@@ -17,8 +17,19 @@ public abstract class Entity : MonoBehaviour
         return armorClass;
     }
 
+    // Entity.cs
     public virtual void TakeDamage(int amount)
     {
         health = Mathf.Max(health - amount, 0);
+
+        if (health <= 0)
+        {
+            OnEntityDestroyed();
+        }
+    }
+
+    protected virtual void OnEntityDestroyed()
+    {
+        // Base implementation (override in subclasses)
     }
 }

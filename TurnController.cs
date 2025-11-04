@@ -144,19 +144,20 @@ public class TurnController : MonoBehaviour
         vehicles.RemoveAt(index);
         SimulationLogger.LogEvent($"{vehicle.vehicleName} removed from turn order.");
         
-        // Adjust currentTurnIndex if needed
         if (index < currentTurnIndex)
         {
             currentTurnIndex--;
         }
-        else if (index == currentTurnIndex && currentTurnIndex >= vehicles.Count)
+        else if (index == currentTurnIndex)
         {
-            // We removed the current vehicle and it was the last one
+            if (currentTurnIndex >= vehicles.Count && vehicles.Count > 0)
+            {
+                currentTurnIndex = 0; // Wrap around
+            }
+        }
+        if (vehicles.Count > 0 && currentTurnIndex >= vehicles.Count)
+        {
             currentTurnIndex = 0;
         }
-        
-        // Handle edge case: only one vehicle left
-        if (vehicles.Count > 0 && currentTurnIndex >= vehicles.Count)
-            currentTurnIndex = 0;
     }
 }

@@ -12,6 +12,7 @@ public class GameManager : MonoBehaviour
 
     [Header("UI References")]
     public TextMeshProUGUI statusNotesText;
+    public RaceLeaderboard raceLeaderboard; // Assign in Inspector
 
     private List<Stage> stages;
     private TurnController turnController;
@@ -20,31 +21,7 @@ public class GameManager : MonoBehaviour
 
     void Start()
     {
-        Debug.Log($"<color=cyan>===== FRAME {Time.frameCount} START =====</color>");
-        
-        // Log every single operation
-        Debug.Log($"Frame {Time.frameCount}: About to call InitializeGame()");
         InitializeGame();
-        Debug.Log($"Frame {Time.frameCount}: InitializeGame() completed");
-        
-        Debug.Log($"<color=cyan>===== FRAME {Time.frameCount} END =====</color>");
-    }
-
-    void Update()
-    {
-        // Log every frame for first 5 frames
-        if (Time.frameCount <= 5)
-        {
-            Debug.Log($"<color=yellow>Frame {Time.frameCount} Update() called</color>");
-        }
-    }
-
-    void LateUpdate()
-    {
-        if (Time.frameCount <= 5)
-        {
-            Debug.Log($"<color=orange>Frame {Time.frameCount} LateUpdate() called</color>");
-        }
     }
 
     /// <summary>
@@ -114,14 +91,18 @@ public class GameManager : MonoBehaviour
                 continue; // Skip to next vehicle in loop
             }
 
-            // Process movement for current vehicle
-            turnController.ProcessMovement(vehicle);
-
             // If it's the player's turn, stop and wait for input
             if (vehicle == playerVehicle)
             {
+                // Process movement for player (just adds speed, no auto-stage-change)
+                turnController.ProcessMovement(vehicle);
                 playerController.ProcessPlayerMovement();
                 UpdateStatusText();
+                
+                // Refresh leaderboard when player's turn starts
+                if (raceLeaderboard != null)
+                    raceLeaderboard.RefreshLeaderboard();
+                
                 return; // Exit method, waiting for player action
             }
 
@@ -135,6 +116,10 @@ public class GameManager : MonoBehaviour
 
         // Only reached if all vehicles are destroyed
         Debug.Log("Game Over: No vehicles remaining!");
+        
+        // Final leaderboard refresh
+        if (raceLeaderboard != null)
+            raceLeaderboard.RefreshLeaderboard();
     }
 
     /// <summary>
@@ -144,6 +129,11 @@ public class GameManager : MonoBehaviour
     private void OnPlayerTurnComplete()
     {
         turnController.AdvanceTurn();
+        
+        // Refresh leaderboard after player action
+        if (raceLeaderboard != null)
+            raceLeaderboard.RefreshLeaderboard();
+        
         NextTurn(); // Resume the loop
     }
 

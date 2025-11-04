@@ -9,8 +9,13 @@ public static class SimulationLogger
     public static void LogEvent(string message)
     {
         simulationLog.Add(message);
-        if (simulationLog.Count > 1000)
+
+        // Remove oldest entries if we exceed the limit
+        while (simulationLog.Count > 1000)
+        {
             simulationLog.RemoveAt(0);
-        Debug.Log(message); 
+        }
+
+        Debug.Log(message);
     }
 }

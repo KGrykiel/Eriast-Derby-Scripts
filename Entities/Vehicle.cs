@@ -143,19 +143,9 @@ public class Vehicle : Entity
         return Mathf.RoundToInt(GetAttribute(Attribute.ArmorClass));
     }
 
-    public override void TakeDamage(int damage)
+    protected override void OnEntityDestroyed()
     {
-        // Reduce health and log the event
-        health -= damage;
-        if (health <= 0)
-        {
-            DestroyVehicle();
-        }
-        else
-        {
-            SimulationLogger.LogEvent($"{vehicleName} took {damage} damage! Remaining health: {health}");
-        }
-        SimulationLogger.LogEvent($"{vehicleName} received damage!");
+        DestroyVehicle();
     }
 
     public void UpdateNameLabel()

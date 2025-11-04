@@ -8,6 +8,10 @@ public class Stage : MonoBehaviour
     public float length = 10f;
     public List<Stage> nextStages = new List<Stage>();
 
+    [Header("Race Configuration")]
+    [Tooltip("Is this stage a finish line?")]
+    public bool isFinishLine = false;
+
     [Header("Modifiers applied on enter")]
     public List<AttributeModifierEffect> onEnterModifiers = new List<AttributeModifierEffect>();
 

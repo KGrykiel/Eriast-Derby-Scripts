@@ -2,3 +2,4 @@
 *.meta
 *.meta
 Effect/abstract_EffectBase.cs.meta
+/.vs
