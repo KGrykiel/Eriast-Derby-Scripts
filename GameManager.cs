@@ -1,6 +1,8 @@
 using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
+using RacingGame.Events;
+using EventType = RacingGame.Events.EventType; // Add this
 
 /// <summary>
 /// Main game coordinator. Manages game initialization and delegates to specialized controllers.
@@ -12,7 +14,10 @@ public class GameManager : MonoBehaviour
 
     [Header("UI References")]
     public TextMeshProUGUI statusNotesText;
-    public RaceLeaderboard raceLeaderboard; // Assign in Inspector
+    public RaceLeaderboard raceLeaderboard;
+    public VehicleInspectorPanel vehicleInspectorPanel;
+    public OverviewPanel overviewPanel; // Add overview panel
+    public FocusPanel focusPanel; // Add focus panel
 
     private List<Stage> stages;
     private TurnController turnController;
@@ -29,15 +34,29 @@ public class GameManager : MonoBehaviour
     /// </summary>
     private void InitializeGame()
     {
+        // Clear any previous race history
+        RaceHistory.ClearHistory();
+
         stages = new List<Stage>(FindObjectsByType<Stage>(FindObjectsSortMode.None));
         List<Vehicle> vehicles = new List<Vehicle>(FindObjectsByType<Vehicle>(FindObjectsSortMode.None));
 
         playerVehicle = vehicles.Find(v => v.controlType == ControlType.Player);
 
+        // Log race start
+        RaceHistory.Log(
+            EventType.System,
+            EventImportance.High,
+            $"Race initialized with {vehicles.Count} vehicles and {stages.Count} stages"
+        );
+
         InitializeVehiclePositions(vehicles);
         InitializeControllers(vehicles);
 
         UpdateStatusText();
+
+        // Log first turn
+        RaceHistory.AdvanceTurn();
+
         NextTurn();
     }
 
@@ -51,7 +70,18 @@ public class GameManager : MonoBehaviour
             Stage startStage = entryStage != null ? entryStage : (stages.Count > 0 ? stages[0] : null);
             vehicle.progress = 0f;
             vehicle.SetCurrentStage(startStage);
+
+            // Old logging (keep for backwards compatibility)
             SimulationLogger.LogEvent($"{vehicle.vehicleName} placed at stage: {startStage?.stageName ?? "None"}");
+
+            // New structured logging
+            RaceHistory.Log(
+                EventType.System,
+                EventImportance.Low,
+                $"{vehicle.vehicleName} placed at starting position",
+                startStage,
+                vehicle
+            );
         }
     }
 
@@ -88,36 +118,56 @@ public class GameManager : MonoBehaviour
             if (turnController.ShouldSkipTurn(vehicle))
             {
                 turnController.AdvanceTurn();
-                continue; // Skip to next vehicle in loop
+                continue;
             }
 
             // If it's the player's turn, stop and wait for input
             if (vehicle == playerVehicle)
             {
-                // Process movement for player (just adds speed, no auto-stage-change)
+                // Log player turn start
+                RaceHistory.Log(
+                    EventType.System,
+                    EventImportance.Medium,
+                    $"{vehicle.vehicleName}'s turn (Player)",
+                    vehicle.currentStage,
+                    vehicle
+                );
+
+                // Process movement for player
                 turnController.ProcessMovement(vehicle);
                 playerController.ProcessPlayerMovement();
                 UpdateStatusText();
-                
-                // Refresh leaderboard when player's turn starts
+
+                // Refresh leaderboard
                 if (raceLeaderboard != null)
                     raceLeaderboard.RefreshLeaderboard();
-                
-                return; // Exit method, waiting for player action
+
+                return; // Wait for player input
             }
 
-            // AI turn - process and move to next vehicle
+            // AI turn
+            RaceHistory.Log(
+                EventType.System,
+                EventImportance.Low,
+                $"{vehicle.vehicleName}'s turn (AI)",
+                vehicle.currentStage,
+                vehicle
+            );
+
             turnController.ProcessAITurn(vehicle);
             turnController.AdvanceTurn();
             UpdateStatusText();
-
-            // Loop continues immediately to next AI turn
         }
 
-        // Only reached if all vehicles are destroyed
+        // Game over
+        RaceHistory.Log(
+            EventType.System,
+            EventImportance.Critical,
+            "Race ended: No vehicles remaining"
+        );
+
         Debug.Log("Game Over: No vehicles remaining!");
-        
-        // Final leaderboard refresh
+
         if (raceLeaderboard != null)
             raceLeaderboard.RefreshLeaderboard();
     }
@@ -129,12 +179,24 @@ public class GameManager : MonoBehaviour
     private void OnPlayerTurnComplete()
     {
         turnController.AdvanceTurn();
-        
-        // Refresh leaderboard after player action
+
+        // Advance turn counter in history
+        RaceHistory.AdvanceTurn();
+
+        // Refresh all UI panels
         if (raceLeaderboard != null)
-            raceLeaderboard.RefreshLeaderboard();
+          raceLeaderboard.RefreshLeaderboard();
         
-        NextTurn(); // Resume the loop
+    if (vehicleInspectorPanel != null)
+  vehicleInspectorPanel.OnTurnChanged();
+        
+        if (overviewPanel != null)
+            overviewPanel.RefreshPanel();
+      
+  if (focusPanel != null)
+   focusPanel.RefreshPanel();
+
+        NextTurn();
     }
 
     /// <summary>
@@ -160,6 +222,16 @@ public class GameManager : MonoBehaviour
 
     /// <summary>
     /// Public API: Returns a copy of all vehicles in the game.
+    /// Returns empty list if TurnController not initialized yet.
     /// </summary>
-    public List<Vehicle> GetVehicles() => new List<Vehicle>(turnController.AllVehicles);
+    public List<Vehicle> GetVehicles()
+    {
+        // Add null check
+        if (turnController == null || turnController.AllVehicles == null)
+        {
+            return new List<Vehicle>(); // Return empty list instead of null
+        }
+
+        return new List<Vehicle>(turnController.AllVehicles);
+    }
 }

@@ -1,5 +1,6 @@
 using System;
 using UnityEngine;
+using RacingGame.Events;
 
 [Serializable]
 public class AttributeModifierEffect : EffectBase
@@ -32,9 +33,32 @@ public class AttributeModifierEffect : EffectBase
             // Always pass a UnityEngine.Object as source, fallback to context if available, otherwise null
             UnityEngine.Object actualSource = source ?? context;
             vehicle.AddModifier(ToRuntimeModifier(actualSource));
+            
+            // Old logging (keep for backwards compatibility)
             SimulationLogger.LogEvent($"{vehicle.vehicleName} receives a modifier: {type} {attribute} {value} for {durationTurns} turns.");
+    
+            // Note: Detailed modifier logging is already handled by Vehicle.AddModifier()
+            // which includes duration, source, and attribute details.
+            // We log here only the raw effect application for debugging purposes.
+            
+            string sourceText = actualSource != null ? actualSource.name : "unknown source";
+            string durText = durationTurns < 0 ? "permanent" : $"{durationTurns} turns";
+            bool isPositive = (type == ModifierType.Flat && value > 0) || (type == ModifierType.Percent && value > 0);
+          
+            RaceHistory.Log(
+                RacingGame.Events.EventType.Modifier,
+                EventImportance.Debug,
+                $"[BUFF] {sourceText} applied {type} {attribute} {value:+0;-0} to {vehicle.vehicleName} ({durText})",
+                vehicle.currentStage,
+                vehicle
+            ).WithMetadata("modifierType", type.ToString())
+             .WithMetadata("attribute", attribute.ToString())
+             .WithMetadata("value", value)
+             .WithMetadata("duration", durationTurns)
+             .WithMetadata("source", sourceText)
+             .WithMetadata("local", local)
+             .WithMetadata("isPositive", isPositive);
         }
         // Handle other Entity types here in the future
     }
-
 }

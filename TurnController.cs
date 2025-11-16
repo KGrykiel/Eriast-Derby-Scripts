@@ -1,5 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
+using RacingGame.Events;
+using EventType = RacingGame.Events.EventType; // Add this
 
 /// <summary>
 /// Handles turn order, turn progression, and vehicle movement.
@@ -27,12 +29,30 @@ public class TurnController : MonoBehaviour
         {
             int initiative = Random.Range(1, 101);
             initiativeRolls[vehicle] = initiative;
+
             SimulationLogger.LogEvent($"{vehicle.vehicleName} rolled initiative: {initiative}");
+
+            // Log to event system
+            RaceHistory.Log(
+                EventType.System,
+                EventImportance.Low,
+                $"{vehicle.vehicleName} rolled initiative: {initiative}",
+                null,
+                vehicle
+            ).WithMetadata("initiative", initiative);
         }
 
         // Sort vehicles by initiative (descending)
         vehicles.Sort((a, b) => initiativeRolls[b].CompareTo(initiativeRolls[a]));
-        SimulationLogger.LogEvent("Turn order: " + string.Join(", ", vehicles.ConvertAll(v => v.vehicleName)));
+
+        string turnOrder = string.Join(", ", vehicles.ConvertAll(v => v.vehicleName));
+        SimulationLogger.LogEvent("Turn order: " + turnOrder);
+
+        RaceHistory.Log(
+            EventType.System,
+            EventImportance.Medium,
+            $"Turn order established: {turnOrder}"
+        );
 
         currentTurnIndex = 0;
     }
@@ -55,12 +75,30 @@ public class TurnController : MonoBehaviour
         if (vehicle.currentStage == null)
         {
             SimulationLogger.LogEvent($"{vehicle.vehicleName} has no current stage. Skipping turn.");
+
+            RaceHistory.Log(
+                EventType.System,
+                EventImportance.Low,
+                $"{vehicle.vehicleName} skipped (no stage)",
+                null,
+                vehicle
+            );
+
             return true;
         }
 
         if (vehicle.Status == VehicleStatus.Destroyed)
         {
             SimulationLogger.LogEvent($"{vehicle.vehicleName} is destroyed. Skipping turn.");
+
+            RaceHistory.Log(
+                EventType.System,
+                EventImportance.Low,
+                $"{vehicle.vehicleName} skipped (destroyed)",
+                vehicle.currentStage,
+                vehicle
+            );
+
             return true;
         }
 
@@ -74,8 +112,20 @@ public class TurnController : MonoBehaviour
     {
         // Add movement
         float speed = vehicle.GetAttribute(Attribute.Speed);
+        float oldProgress = vehicle.progress;
         vehicle.progress += speed;
         vehicle.UpdateModifiers();
+
+        // Log movement
+        RaceHistory.Log(
+            EventType.Movement,
+            EventImportance.Low,
+            $"{vehicle.vehicleName} moved {speed:F1}m (now at {vehicle.progress:F1}m)",
+            vehicle.currentStage,
+            vehicle
+        ).WithMetadata("speed", speed)
+         .WithMetadata("oldProgress", oldProgress)
+         .WithMetadata("newProgress", vehicle.progress);
 
         // Auto-move through stages
         while (vehicle.progress >= vehicle.currentStage.length && vehicle.currentStage.nextStages.Count > 0)
@@ -83,7 +133,19 @@ public class TurnController : MonoBehaviour
             vehicle.progress -= vehicle.currentStage.length;
             var options = vehicle.currentStage.nextStages;
             Stage nextStage = options[Random.Range(0, options.Count)];
+
+            Stage previousStage = vehicle.currentStage;
             vehicle.SetCurrentStage(nextStage);
+
+            // Log stage transition
+            RaceHistory.Log(
+                EventType.Movement,
+                EventImportance.Medium,
+                $"{vehicle.vehicleName} moved from {previousStage.stageName} to {nextStage.stageName}",
+                nextStage,
+                vehicle
+            ).WithMetadata("previousStage", previousStage.stageName)
+             .WithMetadata("carriedProgress", vehicle.progress);
         }
     }
 
@@ -95,10 +157,20 @@ public class TurnController : MonoBehaviour
     {
         if (vehicle == null || vehicle.currentStage == null) return;
 
-        // Just add speed-based progress
         float speed = vehicle.GetAttribute(Attribute.Speed);
+        float oldProgress = vehicle.progress;
         vehicle.progress += speed;
         vehicle.UpdateModifiers();
+
+        // Log movement (lower importance for player since DM already knows)
+        RaceHistory.Log(
+            EventType.Movement,
+            EventImportance.Low,
+            $"{vehicle.vehicleName} progressed {speed:F1}m",
+            vehicle.currentStage,
+            vehicle
+        ).WithMetadata("speed", speed)
+         .WithMetadata("newProgress", vehicle.progress);
     }
 
     /// <summary>
@@ -108,8 +180,19 @@ public class TurnController : MonoBehaviour
     {
         if (vehicle == null || stage == null) return;
 
+        Stage previousStage = vehicle.currentStage;
         vehicle.progress -= vehicle.currentStage.length;
         vehicle.SetCurrentStage(stage);
+
+        // Log stage transition
+        RaceHistory.Log(
+            EventType.Movement,
+            vehicle.controlType == ControlType.Player ? EventImportance.Medium : EventImportance.Low,
+            $"{vehicle.vehicleName} transitioned to {stage.stageName}",
+            stage,
+            vehicle
+        ).WithMetadata("previousStage", previousStage?.stageName ?? "None")
+         .WithMetadata("selectedStage", stage.stageName);
     }
 
     /// <summary>
@@ -142,8 +225,18 @@ public class TurnController : MonoBehaviour
         if (index < 0) return;
 
         vehicles.RemoveAt(index);
+
         SimulationLogger.LogEvent($"{vehicle.vehicleName} removed from turn order.");
-        
+
+        RaceHistory.Log(
+            EventType.System,
+            EventImportance.High,
+            $"{vehicle.vehicleName} removed from turn order",
+            vehicle.currentStage,
+            vehicle
+        );
+
+        // Adjust currentTurnIndex if needed
         if (index < currentTurnIndex)
         {
             currentTurnIndex--;
@@ -152,12 +245,11 @@ public class TurnController : MonoBehaviour
         {
             if (currentTurnIndex >= vehicles.Count && vehicles.Count > 0)
             {
-                currentTurnIndex = 0; // Wrap around
+                currentTurnIndex = 0;
             }
         }
+
         if (vehicles.Count > 0 && currentTurnIndex >= vehicles.Count)
-        {
             currentTurnIndex = 0;
-        }
     }
 }
