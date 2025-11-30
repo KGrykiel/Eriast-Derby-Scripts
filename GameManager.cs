@@ -2,7 +2,7 @@ using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
 using RacingGame.Events;
-using EventType = RacingGame.Events.EventType; // Add this
+using EventType = RacingGame.Events.EventType;
 
 /// <summary>
 /// Main game coordinator. Manages game initialization and delegates to specialized controllers.
@@ -16,8 +16,8 @@ public class GameManager : MonoBehaviour
     public TextMeshProUGUI statusNotesText;
     public RaceLeaderboard raceLeaderboard;
     public VehicleInspectorPanel vehicleInspectorPanel;
-    public OverviewPanel overviewPanel; // Add overview panel
-    public FocusPanel focusPanel; // Add focus panel
+    public OverviewPanel overviewPanel;
+    public FocusPanel focusPanel;
 
     private List<Stage> stages;
     private TurnController turnController;
@@ -54,8 +54,8 @@ public class GameManager : MonoBehaviour
 
         UpdateStatusText();
 
-        // Log first turn
-        RaceHistory.AdvanceTurn();
+        // Don't advance turn here - we're starting Round 1
+        // RaceHistory turn counter starts at 1 by default
 
         NextTurn();
     }
@@ -71,10 +71,7 @@ public class GameManager : MonoBehaviour
             vehicle.progress = 0f;
             vehicle.SetCurrentStage(startStage);
 
-            // Old logging (keep for backwards compatibility)
-            SimulationLogger.LogEvent($"{vehicle.vehicleName} placed at stage: {startStage?.stageName ?? "None"}");
-
-            // New structured logging
+            // Log starting position
             RaceHistory.Log(
                 EventType.System,
                 EventImportance.Low,
@@ -100,7 +97,7 @@ public class GameManager : MonoBehaviour
             return;
         }
 
-        playerController.Initialize(playerVehicle, turnController, OnPlayerTurnComplete);
+        playerController.Initialize(playerVehicle, turnController, this, OnPlayerTurnComplete);
     }
 
     /// <summary>
@@ -117,32 +114,22 @@ public class GameManager : MonoBehaviour
             // Skip invalid vehicles (destroyed or no stage)
             if (turnController.ShouldSkipTurn(vehicle))
             {
-                turnController.AdvanceTurn();
+                bool skipRoundStarted = turnController.AdvanceTurn();
+                
+                // Only advance RaceHistory turn counter when a new round starts
+                if (skipRoundStarted)
+                {
+                    RaceHistory.AdvanceTurn();
+                }
+                
                 continue;
             }
 
             // If it's the player's turn, stop and wait for input
             if (vehicle == playerVehicle)
             {
-                // Log player turn start
-                RaceHistory.Log(
-                    EventType.System,
-                    EventImportance.Medium,
-                    $"{vehicle.vehicleName}'s turn (Player)",
-                    vehicle.currentStage,
-                    vehicle
-                );
-
-                // Process movement for player
-                turnController.ProcessMovement(vehicle);
-                playerController.ProcessPlayerMovement();
-                UpdateStatusText();
-
-                // Refresh leaderboard
-                if (raceLeaderboard != null)
-                    raceLeaderboard.RefreshLeaderboard();
-
-                return; // Wait for player input
+                StartPlayerTurn();
+                return; // Wait for player to end turn
             }
 
             // AI turn
@@ -154,9 +141,18 @@ public class GameManager : MonoBehaviour
                 vehicle
             );
 
-            turnController.ProcessAITurn(vehicle);
-            turnController.AdvanceTurn();
+            ProcessAITurn(vehicle);
+            
+            bool aiRoundStarted = turnController.AdvanceTurn();
+            
+            // Only advance RaceHistory turn counter when a new round starts
+            if (aiRoundStarted)
+            {
+                RaceHistory.AdvanceTurn();
+            }
+            
             UpdateStatusText();
+            RefreshAllPanels();
         }
 
         // Game over
@@ -167,9 +163,45 @@ public class GameManager : MonoBehaviour
         );
 
         Debug.Log("Game Over: No vehicles remaining!");
+        RefreshAllPanels();
+    }
 
-        if (raceLeaderboard != null)
-            raceLeaderboard.RefreshLeaderboard();
+    /// <summary>
+    /// Starts the player's turn. Applies movement and shows action UI.
+    /// </summary>
+    private void StartPlayerTurn()
+    {
+        // Log player turn start
+        RaceHistory.Log(
+            EventType.System,
+            EventImportance.Medium,
+            $"{playerVehicle.vehicleName}'s turn begins",
+            playerVehicle.currentStage,
+            playerVehicle
+        );
+
+        // Apply movement at start of turn
+        turnController.ProcessMovement(playerVehicle);
+        
+        // Handle stage transitions
+        playerController.ProcessPlayerMovement();
+        
+        UpdateStatusText();
+        RefreshAllPanels();
+
+        // Show player UI (handled by PlayerController)
+    }
+
+    /// <summary>
+    /// Processes an AI vehicle's turn including actions and movement.
+    /// </summary>
+    private void ProcessAITurn(Vehicle vehicle)
+    {
+        // Process AI movement
+        turnController.ProcessAITurn(vehicle);
+        
+        // Future: Add AI action selection and execution here
+        // For now, AI just moves (existing behavior)
     }
 
     /// <summary>
@@ -178,25 +210,47 @@ public class GameManager : MonoBehaviour
     /// </summary>
     private void OnPlayerTurnComplete()
     {
-        turnController.AdvanceTurn();
+        // Log turn end
+        RaceHistory.Log(
+            EventType.System,
+            EventImportance.Low,
+            $"{playerVehicle.vehicleName}'s turn ends",
+            playerVehicle.currentStage,
+            playerVehicle
+        );
 
-        // Advance turn counter in history
-        RaceHistory.AdvanceTurn();
+        // Advance turn and check if new round started
+        bool newRoundStarted = turnController.AdvanceTurn();
 
-        // Refresh all UI panels
+        // Only advance RaceHistory turn counter when a new round starts
+        if (newRoundStarted)
+        {
+            RaceHistory.AdvanceTurn();
+        }
+
+        RefreshAllPanels();
+
+        // Continue to next turn
+        NextTurn();
+    }
+
+    /// <summary>
+    /// Refreshes all UI panels at once.
+    /// Called after turn changes or significant game state updates.
+    /// </summary>
+    public void RefreshAllPanels()
+    {
         if (raceLeaderboard != null)
-          raceLeaderboard.RefreshLeaderboard();
+            raceLeaderboard.RefreshLeaderboard();
         
-    if (vehicleInspectorPanel != null)
-  vehicleInspectorPanel.OnTurnChanged();
+        if (vehicleInspectorPanel != null)
+            vehicleInspectorPanel.OnTurnChanged();
         
         if (overviewPanel != null)
             overviewPanel.RefreshPanel();
       
-  if (focusPanel != null)
-   focusPanel.RefreshPanel();
-
-        NextTurn();
+        if (focusPanel != null)
+            focusPanel.RefreshPanel();
     }
 
     /// <summary>
@@ -217,8 +271,10 @@ public class GameManager : MonoBehaviour
 
     /// <summary>
     /// Public API: Returns read-only access to simulation log.
+    /// Deprecated: Use RaceHistory instead.
     /// </summary>
-    public IReadOnlyList<string> GetSimulationLog() => SimulationLogger.Log;
+    [System.Obsolete("Use RaceHistory instead of SimulationLogger")]
+    public IReadOnlyList<string> GetSimulationLog() => new List<string>();
 
     /// <summary>
     /// Public API: Returns a copy of all vehicles in the game.

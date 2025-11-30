@@ -38,7 +38,7 @@ public class RaceLeaderboard : MonoBehaviour
         // Auto-find TurnController if not assigned
         if (turnController == null)
         {
-            var gameManager = FindObjectOfType<GameManager>();
+            var gameManager = FindFirstObjectByType<GameManager>();
             if (gameManager != null)
             {
                 // Wait one frame for GameManager to create TurnController
@@ -55,7 +55,7 @@ public class RaceLeaderboard : MonoBehaviour
     {
         yield return null; // Wait one frame
         
-        turnController = FindObjectOfType<TurnController>();
+        turnController = FindFirstObjectByType<TurnController>();
         
         if (turnController == null)
         {

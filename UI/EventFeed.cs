@@ -28,20 +28,21 @@ public class EventFeed : MonoBehaviour
 
     private ScrollRect scrollRect;
     private int lastProcessedEventCount = 0;
+    private List<RaceEvent> currentlyDisplayedEvents = new List<RaceEvent>();
 
     void Start()
     {
         scrollRect = GetComponentInParent<ScrollRect>();
 
-        // Setup toggle listeners
-        criticalToggle?.onValueChanged.AddListener(_ => RefreshFeed());
-        highToggle?.onValueChanged.AddListener(_ => RefreshFeed());
-        mediumToggle?.onValueChanged.AddListener(_ => RefreshFeed());
-        lowToggle?.onValueChanged.AddListener(_ => RefreshFeed());
-        debugToggle?.onValueChanged.AddListener(_ => RefreshFeed());
+        // Setup toggle listeners - full refresh needed when filters change
+        criticalToggle?.onValueChanged.AddListener(_ => FullRefreshFeed());
+        highToggle?.onValueChanged.AddListener(_ => FullRefreshFeed());
+        mediumToggle?.onValueChanged.AddListener(_ => FullRefreshFeed());
+        lowToggle?.onValueChanged.AddListener(_ => FullRefreshFeed());
+        debugToggle?.onValueChanged.AddListener(_ => FullRefreshFeed());
 
         // Initial refresh
-        RefreshFeed();
+        FullRefreshFeed();
     }
 
     void Update()
@@ -49,20 +50,74 @@ public class EventFeed : MonoBehaviour
         // Check if new events have been added
         int currentEventCount = RaceHistory.Instance.AllEvents.Count;
 
-        if (currentEventCount != lastProcessedEventCount)
+        if (currentEventCount > lastProcessedEventCount)
         {
-            RefreshFeed();
+            AppendNewEvents();
             lastProcessedEventCount = currentEventCount;
         }
     }
 
-    public void RefreshFeed()
+    /// <summary>
+    /// Appends only new events that haven't been displayed yet.
+    /// Preserves scroll position and existing entries.
+    /// </summary>
+    private void AppendNewEvents()
+    {
+        // Get all filtered events
+        var filteredEvents = GetFilteredEvents();
+
+        // Find events that are new (not in currentlyDisplayedEvents)
+        var newEvents = filteredEvents
+            .Skip(currentlyDisplayedEvents.Count)
+            .ToList();
+
+        if (newEvents.Count == 0)
+            return;
+
+        // Track scroll position before adding
+        bool wasAtBottom = scrollRect != null && scrollRect.verticalNormalizedPosition <= 0.01f;
+
+        // Add new events
+        foreach (var evt in newEvents)
+        {
+            CreateEventEntry(evt);
+            currentlyDisplayedEvents.Add(evt);
+        }
+
+        // Enforce max limit (remove oldest if exceeded)
+        while (currentlyDisplayedEvents.Count > maxDisplayedEvents)
+        {
+            // Remove oldest entry from UI
+            if (contentContainer.childCount > 0)
+            {
+                Destroy(contentContainer.GetChild(0).gameObject);
+            }
+            currentlyDisplayedEvents.RemoveAt(0);
+        }
+
+        // Auto-scroll to bottom if user was already at bottom, or if autoScroll is enabled
+        if (autoScrollToBottom || wasAtBottom)
+        {
+            Canvas.ForceUpdateCanvases();
+            if (scrollRect != null)
+            {
+                scrollRect.verticalNormalizedPosition = 0f;
+            }
+        }
+    }
+
+    /// <summary>
+    /// Full refresh of the feed. Used when filters change.
+    /// </summary>
+    private void FullRefreshFeed()
     {
         // Clear existing entries
         foreach (Transform child in contentContainer)
         {
             Destroy(child.gameObject);
         }
+
+        currentlyDisplayedEvents.Clear();
 
         // Get filtered events
         var filteredEvents = GetFilteredEvents();
@@ -74,16 +129,28 @@ public class EventFeed : MonoBehaviour
         foreach (var evt in displayEvents)
         {
             CreateEventEntry(evt);
+            currentlyDisplayedEvents.Add(evt);
         }
 
         // Auto-scroll to bottom
         if (autoScrollToBottom)
         {
             Canvas.ForceUpdateCanvases();
-            scrollRect.verticalNormalizedPosition = 0f;
+            if (scrollRect != null)
+            {
+                scrollRect.verticalNormalizedPosition = 0f;
+            }
         }
 
         lastProcessedEventCount = RaceHistory.Instance.AllEvents.Count;
+    }
+
+    /// <summary>
+    /// Public method to manually refresh the entire feed.
+    /// </summary>
+    public void RefreshFeed()
+    {
+        FullRefreshFeed();
     }
 
     private List<RaceEvent> GetFilteredEvents()

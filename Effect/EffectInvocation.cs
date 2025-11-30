@@ -43,7 +43,6 @@ public class EffectInvocation
         // Track if any target was successfully affected
         bool anyApplied = false;
         int missCount = 0;
-        List<string> missedTargets = new List<string>();
 
         foreach (var target in targets)
         {
@@ -56,29 +55,22 @@ public class EffectInvocation
                     string userName = user is Vehicle vu ? vu.vehicleName : user.name;
                     string targetName = target is Vehicle vt ? vt.vehicleName : target.name;
 
-                    // Old logging (keep for backwards compatibility)
-                    SimulationLogger.LogEvent($"{userName} missed {targetName} with effect.");
-
-                    // New event logging for misses
+                    // Debug-level miss logging (detailed analysis only)
                     var userVehicle = user as Vehicle;
                     var targetVehicle = target as Vehicle;
 
-                    EventImportance missImportance = DetermineMissImportance(userVehicle, targetVehicle);
-
                     RaceHistory.Log(
                         RacingGame.Events.EventType.Combat,
-                        missImportance,
-                        $"[MISS] {userName} missed {targetName}",
+                        EventImportance.Debug, // Downgraded from Medium/Low to Debug
+                        $"[MISS] {userName} missed {targetName} (AC check failed)",
                         userVehicle?.currentStage,
                         userVehicle, targetVehicle
                     ).WithMetadata("missed", true)
                         .WithMetadata("rollType", rollType.ToString())
                         .WithMetadata("toHitBonus", toHitBonus)
-                        .WithMetadata("effectType", effect?.GetType().Name ?? "Unknown")
-                        .WithMetadata("source", source?.name ?? "unknown");
+                        .WithMetadata("effectType", effect?.GetType().Name ?? "Unknown");
 
                     missCount++;
-                    missedTargets.Add(targetName);
                     apply = false;
                 }
             }
@@ -90,46 +82,10 @@ public class EffectInvocation
             }
         }
 
-        // If all targets missed (AoE skill that missed everyone), log a summary
-        if (!anyApplied && missCount > 0 && targets.Count > 1)
-        {
-            var userVehicle = user as Vehicle;
-            string userName = userVehicle != null ? userVehicle.vehicleName : user.name;
-
-            EventImportance missImportance = userVehicle != null && userVehicle.controlType == ControlType.Player
-                ? EventImportance.Medium
-                : EventImportance.Low;
-
-            RaceHistory.Log(
-                 RacingGame.Events.EventType.Combat,
-                missImportance,
-                 $"[MISS] {userName} missed all {missCount} target(s): {string.Join(", ", missedTargets)}",
-                userVehicle?.currentStage,
-                userVehicle
-         ).WithMetadata("missedAll", true)
-                .WithMetadata("missCount", missCount)
-                .WithMetadata("targetCount", targets.Count)
-                .WithMetadata("effectType", effect?.GetType().Name ?? "Unknown");
-        }
+        // AoE miss summary removed - Skill.Use() handles all miss logging now
+        // This prevents duplicate miss events
 
         return anyApplied;
-    }
-
-    /// <summary>
-    /// Determines importance of a miss event based on who's involved.
-    /// </summary>
-    private EventImportance DetermineMissImportance(Vehicle attacker, Vehicle target)
-    {
-        // Player missing is important (they need to know)
-        if (attacker != null && attacker.controlType == ControlType.Player)
-            return EventImportance.Medium;
-
-        // NPC missing player is important (player needs to know they're being attacked)
-        if (target != null && target.controlType == ControlType.Player)
-            return EventImportance.Medium;
-
-        // NPC vs NPC miss is low priority
-        return EventImportance.Low;
     }
 }
 

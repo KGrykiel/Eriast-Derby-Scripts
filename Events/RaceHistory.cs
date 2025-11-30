@@ -95,8 +95,8 @@ namespace RacingGame.Events
             
             allEvents.Add(evt);
             
-            // Also log to old SimulationLogger for backwards compatibility
-            SimulationLogger.LogEvent(evt.description);
+            // SimulationLogger removed - no longer needed
+            // All logging now goes through RaceHistory
             
             // Index by vehicles
             foreach (var vehicle in evt.involvedVehicles)
@@ -122,18 +122,20 @@ namespace RacingGame.Events
             #if UNITY_EDITOR
             if (evt.importance <= EventImportance.High)
             {
-                Debug.Log($"[RaceHistory T{evt.turnNumber}] {evt.description}");
+                Debug.Log($"[RaceHistory R{evt.turnNumber}] {evt.description}");
             }
             #endif
         }
         
         /// <summary>
         /// Advances the turn counter.
+        /// Call this when a new round begins (all vehicles have taken their turns).
         /// </summary>
         public static void AdvanceTurn()
         {
             Instance.currentTurn++;
-            Log(EventType.System, EventImportance.Low, $"=== Turn {Instance.currentTurn} ===");
+            // Logging removed - TurnController now logs round changes
+            // This prevents duplicate "Turn X" / "Round X" messages
         }
         
         /// <summary>
@@ -257,8 +259,8 @@ namespace RacingGame.Events
         {
             Instance.allEvents.Clear();
             Instance.vehicleEvents.Clear();
-            Instance.currentTurn = 0;
-            Log(EventType.System, EventImportance.Medium, "Race history cleared");
+            Instance.currentTurn = 1; // Start at round 1, not 0
+            // Logging removed - race initialization is logged by GameManager
         }
         
         /// <summary>

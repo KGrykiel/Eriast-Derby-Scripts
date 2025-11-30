@@ -8,6 +8,15 @@ public class DamageEffect : EffectBase
     public int damageDieSize = 0;   // e.g. 6 for d6
     public int damageBonus = 0;
 
+    // Store last rolled damage for retrieval by Skill.Use()
+    private int lastDamageRolled = 0;
+
+    /// <summary>
+    /// Gets the last damage rolled by this effect.
+    /// Used by Skill.Use() to log accurate damage values.
+    /// </summary>
+    public int LastDamageRolled => lastDamageRolled;
+
     /// <summary>
     /// Rolls the total damage (sum of dice + bonus).
     /// </summary>
@@ -18,40 +27,18 @@ public class DamageEffect : EffectBase
 
     /// <summary>
     /// Applies this damage effect to the target entity.
-    /// Logs damage events with appropriate importance based on amount and context.
+    /// NO LOGGING - handled by Skill.Use() to prevent duplicates.
     /// </summary>
     public override void Apply(Entity user, Entity target, Object context = null, Object source = null)
     {
         var vehicle = target as Vehicle;
         if (vehicle != null)
         {
-            int damage = RollDamage();
-            int oldHealth = vehicle.health;
+            lastDamageRolled = RollDamage();
+            vehicle.TakeDamage(lastDamageRolled);
 
-            vehicle.TakeDamage(damage);
-
-            // Old logging (keep for backwards compatibility)
-            SimulationLogger.LogEvent($"{vehicle.vehicleName} takes {damage} damage.");
-
-            // Note: Detailed damage logging is already handled by Vehicle.TakeDamage()
-            // which includes damage amount, health percentages, and status changes.
-            // We log here only the raw effect application for debugging purposes.
-
-            string sourceText = source != null ? source.name : "unknown source";
-
-            RaceHistory.Log(
-                RacingGame.Events.EventType.Combat,
-                EventImportance.Debug,
-                $"[DMG] {sourceText} dealt {damage} damage to {vehicle.vehicleName} (rolled {damageDice}d{damageDieSize}+{damageBonus})",
-                vehicle.currentStage,
-                vehicle
-            ).WithMetadata("damageRolled", damage)
-             .WithMetadata("damageDice", damageDice)
-             .WithMetadata("damageDieSize", damageDieSize)
-             .WithMetadata("damageBonus", damageBonus)
-             .WithMetadata("source", sourceText)
-             .WithMetadata("oldHealth", oldHealth)
-             .WithMetadata("newHealth", vehicle.health);
+            // Logging removed - Skill.Use() handles comprehensive combat logging
+            // This prevents duplicate damage events
         }
         // right now focus on vehicle, will handle other entity types later
     }

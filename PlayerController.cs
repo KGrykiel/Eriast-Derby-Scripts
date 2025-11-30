@@ -2,10 +2,12 @@ using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
+using RacingGame.Events;
+using EventType = RacingGame.Events.EventType;
 
 /// <summary>
-/// Manages player input, UI interactions, and turn execution.
-/// Handles skill selection, target selection, and stage choice UI.
+/// Manages player input, UI interactions, and immediate action resolution.
+/// NEW: Actions execute immediately when selected, not at end of turn.
 /// </summary>
 public class PlayerController : MonoBehaviour
 {
@@ -19,9 +21,15 @@ public class PlayerController : MonoBehaviour
     public GameObject stageSelectionPanel;
     public Transform stageButtonContainer;
     public Button stageButtonPrefab;
-    public Button nextTurnButton;
+    public Button endTurnButton;
+    
+    [Header("Turn State UI")]
+    public GameObject playerTurnPanel;
+    public TextMeshProUGUI turnStatusText;
+    public TextMeshProUGUI actionsRemainingText;
 
     private TurnController turnController;
+    private GameManager gameManager;
     private Vehicle playerVehicle;
     private System.Action onPlayerTurnComplete;
 
@@ -30,6 +38,7 @@ public class PlayerController : MonoBehaviour
     private Skill selectedSkill = null;
     private int selectedSkillIndex = -1;
     private bool isSelectingStage = false;
+    private bool isPlayerTurnActive = false;
 
     // UI button caches
     private List<Button> skillButtons = new List<Button>();
@@ -38,34 +47,39 @@ public class PlayerController : MonoBehaviour
     /// <summary>
     /// Initializes the player controller with required references.
     /// </summary>
-    /// <param name="player">The player's vehicle</param>
-    /// <param name="controller">Reference to TurnController</param>
-    /// <param name="turnCompleteCallback">Callback invoked when player turn completes</param>
-    public void Initialize(Vehicle player, TurnController controller, System.Action turnCompleteCallback)
+    public void Initialize(Vehicle player, TurnController controller, GameManager manager, System.Action turnCompleteCallback)
     {
         playerVehicle = player;
         turnController = controller;
+        gameManager = manager;
         onPlayerTurnComplete = turnCompleteCallback;
 
         if (targetCancelButton != null)
             targetCancelButton.onClick.AddListener(OnTargetCancelClicked);
+
+        if (endTurnButton != null)
+            endTurnButton.onClick.AddListener(OnEndTurnClicked);
+
+        HidePlayerUI();
     }
 
     /// <summary>
-    /// Returns true if the player is currently making a decision (stage selection).
+    /// Returns true if the player is currently making a decision.
     /// </summary>
-    public bool IsAwaitingInput => isSelectingStage;
+    public bool IsAwaitingInput => isSelectingStage || isPlayerTurnActive;
 
-    #region Player Movement
+    #region Player Turn Management
 
     /// <summary>
     /// Processes player movement through stages.
     /// Automatically moves through linear paths, pauses at crossroads for player choice.
+    /// Then shows action UI for player to take actions.
     /// </summary>
     public void ProcessPlayerMovement()
     {
         if (isSelectingStage) return;
 
+        // Handle stage transitions
         while (playerVehicle.progress >= playerVehicle.currentStage.length)
         {
             if (playerVehicle.currentStage.nextStages.Count == 0)
@@ -84,13 +98,104 @@ public class PlayerController : MonoBehaviour
             }
         }
 
-        SimulationLogger.LogEvent($"It's now {playerVehicle.vehicleName}'s (Player) turn.");
+        // Movement complete, show action UI
+        StartPlayerActionPhase();
+    }
+
+    /// <summary>
+    /// Starts the player's action phase. Shows UI and enables skill usage.
+    /// </summary>
+    private void StartPlayerActionPhase()
+    {
+        isPlayerTurnActive = true;
+        ShowPlayerUI();
+        UpdateTurnStatusDisplay();
+        
+        RaceHistory.Log(
+            EventType.System,
+            EventImportance.Medium,
+            $"{playerVehicle.vehicleName} can now take actions",
+            playerVehicle.currentStage,
+            playerVehicle
+        );
+    }
+
+    /// <summary>
+    /// Shows the player turn UI panel and skill selection.
+    /// </summary>
+    private void ShowPlayerUI()
+    {
+        if (playerTurnPanel != null)
+            playerTurnPanel.SetActive(true);
+
+        if (endTurnButton != null)
+            endTurnButton.interactable = true;
+
         ShowSkillSelection();
+    }
+
+    /// <summary>
+    /// Hides the player turn UI panel.
+    /// </summary>
+    private void HidePlayerUI()
+    {
+        if (playerTurnPanel != null)
+            playerTurnPanel.SetActive(false);
+
+        if (targetSelectionPanel != null)
+            targetSelectionPanel.SetActive(false);
+
+        if (stageSelectionPanel != null)
+            stageSelectionPanel.SetActive(false);
+    }
+
+    /// <summary>
+    /// Updates the turn status display with current vehicle state.
+    /// </summary>
+    private void UpdateTurnStatusDisplay()
+    {
+        if (turnStatusText != null)
+        {
+            turnStatusText.text = $"<b>{playerVehicle.vehicleName}'s Turn</b>\n" +
+                                  $"Stage: {playerVehicle.currentStage?.stageName ?? "Unknown"}\n" +
+                                  $"Progress: {playerVehicle.progress:F1}m";
+        }
+
+        if (actionsRemainingText != null)
+        {
+            float maxHealth = playerVehicle.GetAttribute(Attribute.MaxHealth);
+            float maxEnergy = playerVehicle.GetAttribute(Attribute.MaxEnergy);
+            
+            actionsRemainingText.text = $"HP: {playerVehicle.health}/{maxHealth:F0}  " +
+                                        $"Energy: {playerVehicle.energy}/{maxEnergy:F0}";
+        }
+    }
+
+    /// <summary>
+    /// Handles End Turn button click. Completes player's turn.
+    /// </summary>
+    public void OnEndTurnClicked()
+    {
+        if (!isPlayerTurnActive) return;
+
+        isPlayerTurnActive = false;
+        ClearPlayerSelections();
+        HidePlayerUI();
+
+        RaceHistory.Log(
+            EventType.System,
+            EventImportance.Low,
+            $"{playerVehicle.vehicleName} manually ended turn",
+            playerVehicle.currentStage,
+            playerVehicle
+        );
+
+        onPlayerTurnComplete?.Invoke();
     }
 
     #endregion
 
-    #region Skill Selection UI
+    #region Skill Selection and Execution
 
     /// <summary>
     /// Displays skill selection UI with buttons for each available skill.
@@ -109,8 +214,17 @@ public class PlayerController : MonoBehaviour
         {
             if (i < playerVehicle.skills.Count)
             {
+                Skill skill = playerVehicle.skills[i];
                 skillButtons[i].gameObject.SetActive(true);
-                skillButtons[i].GetComponentInChildren<TextMeshProUGUI>().text = playerVehicle.skills[i].name;
+                
+                // Show skill name + energy cost
+                string skillText = $"{skill.name} ({skill.energyCost} EN)";
+                skillButtons[i].GetComponentInChildren<TextMeshProUGUI>().text = skillText;
+                
+                // Disable if not enough energy
+                bool canAfford = playerVehicle.energy >= skill.energyCost;
+                skillButtons[i].interactable = canAfford;
+                
                 int skillIndex = i;
                 skillButtons[i].onClick.RemoveAllListeners();
                 skillButtons[i].onClick.AddListener(() => OnSkillButtonClicked(skillIndex));
@@ -123,23 +237,70 @@ public class PlayerController : MonoBehaviour
     }
 
     /// <summary>
-    /// Handles skill button click. Shows target selection if skill requires a target.
+    /// Handles skill button click. Shows target selection or executes immediately.
     /// </summary>
     private void OnSkillButtonClicked(int skillIndex)
     {
         selectedSkill = playerVehicle.skills[skillIndex];
         selectedSkillIndex = skillIndex;
-        SimulationLogger.LogEvent($"Player selected skill: {selectedSkill.name}");
 
+        // Check if skill needs target selection
         bool needsTarget = SkillNeedsTarget(selectedSkill);
+        
         if (needsTarget)
         {
             ShowTargetSelection();
         }
         else
         {
-            selectedTarget = null;
+            // Self-targeted or AoE skill - execute immediately
+            selectedTarget = playerVehicle;
+            ExecuteSkillImmediately();
         }
+    }
+
+    /// <summary>
+    /// Executes the selected skill immediately and provides visual feedback.
+    /// NEW: Skills resolve instantly during the turn, not at end of turn.
+    /// </summary>
+    private void ExecuteSkillImmediately()
+    {
+        if (selectedSkill == null) return;
+
+        Vehicle target = selectedTarget ?? playerVehicle;
+
+        // Validate energy cost
+        if (playerVehicle.energy < selectedSkill.energyCost)
+        {
+            RaceHistory.Log(
+                EventType.SkillUse,
+                EventImportance.Medium,
+                $"{playerVehicle.vehicleName} cannot afford {selectedSkill.name}",
+                playerVehicle.currentStage,
+                playerVehicle
+            ).WithMetadata("skillName", selectedSkill.name)
+             .WithMetadata("energyCost", selectedSkill.energyCost)
+             .WithMetadata("currentEnergy", playerVehicle.energy)
+             .WithMetadata("failed", true);
+            
+            ClearPlayerSelections();
+            return;
+        }
+
+        // Execute skill
+        bool result = selectedSkill.Use(playerVehicle, target);
+
+        if (result)
+        {
+            playerVehicle.energy -= selectedSkill.energyCost;
+        }
+
+        // Refresh UI immediately to show updated HP/Energy
+        UpdateTurnStatusDisplay();
+        ShowSkillSelection(); // Refresh skill buttons (disable if can't afford)
+        gameManager.RefreshAllPanels(); // Update all DM panels
+        
+        ClearPlayerSelections();
     }
 
     /// <summary>
@@ -156,6 +317,18 @@ public class PlayerController : MonoBehaviour
                 return true;
         }
         return false;
+    }
+
+    /// <summary>
+    /// Generates a display name for the main target based on skill targeting mode.
+    /// </summary>
+    private string GetSkillMainTargetName(Skill skill, Vehicle mainTarget)
+    {
+        if (skill.effectInvocations != null && skill.effectInvocations.Exists(ei => ei.targetMode == EffectTargetMode.AllInStage))
+            return "all vehicles in stage";
+        if (skill.effectInvocations != null && skill.effectInvocations.Exists(ei => ei.targetMode == EffectTargetMode.Both))
+            return $"{playerVehicle.vehicleName} and {mainTarget.vehicleName}";
+        return mainTarget != null ? mainTarget.vehicleName : "self";
     }
 
     #endregion
@@ -180,37 +353,42 @@ public class PlayerController : MonoBehaviour
 
         if (validTargets.Count == 0)
         {
-            SimulationLogger.LogEvent("No valid targets available.");
             targetSelectionPanel.SetActive(false);
+            ClearPlayerSelections();
             return;
         }
 
         foreach (var v in validTargets)
         {
             Button btn = Instantiate(targetButtonPrefab, targetButtonContainer);
-            btn.GetComponentInChildren<TextMeshProUGUI>().text = v.vehicleName;
+            btn.GetComponentInChildren<TextMeshProUGUI>().text = $"{v.vehicleName} (HP: {v.health})";
             btn.onClick.AddListener(() => OnTargetButtonClicked(v));
         }
     }
 
     /// <summary>
-    /// Handles target button click. Closes target selection panel.
+    /// Handles target button click. Executes skill immediately.
     /// </summary>
     private void OnTargetButtonClicked(Vehicle v)
     {
         selectedTarget = v;
+        
         if (targetSelectionPanel != null)
             targetSelectionPanel.SetActive(false);
+
+        // Execute skill immediately with selected target
+        ExecuteSkillImmediately();
     }
 
     /// <summary>
-    /// Handles target cancel button. Clears all selections and closes panel.
+    /// Handles target cancel button. Clears selections and closes panel.
     /// </summary>
     private void OnTargetCancelClicked()
     {
         selectedTarget = null;
         selectedSkill = null;
         selectedSkillIndex = -1;
+        
         if (targetSelectionPanel != null)
             targetSelectionPanel.SetActive(false);
     }
@@ -228,8 +406,9 @@ public class PlayerController : MonoBehaviour
             return;
 
         stageSelectionPanel.SetActive(true);
-        if (nextTurnButton != null)
-            nextTurnButton.interactable = false;
+        
+        if (endTurnButton != null)
+            endTurnButton.interactable = false;
 
         while (stageButtons.Count < options.Count)
         {
@@ -262,8 +441,8 @@ public class PlayerController : MonoBehaviour
         stageSelectionPanel.SetActive(false);
         isSelectingStage = false;
 
-        if (nextTurnButton != null)
-            nextTurnButton.interactable = true;
+        if (endTurnButton != null)
+            endTurnButton.interactable = true;
 
         turnController.MoveToStage(playerVehicle, selectedStage);
         ProcessPlayerMovement();
@@ -271,77 +450,10 @@ public class PlayerController : MonoBehaviour
 
     #endregion
 
-    #region Player Action Execution
+    #region Helper Methods
 
     /// <summary>
-    /// Executes the player's selected skill and ends their turn.
-    /// Called by the Next Turn button in the UI.
-    /// Validates target selection and energy cost before execution.
-    /// </summary>
-    public void ExecuteSkillAndEndTurn()
-    {
-        if (isSelectingStage) return;
-
-        Vehicle target = playerVehicle;
-
-        if (selectedSkill != null)
-        {
-            bool needsTarget = SkillNeedsTarget(selectedSkill);
-
-            if (needsTarget)
-            {
-                target = selectedTarget;
-                if (target == null)
-                {
-                    SimulationLogger.LogEvent("Player skipped turn (no target selected).");
-                    ClearPlayerSelections();
-                    onPlayerTurnComplete?.Invoke();
-                    return;
-                }
-            }
-
-            if (playerVehicle.energy < selectedSkill.energyCost)
-            {
-                SimulationLogger.LogEvent($"{playerVehicle.vehicleName} does not have enough energy to use {selectedSkill.name}.");
-                return;
-            }
-
-            bool result = selectedSkill.Use(playerVehicle, target);
-            string targetName = GetSkillMainTargetName(selectedSkill, target);
-
-            if (result)
-            {
-                playerVehicle.energy -= selectedSkill.energyCost;
-                SimulationLogger.LogEvent($"Player used skill: {selectedSkill.name} on {targetName} (Success)");
-            }
-            else
-            {
-                SimulationLogger.LogEvent($"Player used skill: {selectedSkill.name} on {targetName} (Failed)");
-            }
-        }
-        else
-        {
-            SimulationLogger.LogEvent("Player skipped their turn (no skill selected).");
-        }
-
-        ClearPlayerSelections();
-        onPlayerTurnComplete?.Invoke();
-    }
-
-    /// <summary>
-    /// Generates a display name for the main target based on skill targeting mode.
-    /// </summary>
-    private string GetSkillMainTargetName(Skill skill, Vehicle mainTarget)
-    {
-        if (skill.effectInvocations != null && skill.effectInvocations.Exists(ei => ei.targetMode == EffectTargetMode.AllInStage))
-            return "all vehicles in stage";
-        if (skill.effectInvocations != null && skill.effectInvocations.Exists(ei => ei.targetMode == EffectTargetMode.Both))
-            return $"{playerVehicle.vehicleName} and {mainTarget.vehicleName}";
-        return mainTarget != null ? mainTarget.vehicleName : "none";
-    }
-
-    /// <summary>
-    /// Clears all player selections (skill, target, stage choice).
+    /// Clears all player selections (skill, target).
     /// </summary>
     private void ClearPlayerSelections()
     {

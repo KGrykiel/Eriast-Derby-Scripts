@@ -210,72 +210,16 @@ public class Vehicle : Entity
     }
 
     /// <summary>
-    /// Override TakeDamage to log damage events.
+    /// Override TakeDamage - NO LOGGING, just apply damage.
+    /// Logging is handled by the caller (Skill, Stage hazard, etc.)
     /// </summary>
     public override void TakeDamage(int amount)
     {
         int oldHealth = health;
         base.TakeDamage(amount); // Call parent implementation
-        int actualDamage = oldHealth - health;
         
-        // Determine importance based on amount and status
-        EventImportance importance = DetermineDamageImportance(actualDamage);
-        
-        // Build description
-        string description = $"{vehicleName} took {actualDamage} damage ({health}/{maxHealth} HP)";
-        
-        // Add context
-        if (health <= 0)
-        {
-            description += " - DESTROYED!";
-            importance = EventImportance.Critical;
-        }
-        else if (health <= maxHealth * 0.25f && oldHealth > maxHealth * 0.25f)
-        {
-            description += " - CRITICAL HEALTH!";
-            if (importance > EventImportance.High)
-                importance = EventImportance.High;
-        }
-        else if (health <= maxHealth * 0.5f && oldHealth > maxHealth * 0.5f)
-        {
-            description += " - Bloodied!";
-        }
-        
-        // Log damage event
-        RaceHistory.Log(
-            EventType.Combat,
-            importance,
-            description,
-            currentStage,
-            this
-        ).WithMetadata("damage", actualDamage)
-         .WithMetadata("oldHealth", oldHealth)
-         .WithMetadata("newHealth", health)
-         .WithMetadata("maxHealth", maxHealth)
-         .WithMetadata("healthPercent", (float)health / maxHealth);
-    }
-    
-    /// <summary>
-    /// Determines importance of damage event based on amount and vehicle status.
-    /// </summary>
-    private EventImportance DetermineDamageImportance(int damage)
-    {
-        // Player taking damage is always important
-        if (controlType == ControlType.Player)
-        {
-            if (damage > 20 || health <= maxHealth * 0.3f)
-                return EventImportance.High;
-            return EventImportance.Medium;
-        }
-        
-        // NPC damage
-        if (damage > 30)
-            return EventImportance.High;
-        
-        if (damage > 15)
-            return EventImportance.Medium;
-        
-        return EventImportance.Low;
+        // NO LOGGING HERE - prevents duplicates
+        // Status changes (Bloodied, Critical, Destroyed) are logged by the caller
     }
 
     protected override void OnEntityDestroyed()
@@ -306,17 +250,10 @@ public class Vehicle : Entity
         {
             currentStage.TriggerEnter(this);
             
-            // Log stage transition (already logged in TurnController, so keep this Debug level)
-            RaceHistory.Log(
-                EventType.Movement,
-                EventImportance.Debug,
-                $"{vehicleName} entered {stage.stageName}",
-                stage,
-                this
-            ).WithMetadata("previousStage", previousStage?.stageName ?? "None")
-             .WithMetadata("newStage", stage.stageName);
+            // Stage transition logging removed - handled by TurnController
+            // This prevents duplicate logs
             
-            // Check for finish line crossing
+            // Check for finish line crossing (unique event - keep this)
             if (stage.isFinishLine)
             {
                 RaceHistory.Log(
@@ -326,8 +263,6 @@ public class Vehicle : Entity
                     stage,
                     this
                 );
-                
-                SimulationLogger.LogEvent($"{vehicleName} crossed the finish line!");
             }
         }
     }
@@ -346,8 +281,7 @@ public class Vehicle : Entity
         VehicleStatus oldStatus = Status;
         Status = VehicleStatus.Destroyed;
         
-        SimulationLogger.LogEvent($"{vehicleName} has been destroyed!");
-        
+        // Log destruction
         RaceHistory.Log(
             EventType.Destruction,
             EventImportance.Critical,
@@ -370,7 +304,6 @@ public class Vehicle : Entity
             );
         }
         
-        // Remove from turn order
         var turnController = FindFirstObjectByType<TurnController>();
         if (turnController != null)
             turnController.RemoveDestroyedVehicle(this);

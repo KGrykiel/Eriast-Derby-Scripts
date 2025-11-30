@@ -82,18 +82,8 @@ public class Stage : MonoBehaviour
         if (!vehiclesInStage.Contains(vehicle))
             vehiclesInStage.Add(vehicle);
 
-        // Log stage entry
-        EventImportance entryImportance = DetermineStageEntryImportance(vehicle);
-        
-        RaceHistory.Log(
-            EventType.Movement,
-            entryImportance,
-            $"{vehicle.vehicleName} entered {stageName}",
-            this,
-            vehicle
-        ).WithMetadata("stageName", stageName)
-         .WithMetadata("vehicleCount", vehiclesInStage.Count)
-         .WithMetadata("isFinishLine", isFinishLine);
+        // Stage entry logging removed - already handled by TurnController
+        // This prevents duplicate "entered stage" events
 
         // Apply on-enter modifiers
         if (onEnterModifiers != null && onEnterModifiers.Count > 0)
@@ -104,24 +94,8 @@ public class Stage : MonoBehaviour
                 {
                     vehicle.AddModifier(modData.ToRuntimeModifier(this));
                     
-                    // Log stage hazard/effect
-                    string durText = modData.durationTurns > 0 
-                        ? $" for {modData.durationTurns} turns" 
-                        : " (permanent)";
-                    
-                    RaceHistory.Log(
-                        EventType.StageHazard,
-                        vehicle.controlType == ControlType.Player 
-                            ? EventImportance.Medium 
-                            : EventImportance.Low,
-                        $"{stageName} applied {modData.type} {modData.attribute} {modData.value:+0;-0}{durText} to {vehicle.vehicleName}",
-                        this,
-                        vehicle
-                    ).WithMetadata("modifierType", modData.type.ToString())
-                     .WithMetadata("attribute", modData.attribute.ToString())
-                     .WithMetadata("value", modData.value)
-                     .WithMetadata("duration", modData.durationTurns)
-                     .WithShortDescription($"{vehicle.vehicleName}: {modData.attribute} {modData.value:+0;-0}");
+                    // Modifier logging removed - Vehicle.AddModifier() already logs this
+                    // This prevents duplicate modifier events
                 }
             }
         }
