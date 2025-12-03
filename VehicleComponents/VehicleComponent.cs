@@ -52,10 +52,9 @@ public abstract class VehicleComponent : MonoBehaviour
     [Tooltip("Skills provided by this component (assigned in Inspector)")]
     public List<Skill> componentSkills = new List<Skill>();
     
-    // TODO: Re-enable in Phase 3 when PlayerCharacter is created
-    // [Header("Character Assignment")]
-    // [Tooltip("Player character operating this component (null for AI or unassigned)")]
-    // public PlayerCharacter assignedCharacter;
+    [Header("Character Assignment")]
+    [Tooltip("Player character operating this component (null for AI or unassigned)")]
+    public PlayerCharacter assignedCharacter;
     
     [Header("Turn Tracking")]
     [HideInInspector]
@@ -163,7 +162,6 @@ public abstract class VehicleComponent : MonoBehaviour
     
     /// <summary>
     /// Get all skills this component provides (component skills + character personal skills).
-    /// TODO: Add character personal skills in Phase 3 when PlayerCharacter is created.
     /// </summary>
     public virtual List<Skill> GetAllSkills()
     {
@@ -175,44 +173,38 @@ public abstract class VehicleComponent : MonoBehaviour
             allSkills.AddRange(componentSkills);
         }
         
-        // TODO: Re-enable in Phase 3 when PlayerCharacter is created
         // Add character's personal skills (if character is assigned)
-        // if (assignedCharacter != null)
-        // {
-        //     var personalSkills = assignedCharacter.GetPersonalSkills();
-        //     if (personalSkills != null)
-        //     {
-        //         allSkills.AddRange(personalSkills);
-        //     }
-        // }
+        if (assignedCharacter != null)
+        {
+            var personalSkills = assignedCharacter.GetPersonalSkills();
+            if (personalSkills != null)
+            {
+                allSkills.AddRange(personalSkills);
+            }
+        }
         
         return allSkills;
     }
     
     /// <summary>
     /// Can this component currently provide skills?
-    /// (Not destroyed, not disabled)
-    /// TODO: Add character assignment check in Phase 3.
+    /// (Not destroyed, not disabled, and has a character assigned)
     /// </summary>
     public virtual bool CanProvideSkills()
     {
-        // TODO: Re-enable character check in Phase 3
-        // return !isDestroyed && !isDisabled && assignedCharacter != null;
-        return !isDestroyed && !isDisabled;
+        return !isDestroyed && !isDisabled && assignedCharacter != null;
     }
     
     /// <summary>
     /// Get display name for this component (includes character name if assigned).
     /// Used for UI display.
-    /// TODO: Add character name in Phase 3 when PlayerCharacter is created.
     /// </summary>
     public virtual string GetDisplayName()
     {
-        // TODO: Re-enable in Phase 3 when PlayerCharacter is created
-        // if (assignedCharacter != null)
-        // {
-        //     return $"{componentName} ({assignedCharacter.characterName})";
-        // }
+        if (assignedCharacter != null)
+        {
+            return $"{componentName} ({assignedCharacter.characterName})";
+        }
         return componentName;
     }
     
@@ -232,9 +224,8 @@ public abstract class VehicleComponent : MonoBehaviour
         if (enablesRole)
             status += $"Enables: {roleName}\n";
         
-        // TODO: Re-enable in Phase 3 when PlayerCharacter is created
-        // if (assignedCharacter != null)
-        //     status += $"Operated by: {assignedCharacter.characterName}\n";
+        if (assignedCharacter != null)
+            status += $"Operated by: {assignedCharacter.characterName}\n";
         
         if (componentSkills.Count > 0)
             status += $"Skills: {componentSkills.Count}\n";
