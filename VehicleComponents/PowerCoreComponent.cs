@@ -20,12 +20,40 @@ namespace Assets.Scripts.VehicleComponents
         [Tooltip("Power Discharge - power available per turn")]
         public int powerDischarge = 50;
         
+        /// <summary>
+        /// Called when component is first added or reset in Editor.
+        /// Sets default values that appear immediately in Inspector.
+        /// </summary>
+        void Reset()
+        {
+            // Set component identity
+            componentType = ComponentType.PowerCore;
+            componentName = "Standard Power Core";
+            
+            // Set component base stats
+            componentHP = 75;   // Moderately durable
+            componentAC = 20;   // Well-protected critical component
+            componentSpaceRequired = 0;  // Power cores don't consume space
+            powerDrawPerTurn = 0;  // Generates power, doesn't consume it
+            
+            // Set power core-specific stats (already have defaults in field declarations)
+            // powerCapacity = 1000;
+            // powerDischarge = 50;
+            
+            // Power core does NOT enable a role
+            enablesRole = false;
+            roleName = "";
+        }
+        
         void Awake()
         {
-            // Set component type
+            // Set component type (in case Reset wasn't called)
             componentType = ComponentType.PowerCore;
             
-            // Power core does NOT enable a role (it's just power supply)
+            // Initialize current HP
+            currentHP = componentHP;
+            
+            // Ensure role settings
             enablesRole = false;
             roleName = "";
         }

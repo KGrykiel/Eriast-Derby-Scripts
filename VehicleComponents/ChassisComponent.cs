@@ -18,12 +18,41 @@ public class ChassisComponent : VehicleComponent
     [Tooltip("Component Space provided (positive = space for other components)")]
     public int componentSpaceBonus = 2000;
     
+    /// <summary>
+    /// Called when component is first added or reset in Editor.
+    /// Sets default values that appear immediately in Inspector.
+    /// </summary>
+    void Reset()
+    {
+        // Set component identity
+        componentType = ComponentType.Chassis;
+        componentName = "Standard Chassis";
+        
+        // Set component base stats
+        componentHP = 100;  // Chassis is tougher than average
+        componentAC = 18;   // Harder to hit
+        componentSpaceRequired = 0;  // Chassis provides space, doesn't consume it
+        powerDrawPerTurn = 0;  // Passive structure
+        
+        // Set chassis-specific stats (already have defaults in field declarations)
+        // hpBonus = 250;
+        // acBonus = 22;
+        // componentSpaceBonus = 2000;
+        
+        // Chassis does NOT enable a role
+        enablesRole = false;
+        roleName = "";
+    }
+    
     void Awake()
     {
-        // Set component type
+        // Set component type (in case Reset wasn't called)
         componentType = ComponentType.Chassis;
         
-        // Chassis does NOT enable a role (it's just structure)
+        // Initialize current HP
+        currentHP = componentHP;
+        
+        // Ensure role settings
         enablesRole = false;
         roleName = "";
     }

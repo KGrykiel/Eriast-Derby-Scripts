@@ -15,7 +15,8 @@ public abstract class VehicleComponent : MonoBehaviour
     [Tooltip("Display name of this component")]
     public string componentName = "Unnamed Component";
     
-    [Tooltip("Category of this component")]
+    [Tooltip("Category of this component (locked for specific component types)")]
+    [ReadOnly]
     public ComponentType componentType = ComponentType.Custom;
     
     [Header("Component Stats")]
@@ -25,7 +26,7 @@ public abstract class VehicleComponent : MonoBehaviour
     [Tooltip("Armor Class of this component")]
     public int componentAC = 15;
     
-    [Tooltip("Component Space required (negative = uses space)")]
+    [Tooltip("Component Space required (negative = uses space, positive = provides space)")]
     public int componentSpaceRequired = 0;
     
     [Tooltip("Power drawn per turn (0 = no power required)")]
@@ -42,10 +43,12 @@ public abstract class VehicleComponent : MonoBehaviour
     public bool isDisabled = false;
     
     [Header("Role Support")]
-    [Tooltip("Does this component enable a role? (e.g., Weapon enables Gunner)")]
+    [Tooltip("Does this component enable a role? (locked for specific component types)")]
+    [ReadOnly]
     public bool enablesRole = false;
     
-    [Tooltip("Name of the role this component enables (e.g., 'Driver', 'Gunner', 'Navigator')")]
+    [Tooltip("Name of the role this component enables (locked for specific component types)")]
+    [ReadOnly]
     public string roleName = "";
     
     [Header("Skills")]
@@ -53,7 +56,7 @@ public abstract class VehicleComponent : MonoBehaviour
     public List<Skill> componentSkills = new List<Skill>();
     
     [Header("Character Assignment")]
-    [Tooltip("Player character operating this component (null for AI or unassigned)")]
+    [Tooltip("Player character operating this component (null for AI or unassigned, only used if component enables a role)")]
     public PlayerCharacter assignedCharacter;
     
     [Header("Turn Tracking")]
@@ -66,11 +69,18 @@ public abstract class VehicleComponent : MonoBehaviour
     /// <summary>
     /// Initialize this component with a reference to its parent vehicle.
     /// Called by Vehicle.Awake() after component discovery.
+    /// Note: Child classes handle their own Awake() for default values.
+    /// This Initialize() is called AFTER Awake().
     /// </summary>
     public virtual void Initialize(Vehicle vehicle)
     {
         parentVehicle = vehicle;
-        currentHP = componentHP;
+        
+        // Only set currentHP if not already set by child Awake()
+        if (currentHP == 0)
+        {
+            currentHP = componentHP;
+        }
         
         // Log component initialization
         if (enablesRole)

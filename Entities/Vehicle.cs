@@ -4,6 +4,7 @@ using RacingGame.Events;
 using System.Collections.Generic;
 using System.Linq;
 using EventType = RacingGame.Events.EventType;
+using Assets.Scripts.VehicleComponents;
 
 public enum ControlType
 {
@@ -85,6 +86,7 @@ public class Vehicle : Entity
 
     void Start()
     {
+        TestFullIntegration();
         if (nameLabel != null)
         {
             nameLabel.text = vehicleName;
@@ -574,5 +576,29 @@ public class Vehicle : Entity
     {
         // STUB: For now, just return component's AC
         return targetComponent != null ? targetComponent.componentAC : GetArmorClass();
+    }
+
+    // Add to Vehicle Start():
+    void TestFullIntegration()
+    {
+        System.Text.StringBuilder sb = new System.Text.StringBuilder();
+        
+        sb.AppendLine($"=== INTEGRATION TEST: {vehicleName} ===");
+        sb.AppendLine($"MaxHP: {GetAttribute(Attribute.MaxHealth)} (expected: 300)");
+        sb.AppendLine($"AC: {GetArmorClass()} (expected: 32)");
+        sb.AppendLine($"PowerCapacity: {GetComponentStat("PowerCapacity")}");
+
+        var roles = GetAvailableRoles();
+        sb.AppendLine($"Roles: {roles.Count} (expected: 3)");
+        foreach (var role in roles)
+        {
+            string charName = role.assignedCharacter?.characterName ?? "NONE";
+            sb.AppendLine($"  - {role.roleName}: {charName} ({role.availableSkills.Count} skills)");
+        }
+
+        sb.AppendLine($"AllComponentsActed: {AllComponentsActed()} (expected: false)");
+        sb.AppendLine($"=== END TEST ===");
+        
+        Debug.Log(sb.ToString());
     }
 }

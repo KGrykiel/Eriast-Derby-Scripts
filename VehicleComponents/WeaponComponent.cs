@@ -24,10 +24,39 @@ public class WeaponComponent : VehicleComponent
     [Tooltip("Current ammunition remaining")]
     public int currentAmmo;
     
+    /// <summary>
+    /// Called when component is first added or reset in Editor.
+    /// Sets default values that appear immediately in Inspector.
+    /// </summary>
+    void Reset()
+    {
+        // Set component identity
+        componentType = ComponentType.Weapon;
+        componentName = "Standard Weapon";
+        
+        // Set component base stats
+        componentHP = 40;   // Somewhat fragile
+        componentAC = 14;   // Exposed, easier to hit
+        componentSpaceRequired = -150;  // Consumes component space
+        powerDrawPerTurn = 5;  // Requires power to fire
+        
+        // Set weapon-specific stats (already have defaults in field declarations)
+        // baseDamage = 10;
+        // range = 100;
+        // ammo = -1;
+        
+        // Each weapon ENABLES ONE "Gunner" role slot
+        enablesRole = true;
+        roleName = "Gunner";
+    }
+    
     void Awake()
     {
-        // Set component type
+        // Set component type (in case Reset wasn't called)
         componentType = ComponentType.Weapon;
+        
+        // Initialize current HP
+        currentHP = componentHP;
         
         // Each weapon ENABLES ONE "Gunner" role slot
         enablesRole = true;

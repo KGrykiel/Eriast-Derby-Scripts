@@ -21,10 +21,39 @@ public class DriveComponent : VehicleComponent
     [Tooltip("Stability - resistance to terrain effects and bumps")]
     public float stability = 5f;
     
+    /// <summary>
+    /// Called when component is first added or reset in Editor.
+    /// Sets default values that appear immediately in Inspector.
+    /// </summary>
+    void Reset()
+    {
+        // Set component identity
+        componentType = ComponentType.Drive;
+        componentName = "Standard Drive";
+        
+        // Set component base stats
+        componentHP = 60;   // Moderately durable
+        componentAC = 16;   // Somewhat exposed
+        componentSpaceRequired = -200;  // Consumes component space
+        powerDrawPerTurn = 10;  // Requires power to operate
+        
+        // Set drive-specific stats (already have defaults in field declarations)
+        // maxSpeed = 10f;
+        // acceleration = 1f;
+        // stability = 5f;
+        
+        // Drive ENABLES the "Driver" role
+        enablesRole = true;
+        roleName = "Driver";
+    }
+    
     void Awake()
     {
-        // Set component type
+        // Set component type (in case Reset wasn't called)
         componentType = ComponentType.Drive;
+        
+        // Initialize current HP
+        currentHP = componentHP;
         
         // Drive ENABLES the "Driver" role
         enablesRole = true;
