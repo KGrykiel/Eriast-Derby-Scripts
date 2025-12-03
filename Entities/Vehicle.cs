@@ -1,6 +1,8 @@
 ﻿using UnityEngine;
 using TMPro;
 using RacingGame.Events;
+using System.Collections.Generic;
+using System.Linq;
 using EventType = RacingGame.Events.EventType;
 
 public enum ControlType
@@ -22,25 +24,54 @@ public class Vehicle : Entity
     [HideInInspector] public int energy; // Current energy, can be modified by skills or events
 
     // Active modifiers
-    private System.Collections.Generic.List<AttributeModifier> activeModifiers = new System.Collections.Generic.List<AttributeModifier>();
+    private List<AttributeModifier> activeModifiers = new List<AttributeModifier>();
 
     public ControlType controlType = ControlType.Player;
     [HideInInspector] public Stage currentStage;
     [HideInInspector] public float progress = 0f;
 
     private TextMeshPro nameLabel;
+
     [Header("Skills")]
     public System.Collections.Generic.List<Skill> skills = new System.Collections.Generic.List<Skill>();
+    
+    [Header("Vehicle Components")]
+    [Tooltip("Chassis - MANDATORY structural component")]
+    public ChassisComponent chassis;
+    
+    [Tooltip("Power Core - MANDATORY power supply component")]
+    public PowerCoreComponent powerCore;
+    
+    [Tooltip("Optional components (Drive, Weapons, Utilities, etc.)")]
+    public List<VehicleComponent> optionalComponents = new List<VehicleComponent>();
 
-    public System.Collections.Generic.List<AttributeModifier> GetActiveModifiers()
+    public List<AttributeModifier> GetActiveModifiers()
     {
         return activeModifiers;
     }
     
     public VehicleStatus Status { get; private set; } = VehicleStatus.Active;
 
+    /// <summary>
+    /// Get all components (mandatory + optional).
+    /// </summary>
+    public List<VehicleComponent> AllComponents
+    {
+        get
+        {
+            List<VehicleComponent> all = new List<VehicleComponent>();
+            if (chassis != null) all.Add(chassis);
+            if (powerCore != null) all.Add(powerCore);
+            if (optionalComponents != null) all.AddRange(optionalComponents);
+            return all;
+        }
+    }
+
     void Awake()
     {
+        // Initialize components first
+        InitializeComponents();
+        
         // Set health and energy to max at start
         health = maxHealth;
         energy = maxEnergy;
@@ -179,12 +210,30 @@ public class Vehicle : Entity
         float baseValue = 0f;
         switch (attr)
         {
-            case Attribute.Speed: baseValue = speed; break;
-            case Attribute.ArmorClass: baseValue = armorClass; break;
-            case Attribute.MagicResistance: baseValue = magicResistance; break;
-            case Attribute.MaxHealth: baseValue = maxHealth; break;
-            case Attribute.MaxEnergy: baseValue = maxEnergy; break;
-            case Attribute.EnergyRegen: baseValue = energyRegen; break;
+            case Attribute.Speed: 
+                baseValue = speed;
+                // Add component speed bonuses
+                baseValue += GetComponentStat(VehicleStatModifiers.StatNames.Speed);
+                break;
+            case Attribute.ArmorClass: 
+                baseValue = armorClass;
+                // Add component AC bonuses
+                baseValue += GetComponentStat(VehicleStatModifiers.StatNames.AC);
+                break;
+            case Attribute.MagicResistance: 
+                baseValue = magicResistance; 
+                break;
+            case Attribute.MaxHealth: 
+                baseValue = maxHealth;
+                // Add component HP bonuses
+                baseValue += GetComponentStat(VehicleStatModifiers.StatNames.HP);
+                break;
+            case Attribute.MaxEnergy: 
+                baseValue = maxEnergy; 
+                break;
+            case Attribute.EnergyRegen: 
+                baseValue = energyRegen; 
+                break;
             default: return 0f;
         }
 
@@ -346,5 +395,184 @@ public class Vehicle : Entity
              .WithMetadata("currentEnergy", energy)
              .WithMetadata("maxEnergy", maxEnergyValue);
         }
+    }
+    // ==================== COMPONENT SYSTEM METHODS ====================
+
+    /// <summary>
+    /// Discover and initialize all vehicle components.
+    /// Called automatically in Awake().
+    /// </summary>
+    private void InitializeComponents()
+    {
+        // Find all VehicleComponent child objects
+        var allFoundComponents = GetComponentsInChildren<VehicleComponent>();
+
+        // Auto-categorize components
+        foreach (var component in allFoundComponents)
+        {
+            // Initialize component with vehicle reference
+            component.Initialize(this);
+
+            // Auto-assign mandatory components if not manually set
+            if (component is ChassisComponent && chassis == null)
+            {
+                chassis = component as ChassisComponent;
+            }
+            else if (component is PowerCoreComponent && powerCore == null)
+            {
+                powerCore = component as PowerCoreComponent;
+            }
+            else
+            {
+                // Add to optional components if not already there
+                if (!optionalComponents.Contains(component))
+                {
+                    optionalComponents.Add(component);
+                }
+            }
+        }
+
+        // Validate mandatory components
+        if (chassis == null)
+        {
+            Debug.LogWarning($"[Vehicle] {vehicleName} has no Chassis component! Vehicle stats will be incomplete.");
+        }
+
+        if (powerCore == null)
+        {
+            Debug.LogWarning($"[Vehicle] {vehicleName} has no Power Core component! Vehicle will have no power.");
+        }
+
+        // Log component discovery
+        Debug.Log($"[Vehicle] {vehicleName} initialized with {AllComponents.Count} component(s)");
+    }
+
+    /// <summary>
+    /// Get all available roles on this vehicle (emergent from components).
+    /// Roles are discovered dynamically based on which components enable them.
+    /// Returns one VehicleRole struct per component (even if role names are the same).
+    /// Example: Two weapons = two separate Gunner roles with different skills/characters.
+    /// </summary>
+    public List<VehicleRole> GetAvailableRoles()
+    {
+        List<VehicleRole> roles = new List<VehicleRole>();
+
+        foreach (var component in AllComponents)
+        {
+            // Skip if component doesn't enable a role or is destroyed
+            if (!component.enablesRole || component.isDestroyed)
+                continue;
+
+            roles.Add(new VehicleRole
+            {
+                roleName = component.roleName,
+                sourceComponent = component,
+                assignedCharacter = component.assignedCharacter,
+                availableSkills = component.GetAllSkills()
+            });
+        }
+
+        return roles;
+    }
+
+    /// <summary>
+    /// Get all skills from all components with matching role name.
+    /// WARNING: This aggregates skills from multiple components if they share a role name!
+    /// For player UI, use GetAvailableRoles() instead to keep components separate.
+    /// This is primarily for AI use where it doesn't care which weapon/component it uses.
+    /// </summary>
+    public List<Skill> GetSkillsForRole(string roleName)
+    {
+        return AllComponents
+            .Where(c => c.enablesRole && c.roleName == roleName && c.CanProvideSkills())
+            .SelectMany(c => c.GetAllSkills())
+            .ToList();
+    }
+
+    /// <summary>
+    /// Get all skills from all components (for legacy compatibility or AI use).
+    /// Aggregates skills from all operational components.
+    /// </summary>
+    public List<Skill> GetAllComponentSkills()
+    {
+        return AllComponents
+            .Where(c => c.CanProvideSkills())
+            .SelectMany(c => c.GetAllSkills())
+            .ToList();
+    }
+
+    /// <summary>
+    /// Check if all role-enabling components have acted this turn.
+    /// Used to determine when player turn should end.
+    /// Note: Skipping counts as acting (sets hasActedThisTurn = true).
+    /// </summary>
+    public bool AllComponentsActed()
+    {
+        return AllComponents
+            .Where(c => c.enablesRole && !c.isDestroyed && !c.isDisabled)
+            .All(c => c.hasActedThisTurn);
+    }
+
+    /// <summary>
+    /// Reset all components for new turn.
+    /// Call at start of each round.
+    /// </summary>
+    public void ResetComponentsForNewTurn()
+    {
+        foreach (var component in AllComponents)
+        {
+            component.ResetTurnState();
+        }
+    }
+
+    /// <summary>
+    /// Get aggregated stat from all components.
+    /// Example: GetComponentStat("HP") returns total HP from all components.
+    /// Used internally by GetAttribute() to add component bonuses.
+    /// </summary>
+    public float GetComponentStat(string statName)
+    {
+        float total = 0f;
+
+        foreach (var component in AllComponents)
+        {
+            var modifiers = component.GetStatModifiers();
+            total += modifiers.GetStat(statName);
+        }
+
+        return total;
+    }
+
+    // ==================== COMBAT STUBS (Phase 6 - Deferred) ====================
+
+    /// <summary>
+    /// STUB: Component-targeted damage (Phase 6).
+    /// TODO: Implement two-stage hit rolls:
+    ///   1. Roll vs Component AC (harder)
+    ///   2. If miss, roll vs Vehicle AC (easier) → damages vehicle pool
+    /// TODO: Define chassis/power core destruction = vehicle unusable
+    /// TODO: Implement damage distribution between component HP and vehicle HP
+    /// </summary>
+    public void TakeDamageToComponent(VehicleComponent targetComponent, int damage)
+    {
+        // STUB: For now, just damage the component
+        if (targetComponent != null)
+        {
+            targetComponent.TakeDamage(damage);
+
+            // TODO: Also damage vehicle HP pool? Or only on critical components?
+            // TODO: Check if chassis or power core destroyed → DestroyVehicle()
+        }
+    }
+
+    /// <summary>
+    /// STUB: Get AC for targeting a specific component (Phase 6).
+    /// TODO: Account for component location/exposure (hidden power core vs exposed cannon)
+    /// TODO: Apply modifiers based on vehicle orientation, cover, etc.
+    /// </summary>
+    public int GetComponentAC(VehicleComponent targetComponent)
+    {
+        // STUB: For now, just return component's AC
+        return targetComponent != null ? targetComponent.componentAC : GetArmorClass();
     }
 }
