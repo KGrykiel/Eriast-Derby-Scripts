@@ -3,17 +3,27 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 using RacingGame.Events;
+using Assets.Scripts.VehicleComponents;
 using EventType = RacingGame.Events.EventType;
 
 /// <summary>
 /// Manages player input, UI interactions, and immediate action resolution.
-/// NEW: Actions execute immediately when selected, not at end of turn.
+/// Uses component-based role system with tabbed interface.
 /// </summary>
 public class PlayerController : MonoBehaviour
 {
     [Header("UI References")]
+    [Tooltip("Container for role tab buttons")]
+    public Transform roleTabContainer;
+    [Tooltip("Prefab for role tab buttons")]
+    public Button roleTabPrefab;
+    [Tooltip("Container for skill buttons (scrollable)")]
     public Transform skillButtonContainer;
+    [Tooltip("Prefab for skill buttons")]
     public Button skillButtonPrefab;
+    [Tooltip("Text showing current role info")]
+    public TextMeshProUGUI currentRoleText;
+    
     public GameObject targetSelectionPanel;
     public Transform targetButtonContainer;
     public Button targetButtonPrefab;
@@ -33,14 +43,20 @@ public class PlayerController : MonoBehaviour
     private Vehicle playerVehicle;
     private System.Action onPlayerTurnComplete;
 
+    // Role-based state
+    private List<VehicleRole> availableRoles = new List<VehicleRole>();
+    private int selectedRoleIndex = -1;
+    private VehicleRole? currentRole = null;
+
     // Player selection state
     private Vehicle selectedTarget = null;
     private Skill selectedSkill = null;
-    private int selectedSkillIndex = -1;
+    private VehicleComponent selectedSkillSourceComponent = null;
     private bool isSelectingStage = false;
     private bool isPlayerTurnActive = false;
 
     // UI button caches
+    private List<Button> roleTabButtons = new List<Button>();
     private List<Button> skillButtons = new List<Button>();
     private List<Button> stageButtons = new List<Button>();
 
@@ -108,6 +124,13 @@ public class PlayerController : MonoBehaviour
     private void StartPlayerActionPhase()
     {
         isPlayerTurnActive = true;
+        
+        // Reset all components for new turn
+        playerVehicle.ResetComponentsForNewTurn();
+        
+        // Discover available roles
+        availableRoles = playerVehicle.GetAvailableRoles();
+        
         ShowPlayerUI();
         UpdateTurnStatusDisplay();
         
@@ -121,7 +144,7 @@ public class PlayerController : MonoBehaviour
     }
 
     /// <summary>
-    /// Shows the player turn UI panel and skill selection.
+    /// Shows the player turn UI panel, role tabs, and skill selection.
     /// </summary>
     private void ShowPlayerUI()
     {
@@ -131,7 +154,13 @@ public class PlayerController : MonoBehaviour
         if (endTurnButton != null)
             endTurnButton.interactable = true;
 
-        ShowSkillSelection();
+        ShowRoleTabs();
+        
+        // Select first role by default
+        if (availableRoles.Count > 0)
+        {
+            SelectRole(0);
+        }
     }
 
     /// <summary>
@@ -173,6 +202,7 @@ public class PlayerController : MonoBehaviour
 
     /// <summary>
     /// Handles End Turn button click. Completes player's turn.
+    /// Always available - no requirement for all components to act.
     /// </summary>
     public void OnEndTurnClicked()
     {
@@ -185,7 +215,7 @@ public class PlayerController : MonoBehaviour
         RaceHistory.Log(
             EventType.System,
             EventImportance.Low,
-            $"{playerVehicle.vehicleName} manually ended turn",
+            $"{playerVehicle.vehicleName} ended turn",
             playerVehicle.currentStage,
             playerVehicle
         );
@@ -195,35 +225,112 @@ public class PlayerController : MonoBehaviour
 
     #endregion
 
+    #region Role Tab UI
+
+    /// <summary>
+    /// Displays role tabs for all available roles.
+    /// Shows visual feedback for which roles have acted.
+    /// </summary>
+    private void ShowRoleTabs()
+    {
+        if (roleTabContainer == null || roleTabPrefab == null) return;
+
+        // Ensure we have enough tab buttons
+        while (roleTabButtons.Count < availableRoles.Count)
+        {
+            Button btn = Instantiate(roleTabPrefab, roleTabContainer);
+            roleTabButtons.Add(btn);
+        }
+
+        // Update tab buttons
+        for (int i = 0; i < roleTabButtons.Count; i++)
+        {
+            if (i < availableRoles.Count)
+            {
+                VehicleRole role = availableRoles[i];
+                roleTabButtons[i].gameObject.SetActive(true);
+                
+                // Build tab text: "? Driver (Alice)" or "? Gunner 1 (Bob)"
+                string statusIcon = role.sourceComponent.hasActedThisTurn ? "?" : "?";
+                string characterName = role.assignedCharacter?.characterName ?? "Unassigned";
+                string tabText = $"{statusIcon} {role.roleName} ({characterName})";
+                
+                roleTabButtons[i].GetComponentInChildren<TextMeshProUGUI>().text = tabText;
+                
+                // Greyed out if already acted
+                roleTabButtons[i].interactable = !role.sourceComponent.hasActedThisTurn;
+                
+                int roleIndex = i;
+                roleTabButtons[i].onClick.RemoveAllListeners();
+                roleTabButtons[i].onClick.AddListener(() => SelectRole(roleIndex));
+            }
+            else
+            {
+                roleTabButtons[i].gameObject.SetActive(false);
+            }
+        }
+    }
+
+    /// <summary>
+    /// Selects a role and displays its available skills.
+    /// </summary>
+    private void SelectRole(int roleIndex)
+    {
+        if (roleIndex < 0 || roleIndex >= availableRoles.Count) return;
+
+        selectedRoleIndex = roleIndex;
+        currentRole = availableRoles[roleIndex];
+
+        // Update current role display
+        if (currentRoleText != null)
+        {
+            string characterName = currentRole.Value.assignedCharacter?.characterName ?? "Unassigned";
+            string status = currentRole.Value.sourceComponent.hasActedThisTurn ? "- ACTED" : "- Ready";
+            currentRoleText.text = $"<b>{currentRole.Value.roleName}</b> ({characterName}) {status}";
+        }
+
+        // Show skills for this role
+        ShowSkillSelection();
+    }
+
+    #endregion
+
     #region Skill Selection and Execution
 
     /// <summary>
-    /// Displays skill selection UI with buttons for each available skill.
+    /// Displays skill selection UI for the currently selected role.
+    /// Shows all skills from the role's component and assigned character.
     /// </summary>
     private void ShowSkillSelection()
     {
-        if (skillButtonContainer == null || skillButtonPrefab == null || playerVehicle == null) return;
+        if (skillButtonContainer == null || skillButtonPrefab == null || !currentRole.HasValue) return;
 
-        while (skillButtons.Count < playerVehicle.skills.Count)
+        List<Skill> availableSkills = currentRole.Value.availableSkills;
+        bool roleHasActed = currentRole.Value.sourceComponent.hasActedThisTurn;
+
+        // Ensure we have enough skill buttons
+        while (skillButtons.Count < availableSkills.Count)
         {
             Button btn = Instantiate(skillButtonPrefab, skillButtonContainer);
             skillButtons.Add(btn);
         }
 
+        // Update skill buttons
         for (int i = 0; i < skillButtons.Count; i++)
         {
-            if (i < playerVehicle.skills.Count)
+            if (i < availableSkills.Count)
             {
-                Skill skill = playerVehicle.skills[i];
+                Skill skill = availableSkills[i];
                 skillButtons[i].gameObject.SetActive(true);
                 
                 // Show skill name + energy cost
                 string skillText = $"{skill.name} ({skill.energyCost} EN)";
                 skillButtons[i].GetComponentInChildren<TextMeshProUGUI>().text = skillText;
                 
-                // Disable if not enough energy
+                // Disable if not enough energy OR role has already acted
                 bool canAfford = playerVehicle.energy >= skill.energyCost;
-                skillButtons[i].interactable = canAfford;
+                bool canUse = canAfford && !roleHasActed;
+                skillButtons[i].interactable = canUse;
                 
                 int skillIndex = i;
                 skillButtons[i].onClick.RemoveAllListeners();
@@ -241,8 +348,13 @@ public class PlayerController : MonoBehaviour
     /// </summary>
     private void OnSkillButtonClicked(int skillIndex)
     {
-        selectedSkill = playerVehicle.skills[skillIndex];
-        selectedSkillIndex = skillIndex;
+        if (!currentRole.HasValue) return;
+
+        List<Skill> availableSkills = currentRole.Value.availableSkills;
+        if (skillIndex < 0 || skillIndex >= availableSkills.Count) return;
+
+        selectedSkill = availableSkills[skillIndex];
+        selectedSkillSourceComponent = currentRole.Value.sourceComponent;
 
         // Check if skill needs target selection
         bool needsTarget = SkillNeedsTarget(selectedSkill);
@@ -260,12 +372,11 @@ public class PlayerController : MonoBehaviour
     }
 
     /// <summary>
-    /// Executes the selected skill immediately and provides visual feedback.
-    /// NEW: Skills resolve instantly during the turn, not at end of turn.
+    /// Executes the selected skill immediately and marks the component as acted.
     /// </summary>
     private void ExecuteSkillImmediately()
     {
-        if (selectedSkill == null) return;
+        if (selectedSkill == null || selectedSkillSourceComponent == null) return;
 
         Vehicle target = selectedTarget ?? playerVehicle;
 
@@ -293,11 +404,25 @@ public class PlayerController : MonoBehaviour
         if (result)
         {
             playerVehicle.energy -= selectedSkill.energyCost;
+            
+            // Mark component as acted
+            selectedSkillSourceComponent.hasActedThisTurn = true;
+            
+            RaceHistory.Log(
+                EventType.SkillUse,
+                EventImportance.Medium,
+                $"{currentRole.Value.roleName} ({currentRole.Value.assignedCharacter?.characterName ?? "Unassigned"}) used {selectedSkill.name}",
+                playerVehicle.currentStage,
+                playerVehicle
+            ).WithMetadata("roleName", currentRole.Value.roleName)
+             .WithMetadata("skillName", selectedSkill.name)
+             .WithMetadata("componentName", selectedSkillSourceComponent.componentName);
         }
 
-        // Refresh UI immediately to show updated HP/Energy
+        // Refresh UI immediately
         UpdateTurnStatusDisplay();
-        ShowSkillSelection(); // Refresh skill buttons (disable if can't afford)
+        ShowRoleTabs(); // Update tab icons (? for acted roles)
+        ShowSkillSelection(); // Disable skill buttons for acted role
         gameManager.RefreshAllPanels(); // Update all DM panels
         
         ClearPlayerSelections();
@@ -317,18 +442,6 @@ public class PlayerController : MonoBehaviour
                 return true;
         }
         return false;
-    }
-
-    /// <summary>
-    /// Generates a display name for the main target based on skill targeting mode.
-    /// </summary>
-    private string GetSkillMainTargetName(Skill skill, Vehicle mainTarget)
-    {
-        if (skill.effectInvocations != null && skill.effectInvocations.Exists(ei => ei.targetMode == EffectTargetMode.AllInStage))
-            return "all vehicles in stage";
-        if (skill.effectInvocations != null && skill.effectInvocations.Exists(ei => ei.targetMode == EffectTargetMode.Both))
-            return $"{playerVehicle.vehicleName} and {mainTarget.vehicleName}";
-        return mainTarget != null ? mainTarget.vehicleName : "self";
     }
 
     #endregion
@@ -387,7 +500,7 @@ public class PlayerController : MonoBehaviour
     {
         selectedTarget = null;
         selectedSkill = null;
-        selectedSkillIndex = -1;
+        selectedSkillSourceComponent = null;
         
         if (targetSelectionPanel != null)
             targetSelectionPanel.SetActive(false);
@@ -453,12 +566,12 @@ public class PlayerController : MonoBehaviour
     #region Helper Methods
 
     /// <summary>
-    /// Clears all player selections (skill, target).
+    /// Clears all player selections (role, skill, target).
     /// </summary>
     private void ClearPlayerSelections()
     {
         selectedSkill = null;
-        selectedSkillIndex = -1;
+        selectedSkillSourceComponent = null;
         selectedTarget = null;
     }
 
