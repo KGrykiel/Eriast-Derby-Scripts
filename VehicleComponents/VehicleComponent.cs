@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 using RacingGame.Events;
+using Assets.Scripts.VehicleComponents;
 using EventType = RacingGame.Events.EventType;
 
 /// <summary>
@@ -31,6 +32,17 @@ public abstract class VehicleComponent : MonoBehaviour
     
     [Tooltip("Power drawn per turn (0 = no power required)")]
     public int powerDrawPerTurn = 0;
+    
+    [Header("Component Targeting")]
+    [Tooltip("How exposed this component is for targeting")]
+    public ComponentExposure exposure = ComponentExposure.External;
+    
+    [Tooltip("Name of component that shields this one (leave empty if none)")]
+    public string shieldedBy = "";
+    
+    [Tooltip("For Internal exposure: Required chassis damage % to access (0-1, e.g., 0.5 = 50% damage)")]
+    [Range(0f, 1f)]
+    public float internalAccessThreshold = 0.5f;
     
     [Header("Component State")]
     [Tooltip("Current HP of this component")]

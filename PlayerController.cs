@@ -52,6 +52,7 @@ public class PlayerController : MonoBehaviour
     private Vehicle selectedTarget = null;
     private Skill selectedSkill = null;
     private VehicleComponent selectedSkillSourceComponent = null;
+    private VehicleComponent selectedTargetComponent = null; // NEW: For component targeting
     private bool isSelectingStage = false;
     private bool isPlayerTurnActive = false;
 
@@ -380,7 +381,7 @@ public class PlayerController : MonoBehaviour
 
         Vehicle target = selectedTarget ?? playerVehicle;
 
-        // Validate energy cost
+        // Validate energy cost BEFORE attempting to use the skill
         if (playerVehicle.energy < selectedSkill.energyCost)
         {
             RaceHistory.Log(
@@ -398,16 +399,17 @@ public class PlayerController : MonoBehaviour
             return;
         }
 
-        // Execute skill
+        // Execute skill (this may fail due to miss)
         bool result = selectedSkill.Use(playerVehicle, target);
 
+        // ALWAYS consume energy and mark component as acted (even on miss!)
+        // This is the intended game design: missed attacks still consume resources
+        playerVehicle.energy -= selectedSkill.energyCost;
+        selectedSkillSourceComponent.hasActedThisTurn = true;
+        
         if (result)
         {
-            playerVehicle.energy -= selectedSkill.energyCost;
-            
-            // Mark component as acted
-            selectedSkillSourceComponent.hasActedThisTurn = true;
-            
+            // Skill succeeded (hit or applied effect)
             RaceHistory.Log(
                 EventType.SkillUse,
                 EventImportance.Medium,
@@ -417,6 +419,20 @@ public class PlayerController : MonoBehaviour
             ).WithMetadata("roleName", currentRole.Value.roleName)
              .WithMetadata("skillName", selectedSkill.name)
              .WithMetadata("componentName", selectedSkillSourceComponent.componentName);
+        }
+        else
+        {
+            // Skill failed (missed), but still consumed energy and ended turn
+            RaceHistory.Log(
+                EventType.SkillUse,
+                EventImportance.Medium,
+                $"{currentRole.Value.roleName} used {selectedSkill.name} but missed!",
+                playerVehicle.currentStage,
+                playerVehicle
+            ).WithMetadata("roleName", currentRole.Value.roleName)
+             .WithMetadata("skillName", selectedSkill.name)
+             .WithMetadata("componentName", selectedSkillSourceComponent.componentName)
+             .WithMetadata("missed", true);
         }
 
         // Refresh UI immediately
@@ -480,7 +496,9 @@ public class PlayerController : MonoBehaviour
     }
 
     /// <summary>
-    /// Handles target button click. Executes skill immediately.
+    /// Handles target button click. 
+    /// If skill allows component targeting, shows component selection.
+    /// Otherwise executes skill immediately.
     /// </summary>
     private void OnTargetButtonClicked(Vehicle v)
     {
@@ -489,8 +507,17 @@ public class PlayerController : MonoBehaviour
         if (targetSelectionPanel != null)
             targetSelectionPanel.SetActive(false);
 
-        // Execute skill immediately with selected target
-        ExecuteSkillImmediately();
+        // Check if selected skill allows component targeting
+        if (selectedSkill != null && selectedSkill.allowsComponentTargeting)
+        {
+            // Show component selection UI
+            ShowComponentSelection(v);
+        }
+        else
+        {
+            // Execute skill immediately with vehicle target
+            ExecuteSkillImmediately();
+        }
     }
 
     /// <summary>
@@ -501,9 +528,120 @@ public class PlayerController : MonoBehaviour
         selectedTarget = null;
         selectedSkill = null;
         selectedSkillSourceComponent = null;
+        selectedTargetComponent = null;
         
         if (targetSelectionPanel != null)
             targetSelectionPanel.SetActive(false);
+    }
+
+    #endregion
+
+    #region Component Selection UI (Phase 6)
+
+    /// <summary>
+    /// Displays component selection UI for the selected target vehicle.
+    /// Shows chassis option and all components with HP, AC, and accessibility status.
+    /// </summary>
+    private void ShowComponentSelection(Vehicle targetVehicle)
+    {
+        if (targetSelectionPanel == null || targetButtonContainer == null || targetButtonPrefab == null)
+            return;
+
+        // Reuse target selection panel for component selection
+        targetSelectionPanel.SetActive(true);
+
+        // Clear existing buttons
+        foreach (Transform child in targetButtonContainer)
+            Destroy(child.gameObject);
+
+        // Option 1: Target Chassis (vehicle HP)
+        Button chassisBtn = Instantiate(targetButtonPrefab, targetButtonContainer);
+        float maxHealth = targetVehicle.GetAttribute(Attribute.MaxHealth);
+        int chassisAC = targetVehicle.GetArmorClass();
+        chassisBtn.GetComponentInChildren<TextMeshProUGUI>().text = 
+            $"?? Chassis (HP: {targetVehicle.health}/{maxHealth:F0}, AC: {chassisAC})";
+        chassisBtn.onClick.AddListener(() => OnComponentButtonClicked(null)); // null = chassis
+
+        // Option 2: All Components (EXCEPT chassis - it's already shown above)
+        foreach (var component in targetVehicle.AllComponents)
+        {
+            if (component == null) continue;
+            
+            // Skip chassis - it's already shown as the first option
+            if (component is ChassisComponent) continue;
+
+            Button btn = Instantiate(targetButtonPrefab, targetButtonContainer);
+            
+            // Build component button text
+            string componentText = BuildComponentButtonText(targetVehicle, component);
+            btn.GetComponentInChildren<TextMeshProUGUI>().text = componentText;
+            
+            // Check accessibility
+            bool isAccessible = targetVehicle.IsComponentAccessible(component);
+            btn.interactable = isAccessible && !component.isDestroyed;
+            
+            // Add click handler
+            VehicleComponent comp = component; // Capture for lambda
+            btn.onClick.AddListener(() => OnComponentButtonClicked(comp));
+        }
+    }
+
+    /// <summary>
+    /// Builds display text for a component button showing HP, AC, and status.
+    /// </summary>
+    private string BuildComponentButtonText(Vehicle targetVehicle, VehicleComponent component)
+    {
+        string text = $"{component.componentName} ";
+        
+        // HP info
+        text += $"(HP: {component.currentHP}/{component.componentHP}, ";
+        text += $"AC: {component.componentAC})";
+        
+        // Status icons/text
+        if (component.isDestroyed)
+        {
+            text = $"?? {text} - DESTROYED";
+        }
+        else if (!targetVehicle.IsComponentAccessible(component))
+        {
+            string reason = targetVehicle.GetInaccessibilityReason(component);
+            text = $"?? {text} - {reason}";
+        }
+        else
+        {
+            text = $"?? {text}";
+        }
+        
+        return text;
+    }
+
+    /// <summary>
+    /// Handles component button click.
+    /// If component is null, targets chassis. Otherwise targets specific component.
+    /// </summary>
+    private void OnComponentButtonClicked(VehicleComponent component)
+    {
+        selectedTargetComponent = component;
+        
+        if (targetSelectionPanel != null)
+            targetSelectionPanel.SetActive(false);
+
+        // Update skill's target component name
+        if (selectedSkill != null)
+        {
+            if (component != null)
+            {
+                selectedSkill.targetComponentName = component.componentName;
+            }
+            else
+            {
+                // Targeting chassis - clear component name
+                selectedSkill.targetComponentName = "";
+            }
+        }
+
+        // Execute skill
+        ExecuteSkillImmediately();
     }
 
     #endregion
@@ -566,13 +704,14 @@ public class PlayerController : MonoBehaviour
     #region Helper Methods
 
     /// <summary>
-    /// Clears all player selections (role, skill, target).
+    /// Clears all player selections (role, skill, target, component).
     /// </summary>
     private void ClearPlayerSelections()
     {
         selectedSkill = null;
         selectedSkillSourceComponent = null;
         selectedTarget = null;
+        selectedTargetComponent = null;
     }
 
     #endregion

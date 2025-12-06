@@ -16,31 +16,23 @@ public class Vehicle : Entity
 {
     public string vehicleName;
 
-    [Header("Base Attributes (editable per vehicle)")]
-    public float speed = 4f;
-    public int magicResistance = 10; // Temporary
-    public int maxEnergy = 50;
-    public float energyRegen = 1f;
-
-    [HideInInspector] public int energy; // Current energy, can be modified by skills or events
-
-    // Active modifiers
+    // Active modifiers (buffs/debuffs applied to the vehicle)
     private List<AttributeModifier> activeModifiers = new List<AttributeModifier>();
 
     public ControlType controlType = ControlType.Player;
     [HideInInspector] public Stage currentStage;
     [HideInInspector] public float progress = 0f;
 
-    private TextMeshPro nameLabel;
+    private TextMeshProUGUI nameLabel;
 
-    [Header("Skills")]
+    [Header("Skills (Legacy - will be component-based)")]
     public System.Collections.Generic.List<Skill> skills = new System.Collections.Generic.List<Skill>();
     
     [Header("Vehicle Components")]
-    [Tooltip("Chassis - MANDATORY structural component")]
+    [Tooltip("Chassis - MANDATORY structural component (stores HP and AC)")]
     public ChassisComponent chassis;
     
-    [Tooltip("Power Core - MANDATORY power supply component")]
+    [Tooltip("Power Core - MANDATORY power supply component (stores energy)")]
     public PowerCoreComponent powerCore;
     
     [Tooltip("Optional components (Drive, Weapons, Utilities, etc.)")]
@@ -73,14 +65,142 @@ public class Vehicle : Entity
         // Initialize components first
         InitializeComponents();
         
-        // Set health and energy to max at start
-        health = maxHealth;
-        energy = maxEnergy;
+        // Components self-initialize their values in their own Awake() methods
+        // No need to manually set health or energy here
 
         var labelTransform = transform.Find("NameLabel");
         if (labelTransform != null)
         {
-            nameLabel = labelTransform.GetComponent<TextMeshPro>();
+            nameLabel = labelTransform.GetComponent<TextMeshProUGUI>();
+        }
+    }
+    
+    // ==================== CONVENIENCE PROPERTIES (delegate to components) ====================
+    
+    /// <summary>
+    /// Vehicle health IS chassis health.
+    /// Reading this property returns chassis currentHP.
+    /// Writing to this property damages the chassis.
+    /// </summary>
+    public new int health
+    {
+        get
+        {
+            if (chassis == null)
+                return 0; // No chassis = no health
+            return chassis.currentHP;
+        }
+        set
+        {
+            if (chassis == null)
+                return; // Cannot set health without chassis
+            
+            // Setting health actually sets chassis HP
+            chassis.currentHP = value;
+            
+            // Check for destruction
+            if (chassis.currentHP <= 0 && !chassis.isDestroyed)
+            {
+                chassis.isDestroyed = true;
+                OnEntityDestroyed();
+            }
+        }
+    }
+    
+    /// <summary>
+    /// Maximum health (chassis base HP + bonuses from other components).
+    /// </summary>
+    public int maxHealth
+    {
+        get
+        {
+            if (chassis == null) return 0;
+            return chassis.GetMaxHP();
+        }
+    }
+    
+    /// <summary>
+    /// Current energy (stored in power core).
+    /// </summary>
+    public int energy
+    {
+        get
+        {
+            if (powerCore == null) return 0;
+            return powerCore.currentEnergy;
+        }
+        set
+        {
+            if (powerCore == null) return;
+            powerCore.currentEnergy = value;
+        }
+    }
+    
+    /// <summary>
+    /// Maximum energy capacity (stored in power core).
+    /// </summary>
+    public int maxEnergy
+    {
+        get
+        {
+            if (powerCore == null) return 0;
+            return powerCore.maxEnergy;
+        }
+    }
+    
+    /// <summary>
+    /// Energy regeneration rate (stored in power core).
+    /// </summary>
+    public float energyRegen
+    {
+        get
+        {
+            if (powerCore == null) return 0f;
+            return powerCore.energyRegen;
+        }
+    }
+    
+    /// <summary>
+    /// Vehicle speed (from drive component or aggregated from all components).
+    /// </summary>
+    public float speed
+    {
+        get
+        {
+            return GetComponentStat(VehicleStatModifiers.StatNames.Speed);
+        }
+    }
+    
+    /// <summary>
+    /// Vehicle armor class (chassis base AC + bonuses).
+    /// </summary>
+    public int armorClass
+    {
+        get
+        {
+            if (chassis == null) return 10; // Default AC
+            return chassis.GetTotalAC();
+        }
+    }
+    /// <summary>
+    /// Override TakeDamage to damage chassis instead of abstract health pool.
+    /// </summary>
+    public override void TakeDamage(int amount)
+    {
+        if (chassis == null)
+        {
+            // Fallback to base implementation if no chassis
+            base.TakeDamage(amount);
+            return;
+        }
+        
+        // Damage chassis directly
+        chassis.TakeDamage(amount);
+        
+        // Check if chassis destroyed → vehicle destroyed
+        if (chassis.isDestroyed)
+        {
+            OnEntityDestroyed();
         }
     }
 
@@ -213,28 +333,23 @@ public class Vehicle : Entity
         switch (attr)
         {
             case Attribute.Speed: 
-                baseValue = speed;
-                // Add component speed bonuses
-                baseValue += GetComponentStat(VehicleStatModifiers.StatNames.Speed);
+                baseValue = speed; // Delegates to GetComponentStat
                 break;
             case Attribute.ArmorClass: 
-                baseValue = armorClass;
-                // Add component AC bonuses
-                baseValue += GetComponentStat(VehicleStatModifiers.StatNames.AC);
+                baseValue = armorClass; // Delegates to chassis.GetTotalAC()
                 break;
             case Attribute.MagicResistance: 
-                baseValue = magicResistance; 
+                // TODO: Move to component
+                baseValue = 10; // Temporary default
                 break;
             case Attribute.MaxHealth: 
-                baseValue = maxHealth;
-                // Add component HP bonuses
-                baseValue += GetComponentStat(VehicleStatModifiers.StatNames.HP);
+                baseValue = maxHealth; // Delegates to chassis.GetMaxHP()
                 break;
             case Attribute.MaxEnergy: 
-                baseValue = maxEnergy; 
+                baseValue = maxEnergy; // Delegates to powerCore.maxEnergy
                 break;
             case Attribute.EnergyRegen: 
-                baseValue = energyRegen; 
+                baseValue = energyRegen; // Delegates to powerCore.energyRegen
                 break;
             default: return 0f;
         }
@@ -258,19 +373,6 @@ public class Vehicle : Entity
     {
         // Use the attribute system for dynamic armor class
         return Mathf.RoundToInt(GetAttribute(Attribute.ArmorClass));
-    }
-
-    /// <summary>
-    /// Override TakeDamage - NO LOGGING, just apply damage.
-    /// Logging is handled by the caller (Skill, Stage hazard, etc.)
-    /// </summary>
-    public override void TakeDamage(int amount)
-    {
-        int oldHealth = health;
-        base.TakeDamage(amount); // Call parent implementation
-        
-        // NO LOGGING HERE - prevents duplicates
-        // Status changes (Bloodied, Critical, Destroyed) are logged by the caller
     }
 
     protected override void OnEntityDestroyed()
@@ -373,30 +475,30 @@ public class Vehicle : Entity
     
     /// <summary>
     /// Regenerates energy at the start of turn.
-    /// Call this from TurnController or GameManager.
+    /// Delegates to PowerCore component.
+    /// Cannot regenerate if PowerCore is destroyed.
     /// </summary>
     public void RegenerateEnergy()
     {
-        int oldEnergy = energy;
-        int maxEnergyValue = (int)GetAttribute(Attribute.MaxEnergy);
-        float regenRate = GetAttribute(Attribute.EnergyRegen);
-        
-        energy = Mathf.Min(energy + (int)regenRate, maxEnergyValue);
-        
-        int regenAmount = energy - oldEnergy;
-        
-        if (regenAmount > 0)
+        if (powerCore == null || powerCore.isDestroyed)
         {
-            RaceHistory.Log(
-                EventType.Resource,
-                EventImportance.Debug,
-                $"{vehicleName} regenerated {regenAmount} energy ({energy}/{maxEnergyValue})",
-                currentStage,
-                this
-            ).WithMetadata("regenAmount", regenAmount)
-             .WithMetadata("currentEnergy", energy)
-             .WithMetadata("maxEnergy", maxEnergyValue);
+            // No power regeneration without a functional power core
+            if (powerCore != null && powerCore.isDestroyed)
+            {
+                RaceHistory.Log(
+                    EventType.Resource,
+                    EventImportance.Medium,
+                    $"{vehicleName} cannot regenerate energy - Power Core destroyed!",
+                    currentStage,
+                    this
+                ).WithMetadata("powerCoreDestroyed", true)
+                 .WithMetadata("currentEnergy", 0);
+            }
+            return;
         }
+        
+        // Delegate to power core
+        powerCore.RegenerateEnergy();
     }
     // ==================== COMPONENT SYSTEM METHODS ====================
 
@@ -545,37 +647,144 @@ public class Vehicle : Entity
         return total;
     }
 
-    // ==================== COMBAT STUBS (Phase 6 - Deferred) ====================
-
     /// <summary>
-    /// STUB: Component-targeted damage (Phase 6).
-    /// TODO: Implement two-stage hit rolls:
-    ///   1. Roll vs Component AC (harder)
-    ///   2. If miss, roll vs Vehicle AC (easier) → damages vehicle pool
-    /// TODO: Define chassis/power core destruction = vehicle unusable
-    /// TODO: Implement damage distribution between component HP and vehicle HP
+    /// Check if a component is currently accessible for targeting.
+    /// External components always accessible.
+    /// Protected components require shield destruction.
+    /// Internal components require chassis damage (threshold set per component).
     /// </summary>
-    public void TakeDamageToComponent(VehicleComponent targetComponent, int damage)
+    public bool IsComponentAccessible(VehicleComponent target)
     {
-        // STUB: For now, just damage the component
-        if (targetComponent != null)
+        if (target == null || target.isDestroyed)
+            return false;
+        
+        // External components are always accessible
+        if (target.exposure == ComponentExposure.External)
+            return true;
+        
+        // Protected components: check if shielding component is destroyed
+        if (target.exposure == ComponentExposure.Protected && !string.IsNullOrEmpty(target.shieldedBy))
         {
-            targetComponent.TakeDamage(damage);
-
-            // TODO: Also damage vehicle HP pool? Or only on critical components?
-            // TODO: Check if chassis or power core destroyed → DestroyVehicle()
+            VehicleComponent shield = AllComponents.FirstOrDefault(c => c.componentName == target.shieldedBy);
+            // Accessible if shield is null (not found) or destroyed
+            return shield == null || shield.isDestroyed;
         }
+        
+        // Internal components: requires chassis damage based on component's threshold
+        if (target.exposure == ComponentExposure.Internal)
+        {
+            if (chassis == null) return true; // Fallback if no chassis
+            
+            // Calculate chassis damage percentage (1.0 = fully damaged, 0.0 = undamaged)
+            float chassisDamagePercent = 1f - ((float)chassis.currentHP / (float)chassis.componentHP);
+            
+            // Accessible if chassis damage >= threshold
+            return chassisDamagePercent >= target.internalAccessThreshold;
+        }
+        
+        // Shielded: same as protected for now
+        if (target.exposure == ComponentExposure.Shielded && !string.IsNullOrEmpty(target.shieldedBy))
+        {
+            VehicleComponent shield = AllComponents.FirstOrDefault(c => c.componentName == target.shieldedBy);
+            return shield == null || shield.isDestroyed;
+        }
+        
+        // Default: accessible
+        return true;
+    }
+    
+    /// <summary>
+    /// Get the reason why a component cannot be accessed (for UI display).
+    /// Returns null if component is accessible.
+    /// </summary>
+    public string GetInaccessibilityReason(VehicleComponent target)
+    {
+        if (target == null || target.isDestroyed)
+            return "Component destroyed";
+        
+        if (IsComponentAccessible(target))
+            return null; // Accessible
+        
+        // Protected/Shielded components
+        if ((target.exposure == ComponentExposure.Protected || target.exposure == ComponentExposure.Shielded) 
+            && !string.IsNullOrEmpty(target.shieldedBy))
+        {
+            VehicleComponent shield = AllComponents.FirstOrDefault(c => c.componentName == target.shieldedBy);
+            if (shield != null && !shield.isDestroyed)
+                return $"🛡️ Shielded by {shield.componentName}";
+        }
+        
+        // Internal components
+        if (target.exposure == ComponentExposure.Internal)
+        {
+            if (chassis != null)
+            {
+                float chassisDamagePercent = 1f - ((float)chassis.currentHP / (float)chassis.componentHP);
+                if (chassisDamagePercent < target.internalAccessThreshold)
+                {
+                    int requiredDamagePercent = Mathf.RoundToInt(target.internalAccessThreshold * 100f);
+                    return $"⚠️ Chassis must be {requiredDamagePercent}% damaged";
+                }
+            }
+        }
+        
+        return "Cannot target";
     }
 
     /// <summary>
-    /// STUB: Get AC for targeting a specific component (Phase 6).
-    /// TODO: Account for component location/exposure (hidden power core vs exposed cannon)
-    /// TODO: Apply modifiers based on vehicle orientation, cover, etc.
+    /// Check if this vehicle can still move/function.
+    /// Requires operational chassis and power core.
+    /// </summary>
+    public bool IsOperational()
+    {
+        // Chassis destroyed = vehicle destroyed
+        if (chassis == null || chassis.isDestroyed)
+            return false;
+        
+        // Power core destroyed = no power, cannot function
+        if (powerCore == null || powerCore.isDestroyed)
+            return false;
+        
+        // Vehicle is in destroyed state
+        if (Status == VehicleStatus.Destroyed)
+            return false;
+        
+        return true;
+    }
+    
+    /// <summary>
+    /// Get reason why vehicle is non-operational (for UI/logging).
+    /// Returns null if operational.
+    /// </summary>
+    public string GetNonOperationalReason()
+    {
+        if (chassis == null)
+            return "No chassis installed";
+        if (chassis.isDestroyed)
+            return "Chassis destroyed";
+        
+        if (powerCore == null)
+            return "No power core installed";
+        if (powerCore.isDestroyed)
+            return "Power core destroyed - no power";
+        
+        if (Status == VehicleStatus.Destroyed)
+            return "Vehicle destroyed";
+        
+        return null; // Operational
+    }
+
+    /// <summary>
+    /// Get AC for targeting a specific component.
+    /// Accounts for component's base AC.
+    /// Future: Could add modifiers for cover, orientation, etc.
     /// </summary>
     public int GetComponentAC(VehicleComponent targetComponent)
     {
-        // STUB: For now, just return component's AC
-        return targetComponent != null ? targetComponent.componentAC : GetArmorClass();
+        if (targetComponent == null)
+            return GetArmorClass(); // Fallback to chassis AC
+        
+        return targetComponent.componentAC;
     }
 
     // Add to Vehicle Start():

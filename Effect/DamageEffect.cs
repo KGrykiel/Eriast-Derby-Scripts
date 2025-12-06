@@ -31,15 +31,10 @@ public class DamageEffect : EffectBase
     /// </summary>
     public override void Apply(Entity user, Entity target, Object context = null, Object source = null)
     {
-        var vehicle = target as Vehicle;
-        if (vehicle != null)
-        {
-            lastDamageRolled = RollDamage();
-            vehicle.TakeDamage(lastDamageRolled);
+        lastDamageRolled = RollDamage();
+        target.TakeDamage(lastDamageRolled);
 
-            // Logging removed - Skill.Use() handles comprehensive combat logging
-            // This prevents duplicate damage events
-        }
-        // right now focus on vehicle, will handle other entity types later
+        // Logging removed - Skill.Use() handles comprehensive combat logging
+        // This prevents duplicate damage events
     }
 }

@@ -1,22 +1,16 @@
 using UnityEngine;
+using RacingGame.Events;
 
 /// <summary>
 /// Chassis component - the structural foundation of a vehicle.
 /// MANDATORY: Every vehicle must have exactly one chassis.
-/// Provides: HP, AC (Armor Class), and Component Space.
-/// Does NOT enable any role (it's purely structural).
+/// The chassis IS the vehicle - componentHP IS the vehicle's HP, componentAC IS the vehicle's AC.
 /// </summary>
 public class ChassisComponent : VehicleComponent
 {
     [Header("Chassis Stats")]
-    [Tooltip("HP contribution to vehicle total")]
-    public int hpBonus = 250;
-    
-    [Tooltip("AC (Armor Class) contribution to vehicle total")]
-    public int acBonus = 22;
-    
-    [Tooltip("Component Space provided (positive = space for other components)")]
-    public int componentSpaceBonus = 2000;
+    [Tooltip("Component Space provided for other components")]
+    public int componentSpaceProvided = 2000;
     
     /// <summary>
     /// Called when component is first added or reset in Editor.
@@ -28,16 +22,14 @@ public class ChassisComponent : VehicleComponent
         componentType = ComponentType.Chassis;
         componentName = "Standard Chassis";
         
-        // Set component base stats
-        componentHP = 100;  // Chassis is tougher than average
-        componentAC = 18;   // Harder to hit
-        componentSpaceRequired = 0;  // Chassis provides space, doesn't consume it
-        powerDrawPerTurn = 0;  // Passive structure
+        // Chassis uses inherited componentHP/componentAC as the vehicle's HP/AC
+        componentHP = 100;   // This IS the vehicle's max HP
+        componentAC = 18;    // This IS the vehicle's AC
+        componentSpaceProvided = 2000;
         
-        // Set chassis-specific stats (already have defaults in field declarations)
-        // hpBonus = 250;
-        // acBonus = 22;
-        // componentSpaceBonus = 2000;
+        // Chassis provides space, doesn't consume it
+        componentSpaceRequired = 0;
+        powerDrawPerTurn = 0;  // Passive structure
         
         // Chassis does NOT enable a role
         enablesRole = false;
@@ -58,7 +50,34 @@ public class ChassisComponent : VehicleComponent
     }
     
     /// <summary>
-    /// Chassis provides HP, AC, and Component Space to the vehicle.
+    /// Get maximum HP for this chassis (base + bonuses from other components).
+    /// Uses inherited componentHP as the base.
+    /// </summary>
+    public int GetMaxHP()
+    {
+        if (parentVehicle == null) return componentHP;
+        
+        // Base HP + bonuses from other components
+        float bonuses = parentVehicle.GetComponentStat(VehicleStatModifiers.StatNames.HP);
+        return componentHP + Mathf.RoundToInt(bonuses);
+    }
+    
+    /// <summary>
+    /// Get total Armor Class (base + bonuses from other components).
+    /// Uses inherited componentAC as the base.
+    /// </summary>
+    public int GetTotalAC()
+    {
+        if (parentVehicle == null) return componentAC;
+        
+        // Base AC + bonuses from other components
+        float bonuses = parentVehicle.GetComponentStat(VehicleStatModifiers.StatNames.AC);
+        return componentAC + Mathf.RoundToInt(bonuses);
+    }
+    
+    /// <summary>
+    /// Chassis provides Component Space to the vehicle.
+    /// Destroyed/disabled chassis provides nothing.
     /// </summary>
     public override VehicleStatModifiers GetStatModifiers()
     {
@@ -66,27 +85,39 @@ public class ChassisComponent : VehicleComponent
         if (isDestroyed || isDisabled)
             return VehicleStatModifiers.Zero;
         
-        // Create modifiers using the flexible stat system
+        // Chassis only provides component space
+        // HP and AC are accessed directly via GetMaxHP() and GetTotalAC()
         var modifiers = new VehicleStatModifiers();
-        modifiers.HP = hpBonus;
-        modifiers.AC = acBonus;
-        modifiers.ComponentSpace = componentSpaceBonus;
+        modifiers.ComponentSpace = componentSpaceProvided;
         
         return modifiers;
     }
     
     /// <summary>
     /// Called when chassis is destroyed.
-    /// This is catastrophic - without a chassis, the vehicle is likely to collapse.
+    /// This is catastrophic - chassis destruction means vehicle destruction.
     /// </summary>
     protected override void OnComponentDestroyed()
     {
         base.OnComponentDestroyed();
         
-        // Chassis destruction is catastrophic
-        Debug.LogError($"[Chassis] CRITICAL: {componentName} destroyed! Vehicle structural integrity compromised!");
+        if (parentVehicle == null) return;
         
-        // TODO: In future, trigger vehicle destruction if chassis is destroyed
-        // For now, vehicle can continue with reduced stats
+        // Chassis destruction is catastrophic - vehicle is destroyed
+        Debug.LogError($"[Chassis] CRITICAL: {parentVehicle.vehicleName}'s {componentName} destroyed! Vehicle structure collapsed!");
+        
+        RacingGame.Events.RaceHistory.Log(
+            RacingGame.Events.EventType.Combat,
+            RacingGame.Events.EventImportance.Critical,
+            $"[CRITICAL] {parentVehicle.vehicleName}'s Chassis destroyed! Vehicle structural collapse imminent!",
+            parentVehicle.currentStage,
+            parentVehicle
+        ).WithMetadata("componentName", componentName)
+         .WithMetadata("componentType", "Chassis")
+         .WithMetadata("catastrophicFailure", true);
+        
+        // Chassis destruction already triggers vehicle destruction via Vehicle.TakeDamage()
+        // which calls OnEntityDestroyed() -> DestroyVehicle()
+        // No additional logic needed here
     }
 }

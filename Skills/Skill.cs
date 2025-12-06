@@ -11,9 +11,21 @@ public abstract class Skill : ScriptableObject
 
     [SerializeField]
     public List<EffectInvocation> effectInvocations = new List<EffectInvocation>();
+    
+    [Header("Component Targeting (Phase 6)")]
+    [Tooltip("Can this skill target specific vehicle components?")]
+    public bool allowsComponentTargeting = false;
+    
+    [Tooltip("Target component name (leave empty to target chassis/vehicle)")]
+    public string targetComponentName = "";
+    
+    [Tooltip("Penalty when targeting components (applied to both attack rolls). 0 = no penalty")]
+    [Range(0, 10)]
+    public int componentTargetingPenalty = 2;
 
     /// <summary>
     /// Uses the skill. Applies all effect invocations and logs the results.
+    /// Supports component targeting for vehicles.
     /// </summary>
     /// <param name="user">The vehicle using the skill</param>
     /// <param name="mainTarget">The primary target of the skill</param>
@@ -59,7 +71,16 @@ public abstract class Skill : ScriptableObject
 
             return false;
         }
+        
+        // Check for component targeting
+        // If skill allows component targeting and a target component was selected,
+        // use the specialized component targeting logic
+        if (allowsComponentTargeting && !string.IsNullOrEmpty(targetComponentName))
+        {
+            return UseComponentTargeted(user, mainTarget);
+        }
 
+        // Standard skill resolution (existing code)
         bool anyApplied = false;
         int missCount = 0;
         List<string> effectResults = new List<string>();
@@ -310,5 +331,151 @@ public abstract class Skill : ScriptableObject
         // For now, we assume all vehicles have a to-hit bonus of 0.
         // Future: Could pull from vehicle attributes
         return 0;
+    }
+    
+    /// <summary>
+    /// Two-stage component-targeted attack resolution (Phase 6).
+    /// Stage 1: Roll vs Component AC (with penalty)
+    /// Stage 2: If miss, roll vs Chassis AC (with penalty)
+    /// </summary>
+    private bool UseComponentTargeted(Vehicle user, Vehicle mainTarget)
+    {
+        // Find target component
+        VehicleComponent targetComponent = mainTarget.AllComponents
+            .FirstOrDefault(c => c.componentName == targetComponentName);
+
+        if (targetComponent == null || targetComponent.isDestroyed)
+        {
+            // Component not found or destroyed - log and fail
+            RaceHistory.Log(
+                EventType.SkillUse,
+                EventImportance.Medium,
+                $"{user.vehicleName} tried to target {mainTarget.vehicleName}'s {targetComponentName}, but it's unavailable",
+                user.currentStage,
+                user, mainTarget
+            ).WithMetadata("skillName", name)
+             .WithMetadata("targetComponent", targetComponentName)
+             .WithMetadata("failed", true)
+             .WithMetadata("reason", "ComponentUnavailable");
+            
+            return false;
+        }
+
+        // Check if component is accessible
+        if (!mainTarget.IsComponentAccessible(targetComponent))
+        {
+            string reason = mainTarget.GetInaccessibilityReason(targetComponent);
+            RaceHistory.Log(
+                EventType.SkillUse,
+                EventImportance.Medium,
+                $"{user.vehicleName} cannot target {mainTarget.vehicleName}'s {targetComponentName}: {reason}",
+                user.currentStage,
+                user, mainTarget
+            ).WithMetadata("skillName", name)
+             .WithMetadata("targetComponent", targetComponentName)
+             .WithMetadata("failed", true)
+             .WithMetadata("reason", "ComponentInaccessible")
+             .WithMetadata("accessibilityReason", reason);
+            
+            return false;
+        }
+
+        // Two-stage attack rolls
+        int damage = 0;
+        bool hitComponent = false;
+        bool hitChassis = false;
+
+        // Calculate damage first (same for both targets)
+        if (effectInvocations != null && effectInvocations.Count > 0)
+        {
+            var damageEffect = effectInvocations[0].effect as DamageEffect;
+            if (damageEffect != null)
+            {
+                damage = damageEffect.RollDamage();
+            }
+        }
+
+        if (damage == 0)
+        {
+            // No damage to apply
+            return false;
+        }
+
+        // Stage 1: Roll vs Component AC
+        int componentAC = mainTarget.GetComponentAC(targetComponent);
+        int roll1 = Random.Range(1, 21);
+        int total1 = roll1 - componentTargetingPenalty;
+
+        if (total1 >= componentAC)
+        {
+            // Hit the component!
+            hitComponent = true;
+            targetComponent.TakeDamage(damage);
+            
+            RaceHistory.Log(
+                EventType.SkillUse,
+                EventImportance.High,
+                $"{user.vehicleName} used {name}: hit {mainTarget.vehicleName}'s {targetComponentName} for {damage} damage (rolled {roll1}-{componentTargetingPenalty}={total1} vs AC {componentAC})",
+                user.currentStage,
+                user, mainTarget
+            ).WithMetadata("skillName", name)
+             .WithMetadata("targetComponent", targetComponentName)
+             .WithMetadata("damage", damage)
+             .WithMetadata("hitComponent", true)
+             .WithMetadata("roll", roll1)
+             .WithMetadata("penalty", componentTargetingPenalty)
+             .WithMetadata("totalRoll", total1)
+             .WithMetadata("targetAC", componentAC);
+            
+            return true;
+        }
+
+        // Stage 2: Missed component, try chassis
+        int chassisAC = mainTarget.GetArmorClass();
+        int roll2 = Random.Range(1, 21);
+        int total2 = roll2 - componentTargetingPenalty;
+
+        if (total2 >= chassisAC)
+        {
+            // Hit chassis instead
+            hitChassis = true;
+            mainTarget.TakeDamage(damage);
+            
+            RaceHistory.Log(
+                EventType.SkillUse,
+                EventImportance.Medium,
+                $"{user.vehicleName} used {name}: missed {targetComponentName}, hit {mainTarget.vehicleName}'s chassis for {damage} damage (rolled {roll2}-{componentTargetingPenalty}={total2} vs AC {chassisAC})",
+                user.currentStage,
+                user, mainTarget
+            ).WithMetadata("skillName", name)
+             .WithMetadata("targetComponent", targetComponentName)
+             .WithMetadata("damage", damage)
+             .WithMetadata("hitChassis", true)
+             .WithMetadata("missedComponent", true)
+             .WithMetadata("roll", roll2)
+             .WithMetadata("penalty", componentTargetingPenalty)
+             .WithMetadata("totalRoll", total2)
+             .WithMetadata("targetAC", chassisAC);
+            
+            return true;
+        }
+
+        // Both rolls missed
+        RaceHistory.Log(
+            EventType.SkillUse,
+            EventImportance.Medium,
+            $"{user.vehicleName} used {name}: completely missed {mainTarget.vehicleName} (component roll: {total1} vs {componentAC}, chassis roll: {total2} vs {chassisAC})",
+            user.currentStage,
+            user, mainTarget
+        ).WithMetadata("skillName", name)
+         .WithMetadata("targetComponent", targetComponentName)
+         .WithMetadata("failed", true)
+         .WithMetadata("reason", "BothRollsMissed")
+         .WithMetadata("componentRoll", total1)
+         .WithMetadata("componentAC", componentAC)
+         .WithMetadata("chassisRoll", total2)
+         .WithMetadata("chassisAC", chassisAC);
+        
+        return false;
     }
 }
