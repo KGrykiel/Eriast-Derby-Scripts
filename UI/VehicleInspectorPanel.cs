@@ -4,6 +4,7 @@ using UnityEngine.UI;
 using System.Collections.Generic;
 using System.Linq;
 using RacingGame.Events;
+using Assets.Scripts.VehicleComponents;
 
 /// <summary>
 /// Inspector panel for detailed vehicle examination.
@@ -166,6 +167,12 @@ string display = BuildDetailedVehicleInfo();
         
         info += "\n";
         
+        // Components
+        info += "<b>COMPONENTS:</b>\n";
+        info += BuildComponentsInfo();
+        
+        info += "\n";
+        
         // Active Modifiers
         var modifiers = selectedVehicle.GetActiveModifiers();
         info += $"<b>ACTIVE MODIFIERS ({modifiers.Count}):</b>\n";
@@ -247,6 +254,158 @@ string display = BuildDetailedVehicleInfo();
     }
     
     // Helper methods
+    
+    /// <summary>
+    /// Builds detailed component information with health, AC, and accessibility.
+    /// Color-coded by health percentage: Green > 60%, Yellow 30-60%, Red < 30%.
+    /// </summary>
+    private string BuildComponentsInfo()
+    {
+        if (selectedVehicle == null)
+            return "  <color=#888888>No vehicle data</color>\n";
+        
+        var allComponents = selectedVehicle.AllComponents;
+        
+        if (allComponents == null || allComponents.Count == 0)
+        {
+            return "  <color=#888888>No components installed</color>\n";
+        }
+        
+        string componentInfo = "";
+        
+        foreach (var component in allComponents)
+        {
+            if (component == null) continue;
+            
+            // Component icon based on type
+            string icon = GetComponentIcon(component);
+            
+            // Component name
+            string name = component.componentName;
+            
+            // HP bar and color
+            float hpPercent = component.componentHP > 0 
+                ? (float)component.currentHP / component.componentHP 
+                : 0f;
+            string hpColor = GetHealthColor(hpPercent);
+            string hpBar = GenerateBar(hpPercent, 10);
+            string hpText = $"{component.currentHP}/{component.componentHP}";
+            
+            // Destroyed status
+            string statusText = "";
+            if (component.isDestroyed)
+            {
+                statusText = " <color=#FF4444>DESTROYED</color>";
+                hpColor = "#888888";
+            }
+            else if (component.isDisabled)
+            {
+                statusText = " <color=#FFAA44>DISABLED</color>";
+            }
+            
+            // Component line with HP bar
+            componentInfo += $"  {icon} <b>{name}</b> <color={hpColor}>{hpBar} {hpText}</color>{statusText}\n";
+            
+            // Component details (AC, exposure, role)
+            componentInfo += $"    AC: {component.componentAC}";
+            
+            // Exposure/Accessibility
+            string exposureInfo = GetExposureInfo(component);
+            if (!string.IsNullOrEmpty(exposureInfo))
+            {
+                componentInfo += $" | {exposureInfo}";
+            }
+            
+            // Role info
+            if (component.enablesRole)
+            {
+                string roleName = component.roleName;
+                string characterName = component.assignedCharacter?.characterName ?? "Unassigned";
+                componentInfo += $" | Role: <color=#AADDFF>{roleName}</color> ({characterName})";
+            }
+            
+            componentInfo += "\n";
+            
+            // Show inaccessibility reason if applicable
+            if (!component.isDestroyed && !selectedVehicle.IsComponentAccessible(component))
+            {
+                string reason = selectedVehicle.GetInaccessibilityReason(component);
+                componentInfo += $"    <color=#FFAA44>! {reason}</color>\n";
+            }
+        }
+        
+        return componentInfo;
+    }
+    
+    /// <summary>
+    /// Gets an icon/emoji for a component based on its type and state.
+    /// </summary>
+    private string GetComponentIcon(VehicleComponent component)
+    {
+        if (component.isDestroyed)
+            return "[X]";
+        
+        // Icon based on component type
+        if (component is ChassisComponent)
+            return "[#]"; // Shield/armor
+        if (component is PowerCoreComponent)
+            return "[*]"; // Power/energy
+        if (component is DriveComponent)
+            return "[>]"; // Movement
+        if (component is WeaponComponent)
+            return "[!]"; // Weapon/attack
+        
+        // Generic component types
+        switch (component.componentType)
+        {
+            case ComponentType.ActiveDefense:
+                return "[#]";
+            case ComponentType.Sensors:
+                return "[?]";
+            case ComponentType.Communications:
+                return "[~]";
+            case ComponentType.Utility:
+                return "[+]";
+            default:
+                return "[o]";
+        }
+    }
+    
+    /// <summary>
+    /// Gets exposure/accessibility information for a component.
+    /// </summary>
+    private string GetExposureInfo(VehicleComponent component)
+    {
+        string exposureText = "";
+        
+        switch (component.exposure)
+        {
+            case ComponentExposure.External:
+                exposureText = "<color=#44FF44>External</color>";
+                break;
+            case ComponentExposure.Protected:
+                exposureText = "<color=#FFAA44>Protected</color>";
+                if (!string.IsNullOrEmpty(component.shieldedBy))
+                {
+                    exposureText += $" (by {component.shieldedBy})";
+                }
+                break;
+            case ComponentExposure.Internal:
+                exposureText = "<color=#FF8844>Internal</color>";
+                int threshold = Mathf.RoundToInt(component.internalAccessThreshold * 100);
+                exposureText += $" ({threshold}% dmg)";
+                break;
+            case ComponentExposure.Shielded:
+                exposureText = "<color=#88DDFF>Shielded</color>";
+                if (!string.IsNullOrEmpty(component.shieldedBy))
+                {
+                    exposureText += $" (by {component.shieldedBy})";
+                }
+                break;
+        }
+        
+        return exposureText;
+    }
     
     private string GetStatusColor(VehicleStatus status)
     {

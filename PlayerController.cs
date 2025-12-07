@@ -251,8 +251,8 @@ public class PlayerController : MonoBehaviour
                 VehicleRole role = availableRoles[i];
                 roleTabButtons[i].gameObject.SetActive(true);
                 
-                // Build tab text: "? Driver (Alice)" or "? Gunner 1 (Bob)"
-                string statusIcon = role.sourceComponent.hasActedThisTurn ? "?" : "?";
+                // Build tab text: "[v] Driver (Alice)" or "[ ] Gunner 1 (Bob)"
+                string statusIcon = role.sourceComponent.hasActedThisTurn ? "[v]" : "[ ]";
                 string characterName = role.assignedCharacter?.characterName ?? "Unassigned";
                 string tabText = $"{statusIcon} {role.roleName} ({characterName})";
                 
@@ -559,7 +559,7 @@ public class PlayerController : MonoBehaviour
         float maxHealth = targetVehicle.GetAttribute(Attribute.MaxHealth);
         int chassisAC = targetVehicle.GetArmorClass();
         chassisBtn.GetComponentInChildren<TextMeshProUGUI>().text = 
-            $"?? Chassis (HP: {targetVehicle.health}/{maxHealth:F0}, AC: {chassisAC})";
+            $"[#] Chassis (HP: {targetVehicle.health}/{maxHealth:F0}, AC: {chassisAC})";
         chassisBtn.onClick.AddListener(() => OnComponentButtonClicked(null)); // null = chassis
 
         // Option 2: All Components (EXCEPT chassis - it's already shown above)
@@ -600,16 +600,16 @@ public class PlayerController : MonoBehaviour
         // Status icons/text
         if (component.isDestroyed)
         {
-            text = $"?? {text} - DESTROYED";
+            text = $"[X] {text} - DESTROYED";
         }
         else if (!targetVehicle.IsComponentAccessible(component))
         {
             string reason = targetVehicle.GetInaccessibilityReason(component);
-            text = $"?? {text} - {reason}";
+            text = $"[?] {text} - {reason}";
         }
         else
         {
-            text = $"?? {text}";
+            text = $"[>] {text}";
         }
         
         return text;
