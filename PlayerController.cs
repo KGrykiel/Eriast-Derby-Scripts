@@ -418,7 +418,7 @@ public class PlayerController : MonoBehaviour
                 playerVehicle
             ).WithMetadata("roleName", currentRole.Value.roleName)
              .WithMetadata("skillName", selectedSkill.name)
-             .WithMetadata("componentName", selectedSkillSourceComponent.componentName);
+             .WithMetadata("componentName", selectedSkillSourceComponent.name);
         }
         else
         {
@@ -431,7 +431,7 @@ public class PlayerController : MonoBehaviour
                 playerVehicle
             ).WithMetadata("roleName", currentRole.Value.roleName)
              .WithMetadata("skillName", selectedSkill.name)
-             .WithMetadata("componentName", selectedSkillSourceComponent.componentName)
+             .WithMetadata("componentName", selectedSkillSourceComponent.name)
              .WithMetadata("missed", true);
         }
 
@@ -591,11 +591,11 @@ public class PlayerController : MonoBehaviour
     /// </summary>
     private string BuildComponentButtonText(Vehicle targetVehicle, VehicleComponent component)
     {
-        string text = $"{component.componentName} ";
+        string text = $"{component.name} ";
         
-        // HP info
-        text += $"(HP: {component.currentHP}/{component.componentHP}, ";
-        text += $"AC: {component.componentAC})";
+        // HP info using Entity fields
+        text += $"(HP: {component.health}/{component.maxHealth}, ";
+        text += $"AC: {component.armorClass})";
         
         // Status icons/text
         if (component.isDestroyed)
@@ -631,7 +631,7 @@ public class PlayerController : MonoBehaviour
         {
             if (component != null)
             {
-                selectedSkill.targetComponentName = component.componentName;
+                selectedSkill.targetComponentName = component.name;
             }
             else
             {

@@ -33,13 +33,16 @@ public class CustomComponent : VehicleComponent
     /// </summary>
     void Reset()
     {
+        // Set GameObject name (shows in hierarchy)
+        gameObject.name = "Custom Component";
+        
         // For custom components, allow user to set type
         componentType = ComponentType.Custom;
-        componentName = "Custom Component";
         
-        // Set reasonable defaults
-        componentHP = 50;
-        componentAC = 15;
+        // Set reasonable defaults using Entity fields
+        maxHealth = 50;
+        health = 50;
+        armorClass = 15;
         componentSpaceRequired = -100;  // Most components consume space
         powerDrawPerTurn = 0;
         
@@ -53,9 +56,6 @@ public class CustomComponent : VehicleComponent
         // For custom components, don't lock the type
         // User can change componentType, enablesRole, and roleName in Inspector
         // (via the CustomComponentEditor which overrides [ReadOnly])
-        
-        // Initialize current HP
-        currentHP = componentHP;
     }
     
     /// <summary>
@@ -99,6 +99,6 @@ public class CustomComponent : VehicleComponent
     {
         base.OnComponentDestroyed();
         
-        Debug.LogWarning($"[CustomComponent] {componentName} ({componentType}) destroyed!");
+        Debug.LogWarning($"[CustomComponent] {name} ({componentType}) destroyed!");
     }
 }

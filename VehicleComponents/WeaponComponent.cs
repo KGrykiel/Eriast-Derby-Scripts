@@ -30,13 +30,16 @@ public class WeaponComponent : VehicleComponent
     /// </summary>
     void Reset()
     {
+        // Set GameObject name (shows in hierarchy)
+        gameObject.name = "Weapon";
+        
         // Set component identity
         componentType = ComponentType.Weapon;
-        componentName = "Standard Weapon";
         
-        // Set component base stats
-        componentHP = 40;   // Somewhat fragile
-        componentAC = 14;   // Exposed, easier to hit
+        // Set component base stats using Entity fields
+        maxHealth = 40;      // Somewhat fragile
+        health = 40;         // Start at full HP
+        armorClass = 14;     // Exposed, easier to hit
         componentSpaceRequired = -150;  // Consumes component space
         powerDrawPerTurn = 5;  // Requires power to fire
         
@@ -54,9 +57,6 @@ public class WeaponComponent : VehicleComponent
     {
         // Set component type (in case Reset wasn't called)
         componentType = ComponentType.Weapon;
-        
-        // Initialize current HP
-        currentHP = componentHP;
         
         // Each weapon ENABLES ONE "Gunner" role slot
         enablesRole = true;
@@ -104,7 +104,7 @@ public class WeaponComponent : VehicleComponent
             
             if (currentAmmo == 0)
             {
-                Debug.LogWarning($"[Weapon] {componentName} is out of ammo!");
+                Debug.LogWarning($"[Weapon] {name} is out of ammo!");
             }
         }
     }
@@ -118,7 +118,7 @@ public class WeaponComponent : VehicleComponent
         if (ammo == -1) return; // Unlimited ammo, can't reload
         
         currentAmmo = Mathf.Min(currentAmmo + amount, ammo);
-        Debug.Log($"[Weapon] {componentName} reloaded to {currentAmmo}/{ammo} ammo");
+        Debug.Log($"[Weapon] {name} reloaded to {currentAmmo}/{ammo} ammo");
     }
     
     /// <summary>
@@ -130,7 +130,7 @@ public class WeaponComponent : VehicleComponent
         base.OnComponentDestroyed();
         
         // Weapon destruction disables one Gunner slot
-        Debug.LogWarning($"[Weapon] {componentName} destroyed! One Gunner role slot lost!");
+        Debug.LogWarning($"[Weapon] {name} destroyed! One Gunner role slot lost!");
         
         // The base class already logs that the "Gunner" role is no longer available
     }

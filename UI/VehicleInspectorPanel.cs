@@ -280,16 +280,16 @@ string display = BuildDetailedVehicleInfo();
             // Component icon based on type
             string icon = GetComponentIcon(component);
             
-            // Component name
-            string name = component.componentName;
+            // Component name from GameObject
+            string componentName = component.name;
             
-            // HP bar and color
-            float hpPercent = component.componentHP > 0 
-                ? (float)component.currentHP / component.componentHP 
+            // HP bar and color using Entity fields
+            float hpPercent = component.maxHealth > 0 
+                ? (float)component.health / component.maxHealth 
                 : 0f;
             string hpColor = GetHealthColor(hpPercent);
             string hpBar = GenerateBar(hpPercent, 10);
-            string hpText = $"{component.currentHP}/{component.componentHP}";
+            string hpText = $"{component.health}/{component.maxHealth}";
             
             // Destroyed status
             string statusText = "";
@@ -304,10 +304,10 @@ string display = BuildDetailedVehicleInfo();
             }
             
             // Component line with HP bar
-            componentInfo += $"  {icon} <b>{name}</b> <color={hpColor}>{hpBar} {hpText}</color>{statusText}\n";
+            componentInfo += $"  {icon} <b>{componentName}</b> <color={hpColor}>{hpBar} {hpText}</color>{statusText}\n";
             
-            // Component details (AC, exposure, role)
-            componentInfo += $"    AC: {component.componentAC}";
+            // Component details (AC, exposure, role) using Entity.armorClass
+            componentInfo += $"    AC: {component.armorClass}";
             
             // Exposure/Accessibility
             string exposureInfo = GetExposureInfo(component);

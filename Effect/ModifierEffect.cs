@@ -27,7 +27,9 @@ public class AttributeModifierEffect : EffectBase
 
     public override void Apply(Entity user, Entity target, UnityEngine.Object context = null, UnityEngine.Object source = null)
     {
-        var vehicle = target as Vehicle;
+        // Get the parent vehicle from the target entity (if it's a component)
+        Vehicle vehicle = GetParentVehicle(target);
+        
         if (vehicle != null)
         {
             // Always pass a UnityEngine.Object as source, fallback to context if available, otherwise null

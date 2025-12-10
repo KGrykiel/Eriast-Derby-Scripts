@@ -28,13 +28,16 @@ namespace Assets.Scripts.VehicleComponents
         /// </summary>
         void Reset()
         {
+            // Set GameObject name (shows in hierarchy)
+            gameObject.name = "Power Core";
+            
             // Set component identity
             componentType = ComponentType.PowerCore;
-            componentName = "Standard Power Core";
             
-            // Set component base stats
-            componentHP = 75;   // Moderately durable
-            componentAC = 20;   // Well-protected critical component
+            // Set component base stats using Entity fields
+            maxHealth = 75;      // Moderately durable
+            health = 75;         // Start at full HP
+            armorClass = 20;     // Well-protected critical component
             componentSpaceRequired = 0;  // Power cores don't consume space
             powerDrawPerTurn = 0;  // Generates power, doesn't consume it
             
@@ -52,9 +55,6 @@ namespace Assets.Scripts.VehicleComponents
         {
             // Set component type (in case Reset wasn't called)
             componentType = ComponentType.PowerCore;
-            
-            // Initialize current HP
-            currentHP = componentHP;
             
             // Initialize energy to max
             currentEnergy = maxEnergy;
@@ -133,7 +133,7 @@ namespace Assets.Scripts.VehicleComponents
             currentEnergy = 0;
             
             // Log catastrophic failure
-            Debug.LogError($"[PowerCore] CRITICAL: {parentVehicle.vehicleName}'s {componentName} destroyed! Vehicle has no power!");
+            Debug.LogError($"[PowerCore] CRITICAL: {parentVehicle.vehicleName}'s {name} destroyed! Vehicle has no power!");
             
             RacingGame.Events.RaceHistory.Log(
                 RacingGame.Events.EventType.Combat,
@@ -141,7 +141,7 @@ namespace Assets.Scripts.VehicleComponents
                 $"[CRITICAL] {parentVehicle.vehicleName}'s Power Core destroyed! Vehicle is powerless!",
                 parentVehicle.currentStage,
                 parentVehicle
-            ).WithMetadata("componentName", componentName)
+            ).WithMetadata("componentName", name)
              .WithMetadata("componentType", "PowerCore")
              .WithMetadata("currentEnergy", 0)
              .WithMetadata("catastrophicFailure", true);

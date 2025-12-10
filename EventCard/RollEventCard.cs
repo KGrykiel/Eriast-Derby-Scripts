@@ -38,9 +38,18 @@ public class RollEventCard : EventCard
     {
         if (invocations == null) return;
 
+        // Get the chassis entity (primary target entity for vehicle)
+        Entity targetEntity = mainTarget.chassis;
+        if (targetEntity == null)
+        {
+            Debug.LogWarning($"[RollEventCard] Vehicle {mainTarget.vehicleName} has no chassis!");
+            return;
+        }
+
         foreach (var invocation in invocations)
         {
-            invocation.Apply(mainTarget, mainTarget, stage, this, 0);
+            // Pass chassis entity for both user and target (event card affects vehicle)
+            invocation.Apply(targetEntity, targetEntity, stage, this, 0);
         }
     }
 }

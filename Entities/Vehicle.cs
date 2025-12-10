@@ -12,8 +12,20 @@ public enum ControlType
     AI
 }
 
-public class Vehicle : Entity
+/// <summary>
+/// Vehicle is a CONTAINER/COORDINATOR for Entity components.
+/// Vehicle itself is NOT an Entity - its components (chassis, weapons, etc.) ARE entities.
+/// 
+/// The vehicle aggregates stats from components and provides convenience properties.
+/// Damage to "the vehicle" is actually damage to its chassis component.
+/// 
+/// For targeting:
+/// - Target Vehicle → actually targets chassis (the "body" of the vehicle)
+/// - Target Component → targets specific component directly
+/// </summary>
+public class Vehicle : MonoBehaviour
 {
+    [Header("Vehicle Identity")]
     public string vehicleName;
 
     // Active modifiers (buffs/debuffs applied to the vehicle)
@@ -44,6 +56,29 @@ public class Vehicle : Entity
     }
     
     public VehicleStatus Status { get; private set; } = VehicleStatus.Active;
+
+    // ==================== ENTITY ACCESS (for targeting systems) ====================
+    
+    /// <summary>
+    /// Get the primary targetable entity for this vehicle (the chassis).
+    /// When skills target "a vehicle", they actually target this entity.
+    /// </summary>
+    public Entity GetPrimaryTarget()
+    {
+        return chassis;
+    }
+    
+    /// <summary>
+    /// Get all targetable entities on this vehicle.
+    /// This includes all non-destroyed components.
+    /// </summary>
+    public List<Entity> GetAllTargetableEntities()
+    {
+        return AllComponents
+            .Where(c => !c.isDestroyed)
+            .Cast<Entity>()
+            .ToList();
+    }
 
     /// <summary>
     /// Get all components (mandatory + optional).
@@ -79,16 +114,16 @@ public class Vehicle : Entity
     
     /// <summary>
     /// Vehicle health IS chassis health.
-    /// Reading this property returns chassis currentHP.
+    /// Reading this property returns chassis health.
     /// Writing to this property damages the chassis.
     /// </summary>
-    public new int health
+    public int health
     {
         get
         {
             if (chassis == null)
                 return 0; // No chassis = no health
-            return chassis.currentHP;
+            return chassis.health;
         }
         set
         {
@@ -96,13 +131,13 @@ public class Vehicle : Entity
                 return; // Cannot set health without chassis
             
             // Setting health actually sets chassis HP
-            chassis.currentHP = value;
+            chassis.health = value;
             
             // Check for destruction
-            if (chassis.currentHP <= 0 && !chassis.isDestroyed)
+            if (chassis.health <= 0 && !chassis.isDestroyed)
             {
                 chassis.isDestroyed = true;
-                OnEntityDestroyed();
+                DestroyVehicle();
             }
         }
     }
@@ -182,26 +217,36 @@ public class Vehicle : Entity
             return chassis.GetTotalAC();
         }
     }
+    
     /// <summary>
-    /// Override TakeDamage to damage chassis instead of abstract health pool.
+    /// Damage the vehicle. Actually damages the chassis component.
+    /// Use TakeDamageToComponent() to damage specific components.
     /// </summary>
-    public override void TakeDamage(int amount)
+    public void TakeDamage(int amount)
     {
         if (chassis == null)
         {
-            // Fallback to base implementation if no chassis
-            base.TakeDamage(amount);
+            Debug.LogWarning($"[Vehicle] {vehicleName} has no chassis to damage!");
             return;
         }
         
-        // Damage chassis directly
+        // Damage chassis directly (chassis is an Entity)
         chassis.TakeDamage(amount);
         
         // Check if chassis destroyed → vehicle destroyed
         if (chassis.isDestroyed)
         {
-            OnEntityDestroyed();
+            DestroyVehicle();
         }
+    }
+    
+    /// <summary>
+    /// Get armor class for attack rolls.
+    /// </summary>
+    public int GetArmorClass()
+    {
+        // Use the attribute system for dynamic armor class
+        return Mathf.RoundToInt(GetAttribute(Attribute.ArmorClass));
     }
 
     void Start()
@@ -213,6 +258,8 @@ public class Vehicle : Entity
         }
         MoveToCurrentStage();
     }
+
+    // ==================== MODIFIER SYSTEM ====================
 
     public void AddModifier(AttributeModifier modifier)
     {
@@ -327,6 +374,8 @@ public class Vehicle : Entity
         }
     }
 
+    // ==================== ATTRIBUTE SYSTEM ====================
+
     public float GetAttribute(Attribute attr)
     {
         float baseValue = 0f;
@@ -369,16 +418,7 @@ public class Vehicle : Entity
         return (baseValue + flatBonus) * percentMultiplier;
     }
 
-    public override int GetArmorClass()
-    {
-        // Use the attribute system for dynamic armor class
-        return Mathf.RoundToInt(GetAttribute(Attribute.ArmorClass));
-    }
-
-    protected override void OnEntityDestroyed()
-    {
-        DestroyVehicle();
-    }
+    // ==================== STAGE MANAGEMENT ====================
 
     public void UpdateNameLabel()
     {
@@ -429,8 +469,12 @@ public class Vehicle : Entity
         }
     }
 
+    // ==================== VEHICLE DESTRUCTION ====================
+
     public void DestroyVehicle()
     {
+        if (Status == VehicleStatus.Destroyed) return; // Already destroyed
+        
         VehicleStatus oldStatus = Status;
         Status = VehicleStatus.Destroyed;
         
@@ -473,6 +517,8 @@ public class Vehicle : Entity
         return progress > 50f; // Placeholder logic
     }
     
+    // ==================== ENERGY MANAGEMENT ====================
+    
     /// <summary>
     /// Regenerates energy at the start of turn.
     /// Delegates to PowerCore component.
@@ -500,6 +546,7 @@ public class Vehicle : Entity
         // Delegate to power core
         powerCore.RegenerateEnergy();
     }
+    
     // ==================== COMPONENT SYSTEM METHODS ====================
 
     /// <summary>
@@ -550,6 +597,8 @@ public class Vehicle : Entity
         // Log component discovery
         Debug.Log($"[Vehicle] {vehicleName} initialized with {AllComponents.Count} component(s)");
     }
+
+    // ==================== ROLE DISCOVERY ====================
 
     /// <summary>
     /// Get all available roles on this vehicle (emergent from components).
@@ -605,6 +654,8 @@ public class Vehicle : Entity
             .ToList();
     }
 
+    // ==================== TURN MANAGEMENT ====================
+
     /// <summary>
     /// Check if all role-enabling components have acted this turn.
     /// Used to determine when player turn should end.
@@ -629,6 +680,8 @@ public class Vehicle : Entity
         }
     }
 
+    // ==================== COMPONENT STAT AGGREGATION ====================
+
     /// <summary>
     /// Get aggregated stat from all components.
     /// Example: GetComponentStat("HP") returns total HP from all components.
@@ -646,6 +699,8 @@ public class Vehicle : Entity
 
         return total;
     }
+
+    // ==================== COMPONENT ACCESSIBILITY ====================
 
     /// <summary>
     /// Check if a component is currently accessible for targeting.
@@ -665,7 +720,7 @@ public class Vehicle : Entity
         // Protected components: check if shielding component is destroyed
         if (target.exposure == ComponentExposure.Protected && !string.IsNullOrEmpty(target.shieldedBy))
         {
-            VehicleComponent shield = AllComponents.FirstOrDefault(c => c.componentName == target.shieldedBy);
+            VehicleComponent shield = AllComponents.FirstOrDefault(c => c.name == target.shieldedBy);
             // Accessible if shield is null (not found) or destroyed
             return shield == null || shield.isDestroyed;
         }
@@ -676,7 +731,7 @@ public class Vehicle : Entity
             if (chassis == null) return true; // Fallback if no chassis
             
             // Calculate chassis damage percentage (1.0 = fully damaged, 0.0 = undamaged)
-            float chassisDamagePercent = 1f - ((float)chassis.currentHP / (float)chassis.componentHP);
+            float chassisDamagePercent = 1f - ((float)chassis.health / (float)chassis.maxHealth);
             
             // Accessible if chassis damage >= threshold
             return chassisDamagePercent >= target.internalAccessThreshold;
@@ -685,7 +740,7 @@ public class Vehicle : Entity
         // Shielded: same as protected for now
         if (target.exposure == ComponentExposure.Shielded && !string.IsNullOrEmpty(target.shieldedBy))
         {
-            VehicleComponent shield = AllComponents.FirstOrDefault(c => c.componentName == target.shieldedBy);
+            VehicleComponent shield = AllComponents.FirstOrDefault(c => c.name == target.shieldedBy);
             return shield == null || shield.isDestroyed;
         }
         
@@ -709,9 +764,9 @@ public class Vehicle : Entity
         if ((target.exposure == ComponentExposure.Protected || target.exposure == ComponentExposure.Shielded) 
             && !string.IsNullOrEmpty(target.shieldedBy))
         {
-            VehicleComponent shield = AllComponents.FirstOrDefault(c => c.componentName == target.shieldedBy);
+            VehicleComponent shield = AllComponents.FirstOrDefault(c => c.name == target.shieldedBy);
             if (shield != null && !shield.isDestroyed)
-                return $"🛡️ Shielded by {shield.componentName}";
+                return $"Shielded by {shield.name}";
         }
         
         // Internal components
@@ -719,17 +774,19 @@ public class Vehicle : Entity
         {
             if (chassis != null)
             {
-                float chassisDamagePercent = 1f - ((float)chassis.currentHP / (float)chassis.componentHP);
+                float chassisDamagePercent = 1f - ((float)chassis.health / (float)chassis.maxHealth);
                 if (chassisDamagePercent < target.internalAccessThreshold)
                 {
                     int requiredDamagePercent = Mathf.RoundToInt(target.internalAccessThreshold * 100f);
-                    return $"⚠️ Chassis must be {requiredDamagePercent}% damaged";
+                    return $"Chassis must be {requiredDamagePercent}% damaged";
                 }
             }
         }
         
         return "Cannot target";
     }
+
+    // ==================== OPERATIONAL STATUS ====================
 
     /// <summary>
     /// Check if this vehicle can still move/function.
@@ -784,10 +841,11 @@ public class Vehicle : Entity
         if (targetComponent == null)
             return GetArmorClass(); // Fallback to chassis AC
         
-        return targetComponent.componentAC;
+        return targetComponent.armorClass;
     }
 
-    // Add to Vehicle Start():
+    // ==================== DEBUG/TESTING ====================
+
     void TestFullIntegration()
     {
         System.Text.StringBuilder sb = new System.Text.StringBuilder();

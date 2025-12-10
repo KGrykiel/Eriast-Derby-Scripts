@@ -19,9 +19,9 @@ public class CustomEffect : EffectBase
             specialEvent.Invoke(user, target);
 
             // Log custom effect invocation
-            var vehicle = target as Vehicle;
-            string targetName = vehicle != null ? vehicle.vehicleName : target.name;
-            string userName = user is Vehicle userVehicle ? userVehicle.vehicleName : user.name;
+            Vehicle vehicle = GetParentVehicle(target);
+            string targetName = GetEntityDisplayName(target);
+            string userName = GetEntityDisplayName(user);
             string sourceText = source != null ? source.name : "unknown source";
   
             RaceHistory.Log(

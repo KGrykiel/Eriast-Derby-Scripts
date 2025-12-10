@@ -81,6 +81,16 @@ public abstract class Skill : ScriptableObject
         }
 
         // Standard skill resolution (existing code)
+        // Get entities for the effect invocation (chassis is the primary entity for a vehicle)
+        Entity userEntity = user.chassis;
+        Entity targetEntity = mainTarget.chassis;
+        
+        if (userEntity == null || targetEntity == null)
+        {
+            Debug.LogWarning($"[Skill] {name}: User or target has no chassis!");
+            return false;
+        }
+        
         bool anyApplied = false;
         int missCount = 0;
         List<string> effectResults = new List<string>();
@@ -91,7 +101,8 @@ public abstract class Skill : ScriptableObject
             int toHitBonus = GetCasterToHitBonus(user, invocation.rollType);
 
             // Track whether this specific invocation succeeded
-            bool invocationSuccess = invocation.Apply(user, mainTarget, user.currentStage, this, toHitBonus);
+            // Pass entities (components) to the invocation
+            bool invocationSuccess = invocation.Apply(userEntity, targetEntity, user.currentStage, this, toHitBonus);
 
             if (invocationSuccess)
             {
@@ -342,7 +353,7 @@ public abstract class Skill : ScriptableObject
     {
         // Find target component
         VehicleComponent targetComponent = mainTarget.AllComponents
-            .FirstOrDefault(c => c.componentName == targetComponentName);
+            .FirstOrDefault(c => c.name == targetComponentName);
 
         if (targetComponent == null || targetComponent.isDestroyed)
         {
@@ -465,8 +476,8 @@ public abstract class Skill : ScriptableObject
             EventType.SkillUse,
             EventImportance.Medium,
             $"{user.vehicleName} used {name}: completely missed {mainTarget.vehicleName} (component roll: {total1} vs {componentAC}, chassis roll: {total2} vs {chassisAC})",
-            user.currentStage,
-            user, mainTarget
+                user.currentStage,
+                user, mainTarget
         ).WithMetadata("skillName", name)
          .WithMetadata("targetComponent", targetComponentName)
          .WithMetadata("failed", true)

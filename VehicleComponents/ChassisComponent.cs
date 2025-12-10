@@ -4,7 +4,7 @@ using RacingGame.Events;
 /// <summary>
 /// Chassis component - the structural foundation of a vehicle.
 /// MANDATORY: Every vehicle must have exactly one chassis.
-/// The chassis IS the vehicle - componentHP IS the vehicle's HP, componentAC IS the vehicle's AC.
+/// The chassis IS the vehicle - Entity.maxHealth IS the vehicle's max HP, Entity.armorClass IS the vehicle's AC.
 /// </summary>
 public class ChassisComponent : VehicleComponent
 {
@@ -18,13 +18,16 @@ public class ChassisComponent : VehicleComponent
     /// </summary>
     void Reset()
     {
+        // Set GameObject name (shows in hierarchy)
+        gameObject.name = "Chassis";
+        
         // Set component identity
         componentType = ComponentType.Chassis;
-        componentName = "Standard Chassis";
         
-        // Chassis uses inherited componentHP/componentAC as the vehicle's HP/AC
-        componentHP = 100;   // This IS the vehicle's max HP
-        componentAC = 18;    // This IS the vehicle's AC
+        // Chassis uses Entity fields directly
+        maxHealth = 100;      // This IS the vehicle's max HP
+        health = 100;         // Start at full HP
+        armorClass = 18;      // This IS the vehicle's AC
         componentSpaceProvided = 2000;
         
         // Chassis provides space, doesn't consume it
@@ -41,9 +44,6 @@ public class ChassisComponent : VehicleComponent
         // Set component type (in case Reset wasn't called)
         componentType = ComponentType.Chassis;
         
-        // Initialize current HP
-        currentHP = componentHP;
-        
         // Ensure role settings
         enablesRole = false;
         roleName = "";
@@ -51,28 +51,28 @@ public class ChassisComponent : VehicleComponent
     
     /// <summary>
     /// Get maximum HP for this chassis (base + bonuses from other components).
-    /// Uses inherited componentHP as the base.
+    /// Uses Entity.maxHealth as the base.
     /// </summary>
     public int GetMaxHP()
     {
-        if (parentVehicle == null) return componentHP;
+        if (parentVehicle == null) return maxHealth;
         
         // Base HP + bonuses from other components
         float bonuses = parentVehicle.GetComponentStat(VehicleStatModifiers.StatNames.HP);
-        return componentHP + Mathf.RoundToInt(bonuses);
+        return maxHealth + Mathf.RoundToInt(bonuses);
     }
     
     /// <summary>
     /// Get total Armor Class (base + bonuses from other components).
-    /// Uses inherited componentAC as the base.
+    /// Uses Entity.armorClass as the base.
     /// </summary>
     public int GetTotalAC()
     {
-        if (parentVehicle == null) return componentAC;
+        if (parentVehicle == null) return armorClass;
         
         // Base AC + bonuses from other components
         float bonuses = parentVehicle.GetComponentStat(VehicleStatModifiers.StatNames.AC);
-        return componentAC + Mathf.RoundToInt(bonuses);
+        return armorClass + Mathf.RoundToInt(bonuses);
     }
     
     /// <summary>
@@ -104,7 +104,7 @@ public class ChassisComponent : VehicleComponent
         if (parentVehicle == null) return;
         
         // Chassis destruction is catastrophic - vehicle is destroyed
-        Debug.LogError($"[Chassis] CRITICAL: {parentVehicle.vehicleName}'s {componentName} destroyed! Vehicle structure collapsed!");
+        Debug.LogError($"[Chassis] CRITICAL: {parentVehicle.vehicleName}'s {name} destroyed! Vehicle structure collapsed!");
         
         RacingGame.Events.RaceHistory.Log(
             RacingGame.Events.EventType.Combat,
@@ -112,7 +112,7 @@ public class ChassisComponent : VehicleComponent
             $"[CRITICAL] {parentVehicle.vehicleName}'s Chassis destroyed! Vehicle structural collapse imminent!",
             parentVehicle.currentStage,
             parentVehicle
-        ).WithMetadata("componentName", componentName)
+        ).WithMetadata("componentName", name)
          .WithMetadata("componentType", "Chassis")
          .WithMetadata("catastrophicFailure", true);
         

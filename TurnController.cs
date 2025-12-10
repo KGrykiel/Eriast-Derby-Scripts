@@ -85,6 +85,12 @@ public class TurnController : MonoBehaviour
              .WithMetadata("vehicleCount", vehicles.Count);
         }
         
+        // Regenerate energy for current vehicle at start of their turn
+        if (CurrentVehicle != null && CurrentVehicle.Status == VehicleStatus.Active)
+        {
+            CurrentVehicle.RegenerateEnergy();
+        }
+        
         return newRoundStarted;
     }
 

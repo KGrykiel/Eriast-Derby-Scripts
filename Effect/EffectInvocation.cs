@@ -1,12 +1,13 @@
-//using SerializeReferenceEditor;
+using SerializeReferenceEditor;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 using RacingGame.Events;
 
 [System.Serializable]
 public class EffectInvocation
 {
-    [SerializeReference]
+    [SerializeReference, SR]
     public IEffect effect;
 
     public EffectTargetMode targetMode = EffectTargetMode.Target;
@@ -15,6 +16,8 @@ public class EffectInvocation
 
     /// <summary>
     /// Applies the effect to the appropriate targets.
+    /// NOTE: user and mainTarget are Entities (components ARE entities).
+    /// For vehicle-level operations, get the parent vehicle from the component.
     /// </summary>
     /// <returns>True if the effect was successfully applied to at least one target</returns>
     public bool Apply(Entity user, Entity mainTarget, Stage context, Object source, int toHitBonus = 0)
@@ -35,8 +38,26 @@ public class EffectInvocation
                 targets.Add(mainTarget);
                 break;
             case EffectTargetMode.AllInStage:
-                if (user is Vehicle vehicleUser && vehicleUser.currentStage != null)
-                    targets.AddRange(vehicleUser.currentStage.vehiclesInStage.FindAll(v => v != user));
+                // Get all entities in the same stage
+                // Try to get stage from component's parent vehicle, or from context
+                Stage stage = context;
+                if (stage == null && user is VehicleComponent userComp && userComp.ParentVehicle != null)
+                {
+                    stage = userComp.ParentVehicle.currentStage;
+                }
+                
+                if (stage != null && stage.vehiclesInStage != null)
+                {
+                    // Get chassis (primary entity) of each vehicle in stage, excluding user's vehicle
+                    Vehicle userVehicle = EntityHelpers.GetParentVehicle(user);
+                    foreach (var vehicle in stage.vehiclesInStage)
+                    {
+                        if (vehicle != userVehicle && vehicle.chassis != null)
+                        {
+                            targets.Add(vehicle.chassis);
+                        }
+                    }
+                }
                 break;
         }
 
@@ -50,21 +71,23 @@ public class EffectInvocation
 
             if (requiresRollToHit)
             {
-                if (!RollUtility.RollToHit(user as Vehicle, target, rollType, toHitBonus, source?.ToString()))
+                // Get vehicles for roll utility (if applicable)
+                Vehicle attackerVehicle = EntityHelpers.GetParentVehicle(user);
+                
+                if (!RollUtility.RollToHit(attackerVehicle, target, rollType, toHitBonus, source?.ToString()))
                 {
-                    string userName = user is Vehicle vu ? vu.vehicleName : user.name;
-                    string targetName = target is Vehicle vt ? vt.vehicleName : target.name;
+                    string userName = EntityHelpers.GetEntityDisplayName(user);
+                    string targetName = EntityHelpers.GetEntityDisplayName(target);
 
                     // Debug-level miss logging (detailed analysis only)
-                    var userVehicle = user as Vehicle;
-                    var targetVehicle = target as Vehicle;
+                    Vehicle targetVehicle = EntityHelpers.GetParentVehicle(target);
 
                     RaceHistory.Log(
                         RacingGame.Events.EventType.Combat,
                         EventImportance.Debug, // Downgraded from Medium/Low to Debug
                         $"[MISS] {userName} missed {targetName} (AC check failed)",
-                        userVehicle?.currentStage,
-                        userVehicle, targetVehicle
+                        attackerVehicle?.currentStage,
+                        attackerVehicle, targetVehicle
                     ).WithMetadata("missed", true)
                         .WithMetadata("rollType", rollType.ToString())
                         .WithMetadata("toHitBonus", toHitBonus)

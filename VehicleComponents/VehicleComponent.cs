@@ -7,26 +7,21 @@ using EventType = RacingGame.Events.EventType;
 
 /// <summary>
 /// Base class for all vehicle components.
+/// Components ARE Entities - they have HP, AC, and can be damaged/targeted.
 /// Components are modular parts that contribute stats, enable roles, and provide skills.
 /// This is abstract - use specific subclasses like ChassisComponent, WeaponComponent, etc.
+/// 
+/// NOTE: Uses Entity base class fields (health, maxHealth, armorClass) directly.
+/// Display name uses Unity's GameObject.name (set in Inspector hierarchy).
 /// </summary>
-public abstract class VehicleComponent : MonoBehaviour
+public abstract class VehicleComponent : Entity
 {
     [Header("Component Identity")]
-    [Tooltip("Display name of this component")]
-    public string componentName = "Unnamed Component";
-    
     [Tooltip("Category of this component (locked for specific component types)")]
     [ReadOnly]
     public ComponentType componentType = ComponentType.Custom;
     
-    [Header("Component Stats")]
-    [Tooltip("Hit points of this component (can be damaged individually)")]
-    public int componentHP = 50;
-    
-    [Tooltip("Armor Class of this component")]
-    public int componentAC = 15;
-    
+    [Header("Component-Specific Stats")]
     [Tooltip("Component Space required (negative = uses space, positive = provides space)")]
     public int componentSpaceRequired = 0;
     
@@ -45,12 +40,6 @@ public abstract class VehicleComponent : MonoBehaviour
     public float internalAccessThreshold = 0.5f;
     
     [Header("Component State")]
-    [Tooltip("Current HP of this component")]
-    public int currentHP;
-    
-    [Tooltip("Is this component destroyed? (HP <= 0)")]
-    public bool isDestroyed = false;
-    
     [Tooltip("Is this component disabled? (Engineer can disable/enable)")]
     public bool isDisabled = false;
     
@@ -79,25 +68,24 @@ public abstract class VehicleComponent : MonoBehaviour
     protected Vehicle parentVehicle;
     
     /// <summary>
+    /// Get the parent vehicle this component belongs to.
+    /// </summary>
+    public Vehicle ParentVehicle => parentVehicle;
+    
+    // ==================== INITIALIZATION ====================
+    
+    /// <summary>
     /// Initialize this component with a reference to its parent vehicle.
     /// Called by Vehicle.Awake() after component discovery.
-    /// Note: Child classes handle their own Awake() for default values.
-    /// This Initialize() is called AFTER Awake().
     /// </summary>
     public virtual void Initialize(Vehicle vehicle)
     {
         parentVehicle = vehicle;
         
-        // Only set currentHP if not already set by child Awake()
-        if (currentHP == 0)
-        {
-            currentHP = componentHP;
-        }
-        
         // Log component initialization
         if (enablesRole)
         {
-            Debug.Log($"[Component] {componentName} initialized on {vehicle.vehicleName}, enables role: {roleName}");
+            Debug.Log($"[Component] {name} initialized on {vehicle.vehicleName}, enables role: {roleName}");
         }
     }
     
@@ -109,63 +97,110 @@ public abstract class VehicleComponent : MonoBehaviour
         hasActedThisTurn = false;
     }
     
+    // ==================== ENTITY OVERRIDES ====================
+    
     /// <summary>
-    /// Damage this component specifically.
-    /// If HP reaches 0, component is destroyed.
+    /// Get display name (override Entity).
+    /// Shows component name + assigned character if present.
     /// </summary>
-    public virtual void TakeDamage(int damage)
+    public override string GetDisplayName()
+    {
+        if (assignedCharacter != null)
+        {
+            return $"{name} ({assignedCharacter.characterName})";
+        }
+        return name; // Unity's GameObject.name
+    }
+    
+    /// <summary>
+    /// Can this component be targeted?
+    /// Override to check accessibility based on exposure.
+    /// </summary>
+    public override bool CanBeTargeted()
+    {
+        if (isDestroyed) return false;
+        
+        // Check if accessible through parent vehicle
+        if (parentVehicle != null)
+        {
+            return parentVehicle.IsComponentAccessible(this);
+        }
+        
+        return true;
+    }
+    
+    // ==================== DAMAGE HANDLING (Override Entity) ====================
+    
+    /// <summary>
+    /// Override Entity.TakeDamage for component-specific damage handling.
+    /// </summary>
+    public override void TakeDamage(int damage)
     {
         if (isDestroyed) return;
         
-        int oldHP = currentHP;
-        currentHP -= damage;
-        
-        if (currentHP <= 0)
-        {
-            currentHP = 0;
-            isDestroyed = true;
-            OnComponentDestroyed();
-        }
+        int oldHP = health;
+        health = Mathf.Max(health - damage, 0);
         
         // Log component damage
+        string vehicleName = parentVehicle?.vehicleName ?? "Unknown";
         RaceHistory.Log(
             EventType.Combat,
             EventImportance.Medium,
-            $"{parentVehicle.vehicleName}'s {componentName} took {damage} damage ({currentHP}/{componentHP} HP)",
+            $"{vehicleName}'s {name} took {damage} damage ({health}/{maxHealth} HP)",
             parentVehicle?.currentStage,
             parentVehicle
-        ).WithMetadata("componentName", componentName)
+        ).WithMetadata("componentName", name)
          .WithMetadata("componentType", componentType.ToString())
          .WithMetadata("damage", damage)
          .WithMetadata("oldHP", oldHP)
-         .WithMetadata("newHP", currentHP)
-         .WithMetadata("isDestroyed", isDestroyed);
+         .WithMetadata("newHP", health)
+         .WithMetadata("isDestroyed", health <= 0);
+        
+        if (health <= 0 && !isDestroyed)
+        {
+            isDestroyed = true;
+            OnEntityDestroyed();
+        }
     }
     
     /// <summary>
     /// Called when this component is destroyed (HP reaches 0).
     /// Override in subclasses for component-specific destruction effects.
     /// </summary>
-    protected virtual void OnComponentDestroyed()
+    protected override void OnEntityDestroyed()
     {
         // Log destruction
+        string vehicleName = parentVehicle?.vehicleName ?? "Unknown";
         RaceHistory.Log(
             EventType.Combat,
             EventImportance.High,
-            $"[DESTROYED] {parentVehicle.vehicleName}'s {componentName} was destroyed!",
+            $"[DESTROYED] {vehicleName}'s {name} was destroyed!",
             parentVehicle?.currentStage,
             parentVehicle
-        ).WithMetadata("componentName", componentName)
+        ).WithMetadata("componentName", name)
          .WithMetadata("componentType", componentType.ToString());
         
-        Debug.LogWarning($"[Component] {componentName} on {parentVehicle.vehicleName} was destroyed!");
+        Debug.LogWarning($"[Component] {name} on {vehicleName} was destroyed!");
         
         // If this component enabled a role, that role is now unavailable
         if (enablesRole)
         {
-            Debug.Log($"[Component] Role '{roleName}' is no longer available on {parentVehicle.vehicleName}");
+            Debug.Log($"[Component] Role '{roleName}' is no longer available on {vehicleName}");
         }
+        
+        // Notify subclasses
+        OnComponentDestroyed();
     }
+    
+    /// <summary>
+    /// Called after OnEntityDestroyed. Override in subclasses for specific effects.
+    /// </summary>
+    protected virtual void OnComponentDestroyed()
+    {
+        // Override in subclasses (ChassisComponent, PowerCoreComponent, etc.)
+    }
+    
+    // ==================== STAT CONTRIBUTION ====================
     
     /// <summary>
     /// Get stat modifiers this component contributes to the vehicle.
@@ -181,6 +216,8 @@ public abstract class VehicleComponent : MonoBehaviour
         // Override in subclasses (e.g., ChassisComponent, PowerCoreComponent)
         return VehicleStatModifiers.Zero;
     }
+    
+    // ==================== SKILL MANAGEMENT ====================
     
     /// <summary>
     /// Get all skills this component provides (component skills + character personal skills).
@@ -217,26 +254,15 @@ public abstract class VehicleComponent : MonoBehaviour
         return !isDestroyed && !isDisabled && assignedCharacter != null;
     }
     
-    /// <summary>
-    /// Get display name for this component (includes character name if assigned).
-    /// Used for UI display.
-    /// </summary>
-    public virtual string GetDisplayName()
-    {
-        if (assignedCharacter != null)
-        {
-            return $"{componentName} ({assignedCharacter.characterName})";
-        }
-        return componentName;
-    }
+    // ==================== UI HELPERS ====================
     
     /// <summary>
     /// Get component status summary for debugging/UI.
     /// </summary>
     public virtual string GetStatusSummary()
     {
-        string status = $"<b>{componentName}</b> ({componentType})\n";
-        status += $"HP: {currentHP}/{componentHP} | AC: {componentAC}\n";
+        string status = $"<b>{name}</b> ({componentType})\n";
+        status += $"HP: {health}/{maxHealth} | AC: {armorClass}\n";
         
         if (isDestroyed)
             status += "<color=red>[DESTROYED]</color>\n";

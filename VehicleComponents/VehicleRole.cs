@@ -103,10 +103,10 @@ namespace Assets.Scripts.VehicleComponents
                 return "Component missing";
             
             if (sourceComponent.isDestroyed)
-                return $"{sourceComponent.componentName} is destroyed";
+                return $"{sourceComponent.name} is destroyed";
             
             if (sourceComponent.isDisabled)
-                return $"{sourceComponent.componentName} is disabled";
+                return $"{sourceComponent.name} is disabled";
             
             if (assignedCharacter == null)
                 return "No character assigned";

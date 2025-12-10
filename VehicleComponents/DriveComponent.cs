@@ -27,13 +27,16 @@ public class DriveComponent : VehicleComponent
     /// </summary>
     void Reset()
     {
+        // Set GameObject name (shows in hierarchy)
+        gameObject.name = "Drive";
+        
         // Set component identity
         componentType = ComponentType.Drive;
-        componentName = "Standard Drive";
         
-        // Set component base stats
-        componentHP = 60;   // Moderately durable
-        componentAC = 16;   // Somewhat exposed
+        // Set component base stats using Entity fields
+        maxHealth = 60;      // Moderately durable
+        health = 60;         // Start at full HP
+        armorClass = 16;     // Somewhat exposed
         componentSpaceRequired = -200;  // Consumes component space
         powerDrawPerTurn = 10;  // Requires power to operate
         
@@ -51,9 +54,6 @@ public class DriveComponent : VehicleComponent
     {
         // Set component type (in case Reset wasn't called)
         componentType = ComponentType.Drive;
-        
-        // Initialize current HP
-        currentHP = componentHP;
         
         // Drive ENABLES the "Driver" role
         enablesRole = true;
@@ -87,7 +87,7 @@ public class DriveComponent : VehicleComponent
         base.OnComponentDestroyed();
         
         // Drive destruction disables movement
-        Debug.LogWarning($"[Drive] {componentName} destroyed! Vehicle cannot move - Driver role disabled!");
+        Debug.LogWarning($"[Drive] {name} destroyed! Vehicle cannot move - Driver role disabled!");
         
         // The base class already logs that the "Driver" role is no longer available
     }
