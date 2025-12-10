@@ -32,8 +32,8 @@ public abstract class VehicleComponent : Entity
     [Tooltip("How exposed this component is for targeting")]
     public ComponentExposure exposure = ComponentExposure.External;
     
-    [Tooltip("Name of component that shields this one (leave empty if none)")]
-    public string shieldedBy = "";
+    [Tooltip("Component that shields this one (drag component reference here)")]
+    public VehicleComponent shieldedByComponent = null;
     
     [Tooltip("For Internal exposure: Required chassis damage % to access (0-1, e.g., 0.5 = 50% damage)")]
     [Range(0f, 1f)]

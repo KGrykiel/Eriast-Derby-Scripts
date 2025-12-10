@@ -24,7 +24,7 @@ public class FocusPanel : MonoBehaviour
     
     void Start()
     {
-        gameManager = FindObjectOfType<GameManager>();
+        gameManager = FindFirstObjectByType<GameManager>();
         
         if (gameManager != null)
         {
@@ -70,14 +70,14 @@ public class FocusPanel : MonoBehaviour
         
         // Health
         float maxHealth = playerVehicle.GetAttribute(Attribute.MaxHealth);
-        float healthPercent = playerVehicle.health / maxHealth;
+        float healthPercent = maxHealth > 0 ? playerVehicle.health / maxHealth : 0f;
         string healthBar = GenerateBar(healthPercent, 15);
         string healthColor = GetHealthColor(healthPercent);
         status += $"<b>Health:</b> <color={healthColor}>{healthBar} {playerVehicle.health:F0}/{maxHealth:F0}</color>\n";
         
         // Energy
         int maxEnergy = (int)playerVehicle.GetAttribute(Attribute.MaxEnergy);
-        float energyPercent = (float)playerVehicle.energy / maxEnergy;
+        float energyPercent = maxEnergy > 0 ? (float)playerVehicle.energy / maxEnergy : 0f;
         string energyBar = GenerateBar(energyPercent, 15);
         status += $"<b>Energy:</b> <color=#88DDFF>{energyBar} {playerVehicle.energy}/{maxEnergy}</color>\n\n";
         
@@ -93,7 +93,7 @@ public class FocusPanel : MonoBehaviour
             status += $"<b>Active Modifiers ({modifiers.Count}):</b>\n";
             foreach (var mod in modifiers)
             {
-                string durText = mod.DurationTurns > 0 ? $" ({mod.DurationTurns}t)" : " (?)";
+                string durText = mod.DurationTurns > 0 ? $" ({mod.DurationTurns}t)" : " (∞)";
                 status += $"  • {mod.Type} {mod.Attribute} {mod.Value:+0;-0}{durText}\n";
             }
         }
@@ -114,8 +114,20 @@ public class FocusPanel : MonoBehaviour
             return;
         }
         
-        var sameStageVehicles = playerVehicle.currentStage.vehiclesInStage
-            .Where(v => v != playerVehicle && v.Status == VehicleStatus.Active)
+        // Get all vehicles in the same stage using TurnController
+        var turnController = FindFirstObjectByType<TurnController>();
+        if (turnController == null)
+        {
+            sameStageVehiclesText.text = "<color=#888888>TurnController not found</color>";
+            return;
+        }
+        
+        // Get all active vehicles in the same stage (excluding player)
+        var sameStageVehicles = turnController.AllVehicles
+            .Where(v => v != null && 
+                        v != playerVehicle && 
+                        v.Status == VehicleStatus.Active &&
+                        v.currentStage == playerVehicle.currentStage)
             .ToList();
         
         if (sameStageVehicles.Count == 0)
@@ -125,7 +137,7 @@ public class FocusPanel : MonoBehaviour
         }
         
         string display = $"<b><size=16><color=#FF8844>VEHICLES IN {playerVehicle.currentStage.stageName.ToUpper()}</color></size></b>\n\n";
-        display += $"<color=#FFAA44>?? {sameStageVehicles.Count} vehicle(s) in combat range!</color>\n\n";
+        display += $"<color=#FFAA44>⚔ {sameStageVehicles.Count} vehicle(s) in combat range!</color>\n\n";
         
         foreach (var vehicle in sameStageVehicles)
         {
@@ -133,7 +145,7 @@ public class FocusPanel : MonoBehaviour
             
             // Health
             float maxHealth = vehicle.GetAttribute(Attribute.MaxHealth);
-            float healthPercent = vehicle.health / maxHealth;
+            float healthPercent = maxHealth > 0 ? vehicle.health / maxHealth : 0f;
             string healthBar = GenerateBar(healthPercent, 10);
             string healthColor = GetHealthColor(healthPercent);
             display += $"  HP: <color={healthColor}>{healthBar} {vehicle.health:F0}/{maxHealth:F0}</color>\n";
@@ -208,7 +220,7 @@ public class FocusPanel : MonoBehaviour
         string bar = "[";
         for (int i = 0; i < length; i++)
         {
-            bar += i < filled ? "#" : "-"; // Changed from █ and ░
+            bar += i < filled ? "#" : "-";
         }
         bar += "]";
         

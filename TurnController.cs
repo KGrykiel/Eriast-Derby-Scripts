@@ -134,6 +134,21 @@ public class TurnController : MonoBehaviour
     /// </summary>
     public void ProcessAITurn(Vehicle vehicle)
     {
+        // Check if vehicle can operate
+        if (!vehicle.IsOperational())
+        {
+            string reason = vehicle.GetNonOperationalReason();
+            RaceHistory.Log(
+                EventType.System,
+                EventImportance.Medium,
+                $"{vehicle.vehicleName} cannot act: {reason}",
+                vehicle.currentStage,
+                vehicle
+            ).WithMetadata("nonOperational", true)
+             .WithMetadata("reason", reason);
+            return;
+        }
+        
         // Add movement
         float speed = vehicle.GetAttribute(Attribute.Speed);
         vehicle.progress += speed;
@@ -178,6 +193,14 @@ public class TurnController : MonoBehaviour
     public void ProcessMovement(Vehicle vehicle)
     {
         if (vehicle == null || vehicle.currentStage == null) return;
+        
+        // Check if vehicle can operate
+        if (!vehicle.IsOperational())
+        {
+            string reason = vehicle.GetNonOperationalReason();
+            Debug.LogWarning($"[TurnController] {vehicle.vehicleName} cannot move: {reason}");
+            return;
+        }
 
         float speed = vehicle.GetAttribute(Attribute.Speed);
         vehicle.progress += speed;

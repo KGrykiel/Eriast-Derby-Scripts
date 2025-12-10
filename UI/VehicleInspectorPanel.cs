@@ -385,9 +385,9 @@ string display = BuildDetailedVehicleInfo();
                 break;
             case ComponentExposure.Protected:
                 exposureText = "<color=#FFAA44>Protected</color>";
-                if (!string.IsNullOrEmpty(component.shieldedBy))
+                if (component.shieldedByComponent != null)
                 {
-                    exposureText += $" (by {component.shieldedBy})";
+                    exposureText += $" (by {component.shieldedByComponent.name})";
                 }
                 break;
             case ComponentExposure.Internal:
@@ -397,9 +397,9 @@ string display = BuildDetailedVehicleInfo();
                 break;
             case ComponentExposure.Shielded:
                 exposureText = "<color=#88DDFF>Shielded</color>";
-                if (!string.IsNullOrEmpty(component.shieldedBy))
+                if (component.shieldedByComponent != null)
                 {
-                    exposureText += $" (by {component.shieldedBy})";
+                    exposureText += $" (by {component.shieldedByComponent.name})";
                 }
                 break;
         }

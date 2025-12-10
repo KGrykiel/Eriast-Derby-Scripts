@@ -95,6 +95,24 @@ public class PlayerController : MonoBehaviour
     public void ProcessPlayerMovement()
     {
         if (isSelectingStage) return;
+        
+        // Check if vehicle can operate
+        if (!playerVehicle.IsOperational())
+        {
+            string reason = playerVehicle.GetNonOperationalReason();
+            RaceHistory.Log(
+                EventType.System,
+                EventImportance.High,
+                $"{playerVehicle.vehicleName} cannot act: {reason}",
+                playerVehicle.currentStage,
+                playerVehicle
+            ).WithMetadata("nonOperational", true)
+             .WithMetadata("reason", reason);
+            
+            // Auto-end turn if vehicle is non-operational
+            onPlayerTurnComplete?.Invoke();
+            return;
+        }
 
         // Handle stage transitions
         while (playerVehicle.progress >= playerVehicle.currentStage.length)

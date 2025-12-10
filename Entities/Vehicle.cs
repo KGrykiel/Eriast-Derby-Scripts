@@ -116,6 +116,7 @@ public class Vehicle : MonoBehaviour
     /// Vehicle health IS chassis health.
     /// Reading this property returns chassis health.
     /// Writing to this property damages the chassis.
+    /// Clamped between 0 and maxHealth.
     /// </summary>
     public int health
     {
@@ -130,8 +131,8 @@ public class Vehicle : MonoBehaviour
             if (chassis == null)
                 return; // Cannot set health without chassis
             
-            // Setting health actually sets chassis HP
-            chassis.health = value;
+            // Clamp to valid range
+            chassis.health = Mathf.Clamp(value, 0, chassis.maxHealth);
             
             // Check for destruction
             if (chassis.health <= 0 && !chassis.isDestroyed)
@@ -156,6 +157,7 @@ public class Vehicle : MonoBehaviour
     
     /// <summary>
     /// Current energy (stored in power core).
+    /// Clamped between 0 and maxEnergy.
     /// </summary>
     public int energy
     {
@@ -167,7 +169,8 @@ public class Vehicle : MonoBehaviour
         set
         {
             if (powerCore == null) return;
-            powerCore.currentEnergy = value;
+            // Clamp to valid range
+            powerCore.currentEnergy = Mathf.Clamp(value, 0, powerCore.maxEnergy);
         }
     }
     
@@ -705,7 +708,7 @@ public class Vehicle : MonoBehaviour
     /// <summary>
     /// Check if a component is currently accessible for targeting.
     /// External components always accessible.
-    /// Protected components require shield destruction.
+    /// Protected/Shielded components require shield destruction.
     /// Internal components require chassis damage (threshold set per component).
     /// </summary>
     public bool IsComponentAccessible(VehicleComponent target)
@@ -717,12 +720,12 @@ public class Vehicle : MonoBehaviour
         if (target.exposure == ComponentExposure.External)
             return true;
         
-        // Protected components: check if shielding component is destroyed
-        if (target.exposure == ComponentExposure.Protected && !string.IsNullOrEmpty(target.shieldedBy))
+        // Protected/Shielded components: check if shielding component is destroyed
+        if ((target.exposure == ComponentExposure.Protected || target.exposure == ComponentExposure.Shielded) 
+            && target.shieldedByComponent != null)
         {
-            VehicleComponent shield = AllComponents.FirstOrDefault(c => c.name == target.shieldedBy);
-            // Accessible if shield is null (not found) or destroyed
-            return shield == null || shield.isDestroyed;
+            // Accessible if shield is destroyed
+            return target.shieldedByComponent.isDestroyed;
         }
         
         // Internal components: requires chassis damage based on component's threshold
@@ -735,13 +738,6 @@ public class Vehicle : MonoBehaviour
             
             // Accessible if chassis damage >= threshold
             return chassisDamagePercent >= target.internalAccessThreshold;
-        }
-        
-        // Shielded: same as protected for now
-        if (target.exposure == ComponentExposure.Shielded && !string.IsNullOrEmpty(target.shieldedBy))
-        {
-            VehicleComponent shield = AllComponents.FirstOrDefault(c => c.name == target.shieldedBy);
-            return shield == null || shield.isDestroyed;
         }
         
         // Default: accessible
@@ -762,11 +758,10 @@ public class Vehicle : MonoBehaviour
         
         // Protected/Shielded components
         if ((target.exposure == ComponentExposure.Protected || target.exposure == ComponentExposure.Shielded) 
-            && !string.IsNullOrEmpty(target.shieldedBy))
+            && target.shieldedByComponent != null)
         {
-            VehicleComponent shield = AllComponents.FirstOrDefault(c => c.name == target.shieldedBy);
-            if (shield != null && !shield.isDestroyed)
-                return $"Shielded by {shield.name}";
+            if (!target.shieldedByComponent.isDestroyed)
+                return $"Shielded by {target.shieldedByComponent.name}";
         }
         
         // Internal components
