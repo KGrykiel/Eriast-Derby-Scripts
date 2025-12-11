@@ -22,10 +22,10 @@ public abstract class VehicleComponent : Entity
     public ComponentType componentType = ComponentType.Custom;
     
     [Header("Component-Specific Stats")]
-    [Tooltip("Component Space required (negative = uses space, positive = provides space)")]
-    public int componentSpaceRequired = 0;
+    [Tooltip("Component Space (positive = uses space, negative = provides space)")]
+    public int componentSpace = 0;
     
-    [Tooltip("Power drawn per turn (0 = no power required)")]
+    [Tooltip("Power drawn per turn (0 = passive component, no power draw)")]
     public int powerDrawPerTurn = 0;
     
     [Header("Component Targeting")]

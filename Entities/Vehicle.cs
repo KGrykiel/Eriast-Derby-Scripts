@@ -34,6 +34,7 @@ public class Vehicle : MonoBehaviour
     public ControlType controlType = ControlType.Player;
     [HideInInspector] public Stage currentStage;
     [HideInInspector] public float progress = 0f;
+    [HideInInspector] public bool hasLoggedMovementWarningThisTurn = false;
 
     private TextMeshProUGUI nameLabel;
 
@@ -108,6 +109,33 @@ public class Vehicle : MonoBehaviour
         {
             nameLabel = labelTransform.GetComponent<TextMeshProUGUI>();
         }
+    }
+    
+    void OnValidate()
+    {
+        // Validate component space usage
+        if (chassis == null) return;
+        
+        int netSpace = CalculateNetComponentSpace();
+        
+        if (netSpace > 0)
+        {
+            Debug.LogError($"[Vehicle] {vehicleName} exceeds component space by {netSpace} units! " +
+                          $"Remove components or upgrade chassis.");
+        }
+    }
+    
+    private int CalculateNetComponentSpace()
+    {
+        int total = 0;
+        foreach (var component in AllComponents)
+        {
+            if (component != null)
+            {
+                total += component.componentSpace;
+            }
+        }
+        return total;
     }
     
     // ==================== CONVENIENCE PROPERTIES (delegate to components) ====================
@@ -677,6 +705,8 @@ public class Vehicle : MonoBehaviour
     /// </summary>
     public void ResetComponentsForNewTurn()
     {
+        hasLoggedMovementWarningThisTurn = false;
+        
         foreach (var component in AllComponents)
         {
             component.ResetTurnState();
@@ -824,6 +854,46 @@ public class Vehicle : MonoBehaviour
             return "Vehicle destroyed";
         
         return null; // Operational
+    }
+
+    /// <summary>
+    /// Check if this vehicle can move between stages.
+    /// Requires operational chassis, power core, AND drive component.
+    /// </summary>
+    public bool CanMove()
+    {
+        if (!IsOperational()) 
+            return false;
+        
+        // Check if vehicle has an operational drive component
+        var driveComponent = optionalComponents.FirstOrDefault(c => c is DriveComponent);
+        if (driveComponent == null || driveComponent.isDestroyed || driveComponent.isDisabled)
+        {
+            return false;
+        }
+        
+        return true;
+    }
+    
+    /// <summary>
+    /// Get reason why vehicle cannot move.
+    /// Returns null if vehicle can move.
+    /// </summary>
+    public string GetCannotMoveReason()
+    {
+        string operationalReason = GetNonOperationalReason();
+        if (operationalReason != null)
+            return operationalReason;
+        
+        var driveComponent = optionalComponents.FirstOrDefault(c => c is DriveComponent);
+        if (driveComponent == null)
+            return "No drive system installed";
+        if (driveComponent.isDestroyed)
+            return "Drive system destroyed";
+        if (driveComponent.isDisabled)
+            return "Drive system disabled";
+        
+        return null;
     }
 
     /// <summary>

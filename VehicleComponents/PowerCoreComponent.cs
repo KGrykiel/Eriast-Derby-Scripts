@@ -38,7 +38,7 @@ namespace Assets.Scripts.VehicleComponents
             maxHealth = 75;      // Moderately durable
             health = 75;         // Start at full HP
             armorClass = 20;     // Well-protected critical component
-            componentSpaceRequired = 0;  // Power cores don't consume space
+            componentSpace = 0;  // Power cores don't consume space
             powerDrawPerTurn = 0;  // Generates power, doesn't consume it
             
             // Set energy system defaults

@@ -15,9 +15,6 @@ public class WeaponComponent : VehicleComponent
     [Tooltip("Base damage of this weapon")]
     public int baseDamage = 10;
     
-    [Tooltip("Effective range in meters")]
-    public int range = 100;
-    
     [Tooltip("Ammunition count (-1 = unlimited)")]
     public int ammo = -1;
     
@@ -40,12 +37,11 @@ public class WeaponComponent : VehicleComponent
         maxHealth = 40;      // Somewhat fragile
         health = 40;         // Start at full HP
         armorClass = 14;     // Exposed, easier to hit
-        componentSpaceRequired = -150;  // Consumes component space
-        powerDrawPerTurn = 5;  // Requires power to fire
+        componentSpace = 150;  // Consumes component space
+        powerDrawPerTurn = 5;  // Requires power to stay armed
         
         // Set weapon-specific stats (already have defaults in field declarations)
         // baseDamage = 10;
-        // range = 100;
         // ammo = -1;
         
         // Each weapon ENABLES ONE "Gunner" role slot
@@ -117,7 +113,7 @@ public class WeaponComponent : VehicleComponent
     {
         if (ammo == -1) return; // Unlimited ammo, can't reload
         
-        currentAmmo = Mathf.Min(currentAmmo + amount, ammo);
+        currentAmmo = Math.Min(currentAmmo + amount, ammo);
         Debug.Log($"[Weapon] {name} reloaded to {currentAmmo}/{ammo} ammo");
     }
     

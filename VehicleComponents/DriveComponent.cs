@@ -37,7 +37,7 @@ public class DriveComponent : VehicleComponent
         maxHealth = 60;      // Moderately durable
         health = 60;         // Start at full HP
         armorClass = 16;     // Somewhat exposed
-        componentSpaceRequired = -200;  // Consumes component space
+        componentSpace = 200;  // Consumes component space
         powerDrawPerTurn = 10;  // Requires power to operate
         
         // Set drive-specific stats (already have defaults in field declarations)

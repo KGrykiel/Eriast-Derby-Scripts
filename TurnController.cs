@@ -194,12 +194,24 @@ public class TurnController : MonoBehaviour
     {
         if (vehicle == null || vehicle.currentStage == null) return;
         
-        // Check if vehicle can operate
-        if (!vehicle.IsOperational())
+        // Check if vehicle can move (has operational drive)
+        if (!vehicle.CanMove())
         {
-            string reason = vehicle.GetNonOperationalReason();
-            Debug.LogWarning($"[TurnController] {vehicle.vehicleName} cannot move: {reason}");
-            return;
+            // Only log the first time per turn
+            if (!vehicle.hasLoggedMovementWarningThisTurn)
+            {
+                string reason = vehicle.GetCannotMoveReason();
+                RaceHistory.Log(
+                    EventType.Movement,
+                    EventImportance.Medium,
+                    $"{vehicle.vehicleName} cannot move: {reason}",
+                    vehicle.currentStage,
+                    vehicle
+                ).WithMetadata("reason", reason);
+                
+                vehicle.hasLoggedMovementWarningThisTurn = true;
+            }
+            return; // Don't move, but vehicle can still act
         }
 
         float speed = vehicle.GetAttribute(Attribute.Speed);

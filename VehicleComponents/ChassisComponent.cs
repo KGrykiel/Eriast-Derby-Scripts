@@ -8,10 +8,6 @@ using RacingGame.Events;
 /// </summary>
 public class ChassisComponent : VehicleComponent
 {
-    [Header("Chassis Stats")]
-    [Tooltip("Component Space provided for other components")]
-    public int componentSpaceProvided = 2000;
-    
     /// <summary>
     /// Called when component is first added or reset in Editor.
     /// Sets default values that appear immediately in Inspector.
@@ -28,10 +24,9 @@ public class ChassisComponent : VehicleComponent
         maxHealth = 100;      // This IS the vehicle's max HP
         health = 100;         // Start at full HP
         armorClass = 18;      // This IS the vehicle's AC
-        componentSpaceProvided = 2000;
+        componentSpace = -2000; // Provides space (negative value)
         
         // Chassis provides space, doesn't consume it
-        componentSpaceRequired = 0;
         powerDrawPerTurn = 0;  // Passive structure
         
         // Chassis does NOT enable a role
@@ -85,12 +80,9 @@ public class ChassisComponent : VehicleComponent
         if (isDestroyed || isDisabled)
             return VehicleStatModifiers.Zero;
         
-        // Chassis only provides component space
+        // Chassis only provides component space (as negative value in componentSpace field)
         // HP and AC are accessed directly via GetMaxHP() and GetTotalAC()
-        var modifiers = new VehicleStatModifiers();
-        modifiers.ComponentSpace = componentSpaceProvided;
-        
-        return modifiers;
+        return VehicleStatModifiers.Zero;
     }
     
     /// <summary>

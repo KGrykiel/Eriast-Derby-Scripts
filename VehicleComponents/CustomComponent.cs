@@ -43,7 +43,7 @@ public class CustomComponent : VehicleComponent
         maxHealth = 50;
         health = 50;
         armorClass = 15;
-        componentSpaceRequired = -100;  // Most components consume space
+        componentSpace = 100;  // Most components consume space
         powerDrawPerTurn = 0;
         
         // Custom components don't enable roles by default
