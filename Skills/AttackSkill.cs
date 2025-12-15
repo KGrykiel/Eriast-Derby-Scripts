@@ -15,9 +15,14 @@ public class AttackSkill : Skill
                 {
                     effect = new DamageEffect
                     {
-                        damageDice = 1,
-                        damageDieSize = 6,
-                        damageBonus = 0
+                        formula = new DamageFormula
+                        {
+                            mode = SkillDamageMode.SkillOnly,
+                            skillDice = 1,
+                            skillDieSize = 6,
+                            skillBonus = 0,
+                            skillDamageType = DamageType.Physical
+                        }
                     },
                     targetMode = EffectTargetMode.Target,
                     requiresRollToHit = true,

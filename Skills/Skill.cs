@@ -24,13 +24,22 @@ public abstract class Skill : ScriptableObject
     public int componentTargetingPenalty = 2;
 
     /// <summary>
-    /// Uses the skill. Applies all effect invocations and logs the results.
+    /// Uses the skill without a weapon. For spells and non-weapon abilities.
+    /// </summary>
+    public virtual bool Use(Vehicle user, Vehicle mainTarget)
+    {
+        return Use(user, mainTarget, null);
+    }
+
+    /// <summary>
+    /// Uses the skill with an optional weapon. Applies all effect invocations and logs the results.
     /// Supports component targeting for vehicles.
     /// </summary>
     /// <param name="user">The vehicle using the skill</param>
     /// <param name="mainTarget">The primary target of the skill</param>
+    /// <param name="weapon">Optional weapon component (for weapon-based skills)</param>
     /// <returns>True if any effect was applied successfully</returns>
-    public virtual bool Use(Vehicle user, Vehicle mainTarget)
+    public virtual bool Use(Vehicle user, Vehicle mainTarget, WeaponComponent weapon)
     {
         // Check for null target
         if (mainTarget == null)
@@ -77,10 +86,10 @@ public abstract class Skill : ScriptableObject
         // use the specialized component targeting logic
         if (allowsComponentTargeting && !string.IsNullOrEmpty(targetComponentName))
         {
-            return UseComponentTargeted(user, mainTarget);
+            return UseComponentTargeted(user, mainTarget, weapon);
         }
 
-        // Standard skill resolution (existing code)
+        // Standard skill resolution
         // Get entities for the effect invocation (chassis is the primary entity for a vehicle)
         Entity userEntity = user.chassis;
         Entity targetEntity = mainTarget.chassis;
@@ -94,15 +103,20 @@ public abstract class Skill : ScriptableObject
         bool anyApplied = false;
         int missCount = 0;
         List<string> effectResults = new List<string>();
-        List<int> damageDealt = new List<int>(); // Track actual damage
+        List<int> damageDealt = new List<int>();
 
         foreach (var invocation in effectInvocations)
         {
             int toHitBonus = GetCasterToHitBonus(user, invocation.rollType);
+            
+            // Add weapon's attack bonus if present
+            if (weapon != null)
+            {
+                toHitBonus += weapon.attackBonus;
+            }
 
-            // Track whether this specific invocation succeeded
-            // Pass entities (components) to the invocation
-            bool invocationSuccess = invocation.Apply(userEntity, targetEntity, user.currentStage, this, toHitBonus);
+            // Pass weapon as source so DamageEffect can use it
+            bool invocationSuccess = invocation.Apply(userEntity, targetEntity, user.currentStage, weapon, toHitBonus);
 
             if (invocationSuccess)
             {
@@ -115,7 +129,7 @@ public abstract class Skill : ScriptableObject
                     damageDealt.Add(actualDamage);
                     
                     string hitType = invocation.requiresRollToHit ? "hit" : "auto-hit";
-                    effectResults.Add($"{actualDamage} damage ({hitType})");
+                    effectResults.Add($"{actualDamage} {damageEffect.LastDamageType} damage ({hitType})");
                 }
                 else
                 {
@@ -157,6 +171,11 @@ public abstract class Skill : ScriptableObject
                 .WithMetadata("energyCost", energyCost)
                 .WithMetadata("effectCount", effectInvocations.Count)
                 .WithMetadata("succeeded", true);
+            
+            if (weapon != null)
+            {
+                evt.WithMetadata("weaponUsed", weapon.name);
+            }
 
             if (totalDamage > 0)
             {
@@ -191,7 +210,6 @@ public abstract class Skill : ScriptableObject
         else
         {
             // Skill completely failed (all effects missed or invalid)
-            // Determine why it failed
             string failureReason = missCount > 0 ? "AllEffectsMissed" : "EffectsInvalid";
             string failureDescription = missCount > 0
                 ? $"all {missCount} effect(s) missed"
@@ -227,14 +245,14 @@ public abstract class Skill : ScriptableObject
         if (user.controlType == ControlType.Player || target.controlType == ControlType.Player)
         {
             if (damageDealt > 20)
-                return EventImportance.High; // Big damage from/to player
+                return EventImportance.High;
 
             return EventImportance.Medium;
         }
 
         // NPC vs NPC
         if (damageDealt > 30)
-            return EventImportance.High; // Significant damage
+            return EventImportance.High;
 
         if (damageDealt > 10)
             return EventImportance.Medium;
@@ -243,22 +261,7 @@ public abstract class Skill : ScriptableObject
     }
 
     /// <summary>
-    /// Builds a human-readable description of the skill usage.
-    /// </summary>
-    private string BuildSkillDescription(Vehicle user, Vehicle target, List<string> effectResults)
-    {
-        string baseDesc = $"{user.vehicleName} used {name} on {target.vehicleName}";
-
-        if (effectResults.Count > 0)
-        {
-            baseDesc += ": " + string.Join(", ", effectResults);
-        }
-
-        return baseDesc;
-    }
-
-    /// <summary>
-    /// NEW: Builds comprehensive combat description with damage and effects.
+    /// Builds comprehensive combat description with damage and effects.
     /// </summary>
     private string BuildCombatDescription(Vehicle user, Vehicle target, List<string> effectResults, int totalDamage)
     {
@@ -304,14 +307,10 @@ public abstract class Skill : ScriptableObject
         if (invocation.effect == null)
             return "";
 
-        // Damage effect
+        // Damage effect - use formula description
         if (invocation.effect is DamageEffect damageEffect)
         {
-            if (invocation.requiresRollToHit)
-            {
-                return $"{damageEffect.damageDice}d{damageEffect.damageDieSize}+{damageEffect.damageBonus} damage";
-            }
-            return $"{damageEffect.damageDice}d{damageEffect.damageDieSize}+{damageEffect.damageBonus} auto-damage";
+            return damageEffect.GetDamageDescription();
         }
 
         // Modifier effect
@@ -337,10 +336,9 @@ public abstract class Skill : ScriptableObject
     protected int GetCasterToHitBonus(Vehicle caster, RollType rollType)
     {
         if (rollType == RollType.None)
-            return 0; // No bonus for always-hitting skills
+            return 0;
 
-        // For now, we assume all vehicles have a to-hit bonus of 0.
-        // Future: Could pull from vehicle attributes
+        // Future: Could pull from vehicle/character attributes
         return 0;
     }
     
@@ -349,7 +347,7 @@ public abstract class Skill : ScriptableObject
     /// Stage 1: Roll vs Component AC (with penalty)
     /// Stage 2: If miss, roll vs Chassis AC (with penalty)
     /// </summary>
-    private bool UseComponentTargeted(Vehicle user, Vehicle mainTarget)
+    private bool UseComponentTargeted(Vehicle user, Vehicle mainTarget, WeaponComponent weapon)
     {
         // Find target component
         VehicleComponent targetComponent = mainTarget.AllComponents
@@ -357,7 +355,6 @@ public abstract class Skill : ScriptableObject
 
         if (targetComponent == null || targetComponent.isDestroyed)
         {
-            // Component not found or destroyed - log and fail
             RaceHistory.Log(
                 EventType.SkillUse,
                 EventImportance.Medium,
@@ -391,47 +388,49 @@ public abstract class Skill : ScriptableObject
             return false;
         }
 
-        // Two-stage attack rolls
+        // Calculate damage using the first DamageEffect (if any)
         int damage = 0;
-        bool hitComponent = false;
-        bool hitChassis = false;
-
-        // Calculate damage first (same for both targets)
+        DamageType damageType = DamageType.Physical;
+        
         if (effectInvocations != null && effectInvocations.Count > 0)
         {
             var damageEffect = effectInvocations[0].effect as DamageEffect;
             if (damageEffect != null)
             {
-                damage = damageEffect.RollDamage();
+                damage = damageEffect.formula.ComputeDamage(weapon, out damageType);
             }
         }
 
         if (damage == 0)
         {
-            // No damage to apply
             return false;
         }
+
+        // Calculate attack bonus
+        int attackBonus = weapon?.attackBonus ?? 0;
 
         // Stage 1: Roll vs Component AC
         int componentAC = mainTarget.GetComponentAC(targetComponent);
         int roll1 = Random.Range(1, 21);
-        int total1 = roll1 - componentTargetingPenalty;
+        int total1 = roll1 + attackBonus - componentTargetingPenalty;
 
         if (total1 >= componentAC)
         {
             // Hit the component!
-            hitComponent = true;
-            targetComponent.TakeDamage(damage);
+            DamagePacket packet = DamagePacket.Create(damage, damageType, user.chassis);
+            int resolved = DamageResolver.ResolveDamage(packet, targetComponent);
+            targetComponent.TakeDamage(resolved);
             
             RaceHistory.Log(
                 EventType.SkillUse,
                 EventImportance.High,
-                $"{user.vehicleName} used {name}: hit {mainTarget.vehicleName}'s {targetComponentName} for {damage} damage (rolled {roll1}-{componentTargetingPenalty}={total1} vs AC {componentAC})",
+                $"{user.vehicleName} used {name}: hit {mainTarget.vehicleName}'s {targetComponentName} for {resolved} {damageType} damage (rolled {roll1}+{attackBonus}-{componentTargetingPenalty}={total1} vs AC {componentAC})",
                 user.currentStage,
                 user, mainTarget
             ).WithMetadata("skillName", name)
              .WithMetadata("targetComponent", targetComponentName)
-             .WithMetadata("damage", damage)
+             .WithMetadata("damage", resolved)
+             .WithMetadata("damageType", damageType.ToString())
              .WithMetadata("hitComponent", true)
              .WithMetadata("roll", roll1)
              .WithMetadata("penalty", componentTargetingPenalty)
@@ -444,23 +443,25 @@ public abstract class Skill : ScriptableObject
         // Stage 2: Missed component, try chassis
         int chassisAC = mainTarget.GetArmorClass();
         int roll2 = Random.Range(1, 21);
-        int total2 = roll2 - componentTargetingPenalty;
+        int total2 = roll2 + attackBonus - componentTargetingPenalty;
 
         if (total2 >= chassisAC)
         {
             // Hit chassis instead
-            hitChassis = true;
-            mainTarget.TakeDamage(damage);
+            DamagePacket packet = DamagePacket.Create(damage, damageType, user.chassis);
+            int resolved = DamageResolver.ResolveDamage(packet, mainTarget.chassis);
+            mainTarget.TakeDamage(resolved);
             
             RaceHistory.Log(
                 EventType.SkillUse,
                 EventImportance.Medium,
-                $"{user.vehicleName} used {name}: missed {targetComponentName}, hit {mainTarget.vehicleName}'s chassis for {damage} damage (rolled {roll2}-{componentTargetingPenalty}={total2} vs AC {chassisAC})",
+                $"{user.vehicleName} used {name}: missed {targetComponentName}, hit {mainTarget.vehicleName}'s chassis for {resolved} {damageType} damage (rolled {roll2}+{attackBonus}-{componentTargetingPenalty}={total2} vs AC {chassisAC})",
                 user.currentStage,
                 user, mainTarget
             ).WithMetadata("skillName", name)
              .WithMetadata("targetComponent", targetComponentName)
-             .WithMetadata("damage", damage)
+             .WithMetadata("damage", resolved)
+             .WithMetadata("damageType", damageType.ToString())
              .WithMetadata("hitChassis", true)
              .WithMetadata("missedComponent", true)
              .WithMetadata("roll", roll2)
@@ -476,8 +477,8 @@ public abstract class Skill : ScriptableObject
             EventType.SkillUse,
             EventImportance.Medium,
             $"{user.vehicleName} used {name}: completely missed {mainTarget.vehicleName} (component roll: {total1} vs {componentAC}, chassis roll: {total2} vs {chassisAC})",
-                user.currentStage,
-                user, mainTarget
+            user.currentStage,
+            user, mainTarget
         ).WithMetadata("skillName", name)
          .WithMetadata("targetComponent", targetComponentName)
          .WithMetadata("failed", true)

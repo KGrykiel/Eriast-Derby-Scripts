@@ -66,6 +66,15 @@ public static class RollUtility
         SimulationLogger.LogEvent($"Rolling damage: {diceCount}d{dieSize} + {bonus} = {total}");
         return total;
     }
+    
+    /// <summary>
+    /// Roll damage from a weapon component.
+    /// </summary>
+    public static int RollWeaponDamage(WeaponComponent weapon)
+    {
+        if (weapon == null) return 0;
+        return RollDamage(weapon.damageDice, weapon.damageDieSize, weapon.damageBonus);
+    }
 
     /// <summary>
     /// Performs a skill check: rolls d20 + bonus and compares to difficulty.

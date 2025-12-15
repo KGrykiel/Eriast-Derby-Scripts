@@ -11,15 +11,64 @@ using UnityEngine;
 /// </summary>
 public class WeaponComponent : VehicleComponent
 {
+    [Header("Weapon Damage (D&D Style)")]
+    [Tooltip("Number of damage dice")]
+    public int damageDice = 1;
+    
+    [Tooltip("Size of damage dice (4, 6, 8, 10, 12)")]
+    public int damageDieSize = 8;
+    
+    [Tooltip("Flat damage bonus added to roll")]
+    public int damageBonus = 0;
+    
+    [Tooltip("Type of damage this weapon deals")]
+    public DamageType damageType = DamageType.Physical;
+    
     [Header("Weapon Stats")]
-    [Tooltip("Base damage of this weapon")]
-    public int baseDamage = 10;
+    [Tooltip("Attack bonus (for to-hit rolls)")]
+    public int attackBonus = 0;
     
     [Tooltip("Ammunition count (-1 = unlimited)")]
     public int ammo = -1;
     
     [Tooltip("Current ammunition remaining")]
     public int currentAmmo;
+    
+    /// <summary>
+    /// Get damage string for display (e.g., "1d8+2 Physical")
+    /// </summary>
+    public string DamageString
+    {
+        get
+        {
+            string bonus = damageBonus != 0 ? $"+{damageBonus}" : "";
+            return $"{damageDice}d{damageDieSize}{bonus} {damageType}";
+        }
+    }
+    
+    /// <summary>
+    /// Roll this weapon's damage dice.
+    /// </summary>
+    public int RollDamage()
+    {
+        return RollUtility.RollDamage(damageDice, damageDieSize, damageBonus);
+    }
+    
+    /// <summary>
+    /// Create a damage packet from this weapon's damage.
+    /// </summary>
+    public DamagePacket CreateDamagePacket(Entity source, bool isCritical = false)
+    {
+        int damage = RollDamage();
+        
+        // Critical hits double the dice (roll again and add)
+        if (isCritical)
+        {
+            damage += RollUtility.RollDamage(damageDice, damageDieSize, 0); // No bonus on crit dice
+        }
+        
+        return DamagePacket.FromWeapon(damage, damageType, source, isCritical);
+    }
     
     /// <summary>
     /// Called when component is first added or reset in Editor.
@@ -40,9 +89,12 @@ public class WeaponComponent : VehicleComponent
         componentSpace = 150;  // Consumes component space
         powerDrawPerTurn = 5;  // Requires power to stay armed
         
-        // Set weapon-specific stats (already have defaults in field declarations)
-        // baseDamage = 10;
-        // ammo = -1;
+        // Set weapon damage defaults
+        damageDice = 1;
+        damageDieSize = 8;
+        damageBonus = 0;
+        damageType = DamageType.Physical;
+        attackBonus = 0;
         
         // Each weapon ENABLES ONE "Gunner" role slot
         enablesRole = true;
@@ -132,11 +184,14 @@ public class WeaponComponent : VehicleComponent
     }
     
     /// <summary>
-    /// Get status summary including ammo count.
+    /// Get status summary including ammo count and damage.
     /// </summary>
     public override string GetStatusSummary()
     {
         string status = base.GetStatusSummary();
+        
+        // Add damage info
+        status += $"Damage: {DamageString}\n";
         
         // Add ammo info if weapon has limited ammo
         if (ammo != -1)
