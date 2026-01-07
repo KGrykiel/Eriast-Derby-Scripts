@@ -13,20 +13,23 @@ public class DamageEffect : EffectBase
     [Tooltip("Defines how damage is calculated (skill dice, weapon scaling, etc.)")]
     public DamageFormula formula = new DamageFormula();
 
-    // Store last rolled damage for retrieval by Skill.Use()
-    private int lastDamageRolled = 0;
-    private DamageType lastDamageType = DamageType.Physical;
+    // Store last roll breakdown for retrieval by Skill.Use()
+    private DamageBreakdown lastBreakdown;
 
     /// <summary>
     /// Gets the last damage rolled by this effect.
-    /// Used by Skill.Use() to log accurate damage values.
     /// </summary>
-    public int LastDamageRolled => lastDamageRolled;
+    public int LastDamageRolled => lastBreakdown?.finalDamage ?? 0;
     
     /// <summary>
     /// Gets the damage type used in the last application.
     /// </summary>
-    public DamageType LastDamageType => lastDamageType;
+    public DamageType LastDamageType => lastBreakdown?.damageType ?? DamageType.Physical;
+    
+    /// <summary>
+    /// Gets the full breakdown of the last damage calculation.
+    /// </summary>
+    public DamageBreakdown LastBreakdown => lastBreakdown;
 
     /// <summary>
     /// Applies this damage effect to the target entity.
@@ -37,19 +40,16 @@ public class DamageEffect : EffectBase
         // Try to extract weapon from source (optional)
         WeaponComponent weapon = source as WeaponComponent;
         
-        // Calculate damage using the formula
-        DamageType damageType;
-        int damage = formula.ComputeDamage(weapon, out damageType);
+        // Calculate damage using the formula with full breakdown
+        lastBreakdown = formula.ComputeDamageWithBreakdown(weapon);
         
-        if (damage <= 0)
+        if (lastBreakdown.rawTotal <= 0)
         {
-            lastDamageRolled = 0;
-            lastDamageType = damageType;
             return;
         }
         
         // Create damage packet
-        DamagePacket packet = DamagePacket.Create(damage, damageType, user);
+        DamagePacket packet = DamagePacket.Create(lastBreakdown.rawTotal, lastBreakdown.damageType, user);
         
         // If we have a weapon, mark it as weapon damage
         if (weapon != null)
@@ -58,11 +58,14 @@ public class DamageEffect : EffectBase
         }
         
         // Resolve damage through the central resolver (handles resistances, etc.)
-        lastDamageRolled = DamageResolver.ResolveDamage(packet, target);
-        lastDamageType = damageType;
+        int resolvedDamage = DamageResolver.ResolveDamage(packet, target);
+        
+        // Update breakdown with resistance info (for now, assume normal - DamageResolver will be updated later)
+        // TODO: Get actual resistance from target and update breakdown
+        lastBreakdown.finalDamage = resolvedDamage;
         
         // Apply the resolved damage to target
-        target.TakeDamage(lastDamageRolled);
+        target.TakeDamage(resolvedDamage);
     }
 
     /// <summary>
@@ -71,5 +74,13 @@ public class DamageEffect : EffectBase
     public string GetDamageDescription(WeaponComponent weapon = null)
     {
         return formula.GetDescription(weapon);
+    }
+    
+    /// <summary>
+    /// Get detailed breakdown string for tooltips.
+    /// </summary>
+    public string GetDetailedBreakdown()
+    {
+        return lastBreakdown?.ToDetailedString() ?? "No damage calculated yet";
     }
 }

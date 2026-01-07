@@ -34,35 +34,33 @@ public class DamageFormula
     public DamageType skillDamageType = DamageType.Physical;
 
     /// <summary>
-    /// Compute total damage based on mode and optional weapon.
+    /// Compute total damage with full breakdown tracking.
     /// </summary>
-    /// <param name="weapon">Optional weapon component (can be null for spells)</param>
-    /// <param name="damageType">Output: the final damage type</param>
-    /// <returns>Total damage rolled</returns>
-    public int ComputeDamage(WeaponComponent weapon, out DamageType damageType)
+    public DamageBreakdown ComputeDamageWithBreakdown(WeaponComponent weapon)
     {
-        int total = 0;
-        damageType = skillDamageType;
+        DamageType damageType = skillDamageType;
+        var breakdown = DamageBreakdown.Create(damageType);
 
         switch (mode)
         {
             case SkillDamageMode.SkillOnly:
                 // Pure skill damage, ignore weapon entirely
-                total = RollSkillDamage();
-                damageType = skillDamageType;
+                int skillRolled = RollDice(skillDice, skillDieSize);
+                breakdown.AddComponent("Skill", skillDice, skillDieSize, skillBonus, skillRolled, "Skill Effect");
+                breakdown.damageType = skillDamageType;
                 break;
 
             case SkillDamageMode.WeaponOnly:
                 // Just weapon dice, no skill contribution
                 if (weapon != null)
                 {
-                    total = weapon.RollDamage();
-                    damageType = weapon.damageType;
+                    int weaponRolled = RollDice(weapon.damageDice, weapon.damageDieSize);
+                    breakdown.AddComponent("Weapon", weapon.damageDice, weapon.damageDieSize, weapon.damageBonus, weaponRolled, weapon.name);
+                    breakdown.damageType = weapon.damageType;
                 }
                 else
                 {
                     Debug.LogWarning("[DamageFormula] WeaponOnly mode but no weapon provided!");
-                    total = 0;
                 }
                 break;
 
@@ -70,16 +68,27 @@ public class DamageFormula
                 // Weapon dice + skill dice combined
                 if (weapon != null)
                 {
-                    int weaponDmg = weapon.RollDamage();
-                    int skillDmg = RollSkillDamage();
-                    total = weaponDmg + skillDmg;
-                    damageType = useWeaponDamageType ? weapon.damageType : skillDamageType;
+                    int weaponRolled = RollDice(weapon.damageDice, weapon.damageDieSize);
+                    breakdown.AddComponent("Weapon", weapon.damageDice, weapon.damageDieSize, weapon.damageBonus, weaponRolled, weapon.name);
+                    
+                    if (skillDice > 0 && skillDieSize > 0)
+                    {
+                        int skillRolled2 = RollDice(skillDice, skillDieSize);
+                        breakdown.AddComponent("Skill Bonus", skillDice, skillDieSize, skillBonus, skillRolled2, "Skill Effect");
+                    }
+                    else if (skillBonus != 0)
+                    {
+                        breakdown.AddFlat("Skill Bonus", skillBonus, "Skill Effect");
+                    }
+                    
+                    breakdown.damageType = useWeaponDamageType ? weapon.damageType : skillDamageType;
                 }
                 else
                 {
                     // Fallback to skill-only if no weapon
-                    total = RollSkillDamage();
-                    damageType = skillDamageType;
+                    int skillRolled3 = RollDice(skillDice, skillDieSize);
+                    breakdown.AddComponent("Skill", skillDice, skillDieSize, skillBonus, skillRolled3, "Skill Effect");
+                    breakdown.damageType = skillDamageType;
                 }
                 break;
 
@@ -88,29 +97,45 @@ public class DamageFormula
                 if (weapon != null)
                 {
                     int multipliedDice = Mathf.RoundToInt(weapon.damageDice * weaponMultiplier);
-                    total = RollUtility.RollDamage(multipliedDice, weapon.damageDieSize, weapon.damageBonus);
-                    damageType = weapon.damageType;
+                    int multipliedRolled = RollDice(multipliedDice, weapon.damageDieSize);
+                    breakdown.AddComponent($"Weapon ×{weaponMultiplier}", multipliedDice, weapon.damageDieSize, weapon.damageBonus, multipliedRolled, weapon.name);
+                    breakdown.damageType = weapon.damageType;
                 }
                 else
                 {
                     Debug.LogWarning("[DamageFormula] WeaponMultiplied mode but no weapon provided!");
-                    total = 0;
                 }
                 break;
         }
 
-        return total;
+        breakdown.WithResistance(ResistanceLevel.Normal);
+        return breakdown;
     }
 
     /// <summary>
-    /// Roll the skill's own dice.
+    /// Compute total damage based on mode and optional weapon.
+    /// Legacy method - returns just the total and damage type.
     /// </summary>
-    private int RollSkillDamage()
+    public int ComputeDamage(WeaponComponent weapon, out DamageType damageType)
     {
-        if (skillDice <= 0 || skillDieSize <= 0)
-            return skillBonus; // Just flat bonus if no dice
-            
-        return RollUtility.RollDamage(skillDice, skillDieSize, skillBonus);
+        var breakdown = ComputeDamageWithBreakdown(weapon);
+        damageType = breakdown.damageType;
+        return breakdown.rawTotal;
+    }
+
+    /// <summary>
+    /// Roll dice and return sum (without bonus).
+    /// </summary>
+    private int RollDice(int count, int size)
+    {
+        if (count <= 0 || size <= 0) return 0;
+        
+        int total = 0;
+        for (int i = 0; i < count; i++)
+        {
+            total += Random.Range(1, size + 1);
+        }
+        return total;
     }
 
     /// <summary>

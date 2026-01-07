@@ -14,17 +14,108 @@ public class EffectInvocation
     public bool requiresRollToHit = false;
     public RollType rollType = RollType.ArmorClass;
 
+    // Store last roll breakdown for inspection
+    private RollBreakdown lastRollBreakdown;
+    
     /// <summary>
-    /// Applies the effect to the appropriate targets.
-    /// NOTE: user and mainTarget are Entities (components ARE entities).
-    /// For vehicle-level operations, get the parent vehicle from the component.
+    /// Gets the last attack roll breakdown (if this invocation required a roll to hit).
     /// </summary>
-    /// <returns>True if the effect was successfully applied to at least one target</returns>
-    public bool Apply(Entity user, Entity mainTarget, Stage context, Object source, int toHitBonus = 0)
+    public RollBreakdown LastRollBreakdown => lastRollBreakdown;
+
+    /// <summary>
+    /// Applies the effect to the appropriate targets using modifier list for transparent roll tracking.
+    /// </summary>
+    public bool Apply(Entity user, Entity mainTarget, Stage context, Object source, List<RollModifier> modifiers)
     {
         if (effect == null) return false;
 
+        List<Entity> targets = BuildTargetList(user, mainTarget, context);
+
+        bool anyApplied = false;
+        int missCount = 0;
+
+        foreach (var target in targets)
+        {
+            bool apply = true;
+
+            if (requiresRollToHit)
+            {
+                Vehicle attackerVehicle = EntityHelpers.GetParentVehicle(user);
+                
+                // Use the new breakdown method
+                lastRollBreakdown = RollUtility.RollToHitWithBreakdown(
+                    attackerVehicle, 
+                    target, 
+                    rollType, 
+                    modifiers, 
+                    source?.ToString()
+                );
+                
+                if (lastRollBreakdown.success != true)
+                {
+                    string userName = EntityHelpers.GetEntityDisplayName(user);
+                    string targetName = EntityHelpers.GetEntityDisplayName(target);
+                    Vehicle targetVehicle = EntityHelpers.GetParentVehicle(target);
+
+                    var evt = RaceHistory.Log(
+                        RacingGame.Events.EventType.Combat,
+                        EventImportance.Debug,
+                        $"[MISS] {userName} missed {targetName}: {lastRollBreakdown.ToShortString()}",
+                        attackerVehicle?.currentStage,
+                        attackerVehicle, targetVehicle
+                    );
+                    
+                    // Add full breakdown to metadata
+                    evt.WithMetadata("missed", true)
+                       .WithMetadata("rollType", rollType.ToString())
+                       .WithMetadata("effectType", effect?.GetType().Name ?? "Unknown")
+                       .WithMetadata("rollBreakdown", lastRollBreakdown.ToDetailedString());
+                    
+                    // Add individual modifier info
+                    foreach (var kvp in lastRollBreakdown.ToMetadata())
+                    {
+                        evt.WithMetadata(kvp.Key, kvp.Value);
+                    }
+
+                    missCount++;
+                    apply = false;
+                }
+            }
+
+            if (apply)
+            {
+                effect.Apply(user, target, context, source);
+                anyApplied = true;
+            }
+        }
+
+        return anyApplied;
+    }
+
+    /// <summary>
+    /// Legacy method for backward compatibility - converts int bonus to modifier list.
+    /// </summary>
+    public bool Apply(Entity user, Entity mainTarget, Stage context, Object source, int toHitBonus = 0)
+    {
+        List<RollModifier> modifiers = null;
+        if (toHitBonus != 0)
+        {
+            modifiers = new List<RollModifier>
+            {
+                new RollModifier("Bonus", toHitBonus, "Unknown Source")
+            };
+        }
+        
+        return Apply(user, mainTarget, context, source, modifiers);
+    }
+
+    /// <summary>
+    /// Build the list of targets based on target mode.
+    /// </summary>
+    private List<Entity> BuildTargetList(Entity user, Entity mainTarget, Stage context)
+    {
         List<Entity> targets = new List<Entity>();
+        
         switch (targetMode)
         {
             case EffectTargetMode.User:
@@ -38,8 +129,6 @@ public class EffectInvocation
                 targets.Add(mainTarget);
                 break;
             case EffectTargetMode.AllInStage:
-                // Get all entities in the same stage
-                // Try to get stage from component's parent vehicle, or from context
                 Stage stage = context;
                 if (stage == null && user is VehicleComponent userComp && userComp.ParentVehicle != null)
                 {
@@ -48,7 +137,6 @@ public class EffectInvocation
                 
                 if (stage != null && stage.vehiclesInStage != null)
                 {
-                    // Get chassis (primary entity) of each vehicle in stage, excluding user's vehicle
                     Vehicle userVehicle = EntityHelpers.GetParentVehicle(user);
                     foreach (var vehicle in stage.vehiclesInStage)
                     {
@@ -60,55 +148,8 @@ public class EffectInvocation
                 }
                 break;
         }
-
-        // Track if any target was successfully affected
-        bool anyApplied = false;
-        int missCount = 0;
-
-        foreach (var target in targets)
-        {
-            bool apply = true;
-
-            if (requiresRollToHit)
-            {
-                // Get vehicles for roll utility (if applicable)
-                Vehicle attackerVehicle = EntityHelpers.GetParentVehicle(user);
-                
-                if (!RollUtility.RollToHit(attackerVehicle, target, rollType, toHitBonus, source?.ToString()))
-                {
-                    string userName = EntityHelpers.GetEntityDisplayName(user);
-                    string targetName = EntityHelpers.GetEntityDisplayName(target);
-
-                    // Debug-level miss logging (detailed analysis only)
-                    Vehicle targetVehicle = EntityHelpers.GetParentVehicle(target);
-
-                    RaceHistory.Log(
-                        RacingGame.Events.EventType.Combat,
-                        EventImportance.Debug, // Downgraded from Medium/Low to Debug
-                        $"[MISS] {userName} missed {targetName} (AC check failed)",
-                        attackerVehicle?.currentStage,
-                        attackerVehicle, targetVehicle
-                    ).WithMetadata("missed", true)
-                        .WithMetadata("rollType", rollType.ToString())
-                        .WithMetadata("toHitBonus", toHitBonus)
-                        .WithMetadata("effectType", effect?.GetType().Name ?? "Unknown");
-
-                    missCount++;
-                    apply = false;
-                }
-            }
-
-            if (apply)
-            {
-                effect.Apply(user, target, context, source);
-                anyApplied = true; // Mark that at least one target was affected
-            }
-        }
-
-        // AoE miss summary removed - Skill.Use() handles all miss logging now
-        // This prevents duplicate miss events
-
-        return anyApplied;
+        
+        return targets;
     }
 }
 
@@ -118,5 +159,4 @@ public enum EffectTargetMode
     Target,
     Both,
     AllInStage
-    // Extend as needed
 }

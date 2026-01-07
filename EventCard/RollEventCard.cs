@@ -15,13 +15,19 @@ public class RollEventCard : EventCard
 
     public override void Trigger(Vehicle vehicle, Stage stage)
     {
-        int bonus = 0; // will add reference to a skill later.
+        // Build modifiers list (future: add character skill bonuses)
+        var modifiers = RollUtility.BuildModifiers()
+            // Add vehicle/character bonuses here when implemented
+            // .Add("Pilot Skill", vehicle.pilot?.skillBonus ?? 0, vehicle.pilot?.name)
+            .Build();
 
-        var (success, roll, usedBonus, total) = RollUtility.SkillCheck(bonus, difficulty);
+        var breakdown = RollUtility.SkillCheckWithBreakdown(modifiers, difficulty, $"Event: {conditionDescription}");
 
-        SimulationLogger.LogEvent($"{vehicle.vehicleName} faces event: {description} (Roll: {roll} + {usedBonus} vs {difficulty})");
+        SimulationLogger.LogEvent($"{vehicle.vehicleName} faces event: {description}");
+        SimulationLogger.LogEvent($"  Roll: {breakdown.ToShortString()}");
+        SimulationLogger.LogEvent($"  {breakdown.ToDetailedString()}");
 
-        if (success)
+        if (breakdown.success == true)
         {
             ApplyEffectInvocations(rewardEffects, vehicle, stage);
             SimulationLogger.LogEvent($"{vehicle.vehicleName} succeeded! Reward applied.");
@@ -32,7 +38,6 @@ public class RollEventCard : EventCard
             SimulationLogger.LogEvent($"{vehicle.vehicleName} failed! Penalty applied.");
         }
     }
-
 
     private void ApplyEffectInvocations(List<EffectInvocation> invocations, Vehicle mainTarget, Stage stage)
     {

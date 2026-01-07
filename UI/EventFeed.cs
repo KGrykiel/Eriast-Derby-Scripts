@@ -8,6 +8,7 @@ using RacingGame.Events;
 /// <summary>
 /// Displays filtered event feed to the DM.
 /// Updates in real-time as new events are logged.
+/// Supports hover tooltips for detailed roll/damage breakdowns.
 /// </summary>
 public class EventFeed : MonoBehaviour
 {
@@ -25,6 +26,10 @@ public class EventFeed : MonoBehaviour
     [Header("Settings")]
     public int maxDisplayedEvents = 100; // Limit to prevent performance issues
     public bool autoScrollToBottom = true;
+    
+    [Header("Tooltip Settings")]
+    [Tooltip("Enable hover tooltips for detailed breakdowns")]
+    public bool enableTooltips = true;
 
     private ScrollRect scrollRect;
     private int lastProcessedEventCount = 0;
@@ -191,9 +196,21 @@ public class EventFeed : MonoBehaviour
         var text = entryObj.GetComponent<TextMeshProUGUI>();
         if (text != null)
         {
-            text.text = evt.GetFormattedText(includeTimestamp: true, includeLocation: true);
+            // Build display text - add indicator if has breakdown data
+            string displayText = evt.GetFormattedText(includeTimestamp: true, includeLocation: true);
+            
+            // Add hover indicator if event has breakdown metadata
+            if (enableTooltips && HasBreakdownData(evt))
+            {
+                displayText += " <color=#6688FF>[?]</color>";
+            }
+            
+            text.text = displayText;
             text.fontSize = 12;
-            text.enableWordWrapping = true;
+            text.textWrappingMode = TextWrappingModes.Normal;
+            
+            // Enable raycast target for hover detection
+            text.raycastTarget = true;
         }
 
         // Set layout
@@ -204,5 +221,31 @@ public class EventFeed : MonoBehaviour
         }
         layoutElement.preferredHeight = 25;
         layoutElement.flexibleWidth = 1;
+        
+        // Add hover component for tooltips
+        if (enableTooltips && HasBreakdownData(evt))
+        {
+            var hoverComponent = entryObj.AddComponent<EventEntryHover>();
+            hoverComponent.SetEvent(evt);
+        }
+    }
+    
+    /// <summary>
+    /// Checks if an event has breakdown data worth showing in tooltip.
+    /// </summary>
+    private bool HasBreakdownData(RaceEvent evt)
+    {
+        if (evt == null || evt.metadata == null)
+            return false;
+            
+        // Check for various breakdown metadata keys
+        return evt.metadata.ContainsKey("rollBreakdown") ||
+               evt.metadata.ContainsKey("damageBreakdown") ||
+               evt.metadata.ContainsKey("componentRollBreakdown") ||
+               evt.metadata.ContainsKey("chassisRollBreakdown") ||
+               evt.metadata.ContainsKey("baseRoll") ||
+               evt.metadata.ContainsKey("modifierCount") ||
+               evt.metadata.ContainsKey("componentCount") ||
+               evt.metadata.ContainsKey("totalDamage");
     }
 }
