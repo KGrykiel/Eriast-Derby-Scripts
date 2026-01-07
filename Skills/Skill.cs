@@ -370,19 +370,24 @@ public abstract class Skill : ScriptableObject
     }
     
     /// <summary>
-    /// Two-stage component-targeted attack resolution (Phase 6).
+    /// Two-stage component-targeted attack resolution with Pathfinder-style logging.
+    /// Creates separate log entries for: component attack, chassis attack (if needed), and damage.
     /// </summary>
     private bool UseComponentTargeted(Vehicle user, Vehicle mainTarget, WeaponComponent weapon)
     {
         VehicleComponent targetComponent = mainTarget.AllComponents
             .FirstOrDefault(c => c.name == targetComponentName);
 
+        // Get display name once at the start
+        string attackerName = GetAttackerDisplayName(user);
+        string weaponText = weapon != null ? $" with {weapon.name}" : "";
+
         if (targetComponent == null || targetComponent.isDestroyed)
         {
             RaceHistory.Log(
                 EventType.SkillUse,
                 EventImportance.Medium,
-                $"{user.vehicleName} tried to target {mainTarget.vehicleName}'s {targetComponentName}, but it's unavailable",
+                $"{attackerName} tried to target {mainTarget.vehicleName}'s {targetComponentName}, but it's unavailable",
                 user.currentStage,
                 user, mainTarget
             ).WithMetadata("skillName", name)
@@ -399,7 +404,7 @@ public abstract class Skill : ScriptableObject
             RaceHistory.Log(
                 EventType.SkillUse,
                 EventImportance.Medium,
-                $"{user.vehicleName} cannot target {mainTarget.vehicleName}'s {targetComponentName}: {reason}",
+                $"{attackerName} cannot target {mainTarget.vehicleName}'s {targetComponentName}: {reason}",
                 user.currentStage,
                 user, mainTarget
             ).WithMetadata("skillName", name)
@@ -428,90 +433,144 @@ public abstract class Skill : ScriptableObject
             return false;
         }
 
-        // Build modifiers for component targeting
-        var modifiers = RollUtility.BuildModifiers()
+        // Build modifiers for component targeting (NO PENALTY - just base bonuses)
+        var componentModifiers = RollUtility.BuildModifiers()
+            .AddIf(weapon != null && weapon.attackBonus != 0, "Weapon Attack Bonus", weapon?.attackBonus ?? 0, weapon?.name)
+            .Build();
+
+        // Build modifiers for chassis fallback (WITH PENALTY)
+        var chassisModifiers = RollUtility.BuildModifiers()
             .AddIf(weapon != null && weapon.attackBonus != 0, "Weapon Attack Bonus", weapon?.attackBonus ?? 0, weapon?.name)
             .Add("Component Targeting Penalty", -componentTargetingPenalty, name)
             .Build();
 
-        // Stage 1: Roll vs Component AC
+        // Stage 1: Roll vs Component AC (NO PENALTY)
         int componentAC = mainTarget.GetComponentAC(targetComponent);
-        var roll1 = RollBreakdown.D20(Random.Range(1, 21), RollCategory.Attack);
-        foreach (var mod in modifiers) roll1.WithModifier(mod.name, mod.value, mod.source);
-        roll1.Against(componentAC, "Component AC");
+        var componentRoll = RollBreakdown.D20(Random.Range(1, 21), RollCategory.Attack);
+        foreach (var mod in componentModifiers) componentRoll.WithModifier(mod.name, mod.value, mod.source);
+        componentRoll.Against(componentAC, "Component AC");
 
-        if (roll1.success == true)
+        if (componentRoll.success == true)
         {
-            // Hit the component!
+            // HIT THE COMPONENT - Log attack with result
+            var attackEvt = RaceHistory.Log(
+                EventType.Combat,
+                EventImportance.High,
+                $"{attackerName} attacks {mainTarget.vehicleName}'s {targetComponentName}{weaponText}. <color=#44FF44>Hit</color>",
+                user.currentStage,
+                user, mainTarget
+            );
+            
+            attackEvt.WithMetadata("skillName", name)
+                    .WithMetadata("targetComponent", targetComponentName)
+                    .WithMetadata("result", "hit")
+                    .WithMetadata("rollBreakdown", componentRoll.ToDetailedString());
+            
+            // Apply damage
             DamagePacket packet = DamagePacket.Create(damageBreakdown.rawTotal, damageBreakdown.damageType, user.chassis);
             int resolved = DamageResolver.ResolveDamage(packet, targetComponent);
             targetComponent.TakeDamage(resolved);
             
-            var evt = RaceHistory.Log(
-                EventType.SkillUse,
+            // Log damage separately
+            var damageEvt = RaceHistory.Log(
+                EventType.Combat,
                 EventImportance.High,
-                $"{user.vehicleName} used {name}: hit {mainTarget.vehicleName}'s {targetComponentName} for {damageBreakdown.ToShortString()} ({roll1.ToShortString()})",
+                $"{attackerName} deals <color=#FFA500>{resolved}</color> damage to {mainTarget.vehicleName}'s {targetComponentName}",
                 user.currentStage,
                 user, mainTarget
             );
             
-            evt.WithMetadata("skillName", name)
-               .WithMetadata("targetComponent", targetComponentName)
-               .WithMetadata("hitComponent", true)
-               .WithMetadata("rollBreakdown", roll1.ToDetailedString())
-               .WithMetadata("damageBreakdown", damageBreakdown.ToDetailedString());
+            damageEvt.WithMetadata("skillName", name)
+                    .WithMetadata("targetComponent", targetComponentName)
+                    .WithMetadata("damage", resolved)
+                    .WithMetadata("damageBreakdown", damageBreakdown.ToDetailedString());
             
             return true;
         }
 
-        // Stage 2: Missed component, try chassis
-        int chassisAC = mainTarget.GetArmorClass();
-        var roll2 = RollBreakdown.D20(Random.Range(1, 21), RollCategory.Attack);
-        foreach (var mod in modifiers) roll2.WithModifier(mod.name, mod.value, mod.source);
-        roll2.Against(chassisAC, "Chassis AC");
-
-        if (roll2.success == true)
-        {
-            // Hit chassis instead
-            DamagePacket packet = DamagePacket.Create(damageBreakdown.rawTotal, damageBreakdown.damageType, user.chassis);
-            int resolved = DamageResolver.ResolveDamage(packet, mainTarget.chassis);
-            mainTarget.TakeDamage(resolved);
-            
-            var evt = RaceHistory.Log(
-                EventType.SkillUse,
-                EventImportance.Medium,
-                $"{user.vehicleName} used {name}: missed {targetComponentName}, hit chassis for {damageBreakdown.ToShortString()} ({roll2.ToShortString()})",
-                user.currentStage,
-                user, mainTarget
-            );
-            
-            evt.WithMetadata("skillName", name)
-               .WithMetadata("targetComponent", targetComponentName)
-               .WithMetadata("hitChassis", true)
-               .WithMetadata("missedComponent", true)
-               .WithMetadata("componentRollBreakdown", roll1.ToDetailedString())
-               .WithMetadata("chassisRollBreakdown", roll2.ToDetailedString())
-               .WithMetadata("damageBreakdown", damageBreakdown.ToDetailedString());
-            
-            return true;
-        }
-
-        // Both rolls missed
-        var missEvt = RaceHistory.Log(
-            EventType.SkillUse,
+        // MISSED COMPONENT - Log component attack miss
+        var componentMissEvt = RaceHistory.Log(
+            EventType.Combat,
             EventImportance.Medium,
-            $"{user.vehicleName} used {name}: completely missed {mainTarget.vehicleName} ({roll1.ToShortString()}, {roll2.ToShortString()})",
+            $"{attackerName} attacks {mainTarget.vehicleName}'s {targetComponentName}{weaponText}. <color=#FF4444>Miss</color>",
             user.currentStage,
             user, mainTarget
         );
         
-        missEvt.WithMetadata("skillName", name)
-               .WithMetadata("targetComponent", targetComponentName)
-               .WithMetadata("failed", true)
-               .WithMetadata("reason", "BothRollsMissed")
-               .WithMetadata("componentRollBreakdown", roll1.ToDetailedString())
-               .WithMetadata("chassisRollBreakdown", roll2.ToDetailedString());
+        componentMissEvt.WithMetadata("skillName", name)
+                       .WithMetadata("targetComponent", targetComponentName)
+                       .WithMetadata("result", "miss")
+                       .WithMetadata("rollBreakdown", componentRoll.ToDetailedString());
+
+        // Stage 2: Try chassis (WITH PENALTY)
+        int chassisAC = mainTarget.GetArmorClass();
+        var chassisRoll = RollBreakdown.D20(Random.Range(1, 21), RollCategory.Attack);
+        foreach (var mod in chassisModifiers) chassisRoll.WithModifier(mod.name, mod.value, mod.source);
+        chassisRoll.Against(chassisAC, "Chassis AC");
+
+        if (chassisRoll.success == true)
+        {
+            // HIT CHASSIS - Log chassis attack with result
+            var chassisAttackEvt = RaceHistory.Log(
+                EventType.Combat,
+                EventImportance.Medium,
+                $"{attackerName} attacks {mainTarget.vehicleName}'s chassis{weaponText}. <color=#44FF44>Hit</color>",
+                user.currentStage,
+                user, mainTarget
+            );
+            
+            chassisAttackEvt.WithMetadata("skillName", name)
+                           .WithMetadata("targetComponent", "chassis")
+                           .WithMetadata("result", "hit")
+                           .WithMetadata("rollBreakdown", chassisRoll.ToDetailedString());
+            
+            // Apply damage
+            DamagePacket packet = DamagePacket.Create(damageBreakdown.rawTotal, damageBreakdown.damageType, user.chassis);
+            int resolved = DamageResolver.ResolveDamage(packet, mainTarget.chassis);
+            mainTarget.TakeDamage(resolved);
+            
+            // Log damage separately
+            var damageEvt = RaceHistory.Log(
+                EventType.Combat,
+                EventImportance.Medium,
+                $"{attackerName} deals <color=#FFA500>{resolved}</color> damage to {mainTarget.vehicleName}'s chassis",
+                user.currentStage,
+                user, mainTarget
+            );
+            
+            damageEvt.WithMetadata("skillName", name)
+                    .WithMetadata("targetComponent", "chassis")
+                    .WithMetadata("damage", resolved)
+                    .WithMetadata("damageBreakdown", damageBreakdown.ToDetailedString());
+            
+            return true;
+        }
+
+        // MISSED BOTH - Log chassis attack miss
+        var chassisMissEvt = RaceHistory.Log(
+            EventType.Combat,
+            EventImportance.Medium,
+            $"{attackerName} attacks {mainTarget.vehicleName}'s chassis{weaponText}. <color=#FF4444>Miss</color>",
+            user.currentStage,
+            user, mainTarget
+        );
+        
+        chassisMissEvt.WithMetadata("skillName", name)
+                     .WithMetadata("targetComponent", "chassis")
+                     .WithMetadata("result", "miss")
+                     .WithMetadata("rollBreakdown", chassisRoll.ToDetailedString());
         
         return false;
+    }
+
+    /// <summary>
+    /// Gets display name for attacker in format: "CharacterName (VehicleName)" or just "VehicleName"
+    /// </summary>
+    private string GetAttackerDisplayName(Vehicle vehicle)
+    {
+        // TODO: Get character name from vehicle's driver/pilot component
+        // For now, just return vehicle name
+        // Future: return $"{characterName} ({vehicle.vehicleName})"
+        return vehicle.vehicleName;
     }
 }

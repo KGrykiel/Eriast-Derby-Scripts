@@ -140,22 +140,6 @@ public abstract class VehicleComponent : Entity
         
         int oldHP = health;
         health = Mathf.Max(health - damage, 0);
-        
-        // Log component damage
-        string vehicleName = parentVehicle?.vehicleName ?? "Unknown";
-        RaceHistory.Log(
-            EventType.Combat,
-            EventImportance.Medium,
-            $"{vehicleName}'s {name} took {damage} damage ({health}/{maxHealth} HP)",
-            parentVehicle?.currentStage,
-            parentVehicle
-        ).WithMetadata("componentName", name)
-         .WithMetadata("componentType", componentType.ToString())
-         .WithMetadata("damage", damage)
-         .WithMetadata("oldHP", oldHP)
-         .WithMetadata("newHP", health)
-         .WithMetadata("isDestroyed", health <= 0);
-        
         if (health <= 0 && !isDestroyed)
         {
             isDestroyed = true;
