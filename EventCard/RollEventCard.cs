@@ -53,8 +53,11 @@ public class RollEventCard : EventCard
 
         foreach (var invocation in invocations)
         {
-            // Pass chassis entity for both user and target (event card affects vehicle)
-            invocation.Apply(targetEntity, targetEntity, stage, this, 0);
+            // Apply effect directly (no roll logic needed here)
+            if (invocation.effect != null)
+            {
+                invocation.effect.Apply(targetEntity, targetEntity, stage, this);
+            }
         }
     }
 }

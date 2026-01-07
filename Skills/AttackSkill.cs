@@ -6,8 +6,13 @@ public class AttackSkill : Skill
 {
     private void OnEnable()
     {
-        // If the effectInvocations list is empty or not a single DamageEffect, auto-populate for convenience
-        if (effectInvocations == null || effectInvocations.Count != 1 || !(effectInvocations[0].effect is DamageEffect))
+        // Set default roll configuration for attacks
+        requiresAttackRoll = true;
+        rollType = RollType.ArmorClass;
+        
+        // Only auto-populate if the list is empty or null
+        // Allow users to add multiple effects without them being deleted
+        if (effectInvocations == null || effectInvocations.Count == 0)
         {
             effectInvocations = new System.Collections.Generic.List<EffectInvocation>
             {
@@ -24,9 +29,7 @@ public class AttackSkill : Skill
                             skillDamageType = DamageType.Physical
                         }
                     },
-                    targetMode = EffectTargetMode.Target,
-                    requiresRollToHit = true,
-                    rollType = RollType.ArmorClass
+                    targetMode = EffectTargetMode.Target
                 }
             };
         }
