@@ -1,4 +1,6 @@
 using UnityEngine;
+using System.Collections.Generic;
+using System.Linq;
 
 /// <summary>
 /// Abstract base class for all entities that can be damaged, targeted, or interact with skills.
@@ -27,6 +29,10 @@ public abstract class Entity : MonoBehaviour
     [Header("Entity State")]
     [Tooltip("Is this entity destroyed?")]
     public bool isDestroyed = false;
+    
+    [Header("Damage Resistances")]
+    [Tooltip("Resistances and vulnerabilities to different damage types")]
+    public List<DamageResistance> resistances = new List<DamageResistance>();
 
     /// <summary>
     /// Get armor class for targeting calculations.
@@ -35,6 +41,16 @@ public abstract class Entity : MonoBehaviour
     public virtual int GetArmorClass()
     {
         return armorClass;
+    }
+    
+    /// <summary>
+    /// Get resistance level for a specific damage type.
+    /// Returns Normal if no resistance is defined.
+    /// </summary>
+    public virtual ResistanceLevel GetResistance(DamageType type)
+    {
+        var resistance = resistances.FirstOrDefault(r => r.type == type);
+        return resistance.level != default ? resistance.level : ResistanceLevel.Normal;
     }
 
     /// <summary>

@@ -402,12 +402,16 @@ public abstract class Skill : ScriptableObject
                         int resolved = DamageResolver.ResolveDamage(packet, target);
                         target.TakeDamage(resolved);
                         
+                        // Update breakdown with actual resistance info from target
+                        ResistanceLevel resistance = target.GetResistance(breakdown.damageType);
+                        breakdown.WithResistance(resistance);
+                        breakdown.finalDamage = resolved;
+                        
                         // Track for logging
                         if (!damageByTarget.ContainsKey(target))
                         {
                             damageByTarget[target] = new List<DamageBreakdown>();
                         }
-                        breakdown.finalDamage = resolved;
                         damageByTarget[target].Add(breakdown);
                     }
                 }
@@ -619,6 +623,7 @@ public abstract class Skill : ScriptableObject
 
     /// <summary>
     /// Builds a combined damage breakdown string from multiple damage effects.
+    /// Format: (4d6+5) (×0.5) = 12 fire (resistant)
     /// </summary>
     private string BuildCombinedDamageBreakdown(List<DamageBreakdown> breakdowns, string sourceName)
     {
@@ -632,34 +637,40 @@ public abstract class Skill : ScriptableObject
         sb.AppendLine($"Damage Source: {sourceName}");
         sb.AppendLine();
         
-        // List each damage breakdown
+        // List each damage breakdown with inline resistance
         foreach (var breakdown in breakdowns)
         {
             // Show each component in the breakdown
             foreach (var comp in breakdown.components)
             {
+                string diceStr = "";
                 if (comp.diceCount > 0)
                 {
-                    sb.AppendLine($"{comp.ToDiceString()} = {comp.total} {breakdown.damageType.ToString().ToLower()}");
+                    diceStr = $"({comp.ToDiceString()})";
                 }
                 else if (comp.bonus != 0)
                 {
                     string sign = comp.bonus >= 0 ? "+" : "";
-                    sb.AppendLine($"{sign}{comp.bonus} = {comp.total} {breakdown.damageType.ToString().ToLower()}");
+                    diceStr = $"({sign}{comp.bonus})";
                 }
-            }
-            
-            // Show resistance if applicable
-            if (breakdown.resistanceLevel != ResistanceLevel.Normal)
-            {
-                string multiplier = breakdown.resistanceLevel switch
+                
+                // Add resistance multiplier if applicable
+                string resistMod = "";
+                string resistLabel = "";
+                if (breakdown.resistanceLevel != ResistanceLevel.Normal)
                 {
-                    ResistanceLevel.Vulnerable => "×2",
-                    ResistanceLevel.Resistant => "×0.5",
-                    ResistanceLevel.Immune => "×0",
-                    _ => "×1"
-                };
-                sb.AppendLine($"  ({breakdown.resistanceLevel}: {multiplier})");
+                    resistMod = breakdown.resistanceLevel switch
+                    {
+                        ResistanceLevel.Vulnerable => " (×2)",
+                        ResistanceLevel.Resistant => " (×0.5)",
+                        ResistanceLevel.Immune => " (×0)",
+                        _ => ""
+                    };
+                    resistLabel = $" ({breakdown.resistanceLevel.ToString().ToLower()})";
+                }
+                
+                // Format: (4d6+5) (×0.5) = 12 fire (resistant)
+                sb.AppendLine($"{diceStr}{resistMod} = {breakdown.finalDamage} {breakdown.damageType.ToString().ToLower()}{resistLabel}");
             }
         }
         

@@ -77,12 +77,10 @@ public static class DamageResolver
     /// </summary>
     private static ResistanceLevel GetResistance(Entity target, DamageType type)
     {
-        // Check if entity has resistance data
-        // For now, return Normal - entities will implement GetResistance() method
-        // This will be expanded when Entity.cs is updated
-
-        // Future: target.GetResistance(type)
-        return ResistanceLevel.Normal;
+        if (target == null) return ResistanceLevel.Normal;
+        
+        // Use entity's GetResistance method
+        return target.GetResistance(type);
     }
 
     /// <summary>

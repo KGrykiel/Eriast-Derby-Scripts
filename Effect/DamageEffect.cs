@@ -60,8 +60,9 @@ public class DamageEffect : EffectBase
         // Resolve damage through the central resolver (handles resistances, etc.)
         int resolvedDamage = DamageResolver.ResolveDamage(packet, target);
         
-        // Update breakdown with resistance info (for now, assume normal - DamageResolver will be updated later)
-        // TODO: Get actual resistance from target and update breakdown
+        // Update breakdown with actual resistance info from target
+        ResistanceLevel resistance = target.GetResistance(lastBreakdown.damageType);
+        lastBreakdown.WithResistance(resistance);
         lastBreakdown.finalDamage = resolvedDamage;
         
         // Apply the resolved damage to target

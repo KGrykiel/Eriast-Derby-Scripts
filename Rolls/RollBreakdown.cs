@@ -359,7 +359,9 @@ public class DamageBreakdown
         {
             if (comp.diceCount > 0)
             {
-                sb.AppendLine($"  {comp.name}: {comp.ToDiceString()} = {comp.total} ({comp.source})");
+                string diceStr = comp.ToDiceString();
+                string resistMod = resistanceLevel != ResistanceLevel.Normal ? GetResistanceMultiplier() : "";
+                sb.AppendLine($"  {comp.name}: ({diceStr}){resistMod} = {comp.total} ({comp.source})");
             }
             else if (comp.bonus != 0)
             {
@@ -373,19 +375,27 @@ public class DamageBreakdown
         
         if (resistanceLevel != ResistanceLevel.Normal)
         {
-            string multiplier = resistanceLevel switch
-            {
-                ResistanceLevel.Vulnerable => "×2",
-                ResistanceLevel.Resistant => "×0.5",
-                ResistanceLevel.Immune => "×0",
-                _ => "×1"
-            };
+            string multiplier = GetResistanceMultiplier();
             sb.AppendLine($"  {resistanceLevel}: {multiplier}");
         }
         
         sb.AppendLine($"  Final: {finalDamage} {damageType}");
         
         return sb.ToString();
+    }
+    
+    /// <summary>
+    /// Get resistance multiplier string for display.
+    /// </summary>
+    private string GetResistanceMultiplier()
+    {
+        return resistanceLevel switch
+        {
+            ResistanceLevel.Vulnerable => " (×2)",
+            ResistanceLevel.Resistant => " (×0.5)",
+            ResistanceLevel.Immune => " (×0)",
+            _ => ""
+        };
     }
     
     /// <summary>
