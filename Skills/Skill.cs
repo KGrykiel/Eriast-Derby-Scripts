@@ -715,8 +715,17 @@ public abstract class Skill : ScriptableObject
                     resistLabel = $" ({breakdown.resistanceLevel.ToString().ToLower()})";
                 }
                 
-                // Format: (4d6+5) (×0.5) = 12 fire (resistant)
-                sb.AppendLine($"{diceStr}{resistMod} = {breakdown.finalDamage} {breakdown.damageType.ToString().ToLower()}{resistLabel}");
+                // Calculate this component's contribution after resistance
+                int componentDamage = comp.total;
+                if (breakdown.resistanceLevel == ResistanceLevel.Vulnerable)
+                    componentDamage *= 2;
+                else if (breakdown.resistanceLevel == ResistanceLevel.Resistant)
+                    componentDamage /= 2;
+                else if (breakdown.resistanceLevel == ResistanceLevel.Immune)
+                    componentDamage = 0;
+                
+                // Format: (1d8+2) (×0.5) = 5 physical (resistant)
+                sb.AppendLine($"{diceStr}{resistMod} = {componentDamage} {breakdown.damageType.ToString().ToLower()}{resistLabel}");
             }
         }
         
