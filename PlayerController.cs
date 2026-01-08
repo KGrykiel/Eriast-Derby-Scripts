@@ -417,8 +417,11 @@ public class PlayerController : MonoBehaviour
             return;
         }
 
-        // Execute skill (this may fail due to miss)
-        bool result = selectedSkill.Use(playerVehicle, target);
+        // Extract weapon if source component is a weapon
+        WeaponComponent weapon = selectedSkillSourceComponent as WeaponComponent;
+        
+        // Execute skill with weapon parameter (null if not a weapon)
+        bool result = selectedSkill.Use(playerVehicle, target, weapon);
 
         // ALWAYS consume energy and mark component as acted (even on miss!)
         // This is the intended game design: missed attacks still consume resources
