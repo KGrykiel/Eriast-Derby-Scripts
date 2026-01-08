@@ -1,8 +1,0 @@
-- conditional skills (need to pass a check) /
-- stage action cards /
-- shoddiness 
-- mobility
-- Vehicle AI.
-- Division of a vehicle into parts and roles (e.g., Driver, Gunner, Navigator, Technician) each with their own set of skills.
-- Common resource management system for the whole vehicle.
-- Vehicle building and advanced attributes that are derived from the parts used.
