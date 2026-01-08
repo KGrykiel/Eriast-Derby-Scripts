@@ -33,12 +33,17 @@ public class DamageEffect : EffectBase
 
     /// <summary>
     /// Applies this damage effect to the target entity.
-    /// Extracts weapon from source (if provided) and uses formula to calculate damage.
+    /// 
+    /// Parameter convention from Skill.Use():
+    /// - context: WeaponComponent (for damage calculations) or null
+    /// - source: Skill that triggered this effect (for modifier tracking)
+    /// 
+    /// Tries to extract weapon from both context and source for backward compatibility.
     /// </summary>
     public override void Apply(Entity user, Entity target, Object context = null, Object source = null)
     {
-        // Try to extract weapon from source (optional)
-        WeaponComponent weapon = source as WeaponComponent;
+        // Try to extract weapon from context first (new convention), then source (old convention)
+        WeaponComponent weapon = context as WeaponComponent ?? source as WeaponComponent;
         
         // Calculate damage using the formula with full breakdown
         lastBreakdown = formula.ComputeDamageWithBreakdown(weapon);

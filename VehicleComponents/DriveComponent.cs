@@ -61,7 +61,16 @@ public class DriveComponent : VehicleComponent
     }
     
     /// <summary>
+    /// Get speed value (with modifiers applied).
+    /// </summary>
+    public float GetSpeed()
+    {
+        return ApplyModifiers(Attribute.Speed, maxSpeed);
+    }
+    
+    /// <summary>
     /// Drive provides Speed, Acceleration, and Stability to the vehicle.
+    /// Speed stat uses modifier-adjusted value.
     /// </summary>
     public override VehicleStatModifiers GetStatModifiers()
     {
@@ -70,8 +79,9 @@ public class DriveComponent : VehicleComponent
             return VehicleStatModifiers.Zero;
         
         // Create modifiers using the flexible stat system
+        // Use GetSpeed() to include modifier bonuses
         var modifiers = new VehicleStatModifiers();
-        modifiers.Speed = maxSpeed;
+        modifiers.Speed = GetSpeed();
         modifiers.SetStat("Acceleration", acceleration);
         modifiers.Stability = stability;
         

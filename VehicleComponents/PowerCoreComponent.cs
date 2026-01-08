@@ -65,8 +65,25 @@ namespace Assets.Scripts.VehicleComponents
         }
         
         /// <summary>
+        /// Get maximum energy capacity (with modifiers applied).
+        /// </summary>
+        public int GetMaxEnergy()
+        {
+            return Mathf.RoundToInt(ApplyModifiers(Attribute.MaxEnergy, maxEnergy));
+        }
+        
+        /// <summary>
+        /// Get energy regeneration rate (with modifiers applied).
+        /// </summary>
+        public float GetEnergyRegen()
+        {
+            return ApplyModifiers(Attribute.EnergyRegen, energyRegen);
+        }
+        
+        /// <summary>
         /// Regenerates energy at the start of turn.
         /// Cannot regenerate if power core is destroyed.
+        /// Uses modifier-adjusted max energy and regen rate.
         /// </summary>
         public void RegenerateEnergy()
         {
@@ -76,8 +93,12 @@ namespace Assets.Scripts.VehicleComponents
                 return;
             }
             
+            // Use modified regen rate and max capacity
+            float regenRate = GetEnergyRegen();
+            int maxCap = GetMaxEnergy();
+            
             int oldEnergy = currentEnergy;
-            currentEnergy = Mathf.Min(currentEnergy + Mathf.RoundToInt(energyRegen), maxEnergy);
+            currentEnergy = Mathf.Min(currentEnergy + Mathf.RoundToInt(regenRate), maxCap);
             
             int regenAmount = currentEnergy - oldEnergy;
             
@@ -86,12 +107,12 @@ namespace Assets.Scripts.VehicleComponents
                 RacingGame.Events.RaceHistory.Log(
                     RacingGame.Events.EventType.Resource,
                     RacingGame.Events.EventImportance.Debug,
-                    $"{parentVehicle.vehicleName} regenerated {regenAmount} energy ({currentEnergy}/{maxEnergy})",
+                    $"{parentVehicle.vehicleName} regenerated {regenAmount} energy ({currentEnergy}/{maxCap})",
                     parentVehicle.currentStage,
                     parentVehicle
                 ).WithMetadata("regenAmount", regenAmount)
                  .WithMetadata("currentEnergy", currentEnergy)
-                 .WithMetadata("maxEnergy", maxEnergy);
+                 .WithMetadata("maxEnergy", maxCap);
             }
         }
         

@@ -171,23 +171,31 @@ public abstract class Skill : ScriptableObject
             
             foreach (var target in targets)
             {
-                // DEBUG: Log which target we're applying to
+                // Route effect to correct component if targeting a vehicle
+                Entity routedTarget = target;
                 Vehicle targetVehicle = EntityHelpers.GetParentVehicle(target);
-                string targetName = targetVehicle != null ? targetVehicle.vehicleName : "Unknown";
-                Debug.Log($"[Skill] Applying {invocation.effect.GetType().Name} to {targetName} (targetMode: {invocation.targetMode})");
+                if (targetVehicle != null)
+                {
+                    routedTarget = targetVehicle.RouteEffectTarget(invocation.effect, target);
+                }
                 
-                // Apply effect
-                invocation.effect.Apply(userEntity, target, user.currentStage, weapon);
+                // DEBUG: Log which target we're applying to
+                string targetName = targetVehicle != null ? targetVehicle.vehicleName : "Unknown";
+                Debug.Log($"[Skill] Applying {invocation.effect.GetType().Name} to {routedTarget.GetDisplayName()} on {targetName} (targetMode: {invocation.targetMode})");
+                
+                // Apply effect - pass THIS skill as source, weapon as context (for damage calculations)
+                // Source = skill (for modifier tracking), Context = weapon or stage (for damage formula)
+                invocation.effect.Apply(userEntity, routedTarget, weapon, this);
                 anyApplied = true;
                 
                 // Track damage breakdowns by target
                 if (invocation.effect is DamageEffect damageEffect && damageEffect.LastBreakdown != null)
                 {
-                    if (!damageByTarget.ContainsKey(target))
+                    if (!damageByTarget.ContainsKey(routedTarget))
                     {
-                        damageByTarget[target] = new List<DamageBreakdown>();
+                        damageByTarget[routedTarget] = new List<DamageBreakdown>();
                     }
-                    damageByTarget[target].Add(damageEffect.LastBreakdown);
+                    damageByTarget[routedTarget].Add(damageEffect.LastBreakdown);
                     
                     // DEBUG: Log damage tracking
                     Debug.Log($"[Skill] Tracked {damageEffect.LastBreakdown.finalDamage} damage to {targetName}");
@@ -334,8 +342,9 @@ public abstract class Skill : ScriptableObject
     }
     
     /// <summary>
-    /// Two-stage component-targeted attack resolution with Pathfinder-style logging.
-    /// Creates separate log entries for: component attack, chassis attack (if needed), and damage.
+    /// Component-targeted skill resolution.
+    /// For attack skills: Two-stage roll (component AC ? chassis AC fallback).
+    /// For non-attack skills (buffs): Applies effects directly to targeted component.
     /// </summary>
     private bool UseComponentTargeted(Vehicle user, Vehicle mainTarget, WeaponComponent weapon)
     {
@@ -380,10 +389,47 @@ public abstract class Skill : ScriptableObject
             return false;
         }
 
-        // Calculate damage and apply effects (respecting targetMode)
-        Dictionary<Entity, List<DamageBreakdown>> damageByTarget = new Dictionary<Entity, List<DamageBreakdown>>();
         Entity userEntity = user.chassis;
         Entity targetEntity = targetComponent; // Component is the primary target
+        
+        // For non-attack skills (buffs, etc.), apply effects directly without rolling
+        if (!requiresAttackRoll)
+        {
+            bool anyApplied = false;
+            
+            foreach (var invocation in effectInvocations)
+            {
+                if (invocation.effect == null) continue;
+                
+                // Get actual targets based on targetMode
+                List<Entity> targets = BuildTargetList(invocation.targetMode, userEntity, targetEntity, user.currentStage);
+                
+                foreach (var target in targets)
+                {
+                    // Route effect to correct component if targeting a vehicle
+                    Entity routedTarget = target;
+                    Vehicle targetVehicle = EntityHelpers.GetParentVehicle(target);
+                    if (targetVehicle != null)
+                    {
+                        routedTarget = targetVehicle.RouteEffectTarget(invocation.effect, target);
+                    }
+                    
+                    // Apply effect - pass THIS skill as source, weapon as context
+                    invocation.effect.Apply(userEntity, routedTarget, weapon, this);
+                    anyApplied = true;
+                    
+                    // Debug log
+                    string targetName = targetVehicle != null ? targetVehicle.vehicleName : EntityHelpers.GetEntityDisplayName(routedTarget);
+                    Debug.Log($"[Skill] Applied {invocation.effect.GetType().Name} to {routedTarget.GetDisplayName()} on {targetName} (component-targeted, no roll)");
+                }
+            }
+            
+            return anyApplied;
+        }
+        
+        // For attack skills, use two-stage roll system
+        // Pre-calculate damage for all damage effects
+        Dictionary<Entity, List<DamageBreakdown>> damageByTarget = new Dictionary<Entity, List<DamageBreakdown>>();
         
         foreach (var invocation in effectInvocations)
         {
@@ -420,7 +466,7 @@ public abstract class Skill : ScriptableObject
 
         if (damageByTarget.Count == 0)
         {
-            Debug.LogWarning($"[Skill] {name}: Component targeting skill has no damage effects!");
+            Debug.LogWarning($"[Skill] {name}: Component targeting attack skill has no damage effects!");
             return false;
         }
 

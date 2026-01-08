@@ -13,6 +13,9 @@ using EventType = RacingGame.Events.EventType;
 /// 
 /// NOTE: Uses Entity base class fields (health, maxHealth, armorClass) directly.
 /// Display name uses Unity's GameObject.name (set in Inspector hierarchy).
+/// 
+/// MODIFIER SYSTEM: Each component tracks its own modifiers (buffs/debuffs).
+/// When a modifier is applied to a vehicle, it's automatically routed to the correct component.
 /// </summary>
 public abstract class VehicleComponent : Entity
 {
@@ -67,6 +70,10 @@ public abstract class VehicleComponent : Entity
     // Reference to parent vehicle (set during initialization)
     protected Vehicle parentVehicle;
     
+    // Component-level modifiers (buffs/debuffs affecting this component)
+    [SerializeField, HideInInspector]
+    private List<AttributeModifier> componentModifiers = new List<AttributeModifier>();
+    
     /// <summary>
     /// Get the parent vehicle this component belongs to.
     /// </summary>
@@ -95,6 +102,130 @@ public abstract class VehicleComponent : Entity
     public virtual void ResetTurnState()
     {
         hasActedThisTurn = false;
+    }
+    
+    // ==================== MODIFIER SYSTEM ====================
+    
+    /// <summary>
+    /// Add a modifier to this component.
+    /// Automatically logs the modifier addition with component context.
+    /// </summary>
+    public void AddModifier(AttributeModifier modifier)
+    {
+        componentModifiers.Add(modifier);
+        
+        // Log modifier addition (component-specific)
+        // DurationTurns semantics: -1 = permanent, 1+ = turns remaining (1 = last active turn)
+        string durText = modifier.DurationTurns < 0 
+            ? " (permanent)" 
+            : $" for {modifier.DurationTurns} turn(s)";
+        string sourceText = modifier.Source != null ? $" from {modifier.Source.name}" : "";
+        string vehicleName = parentVehicle?.vehicleName ?? "Unknown";
+        
+        RaceHistory.Log(
+            EventType.Modifier,
+            EventImportance.Low,
+            $"{vehicleName}'s {name} gained {modifier.Type} {modifier.Attribute} {modifier.Value:+0;-0}{durText}{sourceText}",
+            parentVehicle?.currentStage,
+            parentVehicle
+        ).WithMetadata("component", name)
+         .WithMetadata("modifierType", modifier.Type.ToString())
+         .WithMetadata("attribute", modifier.Attribute.ToString())
+         .WithMetadata("value", modifier.Value)
+         .WithMetadata("duration", modifier.DurationTurns);
+    }
+    
+    /// <summary>
+    /// Remove a specific modifier from this component.
+    /// </summary>
+    public void RemoveModifier(AttributeModifier modifier)
+    {
+        if (componentModifiers.Remove(modifier))
+        {
+            string vehicleName = parentVehicle?.vehicleName ?? "Unknown";
+            
+            RaceHistory.Log(
+                EventType.Modifier,
+                EventImportance.Low,
+                $"{vehicleName}'s {name} lost {modifier.Type} {modifier.Attribute} {modifier.Value:+0;-0} modifier",
+                parentVehicle?.currentStage,
+                parentVehicle
+            ).WithMetadata("component", name)
+             .WithMetadata("modifierType", modifier.Type.ToString())
+             .WithMetadata("attribute", modifier.Attribute.ToString())
+             .WithMetadata("removed", true);
+        }
+    }
+    
+    /// <summary>
+    /// Update modifiers (decrement durations, remove expired).
+    /// Called by Vehicle.UpdateModifiers() at end of turn.
+    /// 
+    /// Duration semantics:
+    /// - DurationTurns = -1: Permanent, never expires
+    /// - DurationTurns = 1: Last active turn, will expire after this update
+    /// - DurationTurns > 1: Active for N more turns
+    /// 
+    /// Flow: A 3-turn buff starts at 3, decrements each turn (3?2?1?expired)
+    /// </summary>
+    public void UpdateModifiers()
+    {
+        for (int i = componentModifiers.Count - 1; i >= 0; i--)
+        {
+            var mod = componentModifiers[i];
+            
+            // Permanent modifiers (-1) never expire
+            if (mod.DurationTurns < 0)
+                continue;
+            
+            // Decrement duration
+            mod.DurationTurns--;
+            
+            // Remove if expired (reached 0 after decrement)
+            if (mod.DurationTurns <= 0)
+            {
+                string vehicleName = parentVehicle?.vehicleName ?? "Unknown";
+                string sourceText = mod.Source != null ? $" from {mod.Source.name}" : "";
+                
+                RaceHistory.Log(
+                    EventType.Modifier,
+                    EventImportance.Low,
+                    $"{vehicleName}'s {name}: {mod.Type} {mod.Attribute} {mod.Value:+0;-0} expired{sourceText}",
+                    parentVehicle?.currentStage,
+                    parentVehicle
+                ).WithMetadata("component", name)
+                 .WithMetadata("expired", true);
+                
+                componentModifiers.RemoveAt(i);
+            }
+        }
+    }
+    
+    /// <summary>
+    /// Get all modifiers affecting this component.
+    /// Used by Vehicle.GetActiveModifiers() for aggregation.
+    /// </summary>
+    public List<AttributeModifier> GetModifiers() => componentModifiers;
+    
+    /// <summary>
+    /// Apply component-specific modifiers to an attribute value.
+    /// Called by component subclasses when calculating stats.
+    /// </summary>
+    protected float ApplyModifiers(Attribute attr, float baseValue)
+    {
+        float flatBonus = 0f;
+        float percentMultiplier = 1f;
+
+        foreach (var mod in componentModifiers)
+        {
+            if (mod.Attribute != attr) continue;
+            if (mod.Type == ModifierType.Flat)
+                flatBonus += mod.Value;
+            else if (mod.Type == ModifierType.Percent)
+                percentMultiplier *= (1f + mod.Value / 100f);
+        }
+
+        return (baseValue + flatBonus) * percentMultiplier;
     }
     
     // ==================== ENTITY OVERRIDES ====================

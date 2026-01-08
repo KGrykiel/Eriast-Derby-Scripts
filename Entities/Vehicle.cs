@@ -19,6 +19,11 @@ public enum ControlType
 /// The vehicle aggregates stats from components and provides convenience properties.
 /// Damage to "the vehicle" is actually damage to its chassis component.
 /// 
+/// MODIFIER SYSTEM: Modifiers are stored on individual components, not the vehicle.
+/// When a modifier is applied to a vehicle, it's automatically routed to the correct component
+/// based on attribute type (HP modifiers → Chassis, Speed modifiers → Drive, etc.)
+/// Vehicle.GetActiveModifiers() aggregates modifiers from all components for UI display.
+/// 
 /// For targeting:
 /// - Target Vehicle → actually targets chassis (the "body" of the vehicle)
 /// - Target Component → targets specific component directly
@@ -27,9 +32,6 @@ public class Vehicle : MonoBehaviour
 {
     [Header("Vehicle Identity")]
     public string vehicleName;
-
-    // Active modifiers (buffs/debuffs applied to the vehicle)
-    private List<AttributeModifier> activeModifiers = new List<AttributeModifier>();
 
     public ControlType controlType = ControlType.Player;
     [HideInInspector] public Stage currentStage;
@@ -51,9 +53,20 @@ public class Vehicle : MonoBehaviour
     [Tooltip("Optional components (Drive, Weapons, Utilities, etc.)")]
     public List<VehicleComponent> optionalComponents = new List<VehicleComponent>();
 
+    /// <summary>
+    /// Get all active modifiers from all components (for UI display).
+    /// Aggregates modifiers from chassis, power core, drive, weapons, etc.
+    /// </summary>
     public List<AttributeModifier> GetActiveModifiers()
     {
-        return activeModifiers;
+        List<AttributeModifier> allModifiers = new List<AttributeModifier>();
+        
+        foreach (var component in AllComponents)
+        {
+            allModifiers.AddRange(component.GetModifiers());
+        }
+        
+        return allModifiers;
     }
     
     public VehicleStatus Status { get; private set; } = VehicleStatus.Active;
@@ -159,8 +172,8 @@ public class Vehicle : MonoBehaviour
             if (chassis == null)
                 return; // Cannot set health without chassis
             
-            // Clamp to valid range
-            chassis.health = Mathf.Clamp(value, 0, chassis.maxHealth);
+            // Clamp to valid range (use GetMaxHP for modifier-adjusted max)
+            chassis.health = Mathf.Clamp(value, 0, chassis.GetMaxHP());
             
             // Check for destruction
             if (chassis.health <= 0 && !chassis.isDestroyed)
@@ -172,7 +185,8 @@ public class Vehicle : MonoBehaviour
     }
     
     /// <summary>
-    /// Maximum health (chassis base HP + bonuses from other components).
+    /// Maximum health (chassis base HP + bonuses from other components + modifiers).
+    /// Delegates to chassis.GetMaxHP() which applies modifiers.
     /// </summary>
     public int maxHealth
     {
@@ -197,48 +211,56 @@ public class Vehicle : MonoBehaviour
         set
         {
             if (powerCore == null) return;
-            // Clamp to valid range
-            powerCore.currentEnergy = Mathf.Clamp(value, 0, powerCore.maxEnergy);
+            // Clamp to valid range (use GetMaxEnergy for modifier-adjusted max)
+            powerCore.currentEnergy = Mathf.Clamp(value, 0, powerCore.GetMaxEnergy());
         }
     }
     
     /// <summary>
-    /// Maximum energy capacity (stored in power core).
+    /// Maximum energy capacity (with modifiers applied).
+    /// Delegates to powerCore.GetMaxEnergy() which applies modifiers.
     /// </summary>
     public int maxEnergy
     {
         get
         {
             if (powerCore == null) return 0;
-            return powerCore.maxEnergy;
+            return powerCore.GetMaxEnergy();
         }
     }
     
     /// <summary>
-    /// Energy regeneration rate (stored in power core).
+    /// Energy regeneration rate (with modifiers applied).
+    /// Delegates to powerCore.GetEnergyRegen() which applies modifiers.
     /// </summary>
     public float energyRegen
     {
         get
         {
             if (powerCore == null) return 0f;
-            return powerCore.energyRegen;
+            return powerCore.GetEnergyRegen();
         }
     }
     
     /// <summary>
-    /// Vehicle speed (from drive component or aggregated from all components).
+    /// Vehicle speed (from drive component with modifiers applied).
     /// </summary>
     public float speed
     {
         get
         {
-            return GetComponentStat(VehicleStatModifiers.StatNames.Speed);
+            var drive = optionalComponents.OfType<DriveComponent>().FirstOrDefault();
+            if (drive != null && !drive.isDestroyed && !drive.isDisabled)
+            {
+                return drive.GetSpeed();
+            }
+            return 0f;
         }
     }
     
     /// <summary>
-    /// Vehicle armor class (chassis base AC + bonuses).
+    /// Vehicle armor class (chassis base AC + bonuses + modifiers).
+    /// Delegates to chassis.GetTotalAC() which applies modifiers.
     /// </summary>
     public int armorClass
     {
@@ -273,11 +295,11 @@ public class Vehicle : MonoBehaviour
     
     /// <summary>
     /// Get armor class for attack rolls.
+    /// Returns modifier-adjusted AC from chassis.
     /// </summary>
     public int GetArmorClass()
     {
-        // Use the attribute system for dynamic armor class
-        return Mathf.RoundToInt(GetAttribute(Attribute.ArmorClass));
+        return armorClass;
     }
 
     void Start()
@@ -290,75 +312,62 @@ public class Vehicle : MonoBehaviour
         MoveToCurrentStage();
     }
 
-    // ==================== MODIFIER SYSTEM ====================
+    // ==================== MODIFIER SYSTEM (Component-Centric) ====================
 
+    /// <summary>
+    /// Add a modifier to the appropriate component.
+    /// Automatically routes modifier based on attribute type.
+    /// </summary>
     public void AddModifier(AttributeModifier modifier)
     {
-        activeModifiers.Add(modifier);
+        VehicleComponent targetComponent = ResolveModifierTarget(modifier.Attribute);
         
-        // Log modifier addition
-        string durText = modifier.DurationTurns > 0 ? $" for {modifier.DurationTurns} turns" : " (permanent)";
-        string sourceText = modifier.Source != null ? $" from {modifier.Source.name}" : "";
+        if (targetComponent == null)
+        {
+            Debug.LogWarning($"[Vehicle] {vehicleName}: No component found to apply {modifier.Attribute} modifier!");
+            return;
+        }
         
-        RaceHistory.Log(
-            EventType.Modifier,
-            EventImportance.Low,
-            $"{vehicleName} gained {modifier.Type} {modifier.Attribute} {modifier.Value:+0;-0}{durText}{sourceText}",
-            currentStage,
-            this
-        ).WithMetadata("modifierType", modifier.Type.ToString())
-         .WithMetadata("attribute", modifier.Attribute.ToString())
-         .WithMetadata("value", modifier.Value)
-         .WithMetadata("duration", modifier.DurationTurns);
+        targetComponent.AddModifier(modifier);
     }
 
+    /// <summary>
+    /// Remove a specific modifier from all components.
+    /// Searches all components for the modifier and removes it.
+    /// </summary>
     public void RemoveModifier(AttributeModifier modifier)
     {
-        if (activeModifiers.Remove(modifier))
+        foreach (var component in AllComponents)
         {
-            // Log modifier removal
-            RaceHistory.Log(
-                EventType.Modifier,
-                EventImportance.Low,
-                $"{vehicleName} lost {modifier.Type} {modifier.Attribute} {modifier.Value:+0;-0} modifier",
-                currentStage,
-                this
-            ).WithMetadata("modifierType", modifier.Type.ToString())
-             .WithMetadata("attribute", modifier.Attribute.ToString())
-             .WithMetadata("removed", true);
+            component.RemoveModifier(modifier);
         }
     }
 
+    /// <summary>
+    /// Remove modifiers from all components by source.
+    /// </summary>
     public void RemoveModifiersFromSource(UnityEngine.Object source, bool localOnly)
     {
-        int removedCount = 0;
+        int totalRemoved = 0;
         
-        if (localOnly)
+        foreach (var component in AllComponents)
         {
-            for (int i = activeModifiers.Count - 1; i >= 0; i--)
+            var modifiers = component.GetModifiers();
+            
+            for (int i = modifiers.Count - 1; i >= 0; i--)
             {
-                if (activeModifiers[i].Source == source && activeModifiers[i].local)
+                var mod = modifiers[i];
+                bool shouldRemove = mod.Source == source && (!localOnly || mod.local);
+                
+                if (shouldRemove)
                 {
-                    activeModifiers.RemoveAt(i);
-                    removedCount++;
-                }
-            }
-        }
-        else
-        {
-            // Remove all modifiers from the source, regardless of local flag
-            for (int i = activeModifiers.Count - 1; i >= 0; i--)
-            {
-                if (activeModifiers[i].Source == source)
-                {
-                    activeModifiers.RemoveAt(i);
-                    removedCount++;
+                    component.RemoveModifier(mod);
+                    totalRemoved++;
                 }
             }
         }
         
-        // Log bulk removal if any were removed
-        if (removedCount > 0)
+        if (totalRemoved > 0)
         {
             string sourceText = source != null ? source.name : "unknown source";
             string localText = localOnly ? " (local only)" : "";
@@ -366,87 +375,115 @@ public class Vehicle : MonoBehaviour
             RaceHistory.Log(
                 EventType.Modifier,
                 EventImportance.Low,
-                $"{vehicleName} lost {removedCount} modifier(s) from {sourceText}{localText}",
+                $"{vehicleName} lost {totalRemoved} modifier(s) from {sourceText}{localText}",
                 currentStage,
                 this
-            ).WithMetadata("removedCount", removedCount)
+            ).WithMetadata("removedCount", totalRemoved)
              .WithMetadata("source", sourceText)
              .WithMetadata("localOnly", localOnly);
         }
     }
     
+    /// <summary>
+    /// Update all component modifiers (decrement durations, remove expired).
+    /// Call at end of vehicle's turn.
+    /// </summary>
     public void UpdateModifiers()
     {
-        int expiredCount = 0;
-        
-        for (int i = activeModifiers.Count - 1; i >= 0; i--)
+        foreach (var component in AllComponents)
         {
-            var mod = activeModifiers[i];
-            if (mod.DurationTurns == 0)
-            {
-                activeModifiers.RemoveAt(i);
-                expiredCount++;
-                continue;
-            }
-            if (mod.DurationTurns > 0)
-                mod.DurationTurns--;
+            component.UpdateModifiers();
+        }
+    }
+    
+    /// <summary>
+    /// Resolve which component should receive a modifier based on attribute type.
+    /// CORE ROUTING LOGIC - determines component ownership of attributes.
+    /// PUBLIC: Used by skills to route effects to correct components.
+    /// </summary>
+    public VehicleComponent ResolveModifierTarget(Attribute attribute)
+    {
+        return attribute switch
+        {
+            // Chassis attributes
+            Attribute.MaxHealth => chassis,
+            Attribute.ArmorClass => chassis,
+            Attribute.MagicResistance => chassis,
+            
+            // Power Core attributes
+            Attribute.MaxEnergy => powerCore,
+            Attribute.EnergyRegen => powerCore,
+            
+            // Drive attributes
+            Attribute.Speed => optionalComponents.OfType<DriveComponent>().FirstOrDefault(),
+            
+            // Default: chassis (fallback for unknown attributes)
+            _ => chassis
+        };
+    }
+    
+    /// <summary>
+    /// Route an effect to the appropriate component based on effect type.
+    /// Used by skills to resolve targeting before applying effects.
+    /// 
+    /// Routing rules:
+    /// - DamageEffect → Chassis (the vehicle's "body")
+    /// - AttributeModifierEffect → Component based on attribute (Speed→Drive, Energy→PowerCore, etc.)
+    /// - Other effects → Chassis (default)
+    /// 
+    /// This allows easy extension: add new effect types or component types
+    /// by adding new cases here without modifying effect classes.
+    /// </summary>
+    public Entity RouteEffectTarget(IEffect effect, Entity defaultTarget)
+    {
+        if (effect == null)
+            return defaultTarget;
+        
+        // Route modifiers based on attribute type
+        if (effect is AttributeModifierEffect modifierEffect)
+        {
+            VehicleComponent component = ResolveModifierTarget(modifierEffect.attribute);
+            return component ?? defaultTarget;
         }
         
-        // Log if modifiers expired (low importance, won't clutter feed)
-        if (expiredCount > 0)
+        // Route damage to chassis (the vehicle's structural component)
+        if (effect is DamageEffect)
         {
-            RaceHistory.Log(
-                EventType.Modifier,
-                EventImportance.Debug,
-                $"{vehicleName}: {expiredCount} modifier(s) expired",
-                currentStage,
-                this
-            ).WithMetadata("expiredCount", expiredCount);
+            return chassis ?? defaultTarget;
         }
+        
+        // Route restoration effects based on resource type
+        if (effect is ResourceRestorationEffect restorationEffect)
+        {
+            // Health restoration → Chassis
+            // Energy restoration → Power Core
+            // Future: Could check restorationEffect.resourceType if we add that field
+            return chassis ?? defaultTarget;
+        }
+        
+        // Default: use provided target (usually chassis)
+        return defaultTarget;
     }
 
     // ==================== ATTRIBUTE SYSTEM ====================
 
+    /// <summary>
+    /// Get attribute value from components (with modifiers already applied).
+    /// Components calculate their own values including modifiers.
+    /// This method routes to the correct component property.
+    /// </summary>
     public float GetAttribute(Attribute attr)
     {
-        float baseValue = 0f;
-        switch (attr)
+        return attr switch
         {
-            case Attribute.Speed: 
-                baseValue = speed; // Delegates to GetComponentStat
-                break;
-            case Attribute.ArmorClass: 
-                baseValue = armorClass; // Delegates to chassis.GetTotalAC()
-                break;
-            case Attribute.MagicResistance: 
-                // TODO: Move to component
-                baseValue = 10; // Temporary default
-                break;
-            case Attribute.MaxHealth: 
-                baseValue = maxHealth; // Delegates to chassis.GetMaxHP()
-                break;
-            case Attribute.MaxEnergy: 
-                baseValue = maxEnergy; // Delegates to powerCore.maxEnergy
-                break;
-            case Attribute.EnergyRegen: 
-                baseValue = energyRegen; // Delegates to powerCore.energyRegen
-                break;
-            default: return 0f;
-        }
-
-        float flatBonus = 0f;
-        float percentMultiplier = 1f;
-
-        foreach (var mod in activeModifiers)
-        {
-            if (mod.Attribute != attr) continue;
-            if (mod.Type == ModifierType.Flat)
-                flatBonus += mod.Value;
-            else if (mod.Type == ModifierType.Percent)
-                percentMultiplier *= (1f + mod.Value / 100f);
-        }
-
-        return (baseValue + flatBonus) * percentMultiplier;
+            Attribute.Speed => speed,
+            Attribute.ArmorClass => armorClass,
+            Attribute.MagicResistance => 10, // TODO: Move to component
+            Attribute.MaxHealth => maxHealth,
+            Attribute.MaxEnergy => maxEnergy,
+            Attribute.EnergyRegen => energyRegen,
+            _ => 0f
+        };
     }
 
     // ==================== STAGE MANAGEMENT ====================

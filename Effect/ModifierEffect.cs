@@ -25,20 +25,41 @@ public class AttributeModifierEffect : EffectBase
         );
     }
 
+    /// <summary>
+    /// Applies the modifier to the target entity.
+    /// 
+    /// NOTE: Target routing is handled by Skill.Use() before this is called.
+    /// The target will already be the correct component (Drive for Speed, PowerCore for Energy, etc.)
+    /// This method simply applies the modifier to whatever component it receives.
+    /// 
+    /// Parameter convention from Skill.Use():
+    /// - target: Already-routed component (correct target after Vehicle.RouteEffectTarget)
+    /// - context: WeaponComponent (for damage calculations) or null
+    /// - source: Skill that triggered this effect (for modifier tracking)
+    /// </summary>
     public override void Apply(Entity user, Entity target, UnityEngine.Object context = null, UnityEngine.Object source = null)
     {
-        // Get the parent vehicle from the target entity (if it's a component)
-        Vehicle vehicle = GetParentVehicle(target);
+        // Source should be the skill that applied this effect
+        UnityEngine.Object actualSource = source ?? context;
         
+        // Target should already be routed to the correct component by Skill.Use()
+        // Just apply the modifier directly
+        if (target is VehicleComponent targetComponent)
+        {
+            targetComponent.AddModifier(ToRuntimeModifier(actualSource));
+            return;
+        }
+        
+        // Fallback: If target is not a component, try routing through vehicle
+        // (This shouldn't happen with new routing, but kept for safety)
+        Vehicle vehicle = GetParentVehicle(target);
         if (vehicle != null)
         {
-            // Always pass a UnityEngine.Object as source, fallback to context if available, otherwise null
-            UnityEngine.Object actualSource = source ?? context;
-            vehicle.AddModifier(ToRuntimeModifier(actualSource));
-            
-            // Logging removed - Vehicle.AddModifier() already logs with full context
-            // This prevents duplicate modifier events
+            VehicleComponent component = vehicle.ResolveModifierTarget(attribute);
+            if (component != null)
+            {
+                component.AddModifier(ToRuntimeModifier(actualSource));
+            }
         }
-        // Handle other Entity types here in the future
     }
 }

@@ -45,29 +45,37 @@ public class ChassisComponent : VehicleComponent
     }
     
     /// <summary>
-    /// Get maximum HP for this chassis (base + bonuses from other components).
+    /// Get maximum HP for this chassis (base + bonuses from other components + modifiers).
     /// Uses Entity.maxHealth as the base.
     /// </summary>
     public int GetMaxHP()
     {
         if (parentVehicle == null) return maxHealth;
         
-        // Base HP + bonuses from other components
-        float bonuses = parentVehicle.GetComponentStat(VehicleStatModifiers.StatNames.HP);
-        return maxHealth + Mathf.RoundToInt(bonuses);
+        // Apply component modifiers to base HP
+        float modifiedHP = ApplyModifiers(Attribute.MaxHealth, maxHealth);
+        
+        // Add bonuses from other components
+        float componentBonuses = parentVehicle.GetComponentStat(VehicleStatModifiers.StatNames.HP);
+        
+        return Mathf.RoundToInt(modifiedHP + componentBonuses);
     }
     
     /// <summary>
-    /// Get total Armor Class (base + bonuses from other components).
+    /// Get total Armor Class (base + bonuses from other components + modifiers).
     /// Uses Entity.armorClass as the base.
     /// </summary>
     public int GetTotalAC()
     {
         if (parentVehicle == null) return armorClass;
         
-        // Base AC + bonuses from other components
-        float bonuses = parentVehicle.GetComponentStat(VehicleStatModifiers.StatNames.AC);
-        return armorClass + Mathf.RoundToInt(bonuses);
+        // Apply component modifiers to base AC
+        float modifiedAC = ApplyModifiers(Attribute.ArmorClass, armorClass);
+        
+        // Add bonuses from other components
+        float componentBonuses = parentVehicle.GetComponentStat(VehicleStatModifiers.StatNames.AC);
+        
+        return Mathf.RoundToInt(modifiedAC + componentBonuses);
     }
     
     /// <summary>
