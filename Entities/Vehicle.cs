@@ -935,14 +935,21 @@ public class Vehicle : MonoBehaviour
 
     /// <summary>
     /// Get AC for targeting a specific component.
-    /// Accounts for component's base AC.
-    /// Future: Could add modifiers for cover, orientation, etc.
+    /// Returns modifier-adjusted AC if component is a ChassisComponent.
     /// </summary>
     public int GetComponentAC(VehicleComponent targetComponent)
     {
         if (targetComponent == null)
             return GetArmorClass(); // Fallback to chassis AC
         
+        // If targeting chassis, use modifier-adjusted AC
+        if (targetComponent is ChassisComponent chassis)
+        {
+            return chassis.GetTotalAC();
+        }
+        
+        // For other components, use base AC (they don't have GetTotalAC yet)
+        // TODO: Add GetTotalAC() to all VehicleComponents for modifier support
         return targetComponent.armorClass;
     }
 

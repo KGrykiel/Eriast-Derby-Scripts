@@ -41,9 +41,10 @@ public static class RollUtility
             switch (rollType)
             {
                 case RollType.ArmorClass:
-                    if (target is VehicleComponent)
+                    if (target is VehicleComponent component)
                     {
-                        targetValue = target.GetArmorClass();
+                        // Use modifier-adjusted AC for components
+                        targetValue = vehicleTarget.GetComponentAC(component);
                     }
                     else
                     {
