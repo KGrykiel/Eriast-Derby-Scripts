@@ -1,15 +1,14 @@
 using UnityEngine;
 
+// Preset for restoration skills (ResourceRestorationEffect)
 [CreateAssetMenu(menuName = "Racing/Skill/Restoration")]
 public class RestorationSkill : Skill
 {
     private void OnEnable()
     {
-        // Set default: restoration skills typically don't require attack rolls
-        requiresAttackRoll = false;
-        rollType = RollType.None;
+        // Set default configuration for restoration skills
+        skillRollType = SkillRollType.None;  // Heals don't require rolls
         
-        // Only auto-populate if the list is empty or null
         if (effectInvocations == null || effectInvocations.Count == 0)
         {
             effectInvocations = new System.Collections.Generic.List<EffectInvocation>
@@ -17,7 +16,7 @@ public class RestorationSkill : Skill
                 new EffectInvocation
                 {
                     effect = new ResourceRestorationEffect(),
-                    targetMode = EffectTargetMode.User
+                    target = EffectTarget.SourceVehicle  // Routes to chassis for healing
                 }
             };
         }

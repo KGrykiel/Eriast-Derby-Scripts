@@ -1,15 +1,14 @@
 using UnityEngine;
 
+// Preset for buff skills (AttributeModifierEffect)
 [CreateAssetMenu(menuName = "Racing/Skill/Buff")]
 public class BuffSkill : Skill
 {
     private void OnEnable()
     {
-        // Set default: buff skills typically don't require attack rolls
-        requiresAttackRoll = false;
-        rollType = RollType.None;
+        // Set default configuration for buff skills
+        skillRollType = SkillRollType.None;  // Buffs don't require rolls
         
-        // Only auto-populate if the list is empty or null
         if (effectInvocations == null || effectInvocations.Count == 0)
         {
             effectInvocations = new System.Collections.Generic.List<EffectInvocation>
@@ -17,7 +16,7 @@ public class BuffSkill : Skill
                 new EffectInvocation
                 {
                     effect = new AttributeModifierEffect(),
-                    targetMode = EffectTargetMode.User
+                    target = EffectTarget.SourceVehicle  // Routes based on attribute type
                 }
             };
         }

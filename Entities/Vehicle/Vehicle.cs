@@ -954,6 +954,16 @@ public class Vehicle : MonoBehaviour
         // TODO: Add GetTotalAC() to all VehicleComponents for modifier support
         return targetComponent.armorClass;
     }
+    
+    /// <summary>
+    /// Get the first component of a specific type on this vehicle.
+    /// Returns null if no matching component found.
+    /// Used by targeting system to find specific components (e.g., "target enemy's power core").
+    /// </summary>
+    public VehicleComponent GetComponentOfType(ComponentType type)
+    {
+        return AllComponents.FirstOrDefault(c => c != null && c.componentType == type);
+    }
 
     // ==================== DEBUG/TESTING ====================
 

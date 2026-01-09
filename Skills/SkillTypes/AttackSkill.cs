@@ -7,8 +7,7 @@ public class AttackSkill : Skill
     private void OnEnable()
     {
         // Set default roll configuration for attacks
-        requiresAttackRoll = true;
-        rollType = RollType.ArmorClass;
+        skillRollType = SkillRollType.AttackRoll;
         
         // Only auto-populate if the list is empty or null
         // Allow users to add multiple effects without them being deleted
@@ -29,7 +28,7 @@ public class AttackSkill : Skill
                             skillDamageType = DamageType.Physical
                         }
                     },
-                    targetMode = EffectTargetMode.Target
+                    target = EffectTarget.SelectedTarget
                 }
             };
         }

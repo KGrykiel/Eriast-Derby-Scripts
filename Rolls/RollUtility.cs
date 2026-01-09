@@ -8,11 +8,11 @@ public static class RollUtility
     /// </summary>
     /// <param name="user">The attacking vehicle</param>
     /// <param name="target">The target entity</param>
-    /// <param name="rollType">What to roll against (AC, MR, etc.)</param>
+    /// <param name="targetType">What target number to use (AC, MR, etc.)</param>
     /// <param name="modifiers">List of all modifiers with sources</param>
     /// <param name="contextName">Name of the skill/effect for logging</param>
     /// <returns>RollBreakdown with full details</returns>
-    public static RollBreakdown RollToHitWithBreakdown(Vehicle user, Entity target, RollType rollType, List<RollModifier> modifiers = null, string contextName = null)
+    public static RollBreakdown RollToHitWithBreakdown(Vehicle user, Entity target, TargetNumberType targetType, List<RollModifier> modifiers = null, string contextName = null)
     {
         // Get target vehicle from entity (if it's a component)
         Vehicle vehicleTarget = GetParentVehicle(target);
@@ -38,9 +38,9 @@ public static class RollUtility
         
         if (vehicleTarget != null)
         {
-            switch (rollType)
+            switch (targetType)
             {
-                case RollType.ArmorClass:
+                case TargetNumberType.ArmorClass:
                     if (target is VehicleComponent component)
                     {
                         // Use modifier-adjusted AC for components
@@ -52,7 +52,7 @@ public static class RollUtility
                     }
                     targetName = "AC";
                     break;
-                case RollType.MagicResistance:
+                case TargetNumberType.MagicResistance:
                     targetValue = Mathf.RoundToInt(vehicleTarget.GetAttribute(Attribute.MagicResistance));
                     targetName = "MR";
                     break;
@@ -61,36 +61,8 @@ public static class RollUtility
         
         // Set target and determine success
         breakdown.Against(targetValue, targetName);
-        
-        // Log with full breakdown
-        string userName = user?.vehicleName ?? "Unknown";
-        string targetEntityName = vehicleTarget?.vehicleName ?? "Unknown";
-        if (target is VehicleComponent comp)
-        {
-            targetEntityName = $"{vehicleTarget?.vehicleName}'s {comp.name}";
-        }
-        string context = contextName ?? "effect";
      
         return breakdown;
-    }
-    
-    /// <summary>
-    /// Roll to hit an entity. Legacy method for backward compatibility.
-    /// </summary>
-    public static bool RollToHit(Vehicle user, Entity target, RollType rollType, int toHitBonus = 0, string contextName = null)
-    {
-        // Convert single int bonus to modifier list
-        List<RollModifier> modifiers = null;
-        if (toHitBonus != 0)
-        {
-            modifiers = new List<RollModifier>
-            {
-                new RollModifier("Bonus", toHitBonus, "Unknown Source")
-            };
-        }
-        
-        var breakdown = RollToHitWithBreakdown(user, target, rollType, modifiers, contextName);
-        return breakdown.success ?? false;
     }
     
     /// <summary>
@@ -125,18 +97,6 @@ public static class RollUtility
     }
     
     /// <summary>
-    /// Rolls a number of dice and adds a bonus, for damage rolls.
-    /// Legacy method - returns just the total.
-    /// </summary>
-    public static int RollDamage(int diceCount, int dieSize, int bonus = 0)
-    {
-        int total = bonus;
-        for (int i = 0; i < diceCount; i++)
-            total += Random.Range(1, dieSize + 1);
-        return total;
-    }
-    
-    /// <summary>
     /// Roll damage from a weapon component with full breakdown.
     /// </summary>
     public static DamageBreakdown RollWeaponDamageWithBreakdown(WeaponComponent weapon)
@@ -154,16 +114,6 @@ public static class RollUtility
             weapon.damageType,
             weapon.name
         );
-    }
-    
-    /// <summary>
-    /// Roll damage from a weapon component.
-    /// Legacy method - returns just the total.
-    /// </summary>
-    public static int RollWeaponDamage(WeaponComponent weapon)
-    {
-        if (weapon == null) return 0;
-        return RollDamage(weapon.damageDice, weapon.damageDieSize, weapon.damageBonus);
     }
 
     /// <summary>
@@ -185,24 +135,9 @@ public static class RollUtility
         
         breakdown.Against(difficulty, "DC");
         
-        
         return breakdown;
     }
 
-    /// <summary>
-    /// Performs a skill check: rolls d20 + bonus and compares to difficulty.
-    /// Legacy method - returns tuple for backward compatibility.
-    /// </summary>
-    public static (bool success, int roll, int bonus, int total) SkillCheck(int bonus, int difficulty)
-    {
-        int roll = Random.Range(1, 21);
-        int total = roll + bonus;
-        bool success = total >= difficulty;
-        return (success, roll, bonus, total);
-    }
-
-    // ==================== HELPER METHODS ====================
-    
     /// <summary>
     /// Create a modifier list builder for fluent API.
     /// </summary>
@@ -248,10 +183,13 @@ public class ModifierListBuilder
     }
 }
 
-public enum RollType
+/// <summary>
+/// Defines what target number to roll against.
+/// Used internally by roll methods - skills should use SkillRollType instead.
+/// </summary>
+public enum TargetNumberType
 {
-    None,           // Always hits
-    ArmorClass,     // Uses ArmorClass
-    MagicResistance // Uses MagicResistance
-    // will add more later
+    ArmorClass,       // Roll vs target's AC
+    MagicResistance,  // Roll vs target's MR
+    DifficultyClass   // Roll vs fixed DC (future: saving throws, skill checks)
 }

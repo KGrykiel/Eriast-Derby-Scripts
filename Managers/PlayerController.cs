@@ -12,6 +12,8 @@ using Assets.Scripts.Entities.Vehicle.VehicleComponents;
 /// </summary>
 public class PlayerController : MonoBehaviour
 {
+    #region Fields & Configuration
+    
     [Header("UI References")]
     [Tooltip("Container for role tab buttons")]
     public Transform roleTabContainer;
@@ -52,7 +54,7 @@ public class PlayerController : MonoBehaviour
     private Vehicle selectedTarget = null;
     private Skill selectedSkill = null;
     private VehicleComponent selectedSkillSourceComponent = null;
-    private VehicleComponent selectedTargetComponent = null; // NEW: For component targeting
+    private VehicleComponent selectedTargetComponent = null;
     private bool isSelectingStage = false;
     private bool isPlayerTurnActive = false;
 
@@ -84,8 +86,10 @@ public class PlayerController : MonoBehaviour
     /// Returns true if the player is currently making a decision.
     /// </summary>
     public bool IsAwaitingInput => isSelectingStage || isPlayerTurnActive;
+    
+    #endregion
 
-    #region Player Turn Management
+    #region Turn Lifecycle
 
     /// <summary>
     /// Processes player movement through stages.
@@ -163,6 +167,33 @@ public class PlayerController : MonoBehaviour
     }
 
     /// <summary>
+    /// Handles End Turn button click. Completes player's turn.
+    /// Always available - no requirement for all components to act.
+    /// </summary>
+    public void OnEndTurnClicked()
+    {
+        if (!isPlayerTurnActive) return;
+
+        isPlayerTurnActive = false;
+        ClearPlayerSelections();
+        HidePlayerUI();
+
+        RaceHistory.Log(
+            EventType.System,
+            EventImportance.Low,
+            $"{playerVehicle.vehicleName} ended turn",
+            playerVehicle.currentStage,
+            playerVehicle
+        );
+
+        onPlayerTurnComplete?.Invoke();
+    }
+
+    #endregion
+
+    #region Role & Skill Selection UI
+
+    /// <summary>
     /// Shows the player turn UI panel, role tabs, and skill selection.
     /// </summary>
     private void ShowPlayerUI()
@@ -196,55 +227,6 @@ public class PlayerController : MonoBehaviour
         if (stageSelectionPanel != null)
             stageSelectionPanel.SetActive(false);
     }
-
-    /// <summary>
-    /// Updates the turn status display with current vehicle state.
-    /// </summary>
-    private void UpdateTurnStatusDisplay()
-    {
-        if (turnStatusText != null)
-        {
-            turnStatusText.text = $"<b>{playerVehicle.vehicleName}'s Turn</b>\n" +
-                                  $"Stage: {playerVehicle.currentStage?.stageName ?? "Unknown"}\n" +
-                                  $"Progress: {playerVehicle.progress:F1}m";
-        }
-
-        if (actionsRemainingText != null)
-        {
-            float maxHealth = playerVehicle.GetAttribute(Attribute.MaxHealth);
-            float maxEnergy = playerVehicle.GetAttribute(Attribute.MaxEnergy);
-            
-            actionsRemainingText.text = $"HP: {playerVehicle.health}/{maxHealth:F0}  " +
-                                        $"Energy: {playerVehicle.energy}/{maxEnergy:F0}";
-        }
-    }
-
-    /// <summary>
-    /// Handles End Turn button click. Completes player's turn.
-    /// Always available - no requirement for all components to act.
-    /// </summary>
-    public void OnEndTurnClicked()
-    {
-        if (!isPlayerTurnActive) return;
-
-        isPlayerTurnActive = false;
-        ClearPlayerSelections();
-        HidePlayerUI();
-
-        RaceHistory.Log(
-            EventType.System,
-            EventImportance.Low,
-            $"{playerVehicle.vehicleName} ended turn",
-            playerVehicle.currentStage,
-            playerVehicle
-        );
-
-        onPlayerTurnComplete?.Invoke();
-    }
-
-    #endregion
-
-    #region Role Tab UI
 
     /// <summary>
     /// Displays role tabs for all available roles.
@@ -311,10 +293,6 @@ public class PlayerController : MonoBehaviour
         // Show skills for this role
         ShowSkillSelection();
     }
-
-    #endregion
-
-    #region Skill Selection and Execution
 
     /// <summary>
     /// Displays skill selection UI for the currently selected role.
@@ -390,8 +368,13 @@ public class PlayerController : MonoBehaviour
         }
     }
 
+    #endregion
+
+    #region Skill Execution
+
     /// <summary>
     /// Executes the selected skill immediately and marks the component as acted.
+    /// Orchestrates: validation ? execution ? resource consumption ? logging ? UI refresh.
     /// </summary>
     private void ExecuteSkillImmediately()
     {
@@ -399,86 +382,127 @@ public class PlayerController : MonoBehaviour
 
         Vehicle target = selectedTarget ?? playerVehicle;
 
-        // Validate energy cost BEFORE attempting to use the skill
-        if (playerVehicle.energy < selectedSkill.energyCost)
-        {
-            RaceHistory.Log(
-                EventType.SkillUse,
-                EventImportance.Medium,
-                $"{playerVehicle.vehicleName} cannot afford {selectedSkill.name}",
-                playerVehicle.currentStage,
-                playerVehicle
-            ).WithMetadata("skillName", selectedSkill.name)
-             .WithMetadata("energyCost", selectedSkill.energyCost)
-             .WithMetadata("currentEnergy", playerVehicle.energy)
-             .WithMetadata("failed", true);
-            
-            ClearPlayerSelections();
+        // Validate energy cost
+        if (!ValidateSkillEnergyCost())
             return;
-        }
 
-        // Extract weapon if source component is a weapon
-        WeaponComponent weapon = selectedSkillSourceComponent as WeaponComponent;
+        // Execute skill with appropriate targeting
+        bool skillSucceeded = ExecuteSkillWithTargeting(target);
+
+        // Consume resources (always happens, even on miss!)
+        ConsumeSkillResources();
         
-        // Execute skill with weapon parameter (null if not a weapon)
-        bool result = selectedSkill.Use(playerVehicle, target, weapon);
+        // Log skill usage result
+        LogSkillUsageResult(skillSucceeded);
 
-        // ALWAYS consume energy and mark component as acted (even on miss!)
-        // This is the intended game design: missed attacks still consume resources
+        // Refresh UI
+        RefreshPlayerUIAfterSkill();
+        
+        ClearPlayerSelections();
+    }
+    
+    /// <summary>
+    /// Validates that the player has enough energy to use the selected skill.
+    /// Logs failure if validation fails.
+    /// </summary>
+    private bool ValidateSkillEnergyCost()
+    {
+        if (playerVehicle.energy >= selectedSkill.energyCost)
+            return true;
+        
+        RaceHistory.Log(
+            EventType.SkillUse,
+            EventImportance.Medium,
+            $"{playerVehicle.vehicleName} cannot afford {selectedSkill.name}",
+            playerVehicle.currentStage,
+            playerVehicle
+        ).WithMetadata("skillName", selectedSkill.name)
+         .WithMetadata("energyCost", selectedSkill.energyCost)
+         .WithMetadata("currentEnergy", playerVehicle.energy)
+         .WithMetadata("failed", true);
+        
+        ClearPlayerSelections();
+        return false;
+    }
+    
+    /// <summary>
+    /// Executes the skill with appropriate targeting (component or standard).
+    /// Returns true if skill succeeded (hit/applied), false if missed.
+    /// </summary>
+    private bool ExecuteSkillWithTargeting(Vehicle target)
+    {
+        if (selectedTargetComponent != null)
+        {
+            // Component-targeted skill - use 4-parameter overload
+            return selectedSkill.Use(playerVehicle, target, selectedSkillSourceComponent, selectedTargetComponent);
+        }
+        else
+        {
+            // Standard skill - use 3-parameter overload
+            return selectedSkill.Use(playerVehicle, target, selectedSkillSourceComponent);
+        }
+    }
+    
+    /// <summary>
+    /// Consumes energy and marks the component as acted.
+    /// Called after skill execution (even on miss - intended design).
+    /// </summary>
+    private void ConsumeSkillResources()
+    {
         playerVehicle.energy -= selectedSkill.energyCost;
         selectedSkillSourceComponent.hasActedThisTurn = true;
+    }
+    
+    /// <summary>
+    /// Logs skill usage result to race history with role and component context.
+    /// </summary>
+    private void LogSkillUsageResult(bool skillSucceeded)
+    {
+        if (!currentRole.HasValue) return;
         
-        if (result)
+        string roleName = currentRole.Value.roleName;
+        string characterName = currentRole.Value.assignedCharacter?.characterName ?? "Unassigned";
+        string fullRoleName = $"{roleName} ({characterName})";
+        
+        if (skillSucceeded)
         {
             // Skill succeeded (hit or applied effect)
             RaceHistory.Log(
                 EventType.SkillUse,
                 EventImportance.Medium,
-                $"{currentRole.Value.roleName} ({currentRole.Value.assignedCharacter?.characterName ?? "Unassigned"}) used {selectedSkill.name}",
+                $"{fullRoleName} used {selectedSkill.name}",
                 playerVehicle.currentStage,
                 playerVehicle
-            ).WithMetadata("roleName", currentRole.Value.roleName)
+            ).WithMetadata("roleName", roleName)
              .WithMetadata("skillName", selectedSkill.name)
              .WithMetadata("componentName", selectedSkillSourceComponent.name);
         }
         else
         {
-            // Skill failed (missed), but still consumed energy and ended turn
+            // Skill failed (missed), but still consumed energy
             RaceHistory.Log(
                 EventType.SkillUse,
                 EventImportance.Medium,
-                $"{currentRole.Value.roleName} used {selectedSkill.name} but missed!",
+                $"{fullRoleName} used {selectedSkill.name} but missed!",
                 playerVehicle.currentStage,
                 playerVehicle
-            ).WithMetadata("roleName", currentRole.Value.roleName)
+            ).WithMetadata("roleName", roleName)
              .WithMetadata("skillName", selectedSkill.name)
              .WithMetadata("componentName", selectedSkillSourceComponent.name)
              .WithMetadata("missed", true);
         }
-
-        // Refresh UI immediately
-        UpdateTurnStatusDisplay();
-        ShowRoleTabs(); // Update tab icons (? for acted roles)
-        ShowSkillSelection(); // Disable skill buttons for acted role
-        gameManager.RefreshAllPanels(); // Update all DM panels
-        
-        ClearPlayerSelections();
     }
-
+    
     /// <summary>
-    /// Checks if a skill requires target selection based on its effect invocations.
+    /// Refreshes all player UI elements after skill execution.
+    /// Updates turn status, role tabs, skill buttons, and DM panels.
     /// </summary>
-    private bool SkillNeedsTarget(Skill skill)
+    private void RefreshPlayerUIAfterSkill()
     {
-        if (skill.effectInvocations == null) return false;
-
-        foreach (var invocation in skill.effectInvocations)
-        {
-            if (invocation.targetMode == EffectTargetMode.Target ||
-                invocation.targetMode == EffectTargetMode.Both)
-                return true;
-        }
-        return false;
+        UpdateTurnStatusDisplay();
+        ShowRoleTabs();
+        ShowSkillSelection();
+        gameManager.RefreshAllPanels();
     }
 
     #endregion
@@ -557,7 +581,7 @@ public class PlayerController : MonoBehaviour
 
     #endregion
 
-    #region Component Selection UI (Phase 6)
+    #region Component Selection UI
 
     /// <summary>
     /// Displays component selection UI for the selected target vehicle.
@@ -647,21 +671,7 @@ public class PlayerController : MonoBehaviour
         if (targetSelectionPanel != null)
             targetSelectionPanel.SetActive(false);
 
-        // Update skill's target component name
-        if (selectedSkill != null)
-        {
-            if (component != null)
-            {
-                selectedSkill.targetComponentName = component.name;
-            }
-            else
-            {
-                // Targeting chassis - clear component name
-                selectedSkill.targetComponentName = "";
-            }
-        }
-
-        // Execute skill
+        // Execute skill with explicit component targeting
         ExecuteSkillImmediately();
     }
 
@@ -722,7 +732,49 @@ public class PlayerController : MonoBehaviour
 
     #endregion
 
-    #region Helper Methods
+    #region Helpers & Utilities
+
+    /// <summary>
+    /// Updates the turn status display with current vehicle state.
+    /// </summary>
+    private void UpdateTurnStatusDisplay()
+    {
+        if (turnStatusText != null)
+        {
+            turnStatusText.text = $"<b>{playerVehicle.vehicleName}'s Turn</b>\n" +
+                                  $"Stage: {playerVehicle.currentStage?.stageName ?? "Unknown"}\n" +
+                                  $"Progress: {playerVehicle.progress:F1}m";
+        }
+
+        if (actionsRemainingText != null)
+        {
+            float maxHealth = playerVehicle.GetAttribute(Attribute.MaxHealth);
+            float maxEnergy = playerVehicle.GetAttribute(Attribute.MaxEnergy);
+            
+            actionsRemainingText.text = $"HP: {playerVehicle.health}/{maxHealth:F0}  " +
+                                        $"Energy: {playerVehicle.energy}/{maxEnergy:F0}";
+        }
+    }
+
+    /// <summary>
+    /// Checks if a skill requires target selection based on its effect invocations.
+    /// </summary>
+    private bool SkillNeedsTarget(Skill skill)
+    {
+        if (skill.effectInvocations == null) return false;
+
+        foreach (var invocation in skill.effectInvocations)
+        {
+            // Check if any effect targets something other than the user
+            if (invocation.target == EffectTarget.SelectedTarget ||
+                invocation.target == EffectTarget.TargetVehicle ||
+                invocation.target == EffectTarget.Both ||
+                invocation.target == EffectTarget.AllEnemiesInStage ||
+                invocation.target == EffectTarget.AllAlliesInStage)
+                return true;
+        }
+        return false;
+    }
 
     /// <summary>
     /// Clears all player selections (role, skill, target, component).

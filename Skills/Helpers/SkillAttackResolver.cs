@@ -13,11 +13,20 @@ namespace Assets.Scripts.Skills.Helpers
         /// </summary>
         public static RollBreakdown PerformSkillRoll(Skill skill, Vehicle user, Entity targetEntity, VehicleComponent sourceComponent)
         {
-            if (!skill.requiresAttackRoll)
+            if (skill.skillRollType != SkillRollType.AttackRoll)
                 return null;
             
+            // Infer target number type from SkillRollType
+            TargetNumberType targetNumberType = skill.skillRollType switch
+            {
+                SkillRollType.AttackRoll => TargetNumberType.ArmorClass,
+                SkillRollType.SavingThrow => TargetNumberType.DifficultyClass,
+                SkillRollType.SkillCheck => TargetNumberType.DifficultyClass,
+                _ => TargetNumberType.ArmorClass
+            };
+            
             var modifiers = BuildSkillRollModifiers(skill, user, sourceComponent);
-            return RollUtility.RollToHitWithBreakdown(user, targetEntity, skill.rollType, modifiers, skill.name);
+            return RollUtility.RollToHitWithBreakdown(user, targetEntity, targetNumberType, modifiers, skill.name);
         }
         
         /// <summary>
@@ -28,8 +37,15 @@ namespace Assets.Scripts.Skills.Helpers
         {
             var builder = RollUtility.BuildModifiers();
             
+            // Infer target number type for caster bonus calculation
+            TargetNumberType targetNumberType = skill.skillRollType switch
+            {
+                SkillRollType.AttackRoll => TargetNumberType.ArmorClass,
+                _ => TargetNumberType.DifficultyClass
+            };
+            
             // Add caster/vehicle bonus (future: from character stats)
-            int casterBonus = GetCasterToHitBonus(user, skill.rollType);
+            int casterBonus = GetCasterToHitBonus(user, targetNumberType);
             builder.AddIf(casterBonus != 0, "Caster Bonus", casterBonus, user.vehicleName);
             
             // Add source component bonus (weapon attack bonus, power core bonus, etc.)
@@ -47,13 +63,10 @@ namespace Assets.Scripts.Skills.Helpers
         }
         
         /// <summary>
-        /// Utility: Get caster's to-hit bonus based on roll type.
+        /// Utility: Get caster's to-hit bonus based on target number type.
         /// </summary>
-        private static int GetCasterToHitBonus(Vehicle caster, RollType rollType)
+        private static int GetCasterToHitBonus(Vehicle caster, TargetNumberType targetNumberType)
         {
-            if (rollType == RollType.None)
-                return 0;
-
             // Future: Pull from vehicle/character attributes
             return 0;
         }
@@ -92,6 +105,7 @@ namespace Assets.Scripts.Skills.Helpers
         
         /// <summary>
         /// Attempts two-stage component attack: Component AC (no penalty) → Chassis AC (with penalty).
+        /// Calculates and applies damage only after successful hit, targeting the correct entity.
         /// </summary>
         public static bool AttemptTwoStageComponentAttack(
             Skill skill,
@@ -99,8 +113,7 @@ namespace Assets.Scripts.Skills.Helpers
             Vehicle mainTarget, 
             VehicleComponent targetComponent,
             string targetComponentName,
-            VehicleComponent sourceComponent,
-            Dictionary<Entity, List<DamageBreakdown>> damageByTarget)
+            VehicleComponent sourceComponent)
         {
             // Build modifiers
             var componentModifiers = BuildComponentModifiers(sourceComponent);
@@ -114,6 +127,10 @@ namespace Assets.Scripts.Skills.Helpers
 
             if (componentRoll.success == true)
             {
+                // Component hit - calculate and apply damage to component
+                var damageByTarget = SkillEffectApplicator.ApplyAllEffects(
+                    skill, user, mainTarget, sourceComponent, targetComponent);
+                
                 SkillCombatLogger.LogComponentHit(skill.name, user, mainTarget, targetComponentName, sourceComponent, componentRoll, damageByTarget);
                 return true;
             }
@@ -129,31 +146,17 @@ namespace Assets.Scripts.Skills.Helpers
 
             if (chassisRoll.success == true)
             {
+                // Chassis hit - calculate and apply damage to chassis (not component!)
+                var damageByTarget = SkillEffectApplicator.ApplyAllEffects(
+                    skill, user, mainTarget, sourceComponent, null);  // null = use routing (targets chassis)
+                
                 SkillCombatLogger.LogChassisHit(skill.name, user, mainTarget, targetComponentName, sourceComponent, chassisRoll, damageByTarget);
                 return true;
             }
 
-            // Stage 2 Miss - log it
+            // Stage 2 Miss - log it (NO DAMAGE APPLIED)
             SkillCombatLogger.LogChassisMiss(skill.name, user, mainTarget, sourceComponent, chassisRoll);
             return false;
-        }
-        
-        /// <summary>
-        /// DEPRECATED: Old method name - use PerformSkillRoll instead.
-        /// </summary>
-        [System.Obsolete("Use PerformSkillRoll - more generic than 'AttackRoll'")]
-        public static RollBreakdown PerformAttackRoll(Skill skill, Vehicle user, Entity targetEntity, WeaponComponent weapon)
-        {
-            return PerformSkillRoll(skill, user, targetEntity, weapon);
-        }
-        
-        /// <summary>
-        /// DEPRECATED: Old method name - use BuildSkillRollModifiers instead.
-        /// </summary>
-        [System.Obsolete("Use BuildSkillRollModifiers - works for all skill types")]
-        public static List<RollModifier> BuildAttackModifiers(Skill skill, Vehicle user, WeaponComponent weapon)
-        {
-            return BuildSkillRollModifiers(skill, user, weapon);
         }
     }
 }

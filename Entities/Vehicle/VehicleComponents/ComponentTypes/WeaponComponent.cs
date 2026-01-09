@@ -48,10 +48,12 @@ public class WeaponComponent : VehicleComponent
     
     /// <summary>
     /// Roll this weapon's damage dice.
+    /// Returns the total damage value.
     /// </summary>
     public int RollDamage()
     {
-        return RollUtility.RollDamage(damageDice, damageDieSize, damageBonus);
+        var breakdown = RollUtility.RollWeaponDamageWithBreakdown(this);
+        return breakdown.finalDamage;
     }
     
     /// <summary>
@@ -64,7 +66,9 @@ public class WeaponComponent : VehicleComponent
         // Critical hits double the dice (roll again and add)
         if (isCritical)
         {
-            damage += RollUtility.RollDamage(damageDice, damageDieSize, 0); // No bonus on crit dice
+            var critBreakdown = RollUtility.RollDamageWithBreakdown(
+                damageDice, damageDieSize, 0, "Critical", damageType, name);
+            damage += critBreakdown.finalDamage;
         }
         
         return DamagePacket.FromWeapon(damage, damageType, source, isCritical);

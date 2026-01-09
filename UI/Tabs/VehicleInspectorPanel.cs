@@ -45,7 +45,7 @@ public class VehicleInspectorPanel : MonoBehaviour
 
     private void TryInitialize()
     {
- var gameManager = FindObjectOfType<GameManager>();
+ var gameManager = FindFirstObjectByType<GameManager>();
   if (gameManager != null)
         {
           var vehicles = gameManager.GetVehicles();

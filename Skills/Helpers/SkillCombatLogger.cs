@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 using RacingGame.Events;
 using EventType = RacingGame.Events.EventType;
@@ -53,24 +52,6 @@ namespace Assets.Scripts.Skills.Helpers
             hitEvt.WithMetadata("skillName", skillName)
                   .WithMetadata("result", "hit")
                   .WithMetadata("rollBreakdown", skillRoll?.ToDetailedString() ?? "");
-        }
-        
-        /// <summary>
-        /// DEPRECATED: Use LogSkillMiss instead - accepts generic VehicleComponent.
-        /// </summary>
-        [System.Obsolete("Use LogSkillMiss - works for all source component types")]
-        public static void LogAttackMiss(string skillName, Vehicle user, Vehicle mainTarget, WeaponComponent weapon, RollBreakdown attackRoll)
-        {
-            LogSkillMiss(skillName, user, mainTarget, weapon, attackRoll);
-        }
-        
-        /// <summary>
-        /// DEPRECATED: Use LogSkillHit instead - accepts generic VehicleComponent.
-        /// </summary>
-        [System.Obsolete("Use LogSkillHit - works for all source component types")]
-        public static void LogAttackHit(string skillName, Vehicle user, Vehicle mainTarget, WeaponComponent weapon, RollBreakdown attackRoll)
-        {
-            LogSkillHit(skillName, user, mainTarget, weapon, attackRoll);
         }
         
         /// <summary>

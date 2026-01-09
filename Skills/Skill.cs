@@ -11,11 +11,8 @@ public abstract class Skill : ScriptableObject
     public int energyCost = 1;
 
     [Header("Roll Configuration")]
-    [Tooltip("Does this skill require an attack roll to hit?")]
-    public bool requiresAttackRoll = true;
-    
-    [Tooltip("Type of roll (AC for attacks, etc.)")]
-    public RollType rollType = RollType.ArmorClass;
+    [Tooltip("What type of roll does this skill require?")]
+    public SkillRollType skillRollType = SkillRollType.None;
 
     [Header("Effects")]
     [SerializeField]
@@ -30,14 +27,7 @@ public abstract class Skill : ScriptableObject
     public int componentTargetingPenalty = 2;
     
     /// <summary>
-    /// Runtime-only: The name of the component being targeted (set by PlayerController).
-    /// DO NOT expose to Inspector - this is set programmatically when player selects a target.
-    /// </summary>
-    [HideInInspector]
-    public string targetComponentName = "";
-
-    /// <summary>
-    /// Uses the skill without a weapon. For spells and non-weapon abilities.
+    /// Uses the skill without a source component. For spells and non-weapon abilities.
     /// </summary>
     public virtual bool Use(Vehicle user, Vehicle mainTarget)
     {
@@ -46,34 +36,53 @@ public abstract class Skill : ScriptableObject
 
     /// <summary>
     /// Uses the skill with an optional source component. Applies all effect invocations and logs the results.
-    /// Supports component targeting for vehicles.
+    /// Standard targeting - targets vehicle's chassis.
     /// </summary>
     public virtual bool Use(Vehicle user, Vehicle mainTarget, VehicleComponent sourceComponent)
+    {
+        return Use(user, mainTarget, sourceComponent, null);
+    }
+
+    /// <summary>
+    /// Uses the skill with explicit component targeting.
+    /// If targetComponent is provided, uses component-targeted resolution (two-stage rolls for attacks).
+    /// If targetComponent is null, uses standard resolution.
+    /// </summary>
+    public virtual bool Use(Vehicle user, Vehicle mainTarget, VehicleComponent sourceComponent, VehicleComponent targetComponent)
     {
         // Validate target
         if (!SkillValidator.ValidateTarget(this, user, mainTarget))
             return false;
 
-        // Check for component targeting
-        if (allowsComponentTargeting && !string.IsNullOrEmpty(targetComponentName))
+        // Determine resolution strategy
+        if (allowsComponentTargeting && targetComponent != null)
         {
-            return UseComponentTargeted(user, mainTarget, sourceComponent);
+            return UseComponentTargeted(user, mainTarget, sourceComponent, targetComponent);
         }
-
-        // Standard skill resolution
+        else
+        {
+            return UseStandardTargeting(user, mainTarget, sourceComponent);
+        }
+    }
+    
+    /// <summary>
+    /// Standard targeting - targets vehicle (routes to appropriate component based on effect type).
+    /// </summary>
+    private bool UseStandardTargeting(Vehicle user, Vehicle mainTarget, VehicleComponent sourceComponent)
+    {
+        // Validate chassis exists
         if (user.chassis == null || mainTarget.chassis == null)
         {
             Debug.LogWarning($"[Skill] {name}: User or target has no chassis!");
             return false;
         }
         
-        // Perform skill roll (attack or saving throw) if required
-        if (requiresAttackRoll)
+        // Perform roll if required
+        if (skillRollType != SkillRollType.None)
         {
-            RollBreakdown skillRoll = SkillAttackResolver.PerformSkillRoll(
-                this, user, mainTarget.chassis, sourceComponent);
+            RollBreakdown skillRoll = PerformSkillRoll(user, mainTarget.chassis, sourceComponent);
             
-            if (skillRoll?.success == false)
+            if (skillRoll?.success != true)
             {
                 SkillCombatLogger.LogSkillMiss(name, user, mainTarget, sourceComponent, skillRoll);
                 return false;
@@ -83,7 +92,7 @@ public abstract class Skill : ScriptableObject
             SkillCombatLogger.LogSkillHit(name, user, mainTarget, sourceComponent, skillRoll);
         }
         
-        // Apply all effects and track results
+        // Apply all effects (routing handles destination)
         var damageByTarget = SkillEffectApplicator.ApplyAllEffects(
             this, user, mainTarget, sourceComponent);
         
@@ -93,43 +102,124 @@ public abstract class Skill : ScriptableObject
             SkillCombatLogger.LogDamageResults(name, user, damageByTarget);
         }
         
-        return damageByTarget.Count > 0 || effectInvocations.Any(e => !(e.effect is DamageEffect));
+        return damageByTarget.Count > 0 || HasNonDamageEffects();
     }
     
     /// <summary>
-    /// Component-targeted skill resolution.
-    /// For attack skills: Two-stage roll (component AC → chassis AC fallback).
-    /// For non-attack skills (buffs): Applies effects directly to targeted component.
+    /// Component targeting - behavior depends on effect type and roll type.
+    /// Damage-dealing attacks use two-stage roll (component AC → chassis AC with penalty).
+    /// Other skills use single roll or no roll.
     /// </summary>
-    private bool UseComponentTargeted(Vehicle user, Vehicle mainTarget, VehicleComponent sourceComponent)
+    private bool UseComponentTargeted(Vehicle user, Vehicle mainTarget, VehicleComponent sourceComponent, VehicleComponent targetComponent)
     {
-        VehicleComponent targetComponent = mainTarget.AllComponents
-            .FirstOrDefault(c => c.name == targetComponentName);
-
         // Validate component accessibility
-        if (!SkillValidator.ValidateComponentTarget(this, user, mainTarget, targetComponent, targetComponentName))
+        if (!SkillValidator.ValidateComponentTarget(this, user, mainTarget, targetComponent, targetComponent.name))
             return false;
         
-        // For non-attack skills (buffs, etc.), apply effects directly without rolling
-        if (!requiresAttackRoll)
+        // Special case: Damage-dealing attacks use two-stage roll
+        if (skillRollType == SkillRollType.AttackRoll && HasDamageEffects())
         {
-            var result = SkillEffectApplicator.ApplyAllEffects(
-                this, user, mainTarget, sourceComponent, targetComponent);
-            return result.Count > 0 || effectInvocations.Any(e => !(e.effect is DamageEffect));
+            return UseTwoStageComponentAttack(user, mainTarget, sourceComponent, targetComponent);
         }
         
-        // For attack skills, pre-calculate damage and attempt two-stage roll
-        var damageByTarget = SkillEffectApplicator.PreCalculateDamage(
+        // General case: Single roll (or no roll) + apply effects
+        if (skillRollType != SkillRollType.None)
+        {
+            RollBreakdown skillRoll = PerformSkillRoll(user, targetComponent, sourceComponent);
+            
+            if (skillRoll?.success != true)
+            {
+                SkillCombatLogger.LogSkillMiss(name, user, mainTarget, sourceComponent, skillRoll);
+                return false;
+            }
+            
+            SkillCombatLogger.LogSkillHit(name, user, mainTarget, sourceComponent, skillRoll);
+        }
+        
+        // Apply effects to the specific component
+        var results = SkillEffectApplicator.ApplyAllEffects(
             this, user, mainTarget, sourceComponent, targetComponent);
         
-        if (damageByTarget.Count == 0)
+        if (results.Count > 0)
         {
-            Debug.LogWarning($"[Skill] {name}: Component targeting attack skill has no damage effects!");
-            return false;
+            SkillCombatLogger.LogDamageResults(name, user, results);
         }
-
-        // Two-stage attack: Component AC → Chassis AC (with penalty)
+        
+        return results.Count > 0 || HasNonDamageEffects();
+    }
+    
+    /// <summary>
+    /// Two-stage component attack (only for damage-dealing attacks).
+    /// Stage 1: Roll vs Component AC (no penalty)
+    /// Stage 2: Roll vs Chassis AC (with penalty)
+    /// Damage is calculated only after successful hit.
+    /// </summary>
+    private bool UseTwoStageComponentAttack(Vehicle user, Vehicle mainTarget, VehicleComponent sourceComponent, VehicleComponent targetComponent)
+    {
+        // Attempt two-stage roll (damage calculated after hit)
         return SkillAttackResolver.AttemptTwoStageComponentAttack(
-            this, user, mainTarget, targetComponent, targetComponentName, sourceComponent, damageByTarget);
+            this, user, mainTarget, targetComponent, targetComponent.name, sourceComponent);
+    }
+    
+    /// <summary>
+    /// Perform a skill roll based on skillRollType.
+    /// Returns null if roll failed or RollBreakdown if successful.
+    /// </summary>
+    private RollBreakdown PerformSkillRoll(Vehicle user, Entity targetEntity, VehicleComponent sourceComponent)
+    {
+        return skillRollType switch
+        {
+            SkillRollType.AttackRoll => SkillAttackResolver.PerformSkillRoll(this, user, targetEntity, sourceComponent),
+            SkillRollType.SavingThrow => PerformSavingThrow(user, targetEntity),
+            SkillRollType.SkillCheck => PerformSkillCheck(user, targetEntity),
+            SkillRollType.OpposedCheck => PerformOpposedCheck(user, targetEntity),
+            _ => null
+        };
+    }
+    
+    /// <summary>
+    /// Perform saving throw (target rolls to resist).
+    /// TODO: Implement when saving throw system is designed.
+    /// </summary>
+    private RollBreakdown PerformSavingThrow(Vehicle user, Entity targetEntity)
+    {
+        Debug.LogWarning($"[Skill] {name}: Saving throws not yet implemented!");
+        return null;
+    }
+    
+    /// <summary>
+    /// Perform skill check (user rolls vs DC).
+    /// TODO: Implement when skill check system is designed.
+    /// </summary>
+    private RollBreakdown PerformSkillCheck(Vehicle user, Entity targetEntity)
+    {
+        Debug.LogWarning($"[Skill] {name}: Skill checks not yet implemented!");
+        return null;
+    }
+    
+    /// <summary>
+    /// Perform opposed check (both user and target roll, highest wins).
+    /// TODO: Implement when opposed check system is designed.
+    /// </summary>
+    private RollBreakdown PerformOpposedCheck(Vehicle user, Entity targetEntity)
+    {
+        Debug.LogWarning($"[Skill] {name}: Opposed checks not yet implemented!");
+        return null;
+    }
+    
+    /// <summary>
+    /// Check if this skill has any damage effects.
+    /// </summary>
+    private bool HasDamageEffects()
+    {
+        return effectInvocations.Any(e => e.effect is DamageEffect);
+    }
+    
+    /// <summary>
+    /// Check if this skill has any non-damage effects.
+    /// </summary>
+    private bool HasNonDamageEffects()
+    {
+        return effectInvocations.Any(e => !(e.effect is DamageEffect));
     }
 }
