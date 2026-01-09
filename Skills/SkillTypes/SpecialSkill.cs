@@ -4,7 +4,7 @@ using UnityEngine;
 [CreateAssetMenu(menuName = "Racing/Skill/Special")]
 public class SpecialSkill : Skill
 {
-    private void OnEnable()
+    private void Reset()
     {
         // Set default configuration for special skills
         skillRollType = SkillRollType.None;  // Default: no roll required

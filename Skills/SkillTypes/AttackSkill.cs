@@ -4,7 +4,7 @@ using UnityEngine;
 [CreateAssetMenu(menuName = "Racing/Skill/Attack")]
 public class AttackSkill : Skill
 {
-    private void OnEnable()
+    private void Reset()
     {
         // Set default roll configuration for attacks
         skillRollType = SkillRollType.AttackRoll;

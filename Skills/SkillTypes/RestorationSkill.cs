@@ -4,7 +4,7 @@ using UnityEngine;
 [CreateAssetMenu(menuName = "Racing/Skill/Restoration")]
 public class RestorationSkill : Skill
 {
-    private void OnEnable()
+    private void Reset()
     {
         // Set default configuration for restoration skills
         skillRollType = SkillRollType.None;  // Heals don't require rolls

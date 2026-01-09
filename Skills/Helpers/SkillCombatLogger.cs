@@ -69,19 +69,49 @@ namespace Assets.Scripts.Skills.Helpers
                 int totalDamage = breakdowns.Sum(d => d.finalDamage);
                 string attackerName = user.vehicleName;
                 
-                // Determine target name
+                // Determine target name (including component if applicable)
                 Vehicle targetVehicle = EntityHelpers.GetParentVehicle(target);
-                string targetName = targetVehicle != null ? targetVehicle.vehicleName : EntityHelpers.GetEntityDisplayName(target);
+                string targetName;
+                
+                if (target is VehicleComponent component)
+                {
+                    // Target is a specific component - show vehicle + component name
+                    string vehicleName = targetVehicle?.vehicleName ?? "Unknown Vehicle";
+                    targetName = $"{vehicleName}'s {component.name}";
+                }
+                else
+                {
+                    // Target is vehicle chassis or other entity
+                    targetName = targetVehicle != null ? targetVehicle.vehicleName : EntityHelpers.GetEntityDisplayName(target);
+                }
                 
                 // Check if this is self-targeting (healing/self-damage)
                 bool isSelfTarget = targetVehicle == user;
-                string actionVerb = isSelfTarget ? "takes" : "deals";
-                string preposition = isSelfTarget ? "" : $" to {targetName}";
+                
+                // Build log message
+                string damageLog;
+                if (isSelfTarget)
+                {
+                    // Self-damage: Show component name if applicable
+                    if (target is VehicleComponent)
+                    {
+                        damageLog = $"{attackerName}'s {((VehicleComponent)target).name} takes <color=#FFA500>{totalDamage}</color> damage";
+                    }
+                    else
+                    {
+                        damageLog = $"{attackerName} takes <color=#FFA500>{totalDamage}</color> damage";
+                    }
+                }
+                else
+                {
+                    // Damage to other target
+                    damageLog = $"{attackerName} deals <color=#FFA500>{totalDamage}</color> damage to {targetName}";
+                }
                 
                 var damageEvt = RaceHistory.Log(
                     EventType.Combat,
                     EventImportance.High,
-                    $"{attackerName} {actionVerb} <color=#FFA500>{totalDamage}</color> damage{preposition}",
+                    damageLog,
                     user.currentStage,
                     user, targetVehicle
                 );
@@ -90,6 +120,12 @@ namespace Assets.Scripts.Skills.Helpers
                         .WithMetadata("damage", totalDamage)
                         .WithMetadata("damageSource", skillName)
                         .WithMetadata("isSelfTarget", isSelfTarget);
+                
+                // Add component info if target is a component
+                if (target is VehicleComponent comp)
+                {
+                    damageEvt.WithMetadata("targetComponent", comp.name);
+                }
                 
                 // Build combined damage breakdown
                 string combinedBreakdown = SkillDamageFormatter.BuildCombinedDamageBreakdown(breakdowns, skillName);
@@ -230,9 +266,8 @@ namespace Assets.Scripts.Skills.Helpers
                 List<DamageBreakdown> breakdowns = kvp.Value;
                 int totalDamage = breakdowns.Sum(d => d.finalDamage);
                 
-                // Determine target name
+                // Determine target vehicle
                 Vehicle targetVehicle = EntityHelpers.GetParentVehicle(target);
-                string targetName = targetVehicle != null ? targetVehicle.vehicleName : EntityHelpers.GetEntityDisplayName(target);
                 
                 // Check if this is self-targeting
                 bool isSelfTarget = targetVehicle == user;
@@ -241,15 +276,39 @@ namespace Assets.Scripts.Skills.Helpers
                 string damageLog;
                 if (isSelfTarget)
                 {
-                    damageLog = $"{attackerName} takes <color=#FFA500>{totalDamage}</color> damage";
+                    // Self-damage: Show component name if applicable
+                    if (target is VehicleComponent selfComponent)
+                    {
+                        damageLog = $"{attackerName}'s {selfComponent.name} takes <color=#FFA500>{totalDamage}</color> damage";
+                    }
+                    else
+                    {
+                        damageLog = $"{attackerName} takes <color=#FFA500>{totalDamage}</color> damage";
+                    }
                 }
                 else if (targetVehicle == mainTarget)
                 {
-                    string componentName = isChassisHit ? "chassis" : targetComponentName;
-                    damageLog = $"{attackerName} deals <color=#FFA500>{totalDamage}</color> damage to {mainTarget.vehicleName}'s {componentName}";
+                    // Damage to the main target
+                    if (target is VehicleComponent targetComponent)
+                    {
+                        // Show component name for component damage
+                        damageLog = $"{attackerName} deals <color=#FFA500>{totalDamage}</color> damage to {mainTarget.vehicleName}'s {targetComponent.name}";
+                    }
+                    else
+                    {
+                        // Show chassis for chassis damage
+                        string componentName = isChassisHit ? "chassis" : targetComponentName;
+                        damageLog = $"{attackerName} deals <color=#FFA500>{totalDamage}</color> damage to {mainTarget.vehicleName}'s {componentName}";
+                    }
                 }
                 else
                 {
+                    // Damage to a third party (AOE, etc.)
+                    string targetName = targetVehicle != null ? targetVehicle.vehicleName : EntityHelpers.GetEntityDisplayName(target);
+                    if (target is VehicleComponent otherComponent)
+                    {
+                        targetName = $"{targetVehicle?.vehicleName ?? "Unknown Vehicle"}'s {otherComponent.name}";
+                    }
                     damageLog = $"{attackerName} deals <color=#FFA500>{totalDamage}</color> damage to {targetName}";
                 }
                 
@@ -262,10 +321,19 @@ namespace Assets.Scripts.Skills.Helpers
                 );
                 
                 damageEvt.WithMetadata("skillName", skillName)
-                        .WithMetadata("targetComponent", isChassisHit ? "chassis" : targetComponentName)
                         .WithMetadata("damage", totalDamage)
                         .WithMetadata("damageSource", skillName)
                         .WithMetadata("isSelfTarget", isSelfTarget);
+                
+                // Add component info if target is a component
+                if (target is VehicleComponent comp)
+                {
+                    damageEvt.WithMetadata("targetComponent", comp.name);
+                }
+                else
+                {
+                    damageEvt.WithMetadata("targetComponent", isChassisHit ? "chassis" : targetComponentName);
+                }
                 
                 string combinedBreakdown = SkillDamageFormatter.BuildCombinedDamageBreakdown(breakdowns, skillName);
                 damageEvt.WithMetadata("damageBreakdown", combinedBreakdown);

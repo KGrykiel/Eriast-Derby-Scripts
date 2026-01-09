@@ -4,7 +4,7 @@ using UnityEngine;
 [CreateAssetMenu(menuName = "Racing/Skill/Buff")]
 public class BuffSkill : Skill
 {
-    private void OnEnable()
+    private void Reset()
     {
         // Set default configuration for buff skills
         skillRollType = SkillRollType.None;  // Buffs don't require rolls
