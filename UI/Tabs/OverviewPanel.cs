@@ -107,14 +107,14 @@ public class OverviewPanel : MonoBehaviour
             // Energy (inline)
             if (showEnergy)
             {
-                int maxEnergy = (int)vehicle.GetAttribute(Attribute.MaxEnergy);
+                int maxEnergy = (int)vehicle.maxEnergy;
                 display += $" Energy:{vehicle.energy}/{maxEnergy}";
             }
 
             // Speed (inline)
             if (showSpeed)
             {
-                float speed = vehicle.GetAttribute(Attribute.Speed);
+                float speed = vehicle.speed;
                 display += $" Speed:{speed:F1}";
             }
 
@@ -129,10 +129,10 @@ public class OverviewPanel : MonoBehaviour
             display += "\n";
 
             // Health bar (compact)
-            float healthPercent = vehicle.health / vehicle.GetAttribute(Attribute.MaxHealth);
+            float healthPercent = vehicle.health / vehicle.maxHealth;
             string healthBar = GenerateCompactBar(healthPercent, 8);
             string healthColor = GetHealthColor(healthPercent);
-            float maxHealth = vehicle.GetAttribute(Attribute.MaxHealth);
+            float maxHealth = vehicle.maxHealth;
             display += $"   <color={healthColor}>{healthBar}</color> <color=#AAAAAA>{vehicle.health}/{maxHealth:F0}HP</color>\n\n";
         }
 

@@ -69,23 +69,23 @@ public class FocusPanel : MonoBehaviour
         }
         
         // Health
-        float maxHealth = playerVehicle.GetAttribute(Attribute.MaxHealth);
+        float maxHealth = playerVehicle.maxHealth;
         float healthPercent = maxHealth > 0 ? playerVehicle.health / maxHealth : 0f;
         string healthBar = GenerateBar(healthPercent, 15);
         string healthColor = GetHealthColor(healthPercent);
         status += $"<b>Health:</b> <color={healthColor}>{healthBar} {playerVehicle.health:F0}/{maxHealth:F0}</color>\n";
         
         // Energy
-        int maxEnergy = (int)playerVehicle.GetAttribute(Attribute.MaxEnergy);
+        int maxEnergy = (int)playerVehicle.maxEnergy;
         float energyPercent = maxEnergy > 0 ? (float)playerVehicle.energy / maxEnergy : 0f;
         string energyBar = GenerateBar(energyPercent, 15);
         status += $"<b>Energy:</b> <color=#88DDFF>{energyBar} {playerVehicle.energy}/{maxEnergy}</color>\n\n";
         
         // Attributes
-        status += $"<b>Speed:</b> {playerVehicle.GetAttribute(Attribute.Speed):F1}\n";
-        status += $"<b>Armor Class:</b> {playerVehicle.GetAttribute(Attribute.ArmorClass):F0}\n";
-        status += $"<b>Magic Resistance:</b> {playerVehicle.GetAttribute(Attribute.MagicResistance):F0}\n\n";
-        
+        status += $"<b>Speed:</b> {playerVehicle.speed:F1}\n";
+        status += $"<b>Armor Class:</b> {playerVehicle.armorClass:F0}\n";
+        status += $"<b>Magic Resistance:</b> 10 \n\n"; // TODO: Replace with actual MR attribute
+
         // Active Modifiers
         var modifiers = playerVehicle.GetActiveModifiers();
         if (modifiers.Count > 0)
@@ -144,19 +144,19 @@ public class FocusPanel : MonoBehaviour
             display += $"<b>{vehicle.vehicleName}</b> ({vehicle.controlType})\n";
             
             // Health
-            float maxHealth = vehicle.GetAttribute(Attribute.MaxHealth);
+            float maxHealth = vehicle.maxHealth;
             float healthPercent = maxHealth > 0 ? vehicle.health / maxHealth : 0f;
             string healthBar = GenerateBar(healthPercent, 10);
             string healthColor = GetHealthColor(healthPercent);
             display += $"  HP: <color={healthColor}>{healthBar} {vehicle.health:F0}/{maxHealth:F0}</color>\n";
-            
+
             // Energy
-            int maxEnergy = (int)vehicle.GetAttribute(Attribute.MaxEnergy);
+            int maxEnergy = (int)vehicle.maxEnergy;
             display += $"  Energy: {vehicle.energy}/{maxEnergy}\n";
             
             // Key stats
-            display += $"  AC: {vehicle.GetAttribute(Attribute.ArmorClass):F0} | ";
-            display += $"Speed: {vehicle.GetAttribute(Attribute.Speed):F1}\n";
+            display += $"  AC: {vehicle.armorClass:F0} | ";
+            display += $"Speed: {vehicle.speed:F1}\n";
             
             // Progress
             display += $"  Progress: {vehicle.progress:F1}/{vehicle.currentStage.length:F0}m\n";

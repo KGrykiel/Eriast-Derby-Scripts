@@ -601,10 +601,8 @@ public class PlayerController : MonoBehaviour
 
         // Option 1: Target Chassis (vehicle HP)
         Button chassisBtn = Instantiate(targetButtonPrefab, targetButtonContainer);
-        float maxHealth = targetVehicle.GetAttribute(Attribute.MaxHealth);
-        int chassisAC = targetVehicle.GetArmorClass();
         chassisBtn.GetComponentInChildren<TextMeshProUGUI>().text = 
-            $"[#] Chassis (HP: {targetVehicle.health}/{maxHealth:F0}, AC: {chassisAC})";
+            $"[#] Chassis (HP: {targetVehicle.health}/{targetVehicle.maxHealth}, AC: {targetVehicle.armorClass})";
         chassisBtn.onClick.AddListener(() => OnComponentButtonClicked(null)); // null = chassis
 
         // Option 2: All Components (EXCEPT chassis - it's already shown above)
@@ -748,11 +746,8 @@ public class PlayerController : MonoBehaviour
 
         if (actionsRemainingText != null)
         {
-            float maxHealth = playerVehicle.GetAttribute(Attribute.MaxHealth);
-            float maxEnergy = playerVehicle.GetAttribute(Attribute.MaxEnergy);
-            
-            actionsRemainingText.text = $"HP: {playerVehicle.health}/{maxHealth:F0}  " +
-                                        $"Energy: {playerVehicle.energy}/{maxEnergy:F0}";
+            actionsRemainingText.text = $"HP: {playerVehicle.health}/{playerVehicle.maxHealth}  " +
+                                        $"Energy: {playerVehicle.energy}/{playerVehicle.maxEnergy}";
         }
     }
 

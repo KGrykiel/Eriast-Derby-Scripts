@@ -150,7 +150,7 @@ public class TurnController : MonoBehaviour
         }
         
         // Add movement
-        float speed = vehicle.GetAttribute(Attribute.Speed);
+        float speed = vehicle.speed;
         vehicle.progress += speed;
         vehicle.UpdateModifiers();
 
@@ -214,12 +214,9 @@ public class TurnController : MonoBehaviour
             return; // Don't move, but vehicle can still act
         }
 
-        float speed = vehicle.GetAttribute(Attribute.Speed);
+        float speed = vehicle.speed;
         vehicle.progress += speed;
         vehicle.UpdateModifiers();
-
-        // Movement logging removed - too granular
-        // Stage transitions are logged elsewhere
     }
 
     /// <summary>

@@ -26,9 +26,8 @@ public class ResourceRestorationEffect : EffectBase
         switch (resourceType)
         {
             case ResourceType.Health:
-                int maxHealth = (int)vehicle.GetAttribute(Attribute.MaxHealth);
                 int oldHealth = vehicle.health;
-                vehicle.health = Mathf.Clamp(vehicle.health + amount, 0, maxHealth);
+                vehicle.health = Mathf.Clamp(vehicle.health + amount, 0, vehicle.maxHealth);
                 int actualHealthChange = vehicle.health - oldHealth;
                 
                 if (actualHealthChange != 0)
@@ -41,7 +40,7 @@ public class ResourceRestorationEffect : EffectBase
                     RaceHistory.Log(
                         RacingGame.Events.EventType.Resource,
                         importance,
-                        $"[HP] {vehicle.vehicleName} {action} {Mathf.Abs(actualHealthChange)} health from {sourceText} ({vehicle.health}/{maxHealth})",
+                        $"[HP] {vehicle.vehicleName} {action} {Mathf.Abs(actualHealthChange)} health from {sourceText} ({vehicle.health}/{vehicle.maxHealth})",
                         vehicle.currentStage,
                         vehicle
                     ).WithMetadata("resourceType", "Health")
@@ -49,16 +48,15 @@ public class ResourceRestorationEffect : EffectBase
                      .WithMetadata("actualChange", actualHealthChange)
                      .WithMetadata("oldHealth", oldHealth)
                      .WithMetadata("newHealth", vehicle.health)
-                     .WithMetadata("maxHealth", maxHealth)
+                     .WithMetadata("maxHealth", vehicle.maxHealth)
                      .WithMetadata("source", sourceText)
                      .WithMetadata("isRestore", actualHealthChange > 0);
                 }
                 break;
 
             case ResourceType.Energy:
-                int maxEnergy = (int)vehicle.GetAttribute(Attribute.MaxEnergy);
                 int oldEnergy = vehicle.energy;
-                vehicle.energy = Mathf.Clamp(vehicle.energy + amount, 0, maxEnergy);
+                vehicle.energy = Mathf.Clamp(vehicle.energy + amount, 0, vehicle.maxEnergy);
                 int actualEnergyChange = vehicle.energy - oldEnergy;
                 
                 if (actualEnergyChange != 0)
@@ -73,7 +71,7 @@ public class ResourceRestorationEffect : EffectBase
                     RaceHistory.Log(
                         RacingGame.Events.EventType.Resource,
                         importance,
-                        $"[ENERGY] {vehicle.vehicleName} {action} {Mathf.Abs(actualEnergyChange)} energy from {sourceText} ({vehicle.energy}/{maxEnergy})",
+                        $"[ENERGY] {vehicle.vehicleName} {action} {Mathf.Abs(actualEnergyChange)} energy from {sourceText} ({vehicle.energy}/{vehicle.maxEnergy})",
                         vehicle.currentStage,
                         vehicle
                     ).WithMetadata("resourceType", "Energy")
@@ -81,7 +79,7 @@ public class ResourceRestorationEffect : EffectBase
                      .WithMetadata("actualChange", actualEnergyChange)
                      .WithMetadata("oldEnergy", oldEnergy)
                      .WithMetadata("newEnergy", vehicle.energy)
-                     .WithMetadata("maxEnergy", maxEnergy)
+                     .WithMetadata("maxEnergy", vehicle.maxEnergy)
                      .WithMetadata("source", sourceText)
                      .WithMetadata("isRestore", actualEnergyChange > 0);
                 }
@@ -95,7 +93,7 @@ public class ResourceRestorationEffect : EffectBase
     private EventImportance DetermineHealthRestoreImportance(Vehicle vehicle, int healthChange)
     {
         // Healing from critical health is important
-        float healthPercent = (float)vehicle.health / vehicle.GetAttribute(Attribute.MaxHealth);
+        float healthPercent = (float)vehicle.health / vehicle.maxHealth;
         
         if (vehicle.controlType == ControlType.Player)
         {

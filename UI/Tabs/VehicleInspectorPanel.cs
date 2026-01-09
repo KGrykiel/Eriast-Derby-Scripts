@@ -150,21 +150,19 @@ string display = BuildDetailedVehicleInfo();
         
         // Stats
         info += "<b>STATS:</b>\n";
-        float maxHealth = selectedVehicle.GetAttribute(Attribute.MaxHealth);
-        float healthPercent = selectedVehicle.health / maxHealth;
+        float healthPercent = selectedVehicle.health / (float)selectedVehicle.maxHealth;
         string healthBar = GenerateBar(healthPercent, 15);
         string healthColor = GetHealthColor(healthPercent);
-        info += $"  HP: <color={healthColor}>{healthBar} {selectedVehicle.health:F0}/{maxHealth:F0}</color>\n";
+        info += $"  HP: <color={healthColor}>{healthBar} {selectedVehicle.health}/{selectedVehicle.maxHealth}</color>\n";
         
-        int maxEnergy = (int)selectedVehicle.GetAttribute(Attribute.MaxEnergy);
-        float energyPercent = (float)selectedVehicle.energy / maxEnergy;
+        float energyPercent = (float)selectedVehicle.energy / selectedVehicle.maxEnergy;
         string energyBar = GenerateBar(energyPercent, 15);
-        info += $"  Energy: <color=#88DDFF>{energyBar} {selectedVehicle.energy}/{maxEnergy}</color>\n";
+        info += $"  Energy: <color=#88DDFF>{energyBar} {selectedVehicle.energy}/{selectedVehicle.maxEnergy}</color>\n";
         
-        info += $"  Speed: {selectedVehicle.GetAttribute(Attribute.Speed):F1}\n";
-        info += $"  AC: {selectedVehicle.GetAttribute(Attribute.ArmorClass):F0}\n";
-        info += $"  Magic Resist: {selectedVehicle.GetAttribute(Attribute.MagicResistance):F0}\n";
-        info += $"  Energy Regen: {selectedVehicle.GetAttribute(Attribute.EnergyRegen):F1}\n";
+        info += $"  Speed: {selectedVehicle.speed:F1}\n";
+        info += $"  AC: {selectedVehicle.armorClass}\n";
+        info += $"  Magic Resist: 10\n"; // TODO: Move to component
+        info += $"  Energy Regen: {selectedVehicle.energyRegen:F1}\n";
         
         info += "\n";
         
@@ -194,26 +192,39 @@ string display = BuildDetailedVehicleInfo();
         
         info += "\n";
         
-        // Skills
-        info += $"<b>SKILLS ({selectedVehicle.skills.Count}):</b>\n";
+        // Skills (from components via roles)
+        var roles = selectedVehicle.GetAvailableRoles();
+        int totalSkills = roles.Sum(r => r.availableSkills?.Count ?? 0);
         
-        if (selectedVehicle.skills.Count == 0)
+        info += $"<b>SKILLS ({totalSkills} from {roles.Count} roles):</b>\n";
+        
+        if (totalSkills == 0)
         {
             info += "  <color=#888888>None</color>\n";
         }
         else
         {
-            foreach (var skill in selectedVehicle.skills)
+            foreach (var role in roles)
             {
-                if (skill != null)
+                if (role.availableSkills == null || role.availableSkills.Count == 0)
+                    continue;
+                
+                // Role header
+                string characterName = role.assignedCharacter?.characterName ?? "Unassigned";
+                info += $"  <b>{role.roleName}</b> ({characterName}):\n";
+                
+                foreach (var skill in role.availableSkills)
                 {
-                    bool canAfford = selectedVehicle.energy >= skill.energyCost;
-                    string affordText = canAfford ? "" : " <color=#FF4444>(Can't afford)</color>";
-                    info += $"  - <b>{skill.name}</b> ([POWER]{skill.energyCost}){affordText}\n";
-                    
-                    if (!string.IsNullOrEmpty(skill.description))
+                    if (skill != null)
                     {
-                        info += $"    <color=#AAAAAA>{skill.description}</color>\n";
+                        bool canAfford = selectedVehicle.energy >= skill.energyCost;
+                        string affordText = canAfford ? "" : " <color=#FF4444>(Can't afford)</color>";
+                        info += $"    - <b>{skill.name}</b> ({skill.energyCost} EN){affordText}\n";
+                        
+                        if (!string.IsNullOrEmpty(skill.description))
+                        {
+                            info += $"      <color=#AAAAAA>{skill.description}</color>\n";
+                        }
                     }
                 }
             }

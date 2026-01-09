@@ -48,12 +48,12 @@ public static class RollUtility
                     }
                     else
                     {
-                        targetValue = Mathf.RoundToInt(vehicleTarget.GetAttribute(Attribute.ArmorClass));
+                        targetValue = vehicleTarget.armorClass;
                     }
                     targetName = "AC";
                     break;
                 case TargetNumberType.MagicResistance:
-                    targetValue = Mathf.RoundToInt(vehicleTarget.GetAttribute(Attribute.MagicResistance));
+                    targetValue = 10; // TODO: Move to component
                     targetName = "MR";
                     break;
             }

@@ -139,7 +139,7 @@ namespace Assets.Scripts.Skills.Helpers
             SkillCombatLogger.LogComponentMiss(skill.name, user, mainTarget, targetComponentName, sourceComponent, componentRoll);
 
             // Stage 2: Try chassis (WITH PENALTY)
-            int chassisAC = mainTarget.GetArmorClass();
+            int chassisAC = mainTarget.armorClass;
             var chassisRoll = RollBreakdown.D20(Random.Range(1, 21), RollCategory.Attack);
             foreach (var mod in chassisModifiers) chassisRoll.WithModifier(mod.name, mod.value, mod.source);
             chassisRoll.Against(chassisAC, "Chassis AC");
