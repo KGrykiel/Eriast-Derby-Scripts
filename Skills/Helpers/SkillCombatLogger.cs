@@ -339,5 +339,223 @@ namespace Assets.Scripts.Skills.Helpers
                 damageEvt.WithMetadata("damageBreakdown", combinedBreakdown);
             }
         }
+        
+        // ==================== MODIFIER LOGGING ====================
+        
+        /// <summary>
+        /// Logs modifiers applied to entities.
+        /// Groups modifiers by target and logs them as a single entry per target.
+        /// </summary>
+        public static void LogModifierResults(string skillName, Vehicle user, Dictionary<Entity, List<AttributeModifier>> modifiersByTarget)
+        {
+            foreach (var kvp in modifiersByTarget)
+            {
+                Entity target = kvp.Key;
+                List<AttributeModifier> modifiers = kvp.Value;
+                
+                if (modifiers.Count == 0) continue;
+                
+                // Determine target name
+                Vehicle targetVehicle = EntityHelpers.GetParentVehicle(target);
+                string targetName;
+                
+                if (target is VehicleComponent component)
+                {
+                    string vehicleName = targetVehicle?.vehicleName ?? "Unknown Vehicle";
+                    targetName = $"{vehicleName}'s {component.name}";
+                }
+                else
+                {
+                    targetName = targetVehicle != null ? targetVehicle.vehicleName : EntityHelpers.GetEntityDisplayName(target);
+                }
+                
+                // Check if self-targeting
+                bool isSelfTarget = targetVehicle == user;
+                
+                // Build modifier list string
+                List<string> modifierDescriptions = new List<string>();
+                foreach (var mod in modifiers)
+                {
+                    string durText = mod.DurationTurns < 0 ? "permanent" : $"{mod.DurationTurns} turn{(mod.DurationTurns > 1 ? "s" : "")}";
+                    string modDesc = $"{mod.Type} {mod.Attribute} {mod.Value:+0;-0} ({durText})";
+                    modifierDescriptions.Add(modDesc);
+                }
+                
+                string modifierList = string.Join(", ", modifierDescriptions);
+                
+                // Build log message
+                string logMessage;
+                if (isSelfTarget)
+                {
+                    if (target is VehicleComponent)
+                    {
+                        logMessage = $"{user.vehicleName}'s {((VehicleComponent)target).name} gains: {modifierList}";
+                    }
+                    else
+                    {
+                        logMessage = $"{user.vehicleName} gains: {modifierList}";
+                    }
+                }
+                else
+                {
+                    logMessage = $"{targetName} gains: {modifierList}";
+                }
+                
+                // Determine importance
+                EventImportance importance = isSelfTarget ? EventImportance.Medium : EventImportance.High;
+                
+                var modEvt = RaceHistory.Log(
+                    EventType.Modifier,
+                    importance,
+                    logMessage,
+                    user.currentStage,
+                    user, targetVehicle
+                );
+                
+                modEvt.WithMetadata("skillName", skillName)
+                      .WithMetadata("modifierCount", modifiers.Count)
+                      .WithMetadata("isSelfTarget", isSelfTarget);
+                
+                // Add individual modifier metadata
+                for (int i = 0; i < modifiers.Count; i++)
+                {
+                    var mod = modifiers[i];
+                    modEvt.WithMetadata($"modifier_{i}_attribute", mod.Attribute.ToString())
+                          .WithMetadata($"modifier_{i}_type", mod.Type.ToString())
+                          .WithMetadata($"modifier_{i}_value", mod.Value)
+                          .WithMetadata($"modifier_{i}_duration", mod.DurationTurns);
+                }
+            }
+        }
+        
+        // ==================== RESTORATION LOGGING ====================
+        
+        /// <summary>
+        /// Logs resource restoration/drain results for each target.
+        /// Handles health and energy restoration with proper formatting.
+        /// </summary>
+        public static void LogRestorationResults(string skillName, Vehicle user, Dictionary<Entity, List<RestorationBreakdown>> restorationByTarget)
+        {
+            foreach (var kvp in restorationByTarget)
+            {
+                Entity target = kvp.Key;
+                List<RestorationBreakdown> breakdowns = kvp.Value;
+                
+                if (breakdowns.Count == 0) continue;
+                
+                // Determine target name
+                Vehicle targetVehicle = EntityHelpers.GetParentVehicle(target);
+                string targetName;
+                
+                if (target is VehicleComponent component)
+                {
+                    string vehicleName = targetVehicle?.vehicleName ?? "Unknown Vehicle";
+                    targetName = $"{vehicleName}'s {component.name}";
+                }
+                else
+                {
+                    targetName = targetVehicle != null ? targetVehicle.vehicleName : EntityHelpers.GetEntityDisplayName(target);
+                }
+                
+                // Check if self-targeting
+                bool isSelfTarget = targetVehicle == user;
+                
+                // Group by resource type
+                var healthBreakdowns = breakdowns.Where(b => b.resourceType == ResourceRestorationEffect.ResourceType.Health).ToList();
+                var energyBreakdowns = breakdowns.Where(b => b.resourceType == ResourceRestorationEffect.ResourceType.Energy).ToList();
+                
+                // Build restoration message
+                List<string> restorationParts = new List<string>();
+                
+                if (healthBreakdowns.Count > 0)
+                {
+                    int totalHealthChange = healthBreakdowns.Sum(b => b.actualChange);
+                    if (totalHealthChange != 0)
+                    {
+                        string healthAction = totalHealthChange > 0 ? "restores" : "drains";
+                        restorationParts.Add($"{healthAction} <color=#44FF44>{System.Math.Abs(totalHealthChange)}</color> HP");
+                    }
+                }
+                
+                if (energyBreakdowns.Count > 0)
+                {
+                    int totalEnergyChange = energyBreakdowns.Sum(b => b.actualChange);
+                    if (totalEnergyChange != 0)
+                    {
+                        string energyAction = totalEnergyChange > 0 ? "restores" : "drains";
+                        restorationParts.Add($"{energyAction} <color=#88DDFF>{System.Math.Abs(totalEnergyChange)}</color> energy");
+                    }
+                }
+                
+                if (restorationParts.Count == 0) continue;
+                
+                // Build log message
+                string restorationText = string.Join(" and ", restorationParts);
+                string logMessage;
+                
+                if (isSelfTarget)
+                {
+                    logMessage = $"{user.vehicleName} {restorationText}";
+                }
+                else
+                {
+                    logMessage = $"{user.vehicleName} {restorationText} for {targetName}";
+                }
+                
+                // Determine importance based on context
+                EventImportance importance = DetermineRestorationImportance(user, targetVehicle, isSelfTarget, breakdowns);
+                
+                var restorationEvt = RaceHistory.Log(
+                    EventType.Resource,
+                    importance,
+                    logMessage,
+                    user.currentStage,
+                    user, targetVehicle
+                );
+                
+                restorationEvt.WithMetadata("skillName", skillName)
+                             .WithMetadata("isSelfTarget", isSelfTarget)
+                             .WithMetadata("restorationCount", breakdowns.Count);
+                
+                // Add detailed breakdown metadata
+                foreach (var breakdown in breakdowns)
+                {
+                    string prefix = breakdown.resourceType.ToString().ToLower();
+                    restorationEvt.WithMetadata($"{prefix}_actualChange", breakdown.actualChange)
+                                  .WithMetadata($"{prefix}_newValue", breakdown.newValue)
+                                  .WithMetadata($"{prefix}_maxValue", breakdown.maxValue)
+                                  .WithMetadata($"{prefix}_wasClamped", breakdown.WasClamped);
+                }
+            }
+        }
+        
+        /// <summary>
+        /// Determines importance of restoration event based on context.
+        /// </summary>
+        private static EventImportance DetermineRestorationImportance(Vehicle user, Vehicle target, bool isSelfTarget, List<RestorationBreakdown> breakdowns)
+        {
+            // Player-involved restorations are more important
+            bool playerInvolved = user.controlType == ControlType.Player || (target != null && target.controlType == ControlType.Player);
+            
+            // Check for critical health restoration
+            foreach (var breakdown in breakdowns)
+            {
+                if (breakdown.resourceType == ResourceRestorationEffect.ResourceType.Health)
+                {
+                    float healthPercent = breakdown.NewPercentage;
+                    
+                    // Healing from critical health is important
+                    if (breakdown.actualChange > 0 && healthPercent < 0.3f && playerInvolved)
+                        return EventImportance.High;
+                    
+                    // Large health changes
+                    if (System.Math.Abs(breakdown.actualChange) > 20)
+                        return playerInvolved ? EventImportance.High : EventImportance.Medium;
+                }
+            }
+            
+            // Default based on player involvement
+            return playerInvolved ? EventImportance.Medium : EventImportance.Low;
+        }
     }
 }

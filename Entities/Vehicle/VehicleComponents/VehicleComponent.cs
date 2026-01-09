@@ -108,45 +108,32 @@ public abstract class VehicleComponent : Entity
     
     /// <summary>
     /// Add a modifier to this component.
-    /// Automatically logs the modifier addition with component context.
+    /// 
+    /// NOTE: This method does NOT log the modifier application.
+    /// Logging is handled by SkillCombatLogger when effects are applied from skills.
+    /// This allows proper aggregation of multi-effect skills.
     /// </summary>
     public void AddModifier(AttributeModifier modifier)
     {
         componentModifiers.Add(modifier);
         
-        // Log modifier addition (component-specific)
-        // DurationTurns semantics: -1 = permanent, 1+ = turns remaining (1 = last active turn)
-        string durText = modifier.DurationTurns < 0 
-            ? " (permanent)" 
-            : $" for {modifier.DurationTurns} turn(s)";
-        string sourceText = modifier.Source != null ? $" from {modifier.Source.name}" : "";
-        string vehicleName = parentVehicle?.vehicleName ?? "Unknown";
-        
-        RaceHistory.Log(
-            EventType.Modifier,
-            EventImportance.Low,
-            $"{vehicleName}'s {name} gained {modifier.Type} {modifier.Attribute} {modifier.Value:+0;-0}{durText}{sourceText}",
-            parentVehicle?.currentStage,
-            parentVehicle
-        ).WithMetadata("component", name)
-         .WithMetadata("modifierType", modifier.Type.ToString())
-         .WithMetadata("attribute", modifier.Attribute.ToString())
-         .WithMetadata("value", modifier.Value)
-         .WithMetadata("duration", modifier.DurationTurns);
+        // No logging here - Skill.cs/SkillCombatLogger handles it
     }
     
     /// <summary>
     /// Remove a specific modifier from this component.
+    /// Logs removal for debugging purposes.
     /// </summary>
     public void RemoveModifier(AttributeModifier modifier)
     {
         if (componentModifiers.Remove(modifier))
         {
+            // Log removal (for debugging/tracking)
             string vehicleName = parentVehicle?.vehicleName ?? "Unknown";
             
             RaceHistory.Log(
                 EventType.Modifier,
-                EventImportance.Low,
+                EventImportance.Debug,  // Changed to Debug - less noise
                 $"{vehicleName}'s {name} lost {modifier.Type} {modifier.Attribute} {modifier.Value:+0;-0} modifier",
                 parentVehicle?.currentStage,
                 parentVehicle

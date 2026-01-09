@@ -67,16 +67,21 @@ namespace Assets.Scripts.Skills.Helpers
             }
             
             // Apply all effects (routing handles destination)
-            var damageByTarget = SkillEffectApplicator.ApplyAllEffects(
+            var (damageByTarget, modifiersByTarget, restorationByTarget) = SkillEffectApplicator.ApplyAllEffects(
                 skill, user, mainTarget, sourceComponent);
             
-            // Log damage results (if any)
+            // Log all effect results
             if (damageByTarget.Count > 0)
-            {
                 SkillCombatLogger.LogDamageResults(skill.name, user, damageByTarget);
-            }
             
-            return damageByTarget.Count > 0 || HasNonDamageEffects(skill);
+            if (modifiersByTarget.Count > 0)
+                SkillCombatLogger.LogModifierResults(skill.name, user, modifiersByTarget);
+            
+            if (restorationByTarget.Count > 0)
+                SkillCombatLogger.LogRestorationResults(skill.name, user, restorationByTarget);
+            
+            // Skill succeeded if any effects were applied
+            return damageByTarget.Count > 0 || modifiersByTarget.Count > 0 || restorationByTarget.Count > 0 || HasNonDamageEffects(skill);
         }
         
         /// <summary>
@@ -116,15 +121,21 @@ namespace Assets.Scripts.Skills.Helpers
             }
             
             // Apply effects to the specific component
-            var results = SkillEffectApplicator.ApplyAllEffects(
+            var (damageByTarget, modifiersByTarget, restorationByTarget) = SkillEffectApplicator.ApplyAllEffects(
                 skill, user, mainTarget, sourceComponent, targetComponent);
             
-            if (results.Count > 0)
-            {
-                SkillCombatLogger.LogDamageResults(skill.name, user, results);
-            }
+            // Log all effect results
+            if (damageByTarget.Count > 0)
+                SkillCombatLogger.LogDamageResults(skill.name, user, damageByTarget);
             
-            return results.Count > 0 || HasNonDamageEffects(skill);
+            if (modifiersByTarget.Count > 0)
+                SkillCombatLogger.LogModifierResults(skill.name, user, modifiersByTarget);
+            
+            if (restorationByTarget.Count > 0)
+                SkillCombatLogger.LogRestorationResults(skill.name, user, restorationByTarget);
+            
+            // Skill succeeded if any effects were applied
+            return damageByTarget.Count > 0 || modifiersByTarget.Count > 0 || restorationByTarget.Count > 0 || HasNonDamageEffects(skill);
         }
         
         /// <summary>

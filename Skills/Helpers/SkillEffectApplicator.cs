@@ -4,16 +4,20 @@ using UnityEngine;
 namespace Assets.Scripts.Skills.Helpers
 {
     /// <summary>
-    /// Applies effects to targets and tracks damage breakdowns.
+    /// Applies effects to targets and tracks all effect breakdowns.
     /// Handles target resolution and effect routing with component-aware targeting.
     /// </summary>
     public static class SkillEffectApplicator
     {
         /// <summary>
-        /// Applies all effects to their targets and tracks damage breakdowns.
-        /// Returns dictionary of damage breakdowns by target entity.
+        /// Applies all effects to their targets and tracks breakdowns for logging.
+        /// Returns dictionaries of damage, modifier, and restoration breakdowns by target entity.
         /// </summary>
-        public static Dictionary<Entity, List<DamageBreakdown>> ApplyAllEffects(
+        public static (
+            Dictionary<Entity, List<DamageBreakdown>> damageByTarget,
+            Dictionary<Entity, List<AttributeModifier>> modifiersByTarget,
+            Dictionary<Entity, List<RestorationBreakdown>> restorationByTarget
+        ) ApplyAllEffects(
             Skill skill,
             Vehicle user,
             Vehicle mainTarget,
@@ -21,6 +25,8 @@ namespace Assets.Scripts.Skills.Helpers
             VehicleComponent targetComponentOverride = null)
         {
             var damageByTarget = new Dictionary<Entity, List<DamageBreakdown>>();
+            var modifiersByTarget = new Dictionary<Entity, List<AttributeModifier>>();
+            var restorationByTarget = new Dictionary<Entity, List<RestorationBreakdown>>();
             
             foreach (var invocation in skill.effectInvocations)
             {
@@ -33,14 +39,10 @@ namespace Assets.Scripts.Skills.Helpers
                     mainTarget,
                     sourceComponent,
                     targetComponentOverride,
-                    invocation.effect);  // Pass effect for routing
+                    invocation.effect);
                 
                 foreach (var targetEntity in targetEntities)
                 {
-                    // DEBUG: Log which target we're applying to
-                    string targetName = EntityHelpers.GetEntityDisplayName(targetEntity);
-                    Debug.Log($"[Skill] Applying {invocation.effect.GetType().Name} to {targetName} (target: {invocation.target})");
-                    
                     // Apply effect - source component, routed target, weapon for context, skill for metadata
                     invocation.effect.Apply(
                         sourceComponent ?? user.chassis,
@@ -48,22 +50,45 @@ namespace Assets.Scripts.Skills.Helpers
                         sourceComponent as WeaponComponent,
                         skill);
                     
-                    // Track damage breakdowns for DamageEffect
+                    // Track damage breakdowns
                     if (invocation.effect is DamageEffect damageEffect && damageEffect.LastBreakdown != null)
                     {
                         if (!damageByTarget.ContainsKey(targetEntity))
-                        {
                             damageByTarget[targetEntity] = new List<DamageBreakdown>();
-                        }
-                        damageByTarget[targetEntity].Add(damageEffect.LastBreakdown);
                         
-                        // DEBUG: Log damage tracking
-                        Debug.Log($"[Skill] Tracked {damageEffect.LastBreakdown.finalDamage} damage to {targetName}");
+                        damageByTarget[targetEntity].Add(damageEffect.LastBreakdown);
+                    }
+                    
+                    // Track modifier applications
+                    if (invocation.effect is AttributeModifierEffect modifierEffect)
+                    {
+                        // Get the modifier that was just added to the target component
+                        if (targetEntity is VehicleComponent component)
+                        {
+                            var modifiers = component.GetModifiers();
+                            if (modifiers.Count > 0)
+                            {
+                                if (!modifiersByTarget.ContainsKey(targetEntity))
+                                    modifiersByTarget[targetEntity] = new List<AttributeModifier>();
+                                
+                                // Track the last modifier added (the one we just applied)
+                                modifiersByTarget[targetEntity].Add(modifiers[modifiers.Count - 1]);
+                            }
+                        }
+                    }
+                    
+                    // Track restoration breakdowns
+                    if (invocation.effect is ResourceRestorationEffect restorationEffect && restorationEffect.LastBreakdown != null)
+                    {
+                        if (!restorationByTarget.ContainsKey(targetEntity))
+                            restorationByTarget[targetEntity] = new List<RestorationBreakdown>();
+                        
+                        restorationByTarget[targetEntity].Add(restorationEffect.LastBreakdown);
                     }
                 }
             }
             
-            return damageByTarget;
+            return (damageByTarget, modifiersByTarget, restorationByTarget);
         }
         
         /// <summary>

@@ -128,7 +128,7 @@ namespace Assets.Scripts.Skills.Helpers
             if (componentRoll.success == true)
             {
                 // Component hit - calculate and apply damage to component
-                var damageByTarget = SkillEffectApplicator.ApplyAllEffects(
+                var (damageByTarget, modifiersByTarget, restorationByTarget) = SkillEffectApplicator.ApplyAllEffects(
                     skill, user, mainTarget, sourceComponent, targetComponent);
                 
                 SkillCombatLogger.LogComponentHit(skill.name, user, mainTarget, targetComponentName, sourceComponent, componentRoll, damageByTarget);
@@ -147,7 +147,7 @@ namespace Assets.Scripts.Skills.Helpers
             if (chassisRoll.success == true)
             {
                 // Chassis hit - calculate and apply damage to chassis (not component!)
-                var damageByTarget = SkillEffectApplicator.ApplyAllEffects(
+                var (damageByTarget, modifiersByTarget, restorationByTarget) = SkillEffectApplicator.ApplyAllEffects(
                     skill, user, mainTarget, sourceComponent, null);  // null = use routing (targets chassis)
                 
                 SkillCombatLogger.LogChassisHit(skill.name, user, mainTarget, targetComponentName, sourceComponent, chassisRoll, damageByTarget);
