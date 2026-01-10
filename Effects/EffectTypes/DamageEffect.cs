@@ -5,6 +5,13 @@ using RacingGame.Events;
 /// Universal damage effect.
 /// Uses DamageFormula to calculate damage based on mode (skill-only, weapon-based, etc.)
 /// Can work with or without a weapon depending on formula configuration.
+/// 
+/// Damage Flow:
+/// 1. DamageEffect.Apply() is called by SkillEffectApplicator
+/// 2. DamageFormula.ComputeDamageWithBreakdown() calculates damage (uses RollUtility)
+/// 3. DamagePacket is created with raw damage
+/// 4. DamageResolver applies resistances and returns final damage
+/// 5. Entity.TakeDamage() reduces HP
 /// </summary>
 [System.Serializable]
 public class DamageEffect : EffectBase
@@ -13,21 +20,12 @@ public class DamageEffect : EffectBase
     [Tooltip("Defines how damage is calculated (skill dice, weapon scaling, etc.)")]
     public DamageFormula formula = new DamageFormula();
 
-    // Store last roll breakdown for retrieval by Skill.Use()
+    // Store last breakdown for retrieval by SkillEffectApplicator
     private DamageBreakdown lastBreakdown;
-
-    /// <summary>
-    /// Gets the last damage rolled by this effect.
-    /// </summary>
-    public int LastDamageRolled => lastBreakdown?.finalDamage ?? 0;
-    
-    /// <summary>
-    /// Gets the damage type used in the last application.
-    /// </summary>
-    public DamageType LastDamageType => lastBreakdown?.damageType ?? DamageType.Physical;
     
     /// <summary>
     /// Gets the full breakdown of the last damage calculation.
+    /// Used by SkillEffectApplicator for logging.
     /// </summary>
     public DamageBreakdown LastBreakdown => lastBreakdown;
 

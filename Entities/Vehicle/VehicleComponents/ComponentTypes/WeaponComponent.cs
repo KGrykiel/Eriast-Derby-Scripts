@@ -8,6 +8,10 @@ using UnityEngine;
 /// OPTIONAL: Vehicles can have 0 to many weapons.
 /// Each weapon ENABLES ONE "Gunner" role slot (one character per weapon).
 /// Provides: Damage stats and weapon-specific skills.
+/// 
+/// NOTE: Weapon damage is rolled via DamageFormula, not directly on this component.
+/// This component stores the weapon's damage STATS (dice, type, bonus).
+/// DamageFormula reads these stats and handles actual rolling.
 /// </summary>
 public class WeaponComponent : VehicleComponent
 {
@@ -44,34 +48,6 @@ public class WeaponComponent : VehicleComponent
             string bonus = damageBonus != 0 ? $"+{damageBonus}" : "";
             return $"{damageDice}d{damageDieSize}{bonus} {damageType}";
         }
-    }
-    
-    /// <summary>
-    /// Roll this weapon's damage dice.
-    /// Returns the total damage value.
-    /// </summary>
-    public int RollDamage()
-    {
-        var breakdown = RollUtility.RollWeaponDamageWithBreakdown(this);
-        return breakdown.finalDamage;
-    }
-    
-    /// <summary>
-    /// Create a damage packet from this weapon's damage.
-    /// </summary>
-    public DamagePacket CreateDamagePacket(Entity source, bool isCritical = false)
-    {
-        int damage = RollDamage();
-        
-        // Critical hits double the dice (roll again and add)
-        if (isCritical)
-        {
-            var critBreakdown = RollUtility.RollDamageWithBreakdown(
-                damageDice, damageDieSize, 0, "Critical", damageType, name);
-            damage += critBreakdown.finalDamage;
-        }
-        
-        return DamagePacket.FromWeapon(damage, damageType, source, isCritical);
     }
     
     /// <summary>

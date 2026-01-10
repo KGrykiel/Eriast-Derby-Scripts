@@ -4,6 +4,8 @@
 /// Encapsulates damage calculation logic.
 /// Describes HOW to compute damage based on weapon, skill dice, and mode.
 /// Used by DamageEffect to keep damage calculation policy separate from application.
+/// 
+/// NOTE: All dice rolling is delegated to RollUtility for consistency.
 /// </summary>
 [System.Serializable]
 public class DamageFormula
@@ -35,6 +37,7 @@ public class DamageFormula
 
     /// <summary>
     /// Compute total damage with full breakdown tracking.
+    /// All dice rolling is done through RollUtility.
     /// </summary>
     public DamageBreakdown ComputeDamageWithBreakdown(WeaponComponent weapon)
     {
@@ -45,7 +48,7 @@ public class DamageFormula
         {
             case SkillDamageMode.SkillOnly:
                 // Pure skill damage, ignore weapon entirely
-                int skillRolled = RollDice(skillDice, skillDieSize);
+                int skillRolled = RollUtility.RollDice(skillDice, skillDieSize);
                 breakdown.AddComponent("Skill", skillDice, skillDieSize, skillBonus, skillRolled, "Skill Effect");
                 breakdown.damageType = skillDamageType;
                 break;
@@ -54,7 +57,7 @@ public class DamageFormula
                 // Just weapon dice, no skill contribution
                 if (weapon != null)
                 {
-                    int weaponRolled = RollDice(weapon.damageDice, weapon.damageDieSize);
+                    int weaponRolled = RollUtility.RollDice(weapon.damageDice, weapon.damageDieSize);
                     breakdown.AddComponent("Weapon", weapon.damageDice, weapon.damageDieSize, weapon.damageBonus, weaponRolled, weapon.name);
                     breakdown.damageType = weapon.damageType;
                 }
@@ -68,12 +71,12 @@ public class DamageFormula
                 // Weapon dice + skill dice combined
                 if (weapon != null)
                 {
-                    int weaponRolled = RollDice(weapon.damageDice, weapon.damageDieSize);
+                    int weaponRolled = RollUtility.RollDice(weapon.damageDice, weapon.damageDieSize);
                     breakdown.AddComponent("Weapon", weapon.damageDice, weapon.damageDieSize, weapon.damageBonus, weaponRolled, weapon.name);
                     
                     if (skillDice > 0 && skillDieSize > 0)
                     {
-                        int skillRolled2 = RollDice(skillDice, skillDieSize);
+                        int skillRolled2 = RollUtility.RollDice(skillDice, skillDieSize);
                         breakdown.AddComponent("Skill Bonus", skillDice, skillDieSize, skillBonus, skillRolled2, "Skill Effect");
                     }
                     else if (skillBonus != 0)
@@ -86,7 +89,7 @@ public class DamageFormula
                 else
                 {
                     // Fallback to skill-only if no weapon
-                    int skillRolled3 = RollDice(skillDice, skillDieSize);
+                    int skillRolled3 = RollUtility.RollDice(skillDice, skillDieSize);
                     breakdown.AddComponent("Skill", skillDice, skillDieSize, skillBonus, skillRolled3, "Skill Effect");
                     breakdown.damageType = skillDamageType;
                 }
@@ -97,7 +100,7 @@ public class DamageFormula
                 if (weapon != null)
                 {
                     int multipliedDice = Mathf.RoundToInt(weapon.damageDice * weaponMultiplier);
-                    int multipliedRolled = RollDice(multipliedDice, weapon.damageDieSize);
+                    int multipliedRolled = RollUtility.RollDice(multipliedDice, weapon.damageDieSize);
                     breakdown.AddComponent($"Weapon ×{weaponMultiplier}", multipliedDice, weapon.damageDieSize, weapon.damageBonus, multipliedRolled, weapon.name);
                     breakdown.damageType = weapon.damageType;
                 }
@@ -121,21 +124,6 @@ public class DamageFormula
         var breakdown = ComputeDamageWithBreakdown(weapon);
         damageType = breakdown.damageType;
         return breakdown.rawTotal;
-    }
-
-    /// <summary>
-    /// Roll dice and return sum (without bonus).
-    /// </summary>
-    private int RollDice(int count, int size)
-    {
-        if (count <= 0 || size <= 0) return 0;
-        
-        int total = 0;
-        for (int i = 0; i < count; i++)
-        {
-            total += Random.Range(1, size + 1);
-        }
-        return total;
     }
 
     /// <summary>
