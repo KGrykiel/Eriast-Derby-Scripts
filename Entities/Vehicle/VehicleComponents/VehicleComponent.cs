@@ -71,6 +71,8 @@ public abstract class VehicleComponent : Entity
     protected Vehicle parentVehicle;
     
     // Component-level modifiers (buffs/debuffs affecting this component)
+    // NOTE: Stored separately from Entity.entityModifiers for Vehicle routing logic
+    // Vehicle.ResolveModifierTarget() routes modifiers to correct component
     [SerializeField, HideInInspector]
     private List<AttributeModifier> componentModifiers = new List<AttributeModifier>();
     
@@ -104,27 +106,23 @@ public abstract class VehicleComponent : Entity
         hasActedThisTurn = false;
     }
     
-    // ==================== MODIFIER SYSTEM ====================
+    // ==================== MODIFIER SYSTEM (Component-Specific) ====================
     
     /// <summary>
     /// Add a modifier to this component.
-    /// 
-    /// NOTE: This method does NOT log the modifier application.
+    /// NOTE: This overrides Entity.AddModifier() to use componentModifiers for routing.
     /// Logging is handled by SkillCombatLogger when effects are applied from skills.
-    /// This allows proper aggregation of multi-effect skills.
     /// </summary>
-    public void AddModifier(AttributeModifier modifier)
+    public override void AddModifier(AttributeModifier modifier)
     {
         componentModifiers.Add(modifier);
-        
-        // No logging here - Skill.cs/SkillCombatLogger handles it
     }
     
     /// <summary>
     /// Remove a specific modifier from this component.
     /// Logs removal for debugging purposes.
     /// </summary>
-    public void RemoveModifier(AttributeModifier modifier)
+    public override void RemoveModifier(AttributeModifier modifier)
     {
         if (componentModifiers.Remove(modifier))
         {
@@ -133,7 +131,7 @@ public abstract class VehicleComponent : Entity
             
             RaceHistory.Log(
                 EventType.Modifier,
-                EventImportance.Debug,  // Changed to Debug - less noise
+                EventImportance.Debug,
                 $"{vehicleName}'s {name} lost {modifier.Type} {modifier.Attribute} {modifier.Value:+0;-0} modifier",
                 parentVehicle?.currentStage,
                 parentVehicle
@@ -145,74 +143,24 @@ public abstract class VehicleComponent : Entity
     }
     
     /// <summary>
-    /// Update modifiers (decrement durations, remove expired).
-    /// Called by Vehicle.UpdateModifiers() at end of turn.
-    /// 
-    /// Duration semantics:
-    /// - DurationTurns = -1: Permanent, never expires
-    /// - DurationTurns = 1: Last active turn, will expire after this update
-    /// - DurationTurns > 1: Active for N more turns
-    /// 
-    /// Flow: A 3-turn buff starts at 3, decrements each turn (3?2?1?expired)
-    /// </summary>
-    public void UpdateModifiers()
-    {
-        for (int i = componentModifiers.Count - 1; i >= 0; i--)
-        {
-            var mod = componentModifiers[i];
-            
-            // Permanent modifiers (-1) never expire
-            if (mod.DurationTurns < 0)
-                continue;
-            
-            // Decrement duration
-            mod.DurationTurns--;
-            
-            // Remove if expired (reached 0 after decrement)
-            if (mod.DurationTurns <= 0)
-            {
-                string vehicleName = parentVehicle?.vehicleName ?? "Unknown";
-                string sourceText = mod.Source != null ? $" from {mod.Source.name}" : "";
-                
-                RaceHistory.Log(
-                    EventType.Modifier,
-                    EventImportance.Low,
-                    $"{vehicleName}'s {name}: {mod.Type} {mod.Attribute} {mod.Value:+0;-0} expired{sourceText}",
-                    parentVehicle?.currentStage,
-                    parentVehicle
-                ).WithMetadata("component", name)
-                 .WithMetadata("expired", true);
-                
-                componentModifiers.RemoveAt(i);
-            }
-        }
-    }
-    
-    /// <summary>
     /// Get all modifiers affecting this component.
     /// Used by Vehicle.GetActiveModifiers() for aggregation.
     /// </summary>
-    public List<AttributeModifier> GetModifiers() => componentModifiers;
+    public override List<AttributeModifier> GetModifiers()
+    {
+        return componentModifiers;
+    }
     
     /// <summary>
-    /// Apply component-specific modifiers to an attribute value.
-    /// Called by component subclasses when calculating stats.
+    /// Update modifiers and status effects at end of turn.
+    /// NOTE: Overrides Entity to add component-specific behavior.
     /// </summary>
-    protected float ApplyModifiers(Attribute attr, float baseValue)
+    public void UpdateModifiers()
     {
-        float flatBonus = 0f;
-        float percentMultiplier = 1f;
-
-        foreach (var mod in componentModifiers)
-        {
-            if (mod.Attribute != attr) continue;
-            if (mod.Type == ModifierType.Flat)
-                flatBonus += mod.Value;
-            else if (mod.Type == ModifierType.Percent)
-                percentMultiplier *= (1f + mod.Value / 100f);
-        }
-
-        return (baseValue + flatBonus) * percentMultiplier;
+        // Update status effects (from Entity base class)
+        UpdateStatusEffects();
+        
+        // TODO (Phase 2): Additional component-specific modifier logic if needed
     }
     
     // ==================== ENTITY OVERRIDES ====================
@@ -242,6 +190,45 @@ public abstract class VehicleComponent : Entity
         if (parentVehicle != null)
         {
             return parentVehicle.IsComponentAccessible(this);
+        }
+        
+        return true;
+    }
+    
+    // ==================== BEHAVIORAL QUERIES ====================
+    
+    /// <summary>
+    /// Can this component perform actions? (checks for stun/disable effects + component state)
+    /// NOTE: This is component-specific behavior, not applicable to all entities (barrels, props, etc.)
+    /// </summary>
+    public virtual bool CanAct()
+    {
+        if (isDestroyed || isDisabled) return false;
+        
+        // Check if any status effect prevents actions
+        foreach (var statusEffect in activeStatusEffects)
+        {
+            if (statusEffect.PreventsActions)
+                return false;
+        }
+        
+        return true;
+    }
+    
+    /// <summary>
+    /// Can this component contribute to vehicle movement?
+    /// Checks component state and status effects that prevent movement.
+    /// NOTE: Vehicle.CanMove() is the authoritative check - it verifies DriveComponent exists and is functional.
+    /// </summary>
+    public virtual bool CanContributeToMovement()
+    {
+        if (isDestroyed || isDisabled) return false;
+        
+        // Check if any status effect prevents movement
+        foreach (var statusEffect in activeStatusEffects)
+        {
+            if (statusEffect.PreventsMovement)
+                return false;
         }
         
         return true;

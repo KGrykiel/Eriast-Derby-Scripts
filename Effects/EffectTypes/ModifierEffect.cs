@@ -8,9 +8,10 @@ public class AttributeModifierEffect : EffectBase
     public Attribute attribute;
     public ModifierType type;
     public float value;
-    [Tooltip("-1 for permanent, otherwise number of turns")]
-    public int durationTurns = -1;
-    public bool local = false; // If true, this modifier is only applied locally
+    
+    // NOTE: Duration and 'local' fields removed - will be handled by StatusEffect system in Phase 2
+    // For now, modifiers applied by this effect are permanent (equipment-style)
+    // Skills will use StatusEffect system instead (Phase 2 migration)
 
     // Converts to a runtime AttributeModifier, tagging it with the source that applied it
     public AttributeModifier ToRuntimeModifier(UnityEngine.Object source)
@@ -19,9 +20,7 @@ public class AttributeModifierEffect : EffectBase
             attribute,
             type,
             value,
-            durationTurns,
-            source,
-            local
+            source
         );
     }
 

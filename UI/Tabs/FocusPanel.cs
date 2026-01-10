@@ -93,8 +93,9 @@ public class FocusPanel : MonoBehaviour
             status += $"<b>Active Modifiers ({modifiers.Count}):</b>\n";
             foreach (var mod in modifiers)
             {
-                string durText = mod.DurationTurns > 0 ? $" ({mod.DurationTurns}t)" : " (∞)";
-                status += $"  • {mod.Type} {mod.Attribute} {mod.Value:+0;-0}{durText}\n";
+                // NOTE: Duration display removed - will be handled by StatusEffect system in Phase 2
+                // ∞ symbol indicates permanent (equipment-style) modifiers
+                status += $"  • {mod.Type} {mod.Attribute} {mod.Value:+0;-0} (∞)\n";
             }
         }
         else

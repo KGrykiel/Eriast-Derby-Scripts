@@ -1,6 +1,8 @@
 using UnityEngine;
 using System.Collections.Generic;
 using System.Linq;
+using Assets.Scripts.Entities;
+using Assets.Scripts.StatusEffects;
 
 /// <summary>
 /// Abstract base class for all entities that can be damaged, targeted, or interact with skills.
@@ -13,6 +15,11 @@ using System.Linq;
 /// NOTE: Vehicle itself is NOT an Entity - it's a container/coordinator for Entity components.
 /// 
 /// Display name uses Unity's built-in name property (GameObject.name).
+/// 
+/// MODIFIER SYSTEM (Phase 1):
+/// - Entities store their own modifiers and status effects
+/// - Two sources: StatusEffect (temporary/indefinite) OR Component (permanent equipment)
+/// - Skills apply StatusEffects ONLY, Components apply direct modifiers
 /// </summary>
 public abstract class Entity : MonoBehaviour
 {
@@ -30,10 +37,49 @@ public abstract class Entity : MonoBehaviour
     [Tooltip("Is this entity destroyed?")]
     public bool isDestroyed = false;
     
+    [Header("Entity Features")]
+    [Tooltip("Capability flags for status effect targeting validation")]
+    public EntityFeature features = EntityFeature.None;
+    
     [Header("Damage Resistances")]
     [Tooltip("Resistances and vulnerabilities to different damage types")]
     public List<DamageResistance> resistances = new List<DamageResistance>();
 
+    // ==================== MODIFIER & STATUS EFFECT STORAGE ====================
+    
+    /// <summary>
+    /// Active modifiers on this entity (from StatusEffects or Components).
+    /// Note: VehicleComponent subclass adds its own componentModifiers for routing.
+    /// </summary>
+    [SerializeField, HideInInspector]
+    protected List<AttributeModifier> entityModifiers = new List<AttributeModifier>();
+    
+    /// <summary>
+    /// Active status effects on this entity.
+    /// </summary>
+    [SerializeField, HideInInspector]
+    protected List<AppliedStatusEffect> activeStatusEffects = new List<AppliedStatusEffect>();
+
+    // ==================== ENTITY FEATURES ====================
+    
+    /// <summary>
+    /// Check if this entity has a specific feature (or combination of features).
+    /// </summary>
+    public bool HasFeature(EntityFeature feature)
+    {
+        return (features & feature) == feature;
+    }
+    
+    /// <summary>
+    /// Check if entity has ANY of the specified features.
+    /// </summary>
+    public bool HasAnyFeature(EntityFeature flags)
+    {
+        return (features & flags) != 0;
+    }
+
+    // ==================== ARMOR CLASS ====================
+    
     /// <summary>
     /// Get armor class for targeting calculations.
     /// Override for dynamic AC (modifiers, cover, etc.)
@@ -42,6 +88,8 @@ public abstract class Entity : MonoBehaviour
     {
         return armorClass;
     }
+    
+    // ==================== DAMAGE RESISTANCES ====================
     
     /// <summary>
     /// Get resistance level for a specific damage type.
@@ -53,6 +101,8 @@ public abstract class Entity : MonoBehaviour
         return resistance.level != default ? resistance.level : ResistanceLevel.Normal;
     }
 
+    // ==================== DAMAGE & HEALING ====================
+    
     /// <summary>
     /// Apply damage to this entity.
     /// Override in subclasses for custom damage handling (resistances, shields, etc.)
@@ -109,6 +159,214 @@ public abstract class Entity : MonoBehaviour
         return (float)health / maxHealth;
     }
 
+    // ==================== MODIFIER SYSTEM ====================
+    
+    /// <summary>
+    /// Add a direct modifier to this entity.
+    /// Used by Components to apply permanent equipment bonuses.
+    /// Skills should use ApplyStatusEffect() instead.
+    /// </summary>
+    public virtual void AddModifier(AttributeModifier modifier)
+    {
+        entityModifiers.Add(modifier);
+    }
+    
+    /// <summary>
+    /// Remove a specific modifier from this entity.
+    /// </summary>
+    public virtual void RemoveModifier(AttributeModifier modifier)
+    {
+        entityModifiers.Remove(modifier);
+    }
+    
+    /// <summary>
+    /// Get all active modifiers on this entity.
+    /// </summary>
+    public virtual List<AttributeModifier> GetModifiers()
+    {
+        return entityModifiers;
+    }
+    
+    /// <summary>
+    /// Apply modifiers to a base attribute value.
+    /// Returns the modified value after applying all relevant modifiers.
+    /// </summary>
+    protected float ApplyModifiers(Attribute attr, float baseValue)
+    {
+        float flatBonus = 0f;
+        float percentMultiplier = 1f;
+
+        foreach (var mod in entityModifiers)
+        {
+            if (mod.Attribute != attr) continue;
+            
+            if (mod.Type == ModifierType.Flat)
+                flatBonus += mod.Value;
+            else if (mod.Type == ModifierType.Percent)
+                percentMultiplier *= (1f + mod.Value / 100f);
+        }
+
+        return (baseValue + flatBonus) * percentMultiplier;
+    }
+
+    // ==================== STATUS EFFECT SYSTEM ====================
+    
+    /// <summary>
+    /// Apply a status effect to this entity.
+    /// Handles stacking rules: same status effect compares and keeps better one.
+    /// Returns the applied (or existing better) status effect instance.
+    /// </summary>
+    public virtual AppliedStatusEffect ApplyStatusEffect(StatusEffect effect, UnityEngine.Object applier)
+    {
+        // Validate targeting (feature requirements)
+        if (!CanApplyStatusEffect(effect))
+        {
+            Debug.LogWarning($"[Entity] Cannot apply {effect.effectName} to {GetDisplayName()} - feature requirements not met");
+            return null;
+        }
+        
+        // Check for existing status effect of same type (stacking rules)
+        var existing = activeStatusEffects.FirstOrDefault(a => a.template == effect);
+        
+        if (existing != null)
+        {
+            // Compare and keep better effect
+            if (ShouldReplaceStatusEffect(existing, effect))
+            {
+                // Remove old effect
+                existing.OnRemove();
+                activeStatusEffects.Remove(existing);
+                
+                // Apply new effect (will be added below)
+            }
+            else
+            {
+                // Keep existing effect (it's better or equal)
+                return existing;
+            }
+        }
+        
+        // Create and apply new status effect
+        var applied = new AppliedStatusEffect(effect, this, applier);
+        applied.OnApply();
+        activeStatusEffects.Add(applied);
+        
+        return applied;
+    }
+    
+    /// <summary>
+    /// Remove a specific status effect from this entity.
+    /// </summary>
+    public virtual void RemoveStatusEffect(AppliedStatusEffect statusEffect)
+    {
+        if (activeStatusEffects.Remove(statusEffect))
+        {
+            statusEffect.OnRemove();
+        }
+    }
+    
+    /// <summary>
+    /// Remove all status effects from a specific source.
+    /// </summary>
+    public virtual void RemoveStatusEffectsFromSource(UnityEngine.Object source)
+    {
+        var toRemove = activeStatusEffects.Where(s => s.applier == source).ToList();
+        
+        foreach (var statusEffect in toRemove)
+        {
+            RemoveStatusEffect(statusEffect);
+        }
+    }
+    
+    /// <summary>
+    /// Get all active status effects on this entity.
+    /// </summary>
+    public virtual List<AppliedStatusEffect> GetActiveStatusEffects()
+    {
+        return activeStatusEffects;
+    }
+    
+    /// <summary>
+    /// Update status effects (tick periodic effects, decrement durations, remove expired).
+    /// Call this at the start/end of each turn.
+    /// </summary>
+    public virtual void UpdateStatusEffects()
+    {
+        // Tick all status effects (periodic damage, healing, etc.)
+        foreach (var statusEffect in activeStatusEffects.ToList()) // ToList to avoid modification during iteration
+        {
+            statusEffect.OnTick();
+        }
+        
+        // Decrement durations and remove expired
+        for (int i = activeStatusEffects.Count - 1; i >= 0; i--)
+        {
+            var statusEffect = activeStatusEffects[i];
+            
+            statusEffect.DecrementDuration();
+            
+            if (statusEffect.IsExpired)
+            {
+                statusEffect.OnRemove();
+                activeStatusEffects.RemoveAt(i);
+                
+                // TODO: Log expiration
+                // Debug.Log($"{GetDisplayName()}: {statusEffect.template.effectName} expired");
+            }
+        }
+    }
+    
+    /// <summary>
+    /// Check if a status effect can be applied to this entity (feature validation).
+    /// </summary>
+    public virtual bool CanApplyStatusEffect(StatusEffect effect)
+    {
+        // Check required features
+        if (effect.requiredFeatures != EntityFeature.None)
+        {
+            if (!HasFeature(effect.requiredFeatures))
+                return false;
+        }
+        
+        // Check excluded features
+        if (effect.excludedFeatures != EntityFeature.None)
+        {
+            if (HasAnyFeature(effect.excludedFeatures))
+                return false;
+        }
+        
+        return true;
+    }
+    
+    /// <summary>
+    /// Determine if new status effect should replace existing one (stacking rules).
+    /// Comparison order: Better effect > Longer duration > Keep existing
+    /// </summary>
+    private bool ShouldReplaceStatusEffect(AppliedStatusEffect existing, StatusEffect newEffect)
+    {
+        // Compare effect magnitude (sum of absolute modifier values)
+        float existingMagnitude = existing.template.modifiers.Sum(m => Mathf.Abs(m.value));
+        float newMagnitude = newEffect.modifiers.Sum(m => Mathf.Abs(m.value));
+        
+        // 1. Better effect wins
+        if (newMagnitude > existingMagnitude)
+            return true;
+        if (newMagnitude < existingMagnitude)
+            return false;
+        
+        // 2. If equal magnitude, longer duration wins
+        int existingDuration = existing.turnsRemaining;
+        int newDuration = newEffect.baseDuration;
+        
+        if (newDuration > existingDuration)
+            return true;
+        
+        // 3. If equal or worse, keep existing
+        return false;
+    }
+    
+    // ==================== TARGETING ====================
+    
     /// <summary>
     /// Check if this entity can be targeted.
     /// Override for invisibility, phasing, etc.

@@ -187,7 +187,11 @@ public class Vehicle : MonoBehaviour
             for (int i = modifiers.Count - 1; i >= 0; i--)
             {
                 var mod = modifiers[i];
-                bool shouldRemove = mod.Source == source && (!localOnly || mod.local);
+                
+                // TODO (Phase 2): 'localOnly' parameter was for stage-specific modifiers
+                // When StatusEffect system is implemented, this will be handled by AppliedStatusEffect.applier
+                // For now, just check source match
+                bool shouldRemove = mod.Source == source;
                 
                 if (shouldRemove)
                 {
@@ -200,17 +204,15 @@ public class Vehicle : MonoBehaviour
         if (totalRemoved > 0)
         {
             string sourceText = source != null ? source.name : "unknown source";
-            string localText = localOnly ? " (local only)" : "";
             
             RaceHistory.Log(
                 EventType.Modifier,
                 EventImportance.Low,
-                $"{vehicleName} lost {totalRemoved} modifier(s) from {sourceText}{localText}",
+                $"{vehicleName} lost {totalRemoved} modifier(s) from {sourceText}",
                 currentStage,
                 this
             ).WithMetadata("removedCount", totalRemoved)
-             .WithMetadata("source", sourceText)
-             .WithMetadata("localOnly", localOnly);
+             .WithMetadata("source", sourceText);
         }
     }
     

@@ -184,9 +184,10 @@ string display = BuildDetailedVehicleInfo();
         {
             foreach (var mod in modifiers)
             {
-                string durText = mod.DurationTurns > 0 ? $" ({mod.DurationTurns} turns)" : " (permanent)";
+                // NOTE: Duration display removed - will be handled by StatusEffect system in Phase 2
+                // For now, all modifiers shown as permanent (equipment-style)
                 string sourceText = mod.Source != null ? $" [from {mod.Source.name}]" : "";
-                info += $"  - {mod.Type} {mod.Attribute} {mod.Value:+0;-0}{durText}{sourceText}\n";
+                info += $"  - {mod.Type} {mod.Attribute} {mod.Value:+0;-0} (permanent){sourceText}\n";
             }
         }
         

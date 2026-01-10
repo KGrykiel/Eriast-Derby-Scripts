@@ -376,8 +376,9 @@ namespace Assets.Scripts.Skills.Helpers
                 List<string> modifierDescriptions = new List<string>();
                 foreach (var mod in modifiers)
                 {
-                    string durText = mod.DurationTurns < 0 ? "permanent" : $"{mod.DurationTurns} turn{(mod.DurationTurns > 1 ? "s" : "")}";
-                    string modDesc = $"{mod.Type} {mod.Attribute} {mod.Value:+0;-0} ({durText})";
+                    // NOTE: Duration tracking removed - will be handled by StatusEffect system in Phase 2
+                    // For now, show all modifiers as permanent (equipment-style)
+                    string modDesc = $"{mod.Type} {mod.Attribute} {mod.Value:+0;-0} (permanent)";
                     modifierDescriptions.Add(modDesc);
                 }
                 
@@ -422,8 +423,8 @@ namespace Assets.Scripts.Skills.Helpers
                     var mod = modifiers[i];
                     modEvt.WithMetadata($"modifier_{i}_attribute", mod.Attribute.ToString())
                           .WithMetadata($"modifier_{i}_type", mod.Type.ToString())
-                          .WithMetadata($"modifier_{i}_value", mod.Value)
-                          .WithMetadata($"modifier_{i}_duration", mod.DurationTurns);
+                          .WithMetadata($"modifier_{i}_value", mod.Value);
+                    // Duration metadata removed - will be tracked by StatusEffect system in Phase 2
                 }
             }
         }
