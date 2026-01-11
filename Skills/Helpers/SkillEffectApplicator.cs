@@ -1,94 +1,65 @@
 ﻿using System.Collections.Generic;
 using UnityEngine;
+using Assets.Scripts.Effects.EffectTypes;
+using Assets.Scripts.StatusEffects;
+using Assets.Scripts.Combat;
 
 namespace Assets.Scripts.Skills.Helpers
 {
     /// <summary>
-    /// Applies effects to targets and tracks all effect breakdowns.
+    /// Applies effects to targets with action scoping for aggregated logging.
     /// Handles target resolution and effect routing with component-aware targeting.
+    /// 
+    /// LOGGING: Effects emit events to CombatEventBus. This class manages the action scope
+    /// so all events from a skill are aggregated and logged together.
     /// </summary>
     public static class SkillEffectApplicator
     {
         /// <summary>
-        /// Applies all effects to their targets and tracks breakdowns for logging.
-        /// Returns dictionaries of damage, modifier, and restoration breakdowns by target entity.
+        /// Applies all effects to their targets within a combat action scope.
+        /// Events are collected and logged together when the scope ends.
         /// </summary>
-        public static (
-            Dictionary<Entity, List<DamageBreakdown>> damageByTarget,
-            Dictionary<Entity, List<AttributeModifier>> modifiersByTarget,
-            Dictionary<Entity, List<RestorationBreakdown>> restorationByTarget
-        ) ApplyAllEffects(
+        public static void ApplyAllEffects(
             Skill skill,
             Vehicle user,
             Vehicle mainTarget,
             VehicleComponent sourceComponent,
             VehicleComponent targetComponentOverride = null)
         {
-            var damageByTarget = new Dictionary<Entity, List<DamageBreakdown>>();
-            var modifiersByTarget = new Dictionary<Entity, List<AttributeModifier>>();
-            var restorationByTarget = new Dictionary<Entity, List<RestorationBreakdown>>();
+            // Begin action scope - all events will be aggregated
+            CombatEventBus.BeginAction(sourceComponent ?? user.chassis, skill, mainTarget);
             
-            foreach (var invocation in skill.effectInvocations)
+            try
             {
-                if (invocation.effect == null) continue;
-                
-                // Resolve ALL targets for this effect (can be multiple for AOE/Both)
-                List<Entity> targetEntities = ResolveTargets(
-                    invocation.target,
-                    user,
-                    mainTarget,
-                    sourceComponent,
-                    targetComponentOverride,
-                    invocation.effect);
-                
-                foreach (var targetEntity in targetEntities)
+                foreach (var invocation in skill.effectInvocations)
                 {
-                    // Apply effect - source component, routed target, weapon for context, skill for metadata
-                    invocation.effect.Apply(
-                        sourceComponent ?? user.chassis,
-                        targetEntity,
-                        sourceComponent as WeaponComponent,
-                        skill);
+                    if (invocation.effect == null) continue;
                     
-                    // Track damage breakdowns
-                    if (invocation.effect is DamageEffect damageEffect && damageEffect.LastBreakdown != null)
-                    {
-                        if (!damageByTarget.ContainsKey(targetEntity))
-                            damageByTarget[targetEntity] = new List<DamageBreakdown>();
-                        
-                        damageByTarget[targetEntity].Add(damageEffect.LastBreakdown);
-                    }
+                    // Resolve ALL targets for this effect (can be multiple for AOE/Both)
+                    List<Entity> targetEntities = ResolveTargets(
+                        invocation.target,
+                        user,
+                        mainTarget,
+                        sourceComponent,
+                        targetComponentOverride,
+                        invocation.effect);
                     
-                    // Track modifier applications
-                    if (invocation.effect is AttributeModifierEffect modifierEffect)
+                    foreach (var targetEntity in targetEntities)
                     {
-                        // Get the modifier that was just added to the target component
-                        if (targetEntity is VehicleComponent component)
-                        {
-                            var modifiers = component.GetModifiers();
-                            if (modifiers.Count > 0)
-                            {
-                                if (!modifiersByTarget.ContainsKey(targetEntity))
-                                    modifiersByTarget[targetEntity] = new List<AttributeModifier>();
-                                
-                                // Track the last modifier added (the one we just applied)
-                                modifiersByTarget[targetEntity].Add(modifiers[modifiers.Count - 1]);
-                            }
-                        }
-                    }
-                    
-                    // Track restoration breakdowns
-                    if (invocation.effect is ResourceRestorationEffect restorationEffect && restorationEffect.LastBreakdown != null)
-                    {
-                        if (!restorationByTarget.ContainsKey(targetEntity))
-                            restorationByTarget[targetEntity] = new List<RestorationBreakdown>();
-                        
-                        restorationByTarget[targetEntity].Add(restorationEffect.LastBreakdown);
+                        // Apply effect - effects emit events to CombatEventBus
+                        invocation.effect.Apply(
+                            sourceComponent ?? user.chassis,
+                            targetEntity,
+                            sourceComponent as WeaponComponent,
+                            skill);
                     }
                 }
             }
-            
-            return (damageByTarget, modifiersByTarget, restorationByTarget);
+            finally
+            {
+                // End action scope - triggers aggregated logging
+                CombatEventBus.EndAction();
+            }
         }
         
         /// <summary>

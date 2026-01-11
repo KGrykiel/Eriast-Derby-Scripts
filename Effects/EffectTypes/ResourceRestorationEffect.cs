@@ -1,15 +1,15 @@
 using System;
 using UnityEngine;
+using Assets.Scripts.Combat;
 
 /// <summary>
 /// Universal resource restoration/drain effect.
 /// Restores or drains Health (chassis HP) or Energy (power core energy).
 /// 
+/// This effect is STATELESS - emits RestorationEvent for logging.
+/// 
 /// IMPORTANT: This effect should target the CHASSIS for health or POWER CORE for energy.
 /// The Vehicle.RouteEffectTarget() method handles routing if targeting the vehicle.
-/// 
-/// Like DamageEffect, this effect doesn't log directly - Skill.cs handles logging.
-/// This allows consistent multi-effect skill logging (e.g., "heals 15 HP and restores 10 energy").
 /// </summary>
 [System.Serializable]
 public class ResourceRestorationEffect : EffectBase
@@ -26,37 +26,10 @@ public class ResourceRestorationEffect : EffectBase
     
     [Tooltip("Amount to restore (positive) or drain (negative)")]
     public int amount = 0;
-    
-    // Store last restoration breakdown for retrieval by Skill.Use()
-    private RestorationBreakdown lastBreakdown;
-    
-    /// <summary>
-    /// Gets the actual amount restored in the last application.
-    /// </summary>
-    public int LastAmountRestored => lastBreakdown?.actualChange ?? 0;
-    
-    /// <summary>
-    /// Gets the full breakdown of the last restoration.
-    /// </summary>
-    public RestorationBreakdown LastBreakdown => lastBreakdown;
-    
-    /// <summary>
-    /// Gets whether the last effect was a restoration (positive) or drain (negative).
-    /// </summary>
-    public bool WasRestoration => lastBreakdown?.actualChange > 0;
 
     /// <summary>
     /// Applies this restoration effect to the target entity.
-    /// 
-    /// NOTE: For proper component targeting:
-    /// - Health restoration should target ChassisComponent (has health field)
-    /// - Energy restoration should target PowerCoreComponent (has energy field)
-    /// 
-    /// Vehicle.RouteEffectTarget() handles routing if skill targets the vehicle.
-    /// 
-    /// Parameter convention from Skill.Use():
-    /// - target: Already-routed Entity (chassis for health, power core for energy)
-    /// - source: Skill that triggered this effect (for tracking)
+    /// Emits RestorationEvent for logging via CombatEventBus.
     /// </summary>
     public override void Apply(Entity user, Entity target, UnityEngine.Object context = null, UnityEngine.Object source = null)
     {
@@ -65,7 +38,7 @@ public class ResourceRestorationEffect : EffectBase
         if (vehicle == null) return;
         
         // Apply restoration based on resource type
-        lastBreakdown = resourceType switch
+        var breakdown = resourceType switch
         {
             ResourceType.Health => ApplyHealthRestoration(vehicle),
             ResourceType.Energy => ApplyEnergyRestoration(vehicle),
@@ -73,8 +46,14 @@ public class ResourceRestorationEffect : EffectBase
         };
         
         // Store context for breakdown
-        lastBreakdown.resourceType = resourceType;
-        lastBreakdown.source = source?.name ?? "unknown";
+        breakdown.resourceType = resourceType;
+        breakdown.source = source?.name ?? "unknown";
+        
+        // Emit event for logging (CombatEventBus handles aggregation)
+        if (breakdown.actualChange != 0)
+        {
+            CombatEventBus.EmitRestoration(breakdown, user, target, source);
+        }
     }
     
     /// <summary>
@@ -144,7 +123,6 @@ public class ResourceRestorationEffect : EffectBase
 
 /// <summary>
 /// Tracks the breakdown of a resource restoration/drain operation.
-/// Similar to DamageBreakdown, allows Skill.cs to log detailed information.
 /// </summary>
 [Serializable]
 public class RestorationBreakdown
@@ -153,23 +131,13 @@ public class RestorationBreakdown
     public int oldValue;
     public int newValue;
     public int maxValue;
-    public int requestedChange;  // What was requested (can be clamped)
-    public int actualChange;     // What actually happened
+    public int requestedChange;
+    public int actualChange;
     public string source;
     
-    /// <summary>
-    /// Get percentage of resource after restoration.
-    /// </summary>
     public float NewPercentage => maxValue > 0 ? (float)newValue / maxValue : 0f;
-    
-    /// <summary>
-    /// Was the restoration clamped by max/min limits?
-    /// </summary>
     public bool WasClamped => requestedChange != actualChange;
     
-    /// <summary>
-    /// Get a formatted string for logging/tooltips.
-    /// </summary>
     public string ToFormattedString()
     {
         if (actualChange == 0)

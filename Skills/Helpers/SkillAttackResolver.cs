@@ -1,13 +1,47 @@
 ﻿using System.Collections.Generic;
 using UnityEngine;
+using Assets.Scripts.Combat;
 
 namespace Assets.Scripts.Skills.Helpers
 {
     /// <summary>
     /// Handles attack rolls, modifier building, and two-stage component targeting.
+    /// Emits AttackRollEvent for hit/miss logging via CombatEventBus.
     /// </summary>
     public static class SkillAttackResolver
     {
+        /// <summary>
+        /// Build modifiers for component targeting (no penalty).
+        /// </summary>
+        public static List<RollModifier> BuildComponentModifiers(VehicleComponent sourceComponent)
+        {
+            var builder = RollUtility.BuildModifiers();
+            
+            if (sourceComponent is WeaponComponent weapon && weapon.attackBonus != 0)
+            {
+                builder.Add("Weapon Attack Bonus", weapon.attackBonus, weapon.name);
+            }
+            
+            return builder.Build();
+        }
+        
+        /// <summary>
+        /// Build modifiers for chassis fallback (with penalty).
+        /// </summary>
+        public static List<RollModifier> BuildChassisModifiers(VehicleComponent sourceComponent, int componentTargetingPenalty, string skillName)
+        {
+            var builder = RollUtility.BuildModifiers();
+            
+            if (sourceComponent is WeaponComponent weapon && weapon.attackBonus != 0)
+            {
+                builder.Add("Weapon Attack Bonus", weapon.attackBonus, weapon.name);
+            }
+            
+            builder.Add("Component Targeting Penalty", -componentTargetingPenalty, skillName);
+            
+            return builder.Build();
+        }
+        
         /// <summary>
         /// Performs a skill roll (attack roll or saving throw) if required. Returns null if no roll is needed.
         /// </summary>
@@ -72,40 +106,8 @@ namespace Assets.Scripts.Skills.Helpers
         }
         
         /// <summary>
-        /// Build modifiers for component targeting (no penalty).
-        /// </summary>
-        public static List<RollModifier> BuildComponentModifiers(VehicleComponent sourceComponent)
-        {
-            var builder = RollUtility.BuildModifiers();
-            
-            if (sourceComponent is WeaponComponent weapon && weapon.attackBonus != 0)
-            {
-                builder.Add("Weapon Attack Bonus", weapon.attackBonus, weapon.name);
-            }
-            
-            return builder.Build();
-        }
-        
-        /// <summary>
-        /// Build modifiers for chassis fallback (with penalty).
-        /// </summary>
-        public static List<RollModifier> BuildChassisModifiers(VehicleComponent sourceComponent, int componentTargetingPenalty, string skillName)
-        {
-            var builder = RollUtility.BuildModifiers();
-            
-            if (sourceComponent is WeaponComponent weapon && weapon.attackBonus != 0)
-            {
-                builder.Add("Weapon Attack Bonus", weapon.attackBonus, weapon.name);
-            }
-            
-            builder.Add("Component Targeting Penalty", -componentTargetingPenalty, skillName);
-            
-            return builder.Build();
-        }
-        
-        /// <summary>
         /// Attempts two-stage component attack: Component AC (no penalty) → Chassis AC (with penalty).
-        /// Calculates and applies damage only after successful hit, targeting the correct entity.
+        /// Effects are applied after successful hit via SkillEffectApplicator.
         /// </summary>
         public static bool AttemptTwoStageComponentAttack(
             Skill skill,
@@ -127,16 +129,28 @@ namespace Assets.Scripts.Skills.Helpers
 
             if (componentRoll.success == true)
             {
-                // Component hit - calculate and apply damage to component
-                var (damageByTarget, modifiersByTarget, restorationByTarget) = SkillEffectApplicator.ApplyAllEffects(
-                    skill, user, mainTarget, sourceComponent, targetComponent);
+                // Component hit - emit event and apply effects
+                CombatEventBus.EmitAttackRoll(
+                    componentRoll, 
+                    sourceComponent ?? user.chassis, 
+                    targetComponent, 
+                    skill, 
+                    isHit: true, 
+                    targetComponentName);
                 
-                SkillCombatLogger.LogComponentHit(skill.name, user, mainTarget, targetComponentName, sourceComponent, componentRoll, damageByTarget);
+                // Apply effects to component
+                SkillEffectApplicator.ApplyAllEffects(skill, user, mainTarget, sourceComponent, targetComponent);
                 return true;
             }
 
-            // Stage 1 Miss - log it
-            SkillCombatLogger.LogComponentMiss(skill.name, user, mainTarget, targetComponentName, sourceComponent, componentRoll);
+            // Stage 1 Miss - emit event
+            CombatEventBus.EmitAttackRoll(
+                componentRoll, 
+                sourceComponent ?? user.chassis, 
+                targetComponent, 
+                skill, 
+                isHit: false, 
+                targetComponentName);
 
             // Stage 2: Try chassis (WITH PENALTY)
             int chassisAC = mainTarget.armorClass;
@@ -146,16 +160,31 @@ namespace Assets.Scripts.Skills.Helpers
 
             if (chassisRoll.success == true)
             {
-                // Chassis hit - calculate and apply damage to chassis (not component!)
-                var (damageByTarget, modifiersByTarget, restorationByTarget) = SkillEffectApplicator.ApplyAllEffects(
-                    skill, user, mainTarget, sourceComponent, null);  // null = use routing (targets chassis)
+                // Chassis hit - emit event and apply effects
+                CombatEventBus.EmitAttackRoll(
+                    chassisRoll, 
+                    sourceComponent ?? user.chassis, 
+                    mainTarget.chassis, 
+                    skill, 
+                    isHit: true, 
+                    targetComponentName,
+                    isChassisFallback: true);
                 
-                SkillCombatLogger.LogChassisHit(skill.name, user, mainTarget, targetComponentName, sourceComponent, chassisRoll, damageByTarget);
+                // Apply effects to chassis (null = use routing)
+                SkillEffectApplicator.ApplyAllEffects(skill, user, mainTarget, sourceComponent, null);
                 return true;
             }
 
-            // Stage 2 Miss - log it (NO DAMAGE APPLIED)
-            SkillCombatLogger.LogChassisMiss(skill.name, user, mainTarget, sourceComponent, chassisRoll);
+            // Stage 2 Miss - emit event
+            CombatEventBus.EmitAttackRoll(
+                chassisRoll, 
+                sourceComponent ?? user.chassis, 
+                mainTarget.chassis, 
+                skill, 
+                isHit: false, 
+                targetComponentName,
+                isChassisFallback: true);
+            
             return false;
         }
     }

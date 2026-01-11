@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using UnityEngine;
+using Assets.Scripts.Effects.EffectTypes.Damage;
 
 namespace Assets.Scripts.StatusEffects
 {
@@ -84,10 +85,7 @@ namespace Assets.Scripts.StatusEffects
                 );
                 
                 createdModifiers.Add(modifier);
-                
-                // TODO (Phase 1): Apply modifier to target
-                // Will be implemented when Entity.AddModifier() is added
-                // target.AddModifier(modifier);
+                target.AddModifier(modifier);
             }
             
             // TODO (Future): Custom behaviors
@@ -125,9 +123,7 @@ namespace Assets.Scripts.StatusEffects
             // Remove all created modifiers
             foreach (var modifier in createdModifiers)
             {
-                // TODO (Phase 1): Remove modifier from target
-                // Will be implemented when Entity.RemoveModifier() is added
-                // target.RemoveModifier(modifier);
+                target.RemoveModifier(modifier);
             }
             
             createdModifiers.Clear();
@@ -179,17 +175,22 @@ namespace Assets.Scripts.StatusEffects
         
         private void ApplyPeriodicDamage(int damage, DamageType damageType)
         {
-            // TODO (Phase 2): Use DamageResolver pipeline
-            // For now, simple direct damage
-            target.TakeDamage(damage);
+            // Apply environmental damage (no attacker entity)
+            // Uses flat damage for now - future enhancement: support dice in PeriodicEffectData
+            var breakdown = DamageApplicator.ApplyEnvironmentalFlat(
+                damage: damage,
+                damageType: damageType,
+                target: target,
+                causalSource: template,
+                sourceType: DamageSource.Effect
+            );
             
             // TODO: Log periodic damage
-            // RaceHistory.Log(...);
+            // RaceHistory.Log($"{target.GetDisplayName()} takes {breakdown.finalDamage} {damageType} damage from {template.effectName}");
         }
         
         private void ApplyPeriodicHealing(int healing)
         {
-            // TODO (Phase 2): Implement Entity.Heal()
             target.Heal(healing);
             
             // TODO: Log periodic healing

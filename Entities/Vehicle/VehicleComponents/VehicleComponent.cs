@@ -14,8 +14,8 @@ using Assets.Scripts.Entities.Vehicle.VehicleComponents.Enums;
 /// NOTE: Uses Entity base class fields (health, maxHealth, armorClass) directly.
 /// Display name uses Unity's GameObject.name (set in Inspector hierarchy).
 /// 
-/// MODIFIER SYSTEM: Each component tracks its own modifiers (buffs/debuffs).
-/// When a modifier is applied to a vehicle, it's automatically routed to the correct component.
+/// MODIFIER SYSTEM: Uses unified Entity.entityModifiers system.
+/// When a modifier is applied to a vehicle, Vehicle.ResolveModifierTarget() routes it to the correct component.
 /// </summary>
 public abstract class VehicleComponent : Entity
 {
@@ -70,12 +70,6 @@ public abstract class VehicleComponent : Entity
     // Reference to parent vehicle (set during initialization)
     protected Vehicle parentVehicle;
     
-    // Component-level modifiers (buffs/debuffs affecting this component)
-    // NOTE: Stored separately from Entity.entityModifiers for Vehicle routing logic
-    // Vehicle.ResolveModifierTarget() routes modifiers to correct component
-    [SerializeField, HideInInspector]
-    private List<AttributeModifier> componentModifiers = new List<AttributeModifier>();
-    
     /// <summary>
     /// Get the parent vehicle this component belongs to.
     /// </summary>
@@ -106,61 +100,28 @@ public abstract class VehicleComponent : Entity
         hasActedThisTurn = false;
     }
     
-    // ==================== MODIFIER SYSTEM (Component-Specific) ====================
+    // ==================== MODIFIER SYSTEM (Uses Unified Entity System) ====================
     
     /// <summary>
-    /// Add a modifier to this component.
-    /// NOTE: This overrides Entity.AddModifier() to use componentModifiers for routing.
-    /// Logging is handled by SkillCombatLogger when effects are applied from skills.
-    /// </summary>
-    public override void AddModifier(AttributeModifier modifier)
-    {
-        componentModifiers.Add(modifier);
-    }
-    
-    /// <summary>
-    /// Remove a specific modifier from this component.
-    /// Logs removal for debugging purposes.
+    /// Override RemoveModifier to add component-specific logging.
     /// </summary>
     public override void RemoveModifier(AttributeModifier modifier)
     {
-        if (componentModifiers.Remove(modifier))
-        {
-            // Log removal (for debugging/tracking)
-            string vehicleName = parentVehicle?.vehicleName ?? "Unknown";
-            
-            RaceHistory.Log(
-                EventType.Modifier,
-                EventImportance.Debug,
-                $"{vehicleName}'s {name} lost {modifier.Type} {modifier.Attribute} {modifier.Value:+0;-0} modifier",
-                parentVehicle?.currentStage,
-                parentVehicle
-            ).WithMetadata("component", name)
-             .WithMetadata("modifierType", modifier.Type.ToString())
-             .WithMetadata("attribute", modifier.Attribute.ToString())
-             .WithMetadata("removed", true);
-        }
-    }
-    
-    /// <summary>
-    /// Get all modifiers affecting this component.
-    /// Used by Vehicle.GetActiveModifiers() for aggregation.
-    /// </summary>
-    public override List<AttributeModifier> GetModifiers()
-    {
-        return componentModifiers;
-    }
-    
-    /// <summary>
-    /// Update modifiers and status effects at end of turn.
-    /// NOTE: Overrides Entity to add component-specific behavior.
-    /// </summary>
-    public void UpdateModifiers()
-    {
-        // Update status effects (from Entity base class)
-        UpdateStatusEffects();
+        base.RemoveModifier(modifier);
         
-        // TODO (Phase 2): Additional component-specific modifier logic if needed
+        // Log removal (for debugging/tracking)
+        string vehicleName = parentVehicle?.vehicleName ?? "Unknown";
+        
+        RaceHistory.Log(
+            EventType.Modifier,
+            EventImportance.Debug,
+            $"{vehicleName}'s {name} lost {modifier.Type} {modifier.Attribute} {modifier.Value:+0;-0} modifier",
+            parentVehicle?.currentStage,
+            parentVehicle
+        ).WithMetadata("component", name)
+         .WithMetadata("modifierType", modifier.Type.ToString())
+         .WithMetadata("attribute", modifier.Attribute.ToString())
+         .WithMetadata("removed", true);
     }
     
     // ==================== ENTITY OVERRIDES ====================

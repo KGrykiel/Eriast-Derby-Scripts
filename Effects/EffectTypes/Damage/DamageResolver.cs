@@ -22,10 +22,22 @@ public static class DamageResolver
     /// <returns>Final damage amount after all modifiers</returns>
     public static int ResolveDamage(DamagePacket packet, Entity target)
     {
-        if (target == null) return 0;
-        if (packet.amount <= 0) return 0;
+        var (damage, _) = ResolveDamageWithResistance(packet, target);
+        return damage;
+    }
+    
+    /// <summary>
+    /// Process a damage packet and return both final damage and resistance level.
+    /// This is the CORE method - ResolveDamage() calls this.
+    /// </summary>
+    /// <returns>Tuple of (finalDamage, resistanceLevel)</returns>
+    public static (int finalDamage, ResistanceLevel resistance) ResolveDamageWithResistance(DamagePacket packet, Entity target)
+    {
+        if (target == null) return (0, ResistanceLevel.Normal);
+        if (packet.amount <= 0) return (0, ResistanceLevel.Normal);
 
         int damage = packet.amount;
+        ResistanceLevel resistance = ResistanceLevel.Normal;
 
         // Step 1: Apply shields (future - for now, skip)
         // damage = ApplyShields(damage, packet, target);
@@ -33,7 +45,8 @@ public static class DamageResolver
         // Step 2: Apply resistances/vulnerabilities
         if (!packet.ignoresResistance)
         {
-            damage = ApplyResistances(damage, packet.type, target);
+            resistance = GetResistance(target, packet.type);
+            damage = ApplyResistances(damage, resistance);
         }
 
         // Step 3: Apply hardness (future - flat damage reduction for objects)
@@ -43,18 +56,16 @@ public static class DamageResolver
         damage = Mathf.Max(0, damage);
 
         // Log the resolution (debug level)
-        LogDamageResolution(packet, target, damage);
+        LogDamageResolution(packet, target, damage, resistance);
 
-        return damage;
+        return (damage, resistance);
     }
 
     /// <summary>
     /// Apply resistance/vulnerability modifiers to damage.
     /// </summary>
-    private static int ApplyResistances(int damage, DamageType type, Entity target)
+    private static int ApplyResistances(int damage, ResistanceLevel resistance)
     {
-        ResistanceLevel resistance = GetResistance(target, type);
-
         switch (resistance)
         {
             case ResistanceLevel.Vulnerable:
@@ -86,13 +97,14 @@ public static class DamageResolver
     /// <summary>
     /// Log damage resolution for debugging.
     /// </summary>
-    private static void LogDamageResolution(DamagePacket packet, Entity target, int finalDamage)
+    private static void LogDamageResolution(DamagePacket packet, Entity target, int finalDamage, ResistanceLevel resistance)
     {
         // Only log if damage was modified or for debug purposes
-        if (packet.amount != finalDamage)
+        if (packet.amount != finalDamage || resistance != ResistanceLevel.Normal)
         {
             string targetName = target?.GetDisplayName() ?? "Unknown";
-            Debug.Log($"[DamageResolver] {packet.amount} {packet.type} → {finalDamage} to {targetName}");
+            string resistText = resistance != ResistanceLevel.Normal ? $" ({resistance})" : "";
+            Debug.Log($"[DamageResolver] {packet.amount} {packet.type}{resistText} → {finalDamage} to {targetName}");
         }
     }
 

@@ -2,18 +2,36 @@ using System;
 using UnityEngine;
 using RacingGame.Events;
 
+/// <summary>
+/// Applies a PERMANENT stat modifier with no duration or visual status.
+/// 
+/// Use Cases:
+/// - EventCards applying permanent changes ("Chassis scarred: -5 max HP", "Engine upgraded: +2 Speed")
+/// - Direct stat modifications that should NOT show as status effects
+/// 
+/// For TEMPORARY buffs/debuffs with icons and duration, use ApplyStatusEffect instead.
+/// For EQUIPMENT bonuses, use Component.AddModifier() directly (no effect needed).
+/// 
+/// IMPORTANT: Skills should generally use ApplyStatusEffect, not this.
+/// Per ModifierSystem.md Rule 1: "Skills Apply Status Effects ONLY"
+/// This effect exists for edge cases where permanent, invisible modifiers are needed.
+/// </summary>
 [Serializable]
 public class AttributeModifierEffect : EffectBase
 {
+    [Header("Modifier Configuration")]
     public Attribute attribute;
     public ModifierType type;
     public float value;
     
-    // NOTE: Duration and 'local' fields removed - will be handled by StatusEffect system in Phase 2
-    // For now, modifiers applied by this effect are permanent (equipment-style)
-    // Skills will use StatusEffect system instead (Phase 2 migration)
+    [Header("Usage Note")]
+    [Tooltip("This creates a PERMANENT modifier with no duration or status icon. For temporary buffs, use ApplyStatusEffect instead.")]
+    [SerializeField, TextArea(2, 3)]
+    private string usageNote = "Creates PERMANENT modifier. For temporary buffs/debuffs, use ApplyStatusEffect instead.";
 
-    // Converts to a runtime AttributeModifier, tagging it with the source that applied it
+    /// <summary>
+    /// Converts to a runtime AttributeModifier, tagging it with the source that applied it.
+    /// </summary>
     public AttributeModifier ToRuntimeModifier(UnityEngine.Object source)
     {
         return new AttributeModifier(
@@ -25,20 +43,25 @@ public class AttributeModifierEffect : EffectBase
     }
 
     /// <summary>
-    /// Applies the modifier to the target entity.
+    /// Applies a PERMANENT modifier to the target entity.
     /// 
     /// NOTE: Target routing is handled by Skill.Use() before this is called.
     /// The target will already be the correct component (Drive for Speed, PowerCore for Energy, etc.)
-    /// This method simply applies the modifier to whatever component it receives.
     /// 
-    /// Parameter convention from Skill.Use():
+    /// Parameter convention:
     /// - target: Already-routed component (correct target after Vehicle.RouteEffectTarget)
-    /// - context: WeaponComponent (for damage calculations) or null
-    /// - source: Skill that triggered this effect (for modifier tracking)
+    /// - context: Additional context (usually null)
+    /// - source: Skill/EventCard that triggered this (for modifier source tracking)
     /// </summary>
     public override void Apply(Entity user, Entity target, UnityEngine.Object context = null, UnityEngine.Object source = null)
     {
-        // Source should be the skill that applied this effect
+        if (target == null)
+        {
+            Debug.LogWarning("[AttributeModifierEffect] Target is null!");
+            return;
+        }
+        
+        // Source should be the skill/eventcard that applied this effect
         UnityEngine.Object actualSource = source ?? context;
         
         // Target should already be routed to the correct component by Skill.Use()
@@ -60,5 +83,20 @@ public class AttributeModifierEffect : EffectBase
                 component.AddModifier(ToRuntimeModifier(actualSource));
             }
         }
+        else
+        {
+            // Direct entity (not a vehicle component) - apply directly
+            target.AddModifier(ToRuntimeModifier(actualSource));
+        }
+    }
+    
+    /// <summary>
+    /// Get description for UI/logging.
+    /// </summary>
+    public string GetDescription()
+    {
+        string sign = value >= 0 ? "+" : "";
+        string typeStr = type == ModifierType.Percent ? "%" : "";
+        return $"{sign}{value}{typeStr} {attribute} (permanent)";
     }
 }

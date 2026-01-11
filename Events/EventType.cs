@@ -23,8 +23,15 @@ namespace RacingGame.Events
         
         /// <summary>
         /// Modifier applications, expirations, and effects.
+        /// NOTE: This is for PERMANENT modifiers. For status effects with duration, use StatusEffect.
         /// </summary>
         Modifier,
+        
+        /// <summary>
+        /// Status effect applications (buffs, debuffs, conditions with duration).
+        /// Examples: Haste, Burning, Stunned, Blessed.
+        /// </summary>
+        StatusEffect,
         
         /// <summary>
         /// Skill usage (separate from combat for non-attack skills).

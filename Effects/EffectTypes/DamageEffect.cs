@@ -1,17 +1,16 @@
 using UnityEngine;
-using RacingGame.Events;
+using Assets.Scripts.Effects.EffectTypes.Damage;
 
 /// <summary>
-/// Universal damage effect.
-/// Uses DamageFormula to calculate damage based on mode (skill-only, weapon-based, etc.)
-/// Can work with or without a weapon depending on formula configuration.
+/// Damage effect for skills and event cards.
+/// Uses DamageFormula to calculate damage, then DamageApplicator to apply it.
+/// 
+/// This effect is STATELESS - DamageApplicator handles logging automatically.
 /// 
 /// Damage Flow:
 /// 1. DamageEffect.Apply() is called by SkillEffectApplicator
-/// 2. DamageFormula.ComputeDamageWithBreakdown() calculates damage (uses RollUtility)
-/// 3. DamagePacket is created with raw damage
-/// 4. DamageResolver applies resistances and returns final damage
-/// 5. Entity.TakeDamage() reduces HP
+/// 2. DamageFormula computes damage (ComputeSkillOnly or ComputeWithWeapon)
+/// 3. DamageApplicator.Apply() applies damage AND logs it
 /// </summary>
 [System.Serializable]
 public class DamageEffect : EffectBase
@@ -20,56 +19,48 @@ public class DamageEffect : EffectBase
     [Tooltip("Defines how damage is calculated (skill dice, weapon scaling, etc.)")]
     public DamageFormula formula = new DamageFormula();
 
-    // Store last breakdown for retrieval by SkillEffectApplicator
-    private DamageBreakdown lastBreakdown;
-    
-    /// <summary>
-    /// Gets the full breakdown of the last damage calculation.
-    /// Used by SkillEffectApplicator for logging.
-    /// </summary>
-    public DamageBreakdown LastBreakdown => lastBreakdown;
-
     /// <summary>
     /// Applies this damage effect to the target entity.
+    /// Logging is handled automatically by DamageApplicator.
     /// 
-    /// Parameter convention from Skill.Use():
+    /// Parameter convention:
+    /// - user: The Entity dealing damage (attacker)
+    /// - target: The Entity receiving damage
     /// - context: WeaponComponent (for damage calculations) or null
-    /// - source: Skill that triggered this effect (for modifier tracking)
-    /// 
-    /// Tries to extract weapon from both context and source for backward compatibility.
+    /// - source: Skill/EventCard that triggered this (for logging "Destroyed by X")
     /// </summary>
     public override void Apply(Entity user, Entity target, Object context = null, Object source = null)
     {
-        // Try to extract weapon from context first (new convention), then source (old convention)
-        WeaponComponent weapon = context as WeaponComponent ?? source as WeaponComponent;
+        // Extract weapon from context (if weapon-based skill)
+        WeaponComponent weapon = context as WeaponComponent;
         
-        // Calculate damage using the formula with full breakdown
-        lastBreakdown = formula.ComputeDamageWithBreakdown(weapon);
+        // Calculate damage using appropriate method
+        DamageBreakdown breakdown;
+        if (weapon != null && formula.mode != SkillDamageMode.SkillOnly)
+        {
+            breakdown = formula.ComputeWithWeapon(weapon);
+        }
+        else
+        {
+            breakdown = formula.ComputeSkillOnly();
+        }
         
-        if (lastBreakdown.rawTotal <= 0)
+        if (breakdown.rawTotal <= 0)
         {
             return;
         }
         
-        // Create damage packet
-        DamagePacket packet = DamagePacket.Create(lastBreakdown.rawTotal, lastBreakdown.damageType, user);
+        // Determine source type
+        DamageSource sourceType = weapon != null ? DamageSource.Weapon : DamageSource.Ability;
         
-        // If we have a weapon, mark it as weapon damage
-        if (weapon != null)
-        {
-            packet.sourceType = DamageSource.Weapon;
-        }
-        
-        // Resolve damage through the central resolver (handles resistances, etc.)
-        int resolvedDamage = DamageResolver.ResolveDamage(packet, target);
-        
-        // Update breakdown with actual resistance info from target
-        ResistanceLevel resistance = target.GetResistance(lastBreakdown.damageType);
-        lastBreakdown.WithResistance(resistance);
-        lastBreakdown.finalDamage = resolvedDamage;
-        
-        // Apply the resolved damage to target
-        target.TakeDamage(resolvedDamage);
+        // Apply damage - DamageApplicator handles logging automatically
+        DamageApplicator.Apply(
+            breakdown: breakdown,
+            target: target,
+            attacker: user,
+            causalSource: source ?? weapon,
+            sourceType: sourceType
+        );
     }
 
     /// <summary>
@@ -78,13 +69,5 @@ public class DamageEffect : EffectBase
     public string GetDamageDescription(WeaponComponent weapon = null)
     {
         return formula.GetDescription(weapon);
-    }
-    
-    /// <summary>
-    /// Get detailed breakdown string for tooltips.
-    /// </summary>
-    public string GetDetailedBreakdown()
-    {
-        return lastBreakdown?.ToDetailedString() ?? "No damage calculated yet";
     }
 }

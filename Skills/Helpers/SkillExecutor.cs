@@ -1,12 +1,19 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
+using Assets.Scripts.Effects.EffectTypes;
+using Assets.Scripts.Combat;
 
 namespace Assets.Scripts.Skills.Helpers
 {
     /// <summary>
-    /// Executes skills by orchestrating validation, rolls, effect application, and logging.
+    /// Executes skills by orchestrating validation, rolls, and effect application.
     /// Separates execution logic from Skill data (ScriptableObject).
+    /// 
+    /// LOGGING: Uses CombatEventBus for all combat logging.
+    /// - Attack rolls emit AttackRollEvent
+    /// - Effects emit their own events (DamageEvent, StatusEffectEvent, etc.)
+    /// - Events are aggregated per skill execution
     /// </summary>
     public static class SkillExecutor
     {
@@ -58,30 +65,29 @@ namespace Assets.Scripts.Skills.Helpers
                 
                 if (skillRoll?.success != true)
                 {
-                    SkillCombatLogger.LogSkillMiss(skill.name, user, mainTarget, sourceComponent, skillRoll);
+                    // Emit miss event
+                    CombatEventBus.EmitAttackRoll(
+                        skillRoll,
+                        sourceComponent ?? user.chassis,
+                        mainTarget.chassis,
+                        skill,
+                        isHit: false);
                     return false;
                 }
                 
-                // Roll succeeded - log hit
-                SkillCombatLogger.LogSkillHit(skill.name, user, mainTarget, sourceComponent, skillRoll);
+                // Emit hit event
+                CombatEventBus.EmitAttackRoll(
+                    skillRoll,
+                    sourceComponent ?? user.chassis,
+                    mainTarget.chassis,
+                    skill,
+                    isHit: true);
             }
             
-            // Apply all effects (routing handles destination)
-            var (damageByTarget, modifiersByTarget, restorationByTarget) = SkillEffectApplicator.ApplyAllEffects(
-                skill, user, mainTarget, sourceComponent);
+            // Apply all effects - SkillEffectApplicator handles action scoping
+            SkillEffectApplicator.ApplyAllEffects(skill, user, mainTarget, sourceComponent);
             
-            // Log all effect results
-            if (damageByTarget.Count > 0)
-                SkillCombatLogger.LogDamageResults(skill.name, user, damageByTarget);
-            
-            if (modifiersByTarget.Count > 0)
-                SkillCombatLogger.LogModifierResults(skill.name, user, modifiersByTarget);
-            
-            if (restorationByTarget.Count > 0)
-                SkillCombatLogger.LogRestorationResults(skill.name, user, restorationByTarget);
-            
-            // Skill succeeded if any effects were applied
-            return damageByTarget.Count > 0 || modifiersByTarget.Count > 0 || restorationByTarget.Count > 0 || HasNonDamageEffects(skill);
+            return true;
         }
         
         /// <summary>
@@ -113,36 +119,36 @@ namespace Assets.Scripts.Skills.Helpers
                 
                 if (skillRoll?.success != true)
                 {
-                    SkillCombatLogger.LogSkillMiss(skill.name, user, mainTarget, sourceComponent, skillRoll);
+                    // Emit miss event
+                    CombatEventBus.EmitAttackRoll(
+                        skillRoll,
+                        sourceComponent ?? user.chassis,
+                        targetComponent,
+                        skill,
+                        isHit: false,
+                        targetComponent.name);
                     return false;
                 }
                 
-                SkillCombatLogger.LogSkillHit(skill.name, user, mainTarget, sourceComponent, skillRoll);
+                // Emit hit event
+                CombatEventBus.EmitAttackRoll(
+                    skillRoll,
+                    sourceComponent ?? user.chassis,
+                    targetComponent,
+                    skill,
+                    isHit: true,
+                    targetComponent.name);
             }
             
             // Apply effects to the specific component
-            var (damageByTarget, modifiersByTarget, restorationByTarget) = SkillEffectApplicator.ApplyAllEffects(
-                skill, user, mainTarget, sourceComponent, targetComponent);
+            SkillEffectApplicator.ApplyAllEffects(skill, user, mainTarget, sourceComponent, targetComponent);
             
-            // Log all effect results
-            if (damageByTarget.Count > 0)
-                SkillCombatLogger.LogDamageResults(skill.name, user, damageByTarget);
-            
-            if (modifiersByTarget.Count > 0)
-                SkillCombatLogger.LogModifierResults(skill.name, user, modifiersByTarget);
-            
-            if (restorationByTarget.Count > 0)
-                SkillCombatLogger.LogRestorationResults(skill.name, user, restorationByTarget);
-            
-            // Skill succeeded if any effects were applied
-            return damageByTarget.Count > 0 || modifiersByTarget.Count > 0 || restorationByTarget.Count > 0 || HasNonDamageEffects(skill);
+            return true;
         }
         
         /// <summary>
         /// Two-stage component attack (only for damage-dealing attacks).
-        /// Stage 1: Roll vs Component AC (no penalty)
-        /// Stage 2: Roll vs Chassis AC (with penalty)
-        /// Damage is calculated only after successful hit.
+        /// Handled by SkillAttackResolver.
         /// </summary>
         private static bool ExecuteTwoStageComponentAttack(
             Skill skill,
@@ -151,14 +157,12 @@ namespace Assets.Scripts.Skills.Helpers
             VehicleComponent sourceComponent,
             VehicleComponent targetComponent)
         {
-            // Attempt two-stage roll (damage calculated after hit)
             return SkillAttackResolver.AttemptTwoStageComponentAttack(
                 skill, user, mainTarget, targetComponent, targetComponent.name, sourceComponent);
         }
         
         /// <summary>
         /// Perform a skill roll based on skillRollType.
-        /// Returns null if roll failed or RollBreakdown if successful.
         /// </summary>
         private static RollBreakdown PerformSkillRoll(
             Skill skill,
@@ -212,14 +216,6 @@ namespace Assets.Scripts.Skills.Helpers
         private static bool HasDamageEffects(Skill skill)
         {
             return skill.effectInvocations.Any(e => e.effect is DamageEffect);
-        }
-        
-        /// <summary>
-        /// Check if this skill has any non-damage effects.
-        /// </summary>
-        private static bool HasNonDamageEffects(Skill skill)
-        {
-            return skill.effectInvocations.Any(e => !(e.effect is DamageEffect));
         }
     }
 }

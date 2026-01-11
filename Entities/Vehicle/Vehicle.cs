@@ -220,7 +220,7 @@ public class Vehicle : MonoBehaviour
     {
         foreach (var component in AllComponents)
         {
-            component.UpdateModifiers();
+            component.UpdateStatusEffects();
         }
     }
     

@@ -100,44 +100,6 @@ public static class RollUtility
         return breakdown;
     }
     
-    // ==================== DAMAGE ROLLS ====================
-    
-    /// <summary>
-    /// Roll damage dice and return a DamageBreakdown with full details.
-    /// This is the SINGLE SOURCE OF TRUTH for damage rolling.
-    /// </summary>
-    public static DamageBreakdown RollDamageWithBreakdown(int diceCount, int dieSize, int bonus, string componentName, DamageType damageType, string source = null)
-    {
-        // Roll dice using core method
-        int rolled = RollDice(diceCount, dieSize);
-        
-        var breakdown = DamageBreakdown.Create(damageType)
-            .AddComponent(componentName, diceCount, dieSize, bonus, rolled, source)
-            .WithResistance(ResistanceLevel.Normal);
-           
-        return breakdown;
-    }
-    
-    /// <summary>
-    /// Roll damage from a weapon component with full breakdown.
-    /// </summary>
-    public static DamageBreakdown RollWeaponDamageWithBreakdown(WeaponComponent weapon)
-    {
-        if (weapon == null)
-        {
-            return DamageBreakdown.Create(DamageType.Physical).WithResistance(ResistanceLevel.Normal);
-        }
-        
-        return RollDamageWithBreakdown(
-            weapon.damageDice, 
-            weapon.damageDieSize, 
-            weapon.damageBonus, 
-            "Weapon",
-            weapon.damageType,
-            weapon.name
-        );
-    }
-    
     // ==================== SKILL CHECKS ====================
 
     /// <summary>

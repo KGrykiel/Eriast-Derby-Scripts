@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Assets.Scripts.Entities;
 using Assets.Scripts.StatusEffects;
+using Assets.Scripts.Combat;
 
 /// <summary>
 /// Abstract base class for all entities that can be damaged, targeted, or interact with skills.
@@ -20,6 +21,8 @@ using Assets.Scripts.StatusEffects;
 /// - Entities store their own modifiers and status effects
 /// - Two sources: StatusEffect (temporary/indefinite) OR Component (permanent equipment)
 /// - Skills apply StatusEffects ONLY, Components apply direct modifiers
+/// 
+/// LOGGING: Status effect events are emitted to CombatEventBus for aggregated logging.
 /// </summary>
 public abstract class Entity : MonoBehaviour
 {
@@ -47,16 +50,9 @@ public abstract class Entity : MonoBehaviour
 
     // ==================== MODIFIER & STATUS EFFECT STORAGE ====================
     
-    /// <summary>
-    /// Active modifiers on this entity (from StatusEffects or Components).
-    /// Note: VehicleComponent subclass adds its own componentModifiers for routing.
-    /// </summary>
     [SerializeField, HideInInspector]
     protected List<AttributeModifier> entityModifiers = new List<AttributeModifier>();
     
-    /// <summary>
-    /// Active status effects on this entity.
-    /// </summary>
     [SerializeField, HideInInspector]
     protected List<AppliedStatusEffect> activeStatusEffects = new List<AppliedStatusEffect>();
 
@@ -214,7 +210,8 @@ public abstract class Entity : MonoBehaviour
     /// <summary>
     /// Apply a status effect to this entity.
     /// Handles stacking rules: same status effect compares and keeps better one.
-    /// Returns the applied (or existing better) status effect instance.
+    /// Emits StatusEffectEvent for logging via CombatEventBus.
+    /// Returns the applied (or existing better) status effect instance, or null if failed.
     /// </summary>
     public virtual AppliedStatusEffect ApplyStatusEffect(StatusEffect effect, UnityEngine.Object applier)
     {
@@ -227,6 +224,7 @@ public abstract class Entity : MonoBehaviour
         
         // Check for existing status effect of same type (stacking rules)
         var existing = activeStatusEffects.FirstOrDefault(a => a.template == effect);
+        bool wasReplacement = false;
         
         if (existing != null)
         {
@@ -236,8 +234,7 @@ public abstract class Entity : MonoBehaviour
                 // Remove old effect
                 existing.OnRemove();
                 activeStatusEffects.Remove(existing);
-                
-                // Apply new effect (will be added below)
+                wasReplacement = true;
             }
             else
             {
@@ -250,6 +247,10 @@ public abstract class Entity : MonoBehaviour
         var applied = new AppliedStatusEffect(effect, this, applier);
         applied.OnApply();
         activeStatusEffects.Add(applied);
+        
+        // Emit event for logging (CombatEventBus handles aggregation)
+        Entity sourceEntity = applier as Entity;
+        CombatEventBus.EmitStatusEffect(applied, sourceEntity, this, applier, wasReplacement);
         
         return applied;
     }
@@ -293,7 +294,7 @@ public abstract class Entity : MonoBehaviour
     public virtual void UpdateStatusEffects()
     {
         // Tick all status effects (periodic damage, healing, etc.)
-        foreach (var statusEffect in activeStatusEffects.ToList()) // ToList to avoid modification during iteration
+        foreach (var statusEffect in activeStatusEffects.ToList())
         {
             statusEffect.OnTick();
         }
@@ -307,11 +308,11 @@ public abstract class Entity : MonoBehaviour
             
             if (statusEffect.IsExpired)
             {
+                // Emit expiration event
+                CombatEventBus.EmitStatusExpired(statusEffect, this);
+                
                 statusEffect.OnRemove();
                 activeStatusEffects.RemoveAt(i);
-                
-                // TODO: Log expiration
-                // Debug.Log($"{GetDisplayName()}: {statusEffect.template.effectName} expired");
             }
         }
     }
@@ -340,28 +341,23 @@ public abstract class Entity : MonoBehaviour
     
     /// <summary>
     /// Determine if new status effect should replace existing one (stacking rules).
-    /// Comparison order: Better effect > Longer duration > Keep existing
     /// </summary>
     private bool ShouldReplaceStatusEffect(AppliedStatusEffect existing, StatusEffect newEffect)
     {
-        // Compare effect magnitude (sum of absolute modifier values)
         float existingMagnitude = existing.template.modifiers.Sum(m => Mathf.Abs(m.value));
         float newMagnitude = newEffect.modifiers.Sum(m => Mathf.Abs(m.value));
         
-        // 1. Better effect wins
         if (newMagnitude > existingMagnitude)
             return true;
         if (newMagnitude < existingMagnitude)
             return false;
         
-        // 2. If equal magnitude, longer duration wins
         int existingDuration = existing.turnsRemaining;
         int newDuration = newEffect.baseDuration;
         
         if (newDuration > existingDuration)
             return true;
         
-        // 3. If equal or worse, keep existing
         return false;
     }
     
