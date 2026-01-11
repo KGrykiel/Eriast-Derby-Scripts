@@ -35,17 +35,17 @@ public class DamageEffect : EffectBase
         WeaponComponent weapon = context as WeaponComponent;
         
         // Calculate damage using appropriate method
-        DamageBreakdown breakdown;
+        DamageResult result;
         if (weapon != null && formula.mode != SkillDamageMode.SkillOnly)
         {
-            breakdown = formula.ComputeWithWeapon(weapon);
+            result = formula.ComputeWithWeapon(weapon);
         }
         else
         {
-            breakdown = formula.ComputeSkillOnly();
+            result = formula.ComputeSkillOnly();
         }
         
-        if (breakdown.rawTotal <= 0)
+        if (result.RawTotal <= 0)
         {
             return;
         }
@@ -55,7 +55,7 @@ public class DamageEffect : EffectBase
         
         // Apply damage - DamageApplicator handles logging automatically
         DamageApplicator.Apply(
-            breakdown: breakdown,
+            result: result,
             target: target,
             attacker: user,
             causalSource: source ?? weapon,

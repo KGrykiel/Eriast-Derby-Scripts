@@ -2,6 +2,8 @@
 using System.Collections.Generic;
 using UnityEngine;
 using Assets.Scripts.StatusEffects;
+using Assets.Scripts.Combat.Attacks;
+using Assets.Scripts.Combat.Damage;
 
 namespace Assets.Scripts.Combat
 {
@@ -101,13 +103,13 @@ namespace Assets.Scripts.Combat
         /// Emit a damage event.
         /// </summary>
         public static void EmitDamage(
-            DamageBreakdown breakdown,
+            DamageResult result,
             Entity source,
             Entity target,
             UnityEngine.Object causalSource,
             DamageSource sourceType = DamageSource.Ability)
         {
-            Emit(new DamageEvent(breakdown, source, target, causalSource, sourceType));
+            Emit(new DamageEvent(result, source, target, causalSource, sourceType));
         }
         
         /// <summary>
@@ -147,7 +149,7 @@ namespace Assets.Scripts.Combat
         /// Emit an attack roll event.
         /// </summary>
         public static void EmitAttackRoll(
-            RollBreakdown roll,
+            AttackResult result,
             Entity source,
             Entity target,
             UnityEngine.Object causalSource,
@@ -155,7 +157,7 @@ namespace Assets.Scripts.Combat
             string targetComponentName = null,
             bool isChassisFallback = false)
         {
-            Emit(new AttackRollEvent(roll, source, target, causalSource, isHit, targetComponentName, isChassisFallback));
+            Emit(new AttackRollEvent(result, source, target, causalSource, isHit, targetComponentName, isChassisFallback));
         }
         
         // ==================== UTILITY ====================

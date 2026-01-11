@@ -5,20 +5,246 @@ using System.Text;
 using UnityEngine;
 using RacingGame.Events;
 using Assets.Scripts.StatusEffects;
+using Assets.Scripts.Combat.Attacks;
+using Assets.Scripts.Combat.Damage;
 using EventType = RacingGame.Events.EventType;
 
 namespace Assets.Scripts.Combat
 {
     /// <summary>
-    /// Formats and logs combat events to RaceHistory.
-    /// Aggregates multiple events within an action into combined log entries.
+    /// Central manager for all combat logging and formatting.
     /// 
-    /// Example output for a skill with multiple damage types:
-    /// "Speed Racer deals 5 Physical + 8 Fire (13 total) damage to Enemy"
+    /// This is THE source of truth for how combat data is displayed.
+    /// All formatting methods are public for use by tooltips and UI.
+    /// 
+    /// Responsibilities:
+    /// - Formatting attack results, damage results, status effects, defense values
+    /// - Logging combat events to RaceHistory
+    /// - Aggregating multiple events within an action
     /// </summary>
     public static class CombatLogManager
     {
-        // ==================== MAIN ENTRY POINTS ====================
+        // ==================== PUBLIC FORMATTING API ====================
+        
+        /// <summary>
+        /// Format an attack result for display.
+        /// Short format: "15 (d20: 12, +3 modifiers) vs AC 14 - HIT"
+        /// </summary>
+        public static string FormatAttackShort(AttackResult result)
+        {
+            if (result == null) return "No roll";
+            
+            string modStr = result.TotalModifier >= 0 
+                ? $"+{result.TotalModifier}" 
+                : $"{result.TotalModifier}";
+            string output = $"{result.Total} (d{result.dieSize}: {result.baseRoll}{modStr})";
+            
+            if (result.targetValue > 0 && result.success.HasValue)
+            {
+                output += $" vs {result.targetName} {result.targetValue}";
+                output += result.success.Value ? " - HIT" : " - MISS";
+            }
+            
+            return output;
+        }
+        
+        /// <summary>
+        /// Format an attack result with full breakdown for tooltips.
+        /// </summary>
+        public static string FormatAttackDetailed(AttackResult result)
+        {
+            if (result == null) return "No roll data";
+            
+            var sb = new StringBuilder();
+            sb.AppendLine($"Roll Breakdown ({result.category}):");
+            sb.AppendLine($"  Base {result.diceCount}d{result.dieSize}: {result.baseRoll}");
+            
+            foreach (var mod in result.modifiers)
+            {
+                string sign = mod.value >= 0 ? "+" : "";
+                string sourceInfo = mod.source != mod.name ? $" ({mod.source})" : "";
+                sb.AppendLine($"  {mod.name}: {sign}{mod.value}{sourceInfo}");
+            }
+            
+            sb.AppendLine("  ─────────────");
+            sb.AppendLine($"  Total: {result.Total}");
+            
+            if (result.targetValue > 0)
+            {
+                sb.AppendLine($"  vs {result.targetName}: {result.targetValue}");
+                if (result.success.HasValue)
+                {
+                    sb.AppendLine($"  Result: {(result.success.Value ? "SUCCESS" : "FAILURE")}");
+                }
+            }
+            
+            return sb.ToString();
+        }
+        
+        /// <summary>
+        /// Format a defense value breakdown for tooltips.
+        /// Example output:
+        /// AC Breakdown:
+        ///   Base: 14 (Chassis)
+        ///   Shield Spell: +2 (Shield Spell)
+        ///   Armor Plating: +2 (Vehicle Components)
+        ///   ─────────────
+        ///   Total AC: 18
+        /// </summary>
+        public static string FormatDefenseDetailed(int total, List<AttackModifier> breakdown, string defenseName = "AC")
+        {
+            if (breakdown == null || breakdown.Count == 0)
+            {
+                return $"{defenseName}: {total}";
+            }
+            
+            var sb = new StringBuilder();
+            sb.AppendLine($"{defenseName} Breakdown:");
+            
+            for (int i = 0; i < breakdown.Count; i++)
+            {
+                var mod = breakdown[i];
+                // First entry (base) doesn't need sign
+                if (i == 0)
+                {
+                    sb.AppendLine($"  {mod.name}: {mod.value} ({mod.source})");
+                }
+                else
+                {
+                    string sign = mod.value >= 0 ? "+" : "";
+                    sb.AppendLine($"  {mod.name}: {sign}{mod.value} ({mod.source})");
+                }
+            }
+            
+            sb.AppendLine("  ─────────────");
+            sb.AppendLine($"  Total {defenseName}: {total}");
+            
+            return sb.ToString();
+        }
+        
+        /// <summary>
+        /// Format defense value for an entity (convenience method).
+        /// </summary>
+        public static string FormatEntityDefense(Entity target, string defenseName = "AC")
+        {
+            var (total, breakdown) = AttackCalculator.GatherDefenseValueWithBreakdown(target, defenseName);
+            return FormatDefenseDetailed(total, breakdown, defenseName);
+        }
+        
+        /// <summary>
+        /// Format a damage result for display.
+        /// Short format: "15 Fire" or "15 Fire (Resistant)"
+        /// </summary>
+        public static string FormatDamageShort(DamageResult result)
+        {
+            if (result == null) return "0 damage";
+            
+            string resistStr = result.resistanceLevel != ResistanceLevel.Normal 
+                ? $" ({result.resistanceLevel})" 
+                : "";
+            return $"{result.finalDamage} {result.damageType}{resistStr}";
+        }
+        
+        /// <summary>
+        /// Format a damage result with full breakdown for tooltips.
+        /// </summary>
+        public static string FormatDamageDetailed(DamageResult result, string sourceName = null)
+        {
+            if (result == null) return "No damage";
+            
+            var sb = new StringBuilder();
+            sb.AppendLine($"Damage Breakdown ({result.damageType}):");
+            
+            foreach (var source in result.sources)
+            {
+                if (source.diceCount > 0 && source.dieSize > 0)
+                {
+                    string resistMod = GetResistanceModifier(result.resistanceLevel);
+                    sb.AppendLine($"  {source.name}: ({source.ToDiceString()}){resistMod} = {source.Total} ({source.sourceName})");
+                }
+                else if (source.bonus != 0)
+                {
+                    string sign = source.bonus >= 0 ? "+" : "";
+                    sb.AppendLine($"  {source.name}: {sign}{source.bonus} ({source.sourceName})");
+                }
+            }
+            
+            sb.AppendLine("  ─────────────");
+            sb.AppendLine($"  Subtotal: {result.RawTotal}");
+            
+            if (result.resistanceLevel != ResistanceLevel.Normal)
+            {
+                sb.AppendLine($"  {result.resistanceLevel}: {GetResistanceModifier(result.resistanceLevel)}");
+            }
+            
+            sb.AppendLine($"  Final: {result.finalDamage} {result.damageType}");
+            
+            return sb.ToString();
+        }
+        
+        /// <summary>
+        /// Format multiple damage results (aggregated) for tooltips.
+        /// Used when a skill deals multiple damage types.
+        /// </summary>
+        public static string FormatCombinedDamageDetailed(List<DamageResult> results, string sourceName = null)
+        {
+            if (results == null || results.Count == 0) return "No damage";
+            
+            if (results.Count == 1)
+            {
+                return FormatDamageDetailed(results[0], sourceName);
+            }
+            
+            var sb = new StringBuilder();
+            
+            // Calculate total
+            int totalDamage = results.Sum(r => r.finalDamage);
+            sb.AppendLine($"Damage Total: {totalDamage}");
+            
+            if (!string.IsNullOrEmpty(sourceName))
+            {
+                sb.AppendLine($"Damage Source: {sourceName}");
+            }
+            sb.AppendLine();
+            
+            // Each damage result
+            foreach (var result in results)
+            {
+                foreach (var source in result.sources)
+                {
+                    string diceNotation = BuildDiceNotation(source);
+                    string resistMod = GetResistanceModifier(result.resistanceLevel);
+                    string damageTypeLabel = BuildDamageTypeLabel(result);
+                    
+                    sb.AppendLine($"{diceNotation}{resistMod} = {result.finalDamage} {damageTypeLabel}");
+                }
+            }
+            
+            return sb.ToString().Trim();
+        }
+        
+        /// <summary>
+        /// Format combined attack and damage for a single tooltip.
+        /// </summary>
+        public static string FormatCombinedAttackAndDamage(AttackResult attack, DamageResult damage)
+        {
+            var sb = new StringBuilder();
+            
+            if (attack != null)
+            {
+                sb.Append(FormatAttackDetailed(attack));
+            }
+            
+            if (damage != null)
+            {
+                if (sb.Length > 0) sb.AppendLine();
+                sb.Append(FormatDamageDetailed(damage));
+            }
+            
+            return sb.ToString();
+        }
+        
+        // ==================== MAIN LOGGING ENTRY POINTS ====================
         
         /// <summary>
         /// Log a completed combat action with all its events.
@@ -28,16 +254,9 @@ namespace Assets.Scripts.Combat
         {
             if (action == null || !action.HasEvents) return;
             
-            // Log attack rolls (hit/miss)
             LogAttackRolls(action);
-            
-            // Log aggregated damage by target
             LogDamageByTarget(action);
-            
-            // Log status effects
             LogStatusEffects(action);
-            
-            // Log restorations
             LogRestorations(action);
         }
         
@@ -85,7 +304,6 @@ namespace Assets.Scripts.Combat
             string targetName = targetVehicle?.vehicleName ?? evt.Target?.GetDisplayName() ?? "Unknown";
             string sourceName = action?.SourceName ?? evt.CausalSource?.name ?? "attack";
             
-            // Component targeting info
             string componentText = "";
             if (!string.IsNullOrEmpty(evt.TargetComponentName))
             {
@@ -94,7 +312,6 @@ namespace Assets.Scripts.Combat
                     : $"'s {evt.TargetComponentName}";
             }
             
-            // Result color
             string resultText = evt.IsHit 
                 ? "<color=#44FF44>Hit</color>" 
                 : "<color=#FF4444>Miss</color>";
@@ -113,7 +330,7 @@ namespace Assets.Scripts.Combat
             
             logEvt.WithMetadata("skillName", sourceName)
                   .WithMetadata("result", evt.IsHit ? "hit" : "miss")
-                  .WithMetadata("rollBreakdown", evt.Roll?.ToDetailedString() ?? "");
+                  .WithMetadata("rollBreakdown", evt.Result != null ? FormatAttackDetailed(evt.Result) : "");
             
             if (!string.IsNullOrEmpty(evt.TargetComponentName))
             {
@@ -146,23 +363,14 @@ namespace Assets.Scripts.Combat
             string attackerName = attackerVehicle?.vehicleName ?? "Unknown";
             string targetName = GetTargetDisplayName(target, targetVehicle);
             
-            // Check if self-damage
             bool isSelfDamage = attackerVehicle != null && attackerVehicle == targetVehicle;
             
-            // Build damage breakdown string
             string damageText = BuildCombinedDamageText(damages);
-            int totalDamage = damages.Sum(d => d.Breakdown.finalDamage);
+            int totalDamage = damages.Sum(d => d.Result.finalDamage);
             
-            // Build message
-            string message;
-            if (isSelfDamage)
-            {
-                message = $"{targetName} takes {damageText}";
-            }
-            else
-            {
-                message = $"{attackerName} deals {damageText} to {targetName}";
-            }
+            string message = isSelfDamage
+                ? $"{targetName} takes {damageText}"
+                : $"{attackerName} deals {damageText} to {targetName}";
             
             var logEvt = RaceHistory.Log(
                 EventType.Combat,
@@ -172,10 +380,14 @@ namespace Assets.Scripts.Combat
                 attackerVehicle, targetVehicle
             );
             
+            // Use centralized formatting for breakdown
+            var results = damages.Select(d => d.Result).ToList();
+            string breakdown = FormatCombinedDamageDetailed(results, action.SourceName);
+            
             logEvt.WithMetadata("skillName", action.SourceName)
                   .WithMetadata("totalDamage", totalDamage)
                   .WithMetadata("isSelfDamage", isSelfDamage)
-                  .WithMetadata("damageBreakdown", BuildDetailedDamageBreakdown(damages));
+                  .WithMetadata("damageBreakdown", breakdown);
             
             if (target is VehicleComponent comp)
             {
@@ -191,10 +403,9 @@ namespace Assets.Scripts.Combat
             string targetName = GetTargetDisplayName(evt.Target, targetVehicle);
             string sourceName = evt.CausalSource?.name ?? "Unknown";
             
-            int damage = evt.Breakdown.finalDamage;
-            string damageType = evt.Breakdown.damageType.ToString();
+            int damage = evt.Result.finalDamage;
+            string damageType = evt.Result.damageType.ToString();
             
-            // For immediate events (DoT, environmental), format differently
             string message;
             if (evt.Source == null)
             {
@@ -205,14 +416,9 @@ namespace Assets.Scripts.Combat
                 string attackerName = attackerVehicle?.vehicleName ?? evt.Source.GetDisplayName();
                 bool isSelfDamage = attackerVehicle != null && attackerVehicle == targetVehicle;
                 
-                if (isSelfDamage)
-                {
-                    message = $"{targetName} takes <color=#FFA500>{damage}</color> {damageType} damage";
-                }
-                else
-                {
-                    message = $"{attackerName} deals <color=#FFA500>{damage}</color> {damageType} damage to {targetName}";
-                }
+                message = isSelfDamage
+                    ? $"{targetName} takes <color=#FFA500>{damage}</color> {damageType} damage"
+                    : $"{attackerName} deals <color=#FFA500>{damage}</color> {damageType} damage to {targetName}";
             }
             
             bool playerInvolved = (attackerVehicle?.controlType == ControlType.Player) ||
@@ -229,7 +435,7 @@ namespace Assets.Scripts.Combat
             logEvt.WithMetadata("damage", damage)
                   .WithMetadata("damageType", damageType)
                   .WithMetadata("source", sourceName)
-                  .WithMetadata("damageBreakdown", evt.Breakdown.ToDetailedString());
+                  .WithMetadata("damageBreakdown", FormatDamageDetailed(evt.Result));
         }
         
         // ==================== STATUS EFFECT LOGGING ====================
@@ -254,12 +460,10 @@ namespace Assets.Scripts.Combat
             
             string targetName = GetTargetDisplayName(evt.Target, targetVehicle);
             
-            // Determine buff/debuff
             bool isBuff = DetermineIfBuff(effect);
             string color = isBuff ? "#44FF44" : "#FF4444";
             string durationText = applied.IsIndefinite ? "indefinite" : $"{applied.turnsRemaining} turns";
             
-            // Build message
             bool isSelfTarget = sourceVehicle != null && sourceVehicle == targetVehicle;
             string message;
             
@@ -278,7 +482,6 @@ namespace Assets.Scripts.Combat
                 message = $"{sourceVehicle.vehicleName} {actionVerb} <color={color}>{effect.effectName}</color> on {targetName} ({durationText})";
             }
             
-            // Determine importance
             bool playerInvolved = (sourceVehicle?.controlType == ControlType.Player) ||
                                   (targetVehicle?.controlType == ControlType.Player);
             EventImportance importance;
@@ -344,11 +547,9 @@ namespace Assets.Scripts.Combat
             string targetName = targetVehicle?.vehicleName ?? target?.GetDisplayName() ?? "Unknown";
             bool isSelfTarget = sourceVehicle != null && sourceVehicle == targetVehicle;
             
-            // Group by resource type
             var healthRestorations = restorations.Where(r => r.Breakdown.resourceType == ResourceRestorationEffect.ResourceType.Health).ToList();
             var energyRestorations = restorations.Where(r => r.Breakdown.resourceType == ResourceRestorationEffect.ResourceType.Energy).ToList();
             
-            // Build message parts
             var parts = new List<string>();
             
             if (healthRestorations.Count > 0)
@@ -374,18 +575,10 @@ namespace Assets.Scripts.Combat
             if (parts.Count == 0) return;
             
             string restorationText = string.Join(" and ", parts);
-            string message;
+            string message = (isSelfTarget || sourceVehicle == null)
+                ? $"{targetName} {restorationText}"
+                : $"{sourceVehicle.vehicleName} {restorationText} for {targetName}";
             
-            if (isSelfTarget || sourceVehicle == null)
-            {
-                message = $"{targetName} {restorationText}";
-            }
-            else
-            {
-                message = $"{sourceVehicle.vehicleName} {restorationText} for {targetName}";
-            }
-            
-            // Determine importance
             bool playerInvolved = (sourceVehicle?.controlType == ControlType.Player) ||
                                   (targetVehicle?.controlType == ControlType.Player);
             EventImportance importance = playerInvolved ? EventImportance.Medium : EventImportance.Low;
@@ -430,7 +623,7 @@ namespace Assets.Scripts.Combat
                   .WithMetadata("actualChange", evt.Breakdown.actualChange);
         }
         
-        // ==================== HELPER METHODS ====================
+        // ==================== PRIVATE HELPERS ====================
         
         private static string GetTargetDisplayName(Entity target, Vehicle targetVehicle)
         {
@@ -448,120 +641,79 @@ namespace Assets.Scripts.Combat
             
             if (damages.Count == 1)
             {
-                var d = damages[0].Breakdown;
+                var d = damages[0].Result;
                 return $"<color=#FFA500>{d.finalDamage}</color> {d.damageType} damage";
             }
             
-            // Multiple damage types - combine
             var parts = damages.Select(d => 
-                $"<color=#FFA500>{d.Breakdown.finalDamage}</color> {d.Breakdown.damageType}");
+                $"<color=#FFA500>{d.Result.finalDamage}</color> {d.Result.damageType}");
             
-            int total = damages.Sum(d => d.Breakdown.finalDamage);
+            int total = damages.Sum(d => d.Result.finalDamage);
             
             return $"{string.Join(" + ", parts)} (<color=#FFA500>{total} total</color>) damage";
         }
         
-        private static string BuildDetailedDamageBreakdown(List<DamageEvent> damages)
+        private static string BuildDiceNotation(DamageSourceEntry source)
         {
-            var sb = new StringBuilder();
-            
-            // Calculate total damage
-            int totalDamage = damages.Sum(d => d.Breakdown.finalDamage);
-            
-            // Add total header
-            sb.AppendLine($"Damage Total: {totalDamage}");
-            
-            // Add source header
-            if (damages.Count > 0 && damages[0].CausalSource != null)
+            if (source.diceCount > 0 && source.dieSize > 0)
             {
-                sb.AppendLine($"Damage Source: {damages[0].CausalSource.name}");
-                sb.AppendLine();
-            }
-            
-            // Add each damage breakdown with dice notation
-            foreach (var damageEvent in damages)
-            {
-                var breakdown = damageEvent.Breakdown;
-                
-                // For each component in the breakdown
-                foreach (var comp in breakdown.components)
+                string notation = $"({source.diceCount}d{source.dieSize})";
+                if (source.bonus != 0)
                 {
-                    // Build dice notation
-                    string diceNotation = "";
-                    
-                    if (comp.diceCount > 0 && comp.dieSize > 0)
-                    {
-                        // Has dice: (XdY)
-                        diceNotation = $"({comp.diceCount}d{comp.dieSize})";
-                        
-                        // Add bonus if present
-                        if (comp.bonus != 0)
-                        {
-                            string sign = comp.bonus > 0 ? "+" : "";
-                            diceNotation += $"{sign}{comp.bonus}";
-                        }
-                    }
-                    else if (comp.bonus != 0)
-                    {
-                        // No dice, just flat bonus
-                        string sign = comp.bonus > 0 ? "+" : "";
-                        diceNotation = $"{sign}{comp.bonus}";
-                    }
-                    
-                    // Add resistance modifier if applicable
-                    string resistMod = "";
-                    if (breakdown.resistanceLevel != ResistanceLevel.Normal)
-                    {
-                        resistMod = breakdown.resistanceLevel switch
-                        {
-                            ResistanceLevel.Vulnerable => " (×2)",
-                            ResistanceLevel.Resistant => " (×0.5)",
-                            ResistanceLevel.Immune => " (×0)",
-                            _ => ""
-                        };
-                    }
-                    
-                    // Build final line: (1d8)+2 (×0.5) = 6 (Physical)
-                    string damageTypeLabel = $"({breakdown.damageType})";
-                    if (breakdown.resistanceLevel != ResistanceLevel.Normal)
-                    {
-                        damageTypeLabel = $"({breakdown.damageType}, {breakdown.resistanceLevel})";
-                    }
-                    
-                    sb.AppendLine($"{diceNotation}{resistMod} = {breakdown.finalDamage} {damageTypeLabel}");
+                    string sign = source.bonus > 0 ? "+" : "";
+                    notation += $"{sign}{source.bonus}";
                 }
+                return notation;
             }
-            
-            return sb.ToString().Trim();
+            else if (source.bonus != 0)
+            {
+                string sign = source.bonus > 0 ? "+" : "";
+                return $"{sign}{source.bonus}";
+            }
+            return "0";
+        }
+        
+        private static string GetResistanceModifier(ResistanceLevel level)
+        {
+            return level switch
+            {
+                ResistanceLevel.Vulnerable => " (×2)",
+                ResistanceLevel.Resistant => " (×0.5)",
+                ResistanceLevel.Immune => " (×0)",
+                _ => ""
+            };
+        }
+        
+        private static string BuildDamageTypeLabel(DamageResult result)
+        {
+            if (result.resistanceLevel != ResistanceLevel.Normal)
+            {
+                return $"({result.damageType}, {result.resistanceLevel})";
+            }
+            return $"({result.damageType})";
         }
         
         private static bool DetermineIfBuff(StatusEffect statusEffect)
         {
-            // Check modifiers - positive values generally mean buff
             float totalModifierValue = statusEffect.modifiers.Sum(m => m.value);
             
-            // Check periodic effects
             bool hasPeriodicDamage = statusEffect.periodicEffects.Any(p => p.type == PeriodicEffectType.Damage);
             bool hasPeriodicHealing = statusEffect.periodicEffects.Any(p => p.type == PeriodicEffectType.Healing);
             bool hasEnergyDrain = statusEffect.periodicEffects.Any(p => p.type == PeriodicEffectType.EnergyDrain);
             bool hasEnergyRestore = statusEffect.periodicEffects.Any(p => p.type == PeriodicEffectType.EnergyRestore);
             
-            // Check behavioral effects
             bool hasBehavioralRestrictions = statusEffect.behavioralEffects != null &&
                 (statusEffect.behavioralEffects.preventsActions ||
                  statusEffect.behavioralEffects.preventsMovement ||
                  statusEffect.behavioralEffects.preventsSkillUse ||
                  statusEffect.behavioralEffects.damageAmplification > 1f);
             
-            // Debuff indicators outweigh buff indicators
             if (hasPeriodicDamage || hasEnergyDrain || hasBehavioralRestrictions)
                 return false;
             
-            // Buff indicators
             if (hasPeriodicHealing || hasEnergyRestore || totalModifierValue > 0)
                 return true;
             
-            // Neutral or unclear - assume debuff if negative modifiers
             return totalModifierValue >= 0;
         }
     }

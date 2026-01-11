@@ -1,13 +1,16 @@
 ﻿using System.Linq;
 using UnityEngine;
 using Assets.Scripts.Entities.Vehicle.VehicleComponents.ComponentTypes;
+using Assets.Scripts.Combat.Attacks;
 
 namespace Assets.Scripts.Entities.Vehicle
 {
     /// <summary>
     /// Convenience properties for Vehicle that delegate to components.
-    /// Provides a clean API for accessing vehicle stats without direct component access.
-    /// All properties apply modifiers automatically through component methods.
+    /// Provides a clean API for accessing vehicle stats.
+    /// 
+    /// NOTE: For AC with modifiers, use AttackCalculator.GatherDefenseValue().
+    /// These properties return base values or delegate to component methods.
     /// </summary>
     public static class VehicleProperties
     {
@@ -106,35 +109,43 @@ namespace Assets.Scripts.Entities.Vehicle
             return 0f;
         }
 
-        // ==================== ARMOR CLASS (Chassis) ====================
+        // ==================== ARMOR CLASS ====================
 
         /// <summary>
-        /// Get vehicle armor class (chassis base AC + bonuses + modifiers).
+        /// Get vehicle's effective AC (chassis AC with all modifiers applied).
+        /// Uses AttackCalculator for calculation.
         /// </summary>
         public static int GetArmorClass(global::Vehicle vehicle)
         {
-            if (vehicle.chassis == null) return 10; // Default AC
-            return vehicle.chassis.GetTotalAC();
+            if (vehicle.chassis == null) return 10;
+            return AttackCalculator.GatherDefenseValue(vehicle.chassis);
         }
 
         /// <summary>
-        /// Get AC for targeting a specific component.
-        /// Returns modifier-adjusted AC if component is a ChassisComponent.
+        /// Get AC for targeting a specific component (with all modifiers applied).
+        /// Uses AttackCalculator for calculation.
         /// </summary>
         public static int GetComponentAC(global::Vehicle vehicle, VehicleComponent targetComponent)
         {
             if (targetComponent == null)
-                return GetArmorClass(vehicle); // Fallback to chassis AC
+                return GetArmorClass(vehicle);
 
-            // If targeting chassis, use modifier-adjusted AC
-            if (targetComponent is ChassisComponent chassis)
+            return AttackCalculator.GatherDefenseValue(targetComponent);
+        }
+        
+        /// <summary>
+        /// Get AC with full breakdown for tooltips.
+        /// </summary>
+        public static (int total, System.Collections.Generic.List<AttackModifier> breakdown) GetArmorClassWithBreakdown(global::Vehicle vehicle)
+        {
+            if (vehicle.chassis == null)
             {
-                return chassis.GetTotalAC();
+                return (10, new System.Collections.Generic.List<AttackModifier> 
+                { 
+                    new AttackModifier("Default", 10, "No Chassis") 
+                });
             }
-
-            // For other components, use base AC (they don't have GetTotalAC yet)
-            // TODO: Add GetTotalAC() to all VehicleComponents for modifier support
-            return targetComponent.armorClass;
+            return AttackCalculator.GatherDefenseValueWithBreakdown(vehicle.chassis);
         }
     }
 }

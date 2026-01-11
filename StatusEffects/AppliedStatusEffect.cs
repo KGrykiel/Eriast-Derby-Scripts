@@ -177,7 +177,7 @@ namespace Assets.Scripts.StatusEffects
         {
             // Apply environmental damage (no attacker entity)
             // Uses flat damage for now - future enhancement: support dice in PeriodicEffectData
-            var breakdown = DamageApplicator.ApplyEnvironmentalFlat(
+            var result = DamageApplicator.ApplyEnvironmentalFlat(
                 damage: damage,
                 damageType: damageType,
                 target: target,
@@ -186,7 +186,7 @@ namespace Assets.Scripts.StatusEffects
             );
             
             // TODO: Log periodic damage
-            // RaceHistory.Log($"{target.GetDisplayName()} takes {breakdown.finalDamage} {damageType} damage from {template.effectName}");
+            // RaceHistory.Log($"{target.GetDisplayName()} takes {result.finalDamage} {damageType} damage from {template.effectName}");
         }
         
         private void ApplyPeriodicHealing(int healing)

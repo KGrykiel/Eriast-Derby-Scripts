@@ -1,6 +1,8 @@
 ﻿using System;
 using UnityEngine;
 using Assets.Scripts.StatusEffects;
+using Assets.Scripts.Combat.Attacks;
+using Assets.Scripts.Combat.Damage;
 
 namespace Assets.Scripts.Combat
 {
@@ -35,20 +37,20 @@ namespace Assets.Scripts.Combat
     /// </summary>
     public class DamageEvent : CombatEvent
     {
-        /// <summary>Full damage breakdown with dice, resistances, etc.</summary>
-        public DamageBreakdown Breakdown { get; set; }
+        /// <summary>Full damage result with sources, resistances, etc.</summary>
+        public DamageResult Result { get; set; }
         
         /// <summary>Category of damage source (Weapon, Ability, Effect, Environmental)</summary>
         public DamageSource SourceType { get; set; }
         
         public DamageEvent(
-            DamageBreakdown breakdown,
+            DamageResult result,
             Entity source,
             Entity target,
             UnityEngine.Object causalSource,
             DamageSource sourceType = DamageSource.Ability)
         {
-            Breakdown = breakdown;
+            Result = result;
             Source = source;
             Target = target;
             CausalSource = causalSource;
@@ -147,8 +149,8 @@ namespace Assets.Scripts.Combat
     /// </summary>
     public class AttackRollEvent : CombatEvent
     {
-        /// <summary>Full roll breakdown with modifiers</summary>
-        public RollBreakdown Roll { get; set; }
+        /// <summary>Full attack result with modifiers</summary>
+        public AttackResult Result { get; set; }
         
         /// <summary>Whether the attack hit</summary>
         public bool IsHit { get; set; }
@@ -160,7 +162,7 @@ namespace Assets.Scripts.Combat
         public bool IsChassisFallback { get; set; }
         
         public AttackRollEvent(
-            RollBreakdown roll,
+            AttackResult result,
             Entity source,
             Entity target,
             UnityEngine.Object causalSource,
@@ -168,7 +170,7 @@ namespace Assets.Scripts.Combat
             string targetComponentName = null,
             bool isChassisFallback = false)
         {
-            Roll = roll;
+            Result = result;
             Source = source;
             Target = target;
             CausalSource = causalSource;

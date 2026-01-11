@@ -1,4 +1,5 @@
 ﻿using UnityEngine;
+using Assets.Scripts.Combat.Damage;
 
 /// <summary>
 /// Encapsulates damage calculation logic.
@@ -40,7 +41,7 @@ public class DamageFormula
     /// Compute damage for a skill-only formula (no weapon).
     /// Used for spells, abilities, and other non-weapon skills.
     /// </summary>
-    public DamageBreakdown ComputeSkillOnly()
+    public DamageResult ComputeSkillOnly()
     {
         if (mode != SkillDamageMode.SkillOnly)
         {
@@ -49,18 +50,18 @@ public class DamageFormula
         
         int rolled = RollUtility.RollDice(skillDice, skillDieSize);
         
-        var breakdown = DamageBreakdown.Create(skillDamageType);
-        breakdown.AddComponent("Skill", skillDice, skillDieSize, skillBonus, rolled, "Skill Effect");
-        breakdown.WithResistance(ResistanceLevel.Normal);
+        var result = DamageResult.Create(skillDamageType);
+        DamageCalculator.AddSource(result, "Skill", skillDice, skillDieSize, skillBonus, rolled, "Skill Effect");
+        DamageCalculator.ApplyResistance(result, ResistanceLevel.Normal);
         
-        return breakdown;
+        return result;
     }
 
     /// <summary>
     /// Compute damage with weapon integration.
     /// Used for weapon attacks and weapon-enhanced skills.
     /// </summary>
-    public DamageBreakdown ComputeWithWeapon(WeaponComponent weapon)
+    public DamageResult ComputeWithWeapon(WeaponComponent weapon)
     {
         if (weapon == null)
         {
@@ -68,7 +69,7 @@ public class DamageFormula
             return ComputeSkillOnly();
         }
         
-        var breakdown = DamageBreakdown.Create(skillDamageType);
+        var result = DamageResult.Create(skillDamageType);
 
         switch (mode)
         {
@@ -80,39 +81,39 @@ public class DamageFormula
             case SkillDamageMode.WeaponOnly:
                 // Just weapon dice, no skill contribution
                 int weaponRolled = RollUtility.RollDice(weapon.damageDice, weapon.damageDieSize);
-                breakdown.AddComponent("Weapon", weapon.damageDice, weapon.damageDieSize, weapon.damageBonus, weaponRolled, weapon.name);
-                breakdown.damageType = weapon.damageType;
+                DamageCalculator.AddSource(result, "Weapon", weapon.damageDice, weapon.damageDieSize, weapon.damageBonus, weaponRolled, weapon.name);
+                result.damageType = weapon.damageType;
                 break;
 
             case SkillDamageMode.WeaponPlusSkill:
                 // Weapon dice + skill dice combined
                 int weaponRolled2 = RollUtility.RollDice(weapon.damageDice, weapon.damageDieSize);
-                breakdown.AddComponent("Weapon", weapon.damageDice, weapon.damageDieSize, weapon.damageBonus, weaponRolled2, weapon.name);
+                DamageCalculator.AddSource(result, "Weapon", weapon.damageDice, weapon.damageDieSize, weapon.damageBonus, weaponRolled2, weapon.name);
                 
                 if (skillDice > 0 && skillDieSize > 0)
                 {
                     int skillRolled = RollUtility.RollDice(skillDice, skillDieSize);
-                    breakdown.AddComponent("Skill Bonus", skillDice, skillDieSize, skillBonus, skillRolled, "Skill Effect");
+                    DamageCalculator.AddSource(result, "Skill Bonus", skillDice, skillDieSize, skillBonus, skillRolled, "Skill Effect");
                 }
                 else if (skillBonus != 0)
                 {
-                    breakdown.AddFlat("Skill Bonus", skillBonus, "Skill Effect");
+                    DamageCalculator.AddFlat(result, "Skill Bonus", skillBonus, "Skill Effect");
                 }
                 
-                breakdown.damageType = useWeaponDamageType ? weapon.damageType : skillDamageType;
+                result.damageType = useWeaponDamageType ? weapon.damageType : skillDamageType;
                 break;
 
             case SkillDamageMode.WeaponMultiplied:
                 // Weapon dice multiplied (e.g., crits, sneak attack)
                 int multipliedDice = Mathf.RoundToInt(weapon.damageDice * weaponMultiplier);
                 int multipliedRolled = RollUtility.RollDice(multipliedDice, weapon.damageDieSize);
-                breakdown.AddComponent($"Weapon ×{weaponMultiplier}", multipliedDice, weapon.damageDieSize, weapon.damageBonus, multipliedRolled, weapon.name);
-                breakdown.damageType = weapon.damageType;
+                DamageCalculator.AddSource(result, $"Weapon ×{weaponMultiplier}", multipliedDice, weapon.damageDieSize, weapon.damageBonus, multipliedRolled, weapon.name);
+                result.damageType = weapon.damageType;
                 break;
         }
 
-        breakdown.WithResistance(ResistanceLevel.Normal);
-        return breakdown;
+        DamageCalculator.ApplyResistance(result, ResistanceLevel.Normal);
+        return result;
     }
 
     /// <summary>

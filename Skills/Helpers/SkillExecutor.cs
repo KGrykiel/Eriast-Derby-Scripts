@@ -3,6 +3,7 @@ using System.Linq;
 using UnityEngine;
 using Assets.Scripts.Effects.EffectTypes;
 using Assets.Scripts.Combat;
+using Assets.Scripts.Combat.Attacks;
 
 namespace Assets.Scripts.Skills.Helpers
 {
@@ -61,7 +62,7 @@ namespace Assets.Scripts.Skills.Helpers
             // Perform roll if required
             if (skill.skillRollType != SkillRollType.None)
             {
-                RollBreakdown skillRoll = PerformSkillRoll(skill, user, mainTarget.chassis, sourceComponent);
+                AttackResult skillRoll = PerformSkillRoll(skill, user, mainTarget.chassis, sourceComponent);
                 
                 if (skillRoll?.success != true)
                 {
@@ -115,7 +116,7 @@ namespace Assets.Scripts.Skills.Helpers
             // General case: Single roll (or no roll) + apply effects
             if (skill.skillRollType != SkillRollType.None)
             {
-                RollBreakdown skillRoll = PerformSkillRoll(skill, user, targetComponent, sourceComponent);
+                AttackResult skillRoll = PerformSkillRoll(skill, user, targetComponent, sourceComponent);
                 
                 if (skillRoll?.success != true)
                 {
@@ -164,7 +165,7 @@ namespace Assets.Scripts.Skills.Helpers
         /// <summary>
         /// Perform a skill roll based on skillRollType.
         /// </summary>
-        private static RollBreakdown PerformSkillRoll(
+        private static AttackResult PerformSkillRoll(
             Skill skill,
             Vehicle user,
             Entity targetEntity,
@@ -184,7 +185,7 @@ namespace Assets.Scripts.Skills.Helpers
         /// Perform saving throw (target rolls to resist).
         /// TODO: Implement when saving throw system is designed.
         /// </summary>
-        private static RollBreakdown PerformSavingThrow(Skill skill, Vehicle user, Entity targetEntity)
+        private static AttackResult PerformSavingThrow(Skill skill, Vehicle user, Entity targetEntity)
         {
             Debug.LogWarning($"[Skill] {skill.name}: Saving throws not yet implemented!");
             return null;
@@ -194,7 +195,7 @@ namespace Assets.Scripts.Skills.Helpers
         /// Perform skill check (user rolls vs DC).
         /// TODO: Implement when skill check system is designed.
         /// </summary>
-        private static RollBreakdown PerformSkillCheck(Skill skill, Vehicle user, Entity targetEntity)
+        private static AttackResult PerformSkillCheck(Skill skill, Vehicle user, Entity targetEntity)
         {
             Debug.LogWarning($"[Skill] {skill.name}: Skill checks not yet implemented!");
             return null;
@@ -204,7 +205,7 @@ namespace Assets.Scripts.Skills.Helpers
         /// Perform opposed check (both user and target roll, highest wins).
         /// TODO: Implement when opposed check system is designed.
         /// </summary>
-        private static RollBreakdown PerformOpposedCheck(Skill skill, Vehicle user, Entity targetEntity)
+        private static AttackResult PerformOpposedCheck(Skill skill, Vehicle user, Entity targetEntity)
         {
             Debug.LogWarning($"[Skill] {skill.name}: Opposed checks not yet implemented!");
             return null;

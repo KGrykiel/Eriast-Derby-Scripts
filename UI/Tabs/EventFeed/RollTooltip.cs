@@ -3,10 +3,15 @@ using UnityEngine.UI;
 using TMPro;
 using UnityEngine.EventSystems;
 using UnityEngine.InputSystem;
+using Assets.Scripts.Combat;
+using Assets.Scripts.Combat.Attacks;
+using Assets.Scripts.Combat.Damage;
 
 /// <summary>
 /// Tooltip panel that displays detailed roll/damage breakdowns on hover.
 /// Singleton that positions itself near the hovered UI element (not cursor).
+/// 
+/// Uses CombatLogManager for all formatting (single source of truth).
 /// </summary>
 public class RollTooltip : MonoBehaviour
 {
@@ -58,10 +63,8 @@ public class RollTooltip : MonoBehaviour
             canvasRect = parentCanvas.GetComponent<RectTransform>();
         }
         
-        // Make tooltip non-blocking for raycasts to prevent flickering
         if (tooltipPanel != null)
         {
-            // Disable raycast blocking on the tooltip and all its children
             var canvasGroup = tooltipPanel.GetComponent<CanvasGroup>();
             if (canvasGroup == null)
             {
@@ -76,7 +79,6 @@ public class RollTooltip : MonoBehaviour
 
     void Update()
     {
-        // Handle delayed showing
         if (pendingContent != null && !isShowing)
         {
             showTimer += Time.unscaledDeltaTime;
@@ -87,7 +89,6 @@ public class RollTooltip : MonoBehaviour
             }
         }
 
-        // Update position if target element moves (though it shouldn't for event feed)
         if (isShowing && targetElement != null)
         {
             UpdatePosition();
@@ -209,42 +210,28 @@ public class RollTooltip : MonoBehaviour
     }
 
     /// <summary>
-    /// Shows a roll breakdown tooltip.
+    /// Shows an attack result tooltip.
     /// </summary>
-    public static void ShowRollBreakdown(RollBreakdown breakdown, RectTransform target = null)
+    public static void ShowAttackResult(AttackResult result, RectTransform target = null)
     {
-        if (breakdown == null) return;
-        Show(breakdown.ToDetailedString(), target);
+        if (result == null) return;
+        Show(CombatLogManager.FormatAttackDetailed(result), target);
     }
 
     /// <summary>
-    /// Shows a damage breakdown tooltip.
+    /// Shows a damage result tooltip.
     /// </summary>
-    public static void ShowDamageBreakdown(DamageBreakdown breakdown, RectTransform target = null)
+    public static void ShowDamageResult(DamageResult result, RectTransform target = null)
     {
-        if (breakdown == null) return;
-        Show(breakdown.ToDetailedString(), target);
+        if (result == null) return;
+        Show(CombatLogManager.FormatDamageDetailed(result), target);
     }
 
     /// <summary>
-    /// Shows combined roll and damage breakdown.
+    /// Shows combined attack and damage result.
     /// </summary>
-    public static void ShowCombinedBreakdown(RollBreakdown roll, DamageBreakdown damage, RectTransform target = null)
+    public static void ShowCombinedResult(AttackResult attack, DamageResult damage, RectTransform target = null)
     {
-        string content = "";
-
-        if (roll != null)
-        {
-            content += roll.ToDetailedString();
-        }
-
-        if (damage != null)
-        {
-            if (!string.IsNullOrEmpty(content))
-                content += "\n";
-            content += damage.ToDetailedString();
-        }
-
-        Show(content, target);
+        Show(CombatLogManager.FormatCombinedAttackAndDamage(attack, damage), target);
     }
 }

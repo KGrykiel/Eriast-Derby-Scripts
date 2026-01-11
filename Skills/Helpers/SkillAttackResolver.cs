@@ -1,108 +1,49 @@
 ﻿using System.Collections.Generic;
 using UnityEngine;
 using Assets.Scripts.Combat;
+using Assets.Scripts.Combat.Attacks;
 
 namespace Assets.Scripts.Skills.Helpers
 {
     /// <summary>
-    /// Handles attack rolls, modifier building, and two-stage component targeting.
-    /// Emits AttackRollEvent for hit/miss logging via CombatEventBus.
+    /// High-level orchestrator for skill-based attacks.
+    /// 
+    /// Uses AttackCalculator for:
+    /// - Rolling attacks
+    /// - Gathering modifiers
+    /// - Evaluating hits
+    /// 
+    /// Handles skill-specific logic:
+    /// - Two-stage component targeting
+    /// - Emitting combat events
+    /// - Coordinating with SkillEffectApplicator
     /// </summary>
     public static class SkillAttackResolver
     {
         /// <summary>
-        /// Build modifiers for component targeting (no penalty).
+        /// Performs a skill roll if required. Returns null if no roll is needed.
+        /// Delegates to AttackCalculator for actual rolling and modifier gathering.
         /// </summary>
-        public static List<RollModifier> BuildComponentModifiers(VehicleComponent sourceComponent)
+        public static AttackResult PerformSkillRoll(
+            Skill skill,
+            Vehicle user,
+            Entity targetEntity,
+            VehicleComponent sourceComponent)
         {
-            var builder = RollUtility.BuildModifiers();
-            
-            if (sourceComponent is WeaponComponent weapon && weapon.attackBonus != 0)
-            {
-                builder.Add("Weapon Attack Bonus", weapon.attackBonus, weapon.name);
-            }
-            
-            return builder.Build();
-        }
-        
-        /// <summary>
-        /// Build modifiers for chassis fallback (with penalty).
-        /// </summary>
-        public static List<RollModifier> BuildChassisModifiers(VehicleComponent sourceComponent, int componentTargetingPenalty, string skillName)
-        {
-            var builder = RollUtility.BuildModifiers();
-            
-            if (sourceComponent is WeaponComponent weapon && weapon.attackBonus != 0)
-            {
-                builder.Add("Weapon Attack Bonus", weapon.attackBonus, weapon.name);
-            }
-            
-            builder.Add("Component Targeting Penalty", -componentTargetingPenalty, skillName);
-            
-            return builder.Build();
-        }
-        
-        /// <summary>
-        /// Performs a skill roll (attack roll or saving throw) if required. Returns null if no roll is needed.
-        /// </summary>
-        public static RollBreakdown PerformSkillRoll(Skill skill, Vehicle user, Entity targetEntity, VehicleComponent sourceComponent)
-        {
-            if (skill.skillRollType != SkillRollType.AttackRoll)
+            if (skill.skillRollType == SkillRollType.None)
                 return null;
             
-            // Infer target number type from SkillRollType
-            TargetNumberType targetNumberType = skill.skillRollType switch
-            {
-                SkillRollType.AttackRoll => TargetNumberType.ArmorClass,
-                SkillRollType.SavingThrow => TargetNumberType.DifficultyClass,
-                SkillRollType.SkillCheck => TargetNumberType.DifficultyClass,
-                _ => TargetNumberType.ArmorClass
-            };
+            // Get the attacking entity (weapon or chassis)
+            Entity attackerEntity = sourceComponent ?? user.chassis;
             
-            var modifiers = BuildSkillRollModifiers(skill, user, sourceComponent);
-            return RollUtility.RollToHitWithBreakdown(user, targetEntity, targetNumberType, modifiers, skill.name);
-        }
-        
-        /// <summary>
-        /// Build the list of modifiers for a skill roll with proper source tracking.
-        /// Works for attack rolls, saving throws, etc.
-        /// </summary>
-        public static List<RollModifier> BuildSkillRollModifiers(Skill skill, Vehicle user, VehicleComponent sourceComponent)
-        {
-            var builder = RollUtility.BuildModifiers();
+            // Perform the attack using AttackCalculator
+            var result = AttackCalculator.PerformAttack(
+                attacker: attackerEntity,
+                target: targetEntity,
+                sourceComponent: sourceComponent,
+                skill: skill);
             
-            // Infer target number type for caster bonus calculation
-            TargetNumberType targetNumberType = skill.skillRollType switch
-            {
-                SkillRollType.AttackRoll => TargetNumberType.ArmorClass,
-                _ => TargetNumberType.DifficultyClass
-            };
-            
-            // Add caster/vehicle bonus (future: from character stats)
-            int casterBonus = GetCasterToHitBonus(user, targetNumberType);
-            builder.AddIf(casterBonus != 0, "Caster Bonus", casterBonus, user.vehicleName);
-            
-            // Add source component bonus (weapon attack bonus, power core bonus, etc.)
-            if (sourceComponent != null)
-            {
-                // Weapons have attackBonus
-                if (sourceComponent is WeaponComponent weapon && weapon.attackBonus != 0)
-                {
-                    builder.Add("Weapon Attack Bonus", weapon.attackBonus, weapon.name);
-                }
-                // Future: Other components could add their own bonuses here
-            }
-            
-            return builder.Build();
-        }
-        
-        /// <summary>
-        /// Utility: Get caster's to-hit bonus based on target number type.
-        /// </summary>
-        private static int GetCasterToHitBonus(Vehicle caster, TargetNumberType targetNumberType)
-        {
-            // Future: Pull from vehicle/character attributes
-            return 0;
+            return result;
         }
         
         /// <summary>
@@ -117,28 +58,31 @@ namespace Assets.Scripts.Skills.Helpers
             string targetComponentName,
             VehicleComponent sourceComponent)
         {
-            // Build modifiers
-            var componentModifiers = BuildComponentModifiers(sourceComponent);
-            var chassisModifiers = BuildChassisModifiers(sourceComponent, skill.componentTargetingPenalty, skill.name);
-
-            // Stage 1: Roll vs Component AC (NO PENALTY)
-            int componentAC = mainTarget.GetComponentAC(targetComponent);
-            var componentRoll = RollBreakdown.D20(Random.Range(1, 21), RollCategory.Attack);
-            foreach (var mod in componentModifiers) componentRoll.WithModifier(mod.name, mod.value, mod.source);
-            componentRoll.Against(componentAC, "Component AC");
+            Entity attackerEntity = sourceComponent ?? user.chassis;
+            
+            // ==================== STAGE 1: Component AC (NO PENALTY) ====================
+            
+            var componentRoll = AttackCalculator.RollAttack(AttackCategory.Attack);
+            
+            // Gather modifiers (no penalty for direct component targeting)
+            var componentModifiers = AttackCalculator.GatherAttackModifiers(attackerEntity, sourceComponent, skill);
+            AttackCalculator.AddModifiers(componentRoll, componentModifiers);
+            
+            // Evaluate against component AC
+            int componentAC = AttackCalculator.GatherDefenseValue(targetComponent);
+            AttackCalculator.EvaluateAgainst(componentRoll, componentAC, "Component AC");
 
             if (componentRoll.success == true)
             {
                 // Component hit - emit event and apply effects
                 CombatEventBus.EmitAttackRoll(
                     componentRoll, 
-                    sourceComponent ?? user.chassis, 
+                    attackerEntity, 
                     targetComponent, 
                     skill, 
                     isHit: true, 
                     targetComponentName);
                 
-                // Apply effects to component
                 SkillEffectApplicator.ApplyAllEffects(skill, user, mainTarget, sourceComponent, targetComponent);
                 return true;
             }
@@ -146,31 +90,37 @@ namespace Assets.Scripts.Skills.Helpers
             // Stage 1 Miss - emit event
             CombatEventBus.EmitAttackRoll(
                 componentRoll, 
-                sourceComponent ?? user.chassis, 
+                attackerEntity, 
                 targetComponent, 
                 skill, 
                 isHit: false, 
                 targetComponentName);
 
-            // Stage 2: Try chassis (WITH PENALTY)
-            int chassisAC = mainTarget.armorClass;
-            var chassisRoll = RollBreakdown.D20(Random.Range(1, 21), RollCategory.Attack);
-            foreach (var mod in chassisModifiers) chassisRoll.WithModifier(mod.name, mod.value, mod.source);
-            chassisRoll.Against(chassisAC, "Chassis AC");
+            // ==================== STAGE 2: Chassis AC (WITH PENALTY) ====================
+            
+            var chassisRoll = AttackCalculator.RollAttack(AttackCategory.Attack);
+            
+            // Gather modifiers WITH component targeting penalty
+            var chassisModifiers = AttackCalculator.GatherAttackModifiers(attackerEntity, sourceComponent, skill);
+            AttackCalculator.AddModifiers(chassisRoll, chassisModifiers);
+            AttackCalculator.AddModifier(chassisRoll, "Component Targeting Penalty", -skill.componentTargetingPenalty, skill.name);
+            
+            // Evaluate against chassis AC
+            int chassisAC = AttackCalculator.GatherDefenseValue(mainTarget.chassis);
+            AttackCalculator.EvaluateAgainst(chassisRoll, chassisAC, "Chassis AC");
 
             if (chassisRoll.success == true)
             {
                 // Chassis hit - emit event and apply effects
                 CombatEventBus.EmitAttackRoll(
                     chassisRoll, 
-                    sourceComponent ?? user.chassis, 
+                    attackerEntity, 
                     mainTarget.chassis, 
                     skill, 
                     isHit: true, 
                     targetComponentName,
                     isChassisFallback: true);
                 
-                // Apply effects to chassis (null = use routing)
                 SkillEffectApplicator.ApplyAllEffects(skill, user, mainTarget, sourceComponent, null);
                 return true;
             }
@@ -178,7 +128,7 @@ namespace Assets.Scripts.Skills.Helpers
             // Stage 2 Miss - emit event
             CombatEventBus.EmitAttackRoll(
                 chassisRoll, 
-                sourceComponent ?? user.chassis, 
+                attackerEntity, 
                 mainTarget.chassis, 
                 skill, 
                 isHit: false, 

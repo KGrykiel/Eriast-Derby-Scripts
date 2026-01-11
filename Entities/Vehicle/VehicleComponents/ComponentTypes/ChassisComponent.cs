@@ -5,6 +5,8 @@ using RacingGame.Events;
 /// Chassis component - the structural foundation of a vehicle.
 /// MANDATORY: Every vehicle must have exactly one chassis.
 /// The chassis IS the vehicle - Entity.maxHealth IS the vehicle's max HP, Entity.armorClass IS the vehicle's AC.
+/// 
+/// NOTE: Base values only. Use AttackCalculator.GatherDefenseValue() for AC with modifiers.
 /// </summary>
 public class ChassisComponent : VehicleComponent
 {
@@ -44,38 +46,22 @@ public class ChassisComponent : VehicleComponent
         roleName = "";
     }
     
+    // ==================== STATS ====================
+    
     /// <summary>
     /// Get maximum HP for this chassis (base + bonuses from other components + modifiers).
-    /// Uses Entity.maxHealth as the base.
     /// </summary>
     public int GetMaxHP()
     {
         if (parentVehicle == null) return maxHealth;
         
-        // Apply component modifiers to base HP
+        // Apply status effect modifiers
         float modifiedHP = ApplyModifiers(Attribute.MaxHealth, maxHealth);
         
-        // Add bonuses from other components
+        // Add bonuses from other components (e.g., armor plating)
         float componentBonuses = parentVehicle.GetComponentStat(VehicleStatModifiers.StatNames.HP);
         
         return Mathf.RoundToInt(modifiedHP + componentBonuses);
-    }
-    
-    /// <summary>
-    /// Get total Armor Class (base + bonuses from other components + modifiers).
-    /// Uses Entity.armorClass as the base.
-    /// </summary>
-    public int GetTotalAC()
-    {
-        if (parentVehicle == null) return armorClass;
-        
-        // Apply component modifiers to base AC
-        float modifiedAC = ApplyModifiers(Attribute.ArmorClass, armorClass);
-        
-        // Add bonuses from other components
-        float componentBonuses = parentVehicle.GetComponentStat(VehicleStatModifiers.StatNames.AC);
-        
-        return Mathf.RoundToInt(modifiedAC + componentBonuses);
     }
     
     /// <summary>
@@ -84,12 +70,11 @@ public class ChassisComponent : VehicleComponent
     /// </summary>
     public override VehicleStatModifiers GetStatModifiers()
     {
-        // If chassis is destroyed or disabled, it contributes nothing
         if (isDestroyed || isDisabled)
             return VehicleStatModifiers.Zero;
         
         // Chassis only provides component space (as negative value in componentSpace field)
-        // HP and AC are accessed directly via GetMaxHP() and GetTotalAC()
+        // HP and AC are accessed directly via GetMaxHP() and GetArmorClass()
         return VehicleStatModifiers.Zero;
     }
     
@@ -103,7 +88,6 @@ public class ChassisComponent : VehicleComponent
         
         if (parentVehicle == null) return;
         
-        // Chassis destruction is catastrophic - vehicle is destroyed
         Debug.LogError($"[Chassis] CRITICAL: {parentVehicle.vehicleName}'s {name} destroyed! Vehicle structure collapsed!");
         
         RacingGame.Events.RaceHistory.Log(
@@ -115,9 +99,5 @@ public class ChassisComponent : VehicleComponent
         ).WithMetadata("componentName", name)
          .WithMetadata("componentType", "Chassis")
          .WithMetadata("catastrophicFailure", true);
-        
-        // Chassis destruction already triggers vehicle destruction via Vehicle.TakeDamage()
-        // which calls OnEntityDestroyed() -> DestroyVehicle()
-        // No additional logic needed here
     }
 }

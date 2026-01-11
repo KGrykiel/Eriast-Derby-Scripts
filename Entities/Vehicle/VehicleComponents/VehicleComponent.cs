@@ -9,13 +9,10 @@ using Assets.Scripts.Entities.Vehicle.VehicleComponents.Enums;
 /// Base class for all vehicle components.
 /// Components ARE Entities - they have HP, AC, and can be damaged/targeted.
 /// Components are modular parts that contribute stats, enable roles, and provide skills.
-/// This is abstract - use specific subclasses like ChassisComponent, WeaponComponent, etc.
 /// 
-/// NOTE: Uses Entity base class fields (health, maxHealth, armorClass) directly.
-/// Display name uses Unity's GameObject.name (set in Inspector hierarchy).
-/// 
-/// MODIFIER SYSTEM: Uses unified Entity.entityModifiers system.
-/// When a modifier is applied to a vehicle, Vehicle.ResolveModifierTarget() routes it to the correct component.
+/// NOTE: Components store raw base values. Calculators handle modifier application.
+/// - AttackCalculator.GatherDefenseValue() computes AC with all modifiers
+/// - Entity.armorClass is the BASE value only
 /// </summary>
 public abstract class VehicleComponent : Entity
 {

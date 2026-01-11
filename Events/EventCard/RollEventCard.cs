@@ -1,5 +1,6 @@
 using UnityEngine;
 using System.Collections.Generic;
+using Assets.Scripts.Combat.Attacks;
 
 [CreateAssetMenu(menuName = "Racing/EventCards/RollEventCard")]
 public class RollEventCard : EventCard
@@ -15,15 +16,13 @@ public class RollEventCard : EventCard
 
     public override void Trigger(Vehicle vehicle, Stage stage)
     {
-        // Build modifiers list (future: add character skill bonuses)
-        var modifiers = RollUtility.BuildModifiers()
-            // Add vehicle/character bonuses here when implemented
-            // .Add("Pilot Skill", vehicle.pilot?.skillBonus ?? 0, vehicle.pilot?.name)
-            .Build();
+        // Perform skill check using AttackCalculator
+        var result = AttackCalculator.PerformSkillCheck(
+            vehicle.chassis, 
+            difficulty, 
+            $"Event: {conditionDescription}");
 
-        var breakdown = RollUtility.SkillCheckWithBreakdown(modifiers, difficulty, $"Event: {conditionDescription}");
-
-        if (breakdown.success == true)
+        if (result.success == true)
         {
             ApplyEffectInvocations(rewardEffects, vehicle, stage);
         }
@@ -37,7 +36,6 @@ public class RollEventCard : EventCard
     {
         if (invocations == null) return;
 
-        // Get the chassis entity (primary target entity for vehicle)
         Entity targetEntity = mainTarget.chassis;
         if (targetEntity == null)
         {
@@ -47,7 +45,6 @@ public class RollEventCard : EventCard
 
         foreach (var invocation in invocations)
         {
-            // Apply effect directly (no roll logic needed here)
             if (invocation.effect != null)
             {
                 invocation.effect.Apply(targetEntity, targetEntity, stage, this);
