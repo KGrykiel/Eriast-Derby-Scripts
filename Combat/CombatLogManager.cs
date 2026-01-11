@@ -465,13 +465,74 @@ namespace Assets.Scripts.Combat
         {
             var sb = new StringBuilder();
             
-            foreach (var damage in damages)
+            // Calculate total damage
+            int totalDamage = damages.Sum(d => d.Breakdown.finalDamage);
+            
+            // Add total header
+            sb.AppendLine($"Damage Total: {totalDamage}");
+            
+            // Add source header
+            if (damages.Count > 0 && damages[0].CausalSource != null)
             {
-                if (sb.Length > 0) sb.Append(" | ");
-                sb.Append(damage.Breakdown.ToDetailedString());
+                sb.AppendLine($"Damage Source: {damages[0].CausalSource.name}");
+                sb.AppendLine();
             }
             
-            return sb.ToString();
+            // Add each damage breakdown with dice notation
+            foreach (var damageEvent in damages)
+            {
+                var breakdown = damageEvent.Breakdown;
+                
+                // For each component in the breakdown
+                foreach (var comp in breakdown.components)
+                {
+                    // Build dice notation
+                    string diceNotation = "";
+                    
+                    if (comp.diceCount > 0 && comp.dieSize > 0)
+                    {
+                        // Has dice: (XdY)
+                        diceNotation = $"({comp.diceCount}d{comp.dieSize})";
+                        
+                        // Add bonus if present
+                        if (comp.bonus != 0)
+                        {
+                            string sign = comp.bonus > 0 ? "+" : "";
+                            diceNotation += $"{sign}{comp.bonus}";
+                        }
+                    }
+                    else if (comp.bonus != 0)
+                    {
+                        // No dice, just flat bonus
+                        string sign = comp.bonus > 0 ? "+" : "";
+                        diceNotation = $"{sign}{comp.bonus}";
+                    }
+                    
+                    // Add resistance modifier if applicable
+                    string resistMod = "";
+                    if (breakdown.resistanceLevel != ResistanceLevel.Normal)
+                    {
+                        resistMod = breakdown.resistanceLevel switch
+                        {
+                            ResistanceLevel.Vulnerable => " (×2)",
+                            ResistanceLevel.Resistant => " (×0.5)",
+                            ResistanceLevel.Immune => " (×0)",
+                            _ => ""
+                        };
+                    }
+                    
+                    // Build final line: (1d8)+2 (×0.5) = 6 (Physical)
+                    string damageTypeLabel = $"({breakdown.damageType})";
+                    if (breakdown.resistanceLevel != ResistanceLevel.Normal)
+                    {
+                        damageTypeLabel = $"({breakdown.damageType}, {breakdown.resistanceLevel})";
+                    }
+                    
+                    sb.AppendLine($"{diceNotation}{resistMod} = {breakdown.finalDamage} {damageTypeLabel}");
+                }
+            }
+            
+            return sb.ToString().Trim();
         }
         
         private static bool DetermineIfBuff(StatusEffect statusEffect)

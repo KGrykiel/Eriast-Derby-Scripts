@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 using UnityEngine;
-using Assets.Scripts.Effects.EffectTypes.Damage;
+using Assets.Scripts.Combat.Damage;
 
 namespace Assets.Scripts.StatusEffects
 {
