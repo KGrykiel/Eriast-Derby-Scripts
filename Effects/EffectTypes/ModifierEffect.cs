@@ -96,7 +96,15 @@ public class AttributeModifierEffect : EffectBase
     public string GetDescription()
     {
         string sign = value >= 0 ? "+" : "";
-        string typeStr = type == ModifierType.Percent ? "%" : "";
-        return $"{sign}{value}{typeStr} {attribute} (permanent)";
+        string typeStr = type == ModifierType.Multiplier ? "×" : "";
+        
+        if (type == ModifierType.Multiplier)
+        {
+            return $"{typeStr}{value} {attribute} (permanent)";
+        }
+        else
+        {
+            return $"{sign}{value} {attribute} (permanent)";
+        }
     }
 }

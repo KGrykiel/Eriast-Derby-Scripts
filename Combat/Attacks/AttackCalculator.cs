@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
+using Assets.Scripts.Core;
 
 namespace Assets.Scripts.Combat.Attacks
 {
@@ -10,13 +11,14 @@ namespace Assets.Scripts.Combat.Attacks
     /// Responsibilities:
     /// - Rolling d20 attacks (uses RollUtility)
     /// - Gathering attack modifiers from all sources
-    /// - Gathering defense values from all sources (with breakdown for tooltips)
     /// - Evaluating hit/miss
     /// - Crit/fumble detection
     /// 
     /// DESIGN: Entities store raw base values. This calculator gathers modifiers
     /// from all sources and computes final values. This keeps entities clean
     /// and provides breakdown data for tooltips.
+    /// 
+    /// NOTE: Defense values (AC) are now delegated to StatCalculator (single source of truth).
     /// </summary>
     public static class AttackCalculator
     {
@@ -64,7 +66,7 @@ namespace Assets.Scripts.Combat.Attacks
                 AddModifier(result, "Targeting Penalty", -additionalPenalty, skill?.name);
             }
             
-            // Get target's defense value and evaluate
+            // Get target's defense value and evaluate (delegates to StatCalculator)
             int defenseValue = GatherDefenseValue(target);
             EvaluateAgainst(result, defenseValue, "AC");
             
@@ -95,18 +97,23 @@ namespace Assets.Scripts.Combat.Attacks
         /// <summary>
         /// Gather ALL attack modifiers from all sources.
         /// This is the SINGLE SOURCE OF TRUTH for attack bonuses.
+        /// Returns list of AttributeModifiers for the AttackBonus attribute.
         /// </summary>
-        public static List<AttackModifier> GatherAttackModifiers(
+        public static List<AttributeModifier> GatherAttackModifiers(
             Entity attacker,
             VehicleComponent sourceComponent = null,
             Skill skill = null)
         {
-            var modifiers = new List<AttackModifier>();
+            var modifiers = new List<AttributeModifier>();
             
             // 1. Weapon attack bonus
             if (sourceComponent is WeaponComponent weapon && weapon.attackBonus != 0)
             {
-                modifiers.Add(new AttackModifier("Weapon Bonus", weapon.attackBonus, weapon.name));
+                modifiers.Add(new AttributeModifier(
+                    Attribute.AttackBonus,
+                    ModifierType.Flat,
+                    weapon.attackBonus,
+                    weapon));
             }
             
             // 2. Vehicle/Character base attack bonus
@@ -116,7 +123,11 @@ namespace Assets.Scripts.Combat.Attacks
                 int vehicleBonus = GetVehicleAttackBonus(attackerVehicle);
                 if (vehicleBonus != 0)
                 {
-                    modifiers.Add(new AttackModifier("Vehicle Bonus", vehicleBonus, attackerVehicle.vehicleName));
+                    modifiers.Add(new AttributeModifier(
+                        Attribute.AttackBonus,
+                        ModifierType.Flat,
+                        vehicleBonus,
+                        attackerVehicle));
                 }
             }
             
@@ -141,107 +152,27 @@ namespace Assets.Scripts.Combat.Attacks
             return modifiers;
         }
         
-        // ==================== DEFENSE VALUE GATHERING ====================
+        // ==================== DEFENSE VALUE GATHERING (DELEGATES TO StatCalculator) ====================
         
         /// <summary>
         /// Gather target's effective defense value (AC) from all sources.
+        /// DELEGATES to StatCalculator - the single source of truth for ALL stat calculations.
         /// Returns just the total - use GatherDefenseValueWithBreakdown() for tooltip data.
         /// </summary>
         public static int GatherDefenseValue(Entity target, string defenseType = "AC")
         {
-            var (total, _) = GatherDefenseValueWithBreakdown(target, defenseType);
-            return total;
+            return StatCalculator.GatherDefenseValue(target);
         }
         
         /// <summary>
         /// Gather target's effective defense value with full breakdown for tooltips.
-        /// This is the SINGLE SOURCE OF TRUTH for defense values.
-        /// 
-        /// Sources gathered:
-        /// - Base AC (from Entity.armorClass)
-        /// - Entity modifiers (from entityModifiers list)
-        /// - Status effect modifiers (Attribute.ArmorClass)
-        /// - Component bonuses (for chassis - from other vehicle components)
-        /// - Situational modifiers (cover, elevation, etc.)
+        /// DELEGATES to StatCalculator - the single source of truth for ALL stat calculations.
         /// </summary>
-        public static (int total, List<AttackModifier> breakdown) GatherDefenseValueWithBreakdown(
+        public static (int total, List<AttributeModifier> breakdown) GatherDefenseValueWithBreakdown(
             Entity target, 
             string defenseType = "AC")
         {
-            var breakdown = new List<AttackModifier>();
-            
-            if (target == null)
-            {
-                breakdown.Add(new AttackModifier("Default", 10, "No Target"));
-                return (10, breakdown);
-            }
-            
-            // 1. Base AC from entity
-            int baseAC = target.armorClass;
-            breakdown.Add(new AttackModifier("Base", baseAC, target.GetDisplayName()));
-            
-            // 2. Entity's direct modifiers (from entityModifiers list)
-            foreach (var mod in target.GetModifiers())
-            {
-                if (mod.Attribute == Attribute.ArmorClass)
-                {
-                    int value = mod.Type == ModifierType.Flat 
-                        ? (int)mod.Value 
-                        : Mathf.RoundToInt(baseAC * mod.Value / 100f);
-                    
-                    if (value != 0)
-                    {
-                        breakdown.Add(new AttackModifier(
-                            mod.SourceDisplayName,
-                            value,
-                            mod.Source?.name ?? "Equipment"));
-                    }
-                }
-            }
-            
-            // 3. Status effect modifiers
-            foreach (var applied in target.GetActiveStatusEffects())
-            {
-                foreach (var mod in applied.template.modifiers)
-                {
-                    if (mod.attribute == Attribute.ArmorClass)
-                    {
-                        int value = (int)mod.value;
-                        if (value != 0)
-                        {
-                            breakdown.Add(new AttackModifier(
-                                applied.template.effectName,
-                                value,
-                                applied.template.effectName));
-                        }
-                    }
-                }
-            }
-            
-            // 4. Component bonuses (for chassis - other components providing AC)
-            if (target is ChassisComponent chassis && chassis.ParentVehicle != null)
-            {
-                float componentBonus = chassis.ParentVehicle.GetComponentStat(VehicleStatModifiers.StatNames.AC);
-                if (componentBonus != 0)
-                {
-                    breakdown.Add(new AttackModifier(
-                        "Component Bonus",
-                        (int)componentBonus,
-                        "Vehicle Components"));
-                }
-            }
-            
-            // 5. Situational modifiers (cover, elevation, etc.)
-            int situational = GatherSituationalDefenseModifiers(target);
-            if (situational != 0)
-            {
-                breakdown.Add(new AttackModifier("Situational", situational, "Environment"));
-            }
-            
-            // Calculate total
-            int total = breakdown.Sum(m => m.value);
-            
-            return (total, breakdown);
+            return StatCalculator.GatherDefenseValueWithBreakdown(target, defenseType);
         }
         
         // ==================== MODIFIER SOURCES ====================
@@ -252,34 +183,34 @@ namespace Assets.Scripts.Combat.Attacks
             return 0;
         }
         
-        private static void GatherStatusEffectModifiers(Entity entity, Attribute attribute, List<AttackModifier> modifiers)
+        private static void GatherStatusEffectModifiers(Entity entity, Attribute attribute, List<AttributeModifier> modifiers)
         {
             foreach (var applied in entity.GetActiveStatusEffects())
             {
-                foreach (var mod in applied.template.modifiers)
+                foreach (var modData in applied.template.modifiers)
                 {
-                    if (mod.attribute == attribute)
+                    if (modData.attribute == attribute)
                     {
-                        int value = (int)mod.value;
-                        if (value != 0)
+                        if (modData.value != 0)
                         {
-                            modifiers.Add(new AttackModifier(
-                                applied.template.effectName,
-                                value,
-                                applied.template.effectName));
+                            modifiers.Add(new AttributeModifier(
+                                modData.attribute,
+                                modData.type,
+                                modData.value,
+                                applied.template));
                         }
                     }
                 }
             }
         }
         
-        private static void GatherComponentAttackModifiers(Vehicle vehicle, VehicleComponent excludeComponent, List<AttackModifier> modifiers)
+        private static void GatherComponentAttackModifiers(Vehicle vehicle, VehicleComponent excludeComponent, List<AttributeModifier> modifiers)
         {
             // Future: Check for components that provide attack bonuses
             // e.g., targeting systems, fire control computers
         }
         
-        private static void GatherSkillAttackModifiers(Skill skill, List<AttackModifier> modifiers)
+        private static void GatherSkillAttackModifiers(Skill skill, List<AttributeModifier> modifiers)
         {
             // Future: Skill-specific attack bonuses
             // e.g., "Power Attack" adds bonus at cost of accuracy
@@ -309,7 +240,11 @@ namespace Assets.Scripts.Combat.Attacks
         {
             if (value != 0)
             {
-                result.modifiers.Add(new AttackModifier(name, value, source));
+                result.modifiers.Add(new AttributeModifier(
+                    Attribute.AttackBonus,
+                    ModifierType.Flat,
+                    value,
+                    source != null ? null : null)); // Source is a string, not UnityEngine.Object
             }
         }
         
@@ -320,19 +255,23 @@ namespace Assets.Scripts.Combat.Attacks
         {
             if (condition && value != 0)
             {
-                result.modifiers.Add(new AttackModifier(name, value, source));
+                result.modifiers.Add(new AttributeModifier(
+                    Attribute.AttackBonus,
+                    ModifierType.Flat,
+                    value,
+                    null));
             }
         }
         
         /// <summary>
         /// Add multiple modifiers from a list.
         /// </summary>
-        public static void AddModifiers(AttackResult result, IEnumerable<AttackModifier> modifiers)
+        public static void AddModifiers(AttackResult result, IEnumerable<AttributeModifier> modifiers)
         {
             if (modifiers == null) return;
             foreach (var mod in modifiers)
             {
-                if (mod.value != 0)
+                if (mod.Value != 0)
                 {
                     result.modifiers.Add(mod);
                 }
@@ -375,13 +314,17 @@ namespace Assets.Scripts.Combat.Attacks
     /// </summary>
     public class AttackModifierBuilder
     {
-        private readonly List<AttackModifier> modifiers = new List<AttackModifier>();
+        private readonly List<AttributeModifier> modifiers = new List<AttributeModifier>();
         
         public AttackModifierBuilder Add(string name, int value, string source = null)
         {
             if (value != 0)
             {
-                modifiers.Add(new AttackModifier(name, value, source));
+                modifiers.Add(new AttributeModifier(
+                    Attribute.AttackBonus,
+                    ModifierType.Flat,
+                    value,
+                    null));
             }
             return this;
         }
@@ -390,13 +333,17 @@ namespace Assets.Scripts.Combat.Attacks
         {
             if (condition && value != 0)
             {
-                modifiers.Add(new AttackModifier(name, value, source));
+                modifiers.Add(new AttributeModifier(
+                    Attribute.AttackBonus,
+                    ModifierType.Flat,
+                    value,
+                    null));
             }
             return this;
         }
         
-        public List<AttackModifier> Build() => modifiers;
+        public List<AttributeModifier> Build() => modifiers;
         
-        public static implicit operator List<AttackModifier>(AttackModifierBuilder builder) => builder.Build();
+        public static implicit operator List<AttributeModifier>(AttackModifierBuilder builder) => builder.Build();
     }
 }

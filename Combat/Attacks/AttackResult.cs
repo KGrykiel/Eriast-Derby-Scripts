@@ -16,7 +16,7 @@ namespace Assets.Scripts.Combat.Attacks
     
     /// <summary>
     /// Complete result of a d20 attack roll.
-    /// Pure data class - use AttackCalculator for logic, AttackResultFormatter for display.
+    /// Pure data class - use AttackCalculator for logic, CombatLogManager for display.
     /// </summary>
     [System.Serializable]
     public class AttackResult
@@ -33,8 +33,8 @@ namespace Assets.Scripts.Combat.Attacks
         /// <summary>Number of dice (always 1 for attacks)</summary>
         public int diceCount = 1;
         
-        /// <summary>All bonuses and penalties applied</summary>
-        public List<AttackModifier> modifiers;
+        /// <summary>All bonuses and penalties applied (as AttributeModifiers)</summary>
+        public List<AttributeModifier> modifiers;
         
         /// <summary>Target AC/DC value</summary>
         public int targetValue;
@@ -48,16 +48,16 @@ namespace Assets.Scripts.Combat.Attacks
         /// <summary>
         /// Total roll after all modifiers (baseRoll + sum of modifiers).
         /// </summary>
-        public int Total => baseRoll + modifiers.Sum(m => m.value);
+        public int Total => baseRoll + modifiers.Sum(m => (int)m.Value);
         
         /// <summary>
         /// Sum of all modifiers (excluding base roll).
         /// </summary>
-        public int TotalModifier => modifiers.Sum(m => m.value);
+        public int TotalModifier => modifiers.Sum(m => (int)m.Value);
         
         public AttackResult()
         {
-            modifiers = new List<AttackModifier>();
+            modifiers = new List<AttributeModifier>();
             dieSize = 20;
             diceCount = 1;
             targetName = "AC";
@@ -74,7 +74,7 @@ namespace Assets.Scripts.Combat.Attacks
                 dieSize = 20,
                 diceCount = 1,
                 category = category,
-                modifiers = new List<AttackModifier>()
+                modifiers = new List<AttributeModifier>()
             };
         }
     }

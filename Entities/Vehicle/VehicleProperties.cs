@@ -136,13 +136,13 @@ namespace Assets.Scripts.Entities.Vehicle
         /// <summary>
         /// Get AC with full breakdown for tooltips.
         /// </summary>
-        public static (int total, System.Collections.Generic.List<AttackModifier> breakdown) GetArmorClassWithBreakdown(global::Vehicle vehicle)
+        public static (int total, System.Collections.Generic.List<AttributeModifier> breakdown) GetArmorClassWithBreakdown(global::Vehicle vehicle)
         {
             if (vehicle.chassis == null)
             {
-                return (10, new System.Collections.Generic.List<AttackModifier> 
+                return (10, new System.Collections.Generic.List<AttributeModifier> 
                 { 
-                    new AttackModifier("Default", 10, "No Chassis") 
+                    new AttributeModifier(Attribute.ArmorClass, ModifierType.Flat, 10, null)
                 });
             }
             return AttackCalculator.GatherDefenseValueWithBreakdown(vehicle.chassis);

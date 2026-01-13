@@ -7,6 +7,7 @@ using RacingGame.Events;
 using Assets.Scripts.StatusEffects;
 using Assets.Scripts.Combat.Attacks;
 using Assets.Scripts.Combat.Damage;
+using Assets.Scripts.Core;
 using EventType = RacingGame.Events.EventType;
 
 namespace Assets.Scripts.Combat
@@ -61,9 +62,11 @@ namespace Assets.Scripts.Combat
             
             foreach (var mod in result.modifiers)
             {
-                string sign = mod.value >= 0 ? "+" : "";
-                string sourceInfo = mod.source != mod.name ? $" ({mod.source})" : "";
-                sb.AppendLine($"  {mod.name}: {sign}{mod.value}{sourceInfo}");
+                string sign = mod.Value >= 0 ? "+" : "";
+                string sourceInfo = mod.Source?.name != mod.SourceDisplayName 
+                    ? $" ({mod.Source?.name})" 
+                    : "";
+                sb.AppendLine($"  {mod.SourceDisplayName}: {sign}{(int)mod.Value}{sourceInfo}");
             }
             
             sb.AppendLine("  ─────────────");
@@ -91,7 +94,7 @@ namespace Assets.Scripts.Combat
         ///   ─────────────
         ///   Total AC: 18
         /// </summary>
-        public static string FormatDefenseDetailed(int total, List<AttackModifier> breakdown, string defenseName = "AC")
+        public static string FormatDefenseDetailed(int total, List<AttributeModifier> breakdown, string defenseName = "AC")
         {
             if (breakdown == null || breakdown.Count == 0)
             {
@@ -107,12 +110,12 @@ namespace Assets.Scripts.Combat
                 // First entry (base) doesn't need sign
                 if (i == 0)
                 {
-                    sb.AppendLine($"  {mod.name}: {mod.value} ({mod.source})");
+                    sb.AppendLine($"  {mod.SourceDisplayName}: {(int)mod.Value} ({mod.Source?.name ?? "Base"})");
                 }
                 else
                 {
-                    string sign = mod.value >= 0 ? "+" : "";
-                    sb.AppendLine($"  {mod.name}: {sign}{mod.value} ({mod.source})");
+                    string sign = mod.Value >= 0 ? "+" : "";
+                    sb.AppendLine($"  {mod.SourceDisplayName}: {sign}{(int)mod.Value} ({mod.Source?.name ?? "Unknown"})");
                 }
             }
             
@@ -127,7 +130,7 @@ namespace Assets.Scripts.Combat
         /// </summary>
         public static string FormatEntityDefense(Entity target, string defenseName = "AC")
         {
-            var (total, breakdown) = AttackCalculator.GatherDefenseValueWithBreakdown(target, defenseName);
+            var (total, breakdown) = StatCalculator.GatherDefenseValueWithBreakdown(target, defenseName);
             return FormatDefenseDetailed(total, breakdown, defenseName);
         }
         
@@ -242,6 +245,291 @@ namespace Assets.Scripts.Combat
             }
             
             return sb.ToString();
+        }
+        
+        /// <summary>
+        /// Format a stat breakdown with modifiers for tooltips.
+        /// Uses StatCalculator (single source of truth) to gather modifier data.
+        /// Example output:
+        /// Speed: 65
+        /// ═══════════════════════════════
+        /// Base:                      50
+        /// 
+        /// Status Effects:
+        ///   [Icon] Haste            +10  Speed
+        ///   [Icon] Slowed            -5  Speed
+        /// 
+        /// Equipment:
+        ///   Turbo Booster           +10  Speed
+        /// ═══════════════════════════════
+        /// Total Modifiers:          +15  Speed
+        /// Final Value:               65  Speed
+        /// </summary>
+        public static string FormatStatBreakdown(
+            Entity entity, 
+            Attribute attribute, 
+            float baseValue, 
+            float finalValue)
+        {
+            if (entity == null)
+            {
+                return $"{attribute}: {finalValue}";
+            }
+            
+            // Use StatCalculator to gather modifiers (single source of truth)
+            var (calculatedTotal, modifiers) = StatCalculator.GatherAttributeValueWithBreakdown(
+                entity, 
+                attribute, 
+                baseValue);
+            
+            // If no modifiers, show simple message
+            if (modifiers.Count <= 1) // Just base value
+            {
+                return $"{attribute}: {baseValue}\n═══════════════════════════════\nBase value only (no modifiers)";
+            }
+            
+            var sb = new StringBuilder();
+            sb.AppendLine($"{attribute}: {finalValue}");
+            sb.AppendLine("═══════════════════════════════");
+            sb.AppendLine($"Base:                      {baseValue}");
+            sb.AppendLine();
+            
+            // Group modifiers by source type
+            var statusEffectMods = new List<AttributeModifier>();
+            var equipmentMods = new List<AttributeModifier>();
+            var dynamicMods = new List<AttributeModifier>();
+            
+            // Skip first entry (base value)
+            foreach (var mod in modifiers.Skip(1))
+            {
+                // Check if it's from a status effect
+                if (mod.Source is Assets.Scripts.StatusEffects.StatusEffect)
+                {
+                    statusEffectMods.Add(mod);
+                }
+                // Check if it's from a component (equipment)
+                else if (mod.Source is VehicleComponent || mod.Source is Vehicle)
+                {
+                    equipmentMods.Add(mod);
+                }
+                else
+                {
+                    dynamicMods.Add(mod);
+                }
+            }
+            
+            // Status Effects section
+            if (statusEffectMods.Count > 0)
+            {
+                sb.AppendLine("Status Effects:");
+                foreach (var mod in statusEffectMods)
+                {
+                    string sign = mod.Value >= 0 ? "+" : "";
+                    string typeStr = mod.Type == ModifierType.Multiplier ? "×" : "";
+                    string color = mod.Value >= 0 ? "#44FF44" : "#FF4444";
+                    
+                    if (mod.Type == ModifierType.Multiplier)
+                    {
+                        sb.AppendLine($"  <color={color}>{mod.SourceDisplayName,-25} {typeStr}{mod.Value}  {attribute}</color>");
+                    }
+                    else
+                    {
+                        sb.AppendLine($"  <color={color}>{mod.SourceDisplayName,-25} {sign}{mod.Value}  {attribute}</color>");
+                    }
+                }
+                sb.AppendLine();
+            }
+            
+            // Equipment section
+            if (equipmentMods.Count > 0)
+            {
+                sb.AppendLine("Equipment:");
+                foreach (var mod in equipmentMods)
+                {
+                    string sign = mod.Value >= 0 ? "+" : "";
+                    string typeStr = mod.Type == ModifierType.Multiplier ? "×" : "";
+                    string color = mod.Value >= 0 ? "#44FF44" : "#FF4444";
+                    
+                    if (mod.Type == ModifierType.Multiplier)
+                    {
+                        sb.AppendLine($"  <color={color}>{mod.SourceDisplayName,-25} {typeStr}{mod.Value}  {attribute}</color>");
+                    }
+                    else
+                    {
+                        sb.AppendLine($"  <color={color}>{mod.SourceDisplayName,-25} {sign}{mod.Value}  {attribute}</color>");
+                    }
+                }
+                sb.AppendLine();
+            }
+            
+            // Dynamic section
+            if (dynamicMods.Count > 0)
+            {
+                sb.AppendLine("Dynamic:");
+                foreach (var mod in dynamicMods)
+                {
+                    string sign = mod.Value >= 0 ? "+" : "";
+                    string typeStr = mod.Type == ModifierType.Multiplier ? "×" : "";
+                    string color = mod.Value >= 0 ? "#44FF44" : "#FF4444";
+                    
+                    if (mod.Type == ModifierType.Multiplier)
+                    {
+                        sb.AppendLine($"  <color={color}>{mod.SourceDisplayName,-25} {typeStr}{mod.Value}  {attribute}</color>");
+                    }
+                    else
+                    {
+                        sb.AppendLine($"  <color={color}>{mod.SourceDisplayName,-25} {sign}{mod.Value}  {attribute}</color>");
+                    }
+                }
+                sb.AppendLine();
+            }
+            
+            // Total
+            float totalModifiers = finalValue - baseValue;
+            string totalSign = totalModifiers >= 0 ? "+" : "";
+            sb.AppendLine("═══════════════════════════════");
+            sb.AppendLine($"Total Modifiers:          {totalSign}{totalModifiers}  {attribute}");
+            sb.AppendLine($"Final Value:               {finalValue}  {attribute}");
+            
+            return sb.ToString();
+        }
+        
+        /// <summary>
+        /// Format a status effect tooltip with full details.
+        /// Example output:
+        /// 🔥 Haste
+        /// ═══════════════════════════════
+        /// Duration: 3 turns remaining
+        /// 
+        /// Effects:
+        ///   • +10 Speed
+        ///   • +2 AC
+        /// 
+        /// Grants enhanced movement speed
+        /// and improved reflexes.
+        /// ═══════════════════════════════
+        /// </summary>
+        public static string FormatStatusEffectTooltip(AppliedStatusEffect appliedEffect)
+        {
+            if (appliedEffect == null || appliedEffect.template == null)
+            {
+                return "Unknown status effect";
+            }
+            
+            var effect = appliedEffect.template;
+            var sb = new StringBuilder();
+            
+            // Title
+            sb.AppendLine($"{effect.effectName}");
+            sb.AppendLine("═══════════════════════════════");
+            
+            // Duration
+            if (appliedEffect.IsIndefinite)
+            {
+                sb.AppendLine("Duration: Indefinite (∞)");
+            }
+            else
+            {
+                sb.AppendLine($"Duration: {appliedEffect.turnsRemaining} turns remaining");
+            }
+            sb.AppendLine();
+            
+            // Effects (modifiers)
+            if (effect.modifiers != null && effect.modifiers.Count > 0)
+            {
+                sb.AppendLine("Effects:");
+                foreach (var mod in effect.modifiers)
+                {
+                    string sign = mod.value >= 0 ? "+" : "";
+                    string typeStr = mod.type == ModifierType.Multiplier ? "×" : "";
+                    string color = mod.value >= 0 ? "#44FF44" : "#FF4444";
+                    
+                    if (mod.type == ModifierType.Multiplier)
+                    {
+                        sb.AppendLine($"  • <color={color}>{typeStr}{mod.value} {mod.attribute}</color>");
+                    }
+                    else
+                    {
+                        sb.AppendLine($"  • <color={color}>{sign}{mod.value} {mod.attribute}</color>");
+                    }
+                }
+                sb.AppendLine();
+            }
+            
+            // Periodic effects
+            if (effect.periodicEffects != null && effect.periodicEffects.Count > 0)
+            {
+                foreach (var periodic in effect.periodicEffects)
+                {
+                    string effectText = periodic.type switch
+                    {
+                        PeriodicEffectType.Damage => $"  • <color=#FF4444>{periodic.value} {periodic.damageType} damage per turn</color>",
+                        PeriodicEffectType.Healing => $"  • <color=#44FF44>{periodic.value} healing per turn</color>",
+                        PeriodicEffectType.EnergyDrain => $"  • <color=#FF4444>-{periodic.value} energy per turn</color>",
+                        PeriodicEffectType.EnergyRestore => $"  • <color=#88DDFF>+{periodic.value} energy per turn</color>",
+                        _ => ""
+                    };
+                    if (!string.IsNullOrEmpty(effectText))
+                    {
+                        sb.AppendLine(effectText);
+                    }
+                }
+                sb.AppendLine();
+            }
+            
+            // Behavioral effects
+            if (effect.behavioralEffects != null)
+            {
+                if (effect.behavioralEffects.preventsActions)
+                {
+                    sb.AppendLine("  • <color=#FF4444>Prevents actions</color>");
+                }
+                if (effect.behavioralEffects.preventsMovement)
+                {
+                    sb.AppendLine("  • <color=#FF4444>Prevents movement</color>");
+                }
+                if (effect.behavioralEffects.preventsSkillUse)
+                {
+                    sb.AppendLine("  • <color=#FF4444>Prevents skill use</color>");
+                }
+                if (effect.behavioralEffects.damageAmplification != 1f)
+                {
+                    float percent = (effect.behavioralEffects.damageAmplification - 1f) * 100f;
+                    string color = percent > 0 ? "#FF4444" : "#44FF44";
+                    string sign = percent > 0 ? "+" : "";
+                    sb.AppendLine($"  • <color={color}>{sign}{percent:F0}% damage taken</color>");
+                }
+                sb.AppendLine();
+            }
+            
+            // Description
+            if (!string.IsNullOrEmpty(effect.description))
+            {
+                sb.AppendLine(effect.description);
+                sb.AppendLine();
+            }
+            
+            sb.AppendLine("═══════════════════════════════");
+            
+            return sb.ToString().TrimEnd();
+        }
+        
+        /// <summary>
+        /// Format a short status effect summary for icon labels.
+        /// Example: "Haste (3)" or "Burning (∞)"
+        /// </summary>
+        public static string FormatStatusEffectSummary(AppliedStatusEffect appliedEffect)
+        {
+            if (appliedEffect == null || appliedEffect.template == null)
+            {
+                return "Unknown";
+            }
+            
+            string duration = appliedEffect.IsIndefinite 
+                ? "∞" 
+                : appliedEffect.turnsRemaining.ToString();
+            
+            return $"{appliedEffect.template.effectName} ({duration})";
         }
         
         // ==================== MAIN LOGGING ENTRY POINTS ====================

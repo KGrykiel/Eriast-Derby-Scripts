@@ -186,23 +186,34 @@ public abstract class Entity : MonoBehaviour
     /// <summary>
     /// Apply modifiers to a base attribute value.
     /// Returns the modified value after applying all relevant modifiers.
+    /// 
+    /// Application order follows D&D standard:
+    /// 1. Apply all Flat modifiers (additive)
+    /// 2. Apply all Multiplier modifiers (multiplicative)
     /// </summary>
     protected float ApplyModifiers(Attribute attr, float baseValue)
     {
-        float flatBonus = 0f;
-        float percentMultiplier = 1f;
-
+        float result = baseValue;
+        
+        // Step 1: Apply all flat modifiers (additive)
         foreach (var mod in entityModifiers)
         {
             if (mod.Attribute != attr) continue;
             
             if (mod.Type == ModifierType.Flat)
-                flatBonus += mod.Value;
-            else if (mod.Type == ModifierType.Percent)
-                percentMultiplier *= (1f + mod.Value / 100f);
+                result += mod.Value;
+        }
+        
+        // Step 2: Apply all multiplier modifiers (multiplicative)
+        foreach (var mod in entityModifiers)
+        {
+            if (mod.Attribute != attr) continue;
+            
+            if (mod.Type == ModifierType.Multiplier)
+                result *= mod.Value;
         }
 
-        return (baseValue + flatBonus) * percentMultiplier;
+        return result;
     }
 
     // ==================== STATUS EFFECT SYSTEM ====================
