@@ -533,10 +533,6 @@ namespace Assets.Scripts.Combat
                 {
                     sb.AppendLine("  • <color=#FF4444>Prevents movement</color>");
                 }
-                if (effect.behavioralEffects.preventsSkillUse)
-                {
-                    sb.AppendLine("  • <color=#FF4444>Prevents skill use</color>");
-                }
                 if (effect.behavioralEffects.damageAmplification != 1f)
                 {
                     float percent = (effect.behavioralEffects.damageAmplification - 1f) * 100f;
@@ -1038,7 +1034,6 @@ namespace Assets.Scripts.Combat
             bool hasBehavioralRestrictions = statusEffect.behavioralEffects != null &&
                 (statusEffect.behavioralEffects.preventsActions ||
                  statusEffect.behavioralEffects.preventsMovement ||
-                 statusEffect.behavioralEffects.preventsSkillUse ||
                  statusEffect.behavioralEffects.damageAmplification > 1f);
             
             if (hasPeriodicDamage || hasEnergyDrain || hasBehavioralRestrictions)

@@ -171,7 +171,6 @@ namespace Assets.Scripts.UI.Components
             bool hasBehavioralRestrictions = statusEffect.behavioralEffects != null &&
                 (statusEffect.behavioralEffects.preventsActions ||
                  statusEffect.behavioralEffects.preventsMovement ||
-                 statusEffect.behavioralEffects.preventsSkillUse ||
                  statusEffect.behavioralEffects.damageAmplification > 1f);
             
             if (hasPeriodicDamage || hasBehavioralRestrictions)

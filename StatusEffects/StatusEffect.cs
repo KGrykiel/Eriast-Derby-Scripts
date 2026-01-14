@@ -121,9 +121,6 @@ namespace Assets.Scripts.StatusEffects
         [Tooltip("Prevents the entity from moving")]
         public bool preventsMovement = false;
         
-        [Tooltip("Prevents the entity from using specific skills")]
-        public bool preventsSkillUse = false;
-        
         [Tooltip("Damage amplification (1.0 = normal, 1.5 = take 50% more damage, 0.5 = take 50% less)")]
         [Range(0f, 3f)]
         public float damageAmplification = 1f;

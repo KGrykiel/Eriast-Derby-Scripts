@@ -235,13 +235,7 @@ namespace Assets.Scripts.StatusEffects
         /// Used by movement systems to check if entity can move.
         /// </summary>
         public bool PreventsMovement => template.behavioralEffects?.preventsMovement ?? false;
-        
-        /// <summary>
-        /// Does this status effect prevent skill use?
-        /// Used by skill systems to check if skills can be used.
-        /// </summary>
-        public bool PreventsSkillUse => template.behavioralEffects?.preventsSkillUse ?? false;
-        
+
         /// <summary>
         /// Damage amplification multiplier from this effect.
         /// 1.0 = normal, 1.5 = take 50% more damage, 0.5 = take 50% less.

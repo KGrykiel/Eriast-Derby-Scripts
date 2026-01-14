@@ -61,30 +61,30 @@ public class DriveComponent : VehicleComponent
     }
     
     /// <summary>
-    /// Get base speed value.
-    /// NOTE: Use StatCalculator.GatherAttributeValue for modified value.
+    /// Get speed value with modifiers applied.
+    /// Uses StatCalculator for consistent modifier application.
     /// </summary>
     public float GetSpeed()
     {
-        return maxSpeed; // Base value - StatCalculator handles modifiers
+        return Assets.Scripts.Core.StatCalculator.GatherAttributeValue(this, Attribute.Speed, maxSpeed);
     }
     
     /// <summary>
-    /// Get base acceleration value.
-    /// NOTE: Use StatCalculator.GatherAttributeValue for modified value.
+    /// Get acceleration value with modifiers applied.
+    /// Uses StatCalculator for consistent modifier application.
     /// </summary>
     public float GetAcceleration()
     {
-        return acceleration; // Base value - StatCalculator handles modifiers
+        return Assets.Scripts.Core.StatCalculator.GatherAttributeValue(this, Attribute.Acceleration, acceleration);
     }
     
     /// <summary>
-    /// Get base stability value.
-    /// NOTE: Use StatCalculator.GatherAttributeValue for modified value.
+    /// Get stability value with modifiers applied.
+    /// Uses StatCalculator for consistent modifier application.
     /// </summary>
     public float GetStability()
     {
-        return stability; // Base value - StatCalculator handles modifiers
+        return Assets.Scripts.Core.StatCalculator.GatherAttributeValue(this, Attribute.Stability, stability);
     }
     
     /// <summary>

@@ -264,6 +264,22 @@ public class Vehicle : MonoBehaviour
             return component ?? defaultTarget;
         }
         
+        if (effect is ApplyStatusEffect statusEffect)
+        {
+            // Route status effect based on what attributes it modifies
+            if (statusEffect.statusEffect == null || statusEffect.statusEffect.modifiers == null || statusEffect.statusEffect.modifiers.Count == 0)
+            {
+                // No modifiers or can't determine - default to chassis
+                return chassis ?? defaultTarget;
+            }
+            
+            // Use the first modifier's attribute to determine routing
+            // (Most status effects modify a single component's stats)
+            var firstModifier = statusEffect.statusEffect.modifiers[0];
+            VehicleComponent component = ResolveModifierTarget(firstModifier.attribute);
+            return component ?? chassis ?? defaultTarget;
+        }
+        
         if (effect is DamageEffect)
         {
             return chassis ?? defaultTarget;

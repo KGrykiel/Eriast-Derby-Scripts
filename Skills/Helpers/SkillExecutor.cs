@@ -1,7 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
-using Assets.Scripts.Effects.EffectTypes;
 using Assets.Scripts.Combat;
 using Assets.Scripts.Combat.Attacks;
 

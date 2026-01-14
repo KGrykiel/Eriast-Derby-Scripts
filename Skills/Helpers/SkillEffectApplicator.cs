@@ -1,6 +1,5 @@
 ﻿using System.Collections.Generic;
 using UnityEngine;
-using Assets.Scripts.Effects.EffectTypes;
 using Assets.Scripts.StatusEffects;
 using Assets.Scripts.Combat;
 

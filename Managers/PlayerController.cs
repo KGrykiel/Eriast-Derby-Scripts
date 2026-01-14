@@ -303,6 +303,12 @@ public class PlayerController : MonoBehaviour
         if (skillButtonContainer == null || skillButtonPrefab == null || !currentRole.HasValue) return;
 
         List<Skill> availableSkills = currentRole.Value.availableSkills;
+        if (availableSkills == null)
+        {
+            Debug.LogWarning($"[PlayerController] No available skills for role {currentRole.Value.roleName}");
+            return;
+        }
+
         bool roleHasActed = currentRole.Value.sourceComponent.hasActedThisTurn;
 
         // Ensure we have enough skill buttons
@@ -318,11 +324,22 @@ public class PlayerController : MonoBehaviour
             if (i < availableSkills.Count)
             {
                 Skill skill = availableSkills[i];
+                if (skill == null)
+                {
+                    Debug.LogWarning($"[PlayerController] Null skill at index {i} for role {currentRole.Value.roleName}");
+                    skillButtons[i].gameObject.SetActive(false);
+                    continue;
+                }
+
                 skillButtons[i].gameObject.SetActive(true);
                 
                 // Show skill name + energy cost
                 string skillText = $"{skill.name} ({skill.energyCost} EN)";
-                skillButtons[i].GetComponentInChildren<TextMeshProUGUI>().text = skillText;
+                var textComponent = skillButtons[i].GetComponentInChildren<TextMeshProUGUI>();
+                if (textComponent != null)
+                {
+                    textComponent.text = skillText;
+                }
                 
                 // Disable if not enough energy OR role has already acted
                 bool canAfford = playerVehicle.energy >= skill.energyCost;
@@ -631,14 +648,18 @@ public class PlayerController : MonoBehaviour
 
     /// <summary>
     /// Builds display text for a component button showing HP, AC, and status.
+    /// Uses modified values from StatCalculator for accurate display.
     /// </summary>
     private string BuildComponentButtonText(Vehicle targetVehicle, VehicleComponent component)
     {
-        string text = $"{component.name} ";
+        // Get modified AC from StatCalculator
+        var (modifiedAC, _, _) = Assets.Scripts.Core.StatCalculator.GatherDefenseValueWithBreakdown(component);
         
-        // HP info using Entity fields
-        text += $"(HP: {component.health}/{component.maxHealth}, ";
-        text += $"AC: {component.armorClass})";
+        // HP info using Entity fields (current health) and modified max HP
+        int modifiedMaxHP = Mathf.RoundToInt(Assets.Scripts.Core.StatCalculator.GatherAttributeValue(
+            component, Attribute.MaxHealth, component.maxHealth));
+        
+        string text = $"{component.name} (HP: {component.health}/{modifiedMaxHP}, AC: {modifiedAC})";
         
         // Status icons/text
         if (component.isDestroyed)
