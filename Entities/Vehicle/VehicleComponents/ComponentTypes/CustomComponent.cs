@@ -3,28 +3,33 @@ using System.Collections.Generic;
 
 /// <summary>
 /// Custom component - a flexible component for user-defined purposes.
-/// Can be configured to provide any stats, enable any role, and use any component type.
+/// Can be configured to provide modifiers to other components, enable any role, and use any component type.
 /// Use this for components that don't fit the standard categories.
+/// 
+/// NOTE: To provide bonuses to other components (like HP to chassis or Speed to drive),
+/// use the providedModifiers list (inherited from VehicleComponent) instead of the
+/// deprecated bonus fields below. Those fields are kept for backward compatibility
+/// but should be migrated to providedModifiers.
 /// </summary>
 public class CustomComponent : VehicleComponent
 {
-    [Header("Custom Stats (Flexible)")]
-    [Tooltip("HP contribution to vehicle (0 = no contribution)")]
+    [Header("Legacy Bonus Stats (DEPRECATED - Use providedModifiers instead)")]
+    [Tooltip("DEPRECATED: Use providedModifiers with target Chassis and Attribute.MaxHealth instead")]
     public int hpBonus = 0;
     
-    [Tooltip("AC contribution to vehicle (0 = no contribution)")]
+    [Tooltip("DEPRECATED: Use providedModifiers with target Chassis and Attribute.ArmorClass instead")]
     public int acBonus = 0;
     
-    [Tooltip("Speed contribution to vehicle (0 = no contribution)")]
+    [Tooltip("DEPRECATED: Use providedModifiers with target Drive and Attribute.Speed instead")]
     public float speedBonus = 0f;
     
-    [Tooltip("Component Space contribution (positive = provides, negative = consumes)")]
+    [Tooltip("DEPRECATED: Use providedModifiers with target Chassis and Attribute.ComponentSpace instead")]
     public int componentSpaceBonus = 0;
     
-    [Tooltip("Power Capacity contribution (0 = no contribution)")]
+    [Tooltip("DEPRECATED: Use providedModifiers with target PowerCore and Attribute.MaxEnergy instead")]
     public int powerCapacityBonus = 0;
     
-    [Tooltip("Power Discharge contribution (0 = no contribution)")]
+    [Tooltip("DEPRECATED: Use providedModifiers with target PowerCore instead")]
     public int powerDischargeBonus = 0;
     
     /// <summary>
@@ -59,47 +64,14 @@ public class CustomComponent : VehicleComponent
     }
     
     /// <summary>
-    /// Custom components can provide any combination of stats.
-    /// Configured via Inspector.
-    /// </summary>
-    public override VehicleStatModifiers GetStatModifiers()
-    {
-        // If component is destroyed or disabled, it contributes nothing
-        if (isDestroyed || isDisabled)
-            return VehicleStatModifiers.Zero;
-        
-        // Build modifiers from custom stats
-        var modifiers = new VehicleStatModifiers();
-        
-        if (hpBonus != 0)
-            modifiers.HP = hpBonus;
-        
-        if (acBonus != 0)
-            modifiers.AC = acBonus;
-        
-        if (speedBonus != 0)
-            modifiers.Speed = speedBonus;
-        
-        if (componentSpaceBonus != 0)
-            modifiers.ComponentSpace = componentSpaceBonus;
-        
-        if (powerCapacityBonus != 0)
-            modifiers.PowerCapacity = powerCapacityBonus;
-        
-        if (powerDischargeBonus != 0)
-            modifiers.PowerDischarge = powerDischargeBonus;
-        
-        return modifiers;
-    }
-    
-    /// <summary>
     /// Get the stats to display in the UI for this custom component.
-    /// Shows all non-zero bonus stats.
+    /// Shows all non-zero bonus stats (legacy) and providedModifiers.
     /// </summary>
     public override List<DisplayStat> GetDisplayStats()
     {
         var stats = new List<DisplayStat>();
         
+        // Legacy bonus display (for backward compatibility)
         if (hpBonus != 0)
             stats.Add(DisplayStat.Simple("HP Bonus", "HP+", hpBonus));
         
@@ -117,6 +89,13 @@ public class CustomComponent : VehicleComponent
         
         if (powerDischargeBonus != 0)
             stats.Add(DisplayStat.Simple("Discharge", "DISC", powerDischargeBonus));
+        
+        // Show providedModifiers summary
+        foreach (var mod in providedModifiers)
+        {
+            string sign = mod.value >= 0 ? "+" : "";
+            stats.Add(DisplayStat.Simple($"{mod.attribute} to {mod.targetMode}", "", $"{sign}{mod.value}"));
+        }
         
         // Add base class stats (power draw)
         stats.AddRange(base.GetDisplayStats());

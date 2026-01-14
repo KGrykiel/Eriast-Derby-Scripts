@@ -67,6 +67,9 @@ namespace Assets.Scripts.Entities.Vehicle
                 Debug.LogWarning($"[Vehicle] {vehicle.vehicleName} has no Power Core component! Vehicle will have no power.");
             }
 
+            // Apply cross-component modifiers after all components are discovered
+            vehicle.InitializeComponentModifiers();
+
             // Log component discovery
             Debug.Log($"[Vehicle] {vehicle.vehicleName} initialized with {GetAllComponents().Count} component(s)");
         }
@@ -191,24 +194,6 @@ namespace Assets.Scripts.Entities.Vehicle
             if (vehicle.powerCore != null) all.Add(vehicle.powerCore);
             if (vehicle.optionalComponents != null) all.AddRange(vehicle.optionalComponents);
             return all;
-        }
-
-        /// <summary>
-        /// Get aggregated stat from all components.
-        /// Example: GetComponentStat("HP") returns total HP from all components.
-        /// Used internally by Vehicle.GetAttribute() to add component bonuses.
-        /// </summary>
-        public float GetComponentStat(string statName)
-        {
-            float total = 0f;
-
-            foreach (var component in GetAllComponents())
-            {
-                var modifiers = component.GetStatModifiers();
-                total += modifiers.GetStat(statName);
-            }
-
-            return total;
         }
 
         // ==================== TURN MANAGEMENT ====================

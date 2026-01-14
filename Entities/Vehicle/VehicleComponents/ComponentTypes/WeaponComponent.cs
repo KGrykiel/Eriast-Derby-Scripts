@@ -122,23 +122,6 @@ public class WeaponComponent : VehicleComponent
     }
     
     /// <summary>
-    /// Weapons typically don't provide vehicle-level stat bonuses.
-    /// They provide combat capabilities through skills instead.
-    /// Override this if a weapon provides passive bonuses (e.g., defensive turret adds AC).
-    /// </summary>
-    public override VehicleStatModifiers GetStatModifiers()
-    {
-        // If weapon is destroyed or disabled, it contributes nothing
-        if (isDestroyed || isDisabled)
-            return VehicleStatModifiers.Zero;
-        
-        // Most weapons don't provide passive stat bonuses
-        // They provide combat power through componentSkills instead
-        // Override in subclasses if needed (e.g., shield weapons might add AC)
-        return VehicleStatModifiers.Zero;
-    }
-    
-    /// <summary>
     /// Get the stats to display in the UI for this weapon.
     /// Uses StatCalculator for modified values.
     /// </summary>

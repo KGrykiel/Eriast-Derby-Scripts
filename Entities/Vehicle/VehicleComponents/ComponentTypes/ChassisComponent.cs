@@ -7,7 +7,7 @@ using RacingGame.Events;
 /// MANDATORY: Every vehicle must have exactly one chassis.
 /// The chassis IS the vehicle - Entity.maxHealth IS the vehicle's max HP, Entity.armorClass IS the vehicle's AC.
 /// 
-/// NOTE: Base values only. Use AttackCalculator.GatherDefenseValue() for AC with modifiers.
+/// NOTE: Base values only. Use StatCalculator.GatherDefenseValue() for AC with modifiers.
 /// </summary>
 public class ChassisComponent : VehicleComponent
 {
@@ -50,19 +50,13 @@ public class ChassisComponent : VehicleComponent
     // ==================== STATS ====================
     
     /// <summary>
-    /// Get maximum HP for this chassis (base + bonuses from other components + modifiers).
+    /// Get maximum HP for this chassis (base + modifiers from status effects and equipment).
+    /// Uses StatCalculator for consistent modifier application.
     /// </summary>
     public int GetMaxHP()
     {
-        if (parentVehicle == null) return maxHealth;
-        
-        // Apply status effect modifiers
-        float modifiedHP = ApplyModifiers(Attribute.MaxHealth, maxHealth);
-        
-        // Add bonuses from other components (e.g., armor plating)
-        float componentBonuses = parentVehicle.GetComponentStat(VehicleStatModifiers.StatNames.HP);
-        
-        return Mathf.RoundToInt(modifiedHP + componentBonuses);
+        float modified = Assets.Scripts.Core.StatCalculator.GatherAttributeValue(this, Attribute.MaxHealth, maxHealth);
+        return Mathf.RoundToInt(modified);
     }
     
     /// <summary>
@@ -72,20 +66,6 @@ public class ChassisComponent : VehicleComponent
     {
         float modified = Assets.Scripts.Core.StatCalculator.GatherAttributeValue(this, Attribute.ComponentSpace, componentSpace);
         return Mathf.RoundToInt(modified);
-    }
-    
-    /// <summary>
-    /// Chassis provides Component Space to the vehicle.
-    /// Destroyed/disabled chassis provides nothing.
-    /// </summary>
-    public override VehicleStatModifiers GetStatModifiers()
-    {
-        if (isDestroyed || isDisabled)
-            return VehicleStatModifiers.Zero;
-        
-        // Chassis only provides component space (as negative value in componentSpace field)
-        // HP and AC are accessed directly via GetMaxHP() and GetArmorClass()
-        return VehicleStatModifiers.Zero;
     }
     
     /// <summary>

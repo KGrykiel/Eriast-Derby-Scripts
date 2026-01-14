@@ -121,8 +121,6 @@ public class Vehicle : MonoBehaviour
     
     public string GetInaccessibilityReason(VehicleComponent target) => componentCoordinator?.GetInaccessibilityReason(target);
     
-    public float GetComponentStat(string statName) => componentCoordinator?.GetComponentStat(statName) ?? 0f;
-    
     public void ResetComponentsForNewTurn()
     {
         hasLoggedMovementWarningThisTurn = false;
@@ -142,6 +140,23 @@ public class Vehicle : MonoBehaviour
     }
 
     // ==================== MODIFIER SYSTEM ====================
+
+    /// <summary>
+    /// Initialize all component-provided modifiers.
+    /// Called once during vehicle initialization after all components are discovered.
+    /// For runtime changes (destroy/disable), components handle their own modifier cleanup.
+    /// </summary>
+    public void InitializeComponentModifiers()
+    {
+        // Apply modifiers from all active (non-destroyed, non-disabled) providers
+        foreach (var provider in AllComponents)
+        {
+            if (!provider.isDestroyed && !provider.isDisabled)
+            {
+                provider.ApplyProvidedModifiers(this);
+            }
+        }
+    }
 
     public List<AttributeModifier> GetActiveModifiers()
     {

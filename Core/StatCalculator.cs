@@ -1,7 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
-using Assets.Scripts.Entities.Vehicle.VehicleComponents.ComponentTypes;
 
 namespace Assets.Scripts.Core
 {
@@ -14,8 +13,11 @@ namespace Assets.Scripts.Core
     /// - StatCalculator gathers modifiers from all sources and computes final values
     /// - Returns breakdown data for tooltips
     /// 
+    /// Modifier sources (all stored in Entity.entityModifiers):
+    /// - Status effect modifiers (Category = StatusEffect)
+    /// - Cross-component modifiers (Category = Equipment)
+    /// 
     /// Used by:
-    /// - AttackCalculator (for AC/defense values)
     /// - CombatLogManager (for tooltip formatting)
     /// - UI components (for stat display with tooltips)
     /// - Vehicle/Component systems (for modified stat values)
@@ -28,9 +30,9 @@ namespace Assets.Scripts.Core
         /// Gather an entity's attribute value with full modifier breakdown for tooltips.
         /// This is the SINGLE SOURCE OF TRUTH for stat calculations.
         /// 
-        /// Sources gathered:
-        /// - Entity modifiers (from entityModifiers list, includes status effect modifiers)
-        /// - Component bonuses (for vehicle components from other components)
+        /// All modifiers are stored in entity.entityModifiers:
+        /// - Status effects add modifiers with Category = StatusEffect
+        /// - Cross-component bonuses add modifiers with Category = Equipment
         /// 
         /// Returns: (final value, base value, modifier list for tooltips)
         /// Base value is returned separately - it's NOT a modifier.
@@ -47,16 +49,11 @@ namespace Assets.Scripts.Core
                 return (baseValue, baseValue, modifiers);
             }
             
-            // 1. Gather entity modifiers (includes status effect modifiers - AppliedStatusEffect.OnApply() adds them)
+            // Gather all modifiers from entity's modifier list
+            // This includes both status effect modifiers and cross-component equipment modifiers
             GatherEntityModifiers(entity, attribute, modifiers);
             
-            // 2. Gather component bonuses (for vehicle components from other components)
-            if (entity is VehicleComponent component && component.ParentVehicle != null)
-            {
-                GatherComponentBonuses(component.ParentVehicle, attribute, modifiers);
-            }
-            
-            // 3. Calculate total: base + flat modifiers, then apply multipliers
+            // Calculate total: base + flat modifiers, then apply multipliers
             float total = CalculateTotal(baseValue, modifiers);
             
             return (total, baseValue, modifiers);
@@ -107,8 +104,9 @@ namespace Assets.Scripts.Core
         
         /// <summary>
         /// Gather modifiers from entity's entityModifiers list.
-        /// This includes both direct modifiers AND modifiers created by status effects
-        /// (AppliedStatusEffect.OnApply() adds them to entityModifiers).
+        /// This includes:
+        /// - Status effect modifiers (Category = StatusEffect)
+        /// - Cross-component equipment modifiers (Category = Equipment)
         /// </summary>
         private static void GatherEntityModifiers(
             Entity entity,
@@ -123,34 +121,6 @@ namespace Assets.Scripts.Core
                 {
                     modifiers.Add(mod);
                 }
-            }
-        }
-        
-        /// <summary>
-        /// Gather bonuses from other vehicle components (equipment bonuses).
-        /// Example: Shield generator provides +3 AC to chassis.
-        /// </summary>
-        private static void GatherComponentBonuses(
-            Vehicle vehicle,
-            Attribute attribute,
-            List<AttributeModifier> modifiers)
-        {
-            // Map attributes to VehicleStatModifiers stat names
-            var statName = MapAttributeToStatName(attribute);
-            if (statName == null) return;
-            
-            float componentBonus = vehicle.GetComponentStat(statName);
-            if (componentBonus != 0)
-            {
-                var mod = new AttributeModifier(
-                    attribute,
-                    ModifierType.Flat,
-                    componentBonus,
-                    vehicle,
-                    ModifierCategory.Equipment
-                );
-                
-                modifiers.Add(mod);
             }
         }
         
@@ -184,22 +154,6 @@ namespace Assets.Scripts.Core
             }
             
             return total;
-        }
-        
-        /// <summary>
-        /// Map Attribute enum to VehicleStatModifiers stat name strings.
-        /// Only maps attributes that are supported by VehicleStatModifiers.
-        /// </summary>
-        private static string MapAttributeToStatName(Attribute attribute)
-        {
-            return attribute switch
-            {
-                Attribute.ArmorClass => VehicleStatModifiers.StatNames.AC,
-                Attribute.Speed => VehicleStatModifiers.StatNames.Speed,
-                Attribute.MaxHealth => VehicleStatModifiers.StatNames.HP,
-                // Add more mappings as VehicleStatModifiers expands
-                _ => null // Unsupported attributes return null
-            };
         }
     }
 }

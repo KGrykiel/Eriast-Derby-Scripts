@@ -4,6 +4,8 @@ using UnityEngine;
 using RacingGame.Events;
 using EventType = RacingGame.Events.EventType;
 using Assets.Scripts.Entities.Vehicle.VehicleComponents.Enums;
+using Assets.Scripts.Entities.Vehicle.VehicleComponents;
+using Assets.Scripts.Entities.Vehicle.VehicleComponents.ComponentTypes;
 
 /// <summary>
 /// Base class for all vehicle components.
@@ -11,8 +13,13 @@ using Assets.Scripts.Entities.Vehicle.VehicleComponents.Enums;
 /// Components are modular parts that contribute stats, enable roles, and provide skills.
 /// 
 /// NOTE: Components store raw base values. Calculators handle modifier application.
-/// - AttackCalculator.GatherDefenseValue() computes AC with all modifiers
+/// - StatCalculator.GatherDefenseValue() computes AC with all modifiers
 /// - Entity.armorClass is the BASE value only
+/// 
+/// CROSS-COMPONENT MODIFIERS:
+/// Components can provide modifiers to OTHER components via providedModifiers list.
+/// Example: Advanced Armor provides +2 AC to Chassis.
+/// These are applied during vehicle initialization and refreshed when components change state.
 /// </summary>
 public abstract class VehicleComponent : Entity
 {
@@ -27,6 +34,10 @@ public abstract class VehicleComponent : Entity
     
     [Tooltip("Power drawn per turn (0 = passive component, no power draw)")]
     public int powerDrawPerTurn = 0;
+    
+    [Header("Provided Modifiers")]
+    [Tooltip("Modifiers this component provides to OTHER components. Used for cross-component bonuses like armor upgrades, boosters, etc.")]
+    public List<ComponentModifierData> providedModifiers = new List<ComponentModifierData>();
     
     [Header("Component Targeting")]
     [Tooltip("How exposed this component is for targeting")]
@@ -95,6 +106,123 @@ public abstract class VehicleComponent : Entity
     public virtual void ResetTurnState()
     {
         hasActedThisTurn = false;
+    }
+    
+    // ==================== CROSS-COMPONENT MODIFIER SYSTEM ====================
+    
+    /// <summary>
+    /// Apply this component's provided modifiers to target components.
+    /// Called during vehicle initialization and when component is re-enabled.
+    /// </summary>
+    public virtual void ApplyProvidedModifiers(global::Vehicle vehicle)
+    {
+        if (isDestroyed || isDisabled) return;
+        if (vehicle == null) return;
+        
+        foreach (var modData in providedModifiers)
+        {
+            var targets = ResolveModifierTargets(vehicle, modData);
+            foreach (var target in targets)
+            {
+                if (target != null && !target.isDestroyed)
+                {
+                    target.AddModifier(new AttributeModifier(
+                        modData.attribute,
+                        modData.type,
+                        modData.value,
+                        source: this,
+                        category: ModifierCategory.Equipment
+                    ));
+                }
+            }
+        }
+    }
+    
+    /// <summary>
+    /// Remove all modifiers this component has provided to other components.
+    /// Called when component is destroyed or disabled.
+    /// </summary>
+    public virtual void RemoveProvidedModifiers(global::Vehicle vehicle)
+    {
+        if (vehicle == null) return;
+        
+        foreach (var component in vehicle.AllComponents)
+        {
+            component.RemoveModifiersFromSource(this);
+        }
+    }
+    
+    /// <summary>
+    /// Resolve which components should receive a modifier based on target mode.
+    /// </summary>
+    private List<VehicleComponent> ResolveModifierTargets(global::Vehicle vehicle, ComponentModifierData modData)
+    {
+        var targets = new List<VehicleComponent>();
+        
+        switch (modData.targetMode)
+        {
+            case ComponentTargetMode.Chassis:
+                if (vehicle.chassis != null) 
+                    targets.Add(vehicle.chassis);
+                break;
+                
+            case ComponentTargetMode.PowerCore:
+                if (vehicle.powerCore != null) 
+                    targets.Add(vehicle.powerCore);
+                break;
+                
+            case ComponentTargetMode.Drive:
+                var drive = vehicle.optionalComponents.OfType<DriveComponent>().FirstOrDefault();
+                if (drive != null) 
+                    targets.Add(drive);
+                break;
+                
+            case ComponentTargetMode.AllWeapons:
+                foreach (var weapon in vehicle.optionalComponents.OfType<WeaponComponent>())
+                {
+                    targets.Add(weapon);
+                }
+                break;
+                
+            case ComponentTargetMode.AllComponents:
+                targets.AddRange(vehicle.AllComponents);
+                break;
+                
+            case ComponentTargetMode.SpecificComponent:
+                if (modData.specificTarget != null) 
+                    targets.Add(modData.specificTarget);
+                break;
+        }
+        
+        return targets;
+    }
+    
+    /// <summary>
+    /// Remove all modifiers from a specific source.
+    /// </summary>
+    public void RemoveModifiersFromSource(UnityEngine.Object source)
+    {
+        for (int i = entityModifiers.Count - 1; i >= 0; i--)
+        {
+            if (entityModifiers[i].Source == source)
+            {
+                entityModifiers.RemoveAt(i);
+            }
+        }
+    }
+    
+    /// <summary>
+    /// Remove all modifiers of a specific category.
+    /// </summary>
+    public void RemoveModifiersByCategory(ModifierCategory category)
+    {
+        for (int i = entityModifiers.Count - 1; i >= 0; i--)
+        {
+            if (entityModifiers[i].Category == category)
+            {
+                entityModifiers.RemoveAt(i);
+            }
+        }
     }
     
     // ==================== MODIFIER SYSTEM (Uses Unified Entity System) ====================
@@ -244,24 +372,46 @@ public abstract class VehicleComponent : Entity
     /// </summary>
     protected virtual void OnComponentDestroyed()
     {
+        // Remove modifiers this component provided to others (targeted removal)
+        RemoveProvidedModifiers(parentVehicle);
+        
         // Override in subclasses (ChassisComponent, PowerCoreComponent, etc.)
     }
     
-    // ==================== STAT CONTRIBUTION ====================
+    /// <summary>
+    /// Called when component is disabled. Removes provided modifiers.
+    /// </summary>
+    protected virtual void OnComponentDisabled()
+    {
+        RemoveProvidedModifiers(parentVehicle);
+    }
     
     /// <summary>
-    /// Get stat modifiers this component contributes to the vehicle.
-    /// Override in subclasses to provide specific bonuses.
+    /// Called when component is re-enabled. Re-applies provided modifiers.
     /// </summary>
-    public virtual VehicleStatModifiers GetStatModifiers()
+    protected virtual void OnComponentEnabled()
     {
-        // If component is destroyed or disabled, it contributes nothing
-        if (isDestroyed || isDisabled)
-            return VehicleStatModifiers.Zero;
+        ApplyProvidedModifiers(parentVehicle);
+    }
+    
+    /// <summary>
+    /// Set the disabled state of this component.
+    /// Handles modifier application/removal automatically.
+    /// </summary>
+    public void SetDisabled(bool disabled)
+    {
+        if (isDisabled == disabled) return;
         
-        // Base implementation: no stat contributions
-        // Override in subclasses (e.g., ChassisComponent, PowerCoreComponent)
-        return VehicleStatModifiers.Zero;
+        isDisabled = disabled;
+        
+        if (disabled)
+        {
+            OnComponentDisabled();
+        }
+        else
+        {
+            OnComponentEnabled();
+        }
     }
     
     // ==================== SKILL MANAGEMENT ====================

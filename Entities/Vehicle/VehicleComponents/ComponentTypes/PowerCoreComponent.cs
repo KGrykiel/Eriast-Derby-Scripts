@@ -130,17 +130,6 @@ namespace Assets.Scripts.Entities.Vehicle.VehicleComponents.ComponentTypes
         }
         
         /// <summary>
-        /// Power core does not contribute stats via GetStatModifiers.
-        /// Energy is accessed directly through powerCore.currentEnergy.
-        /// </summary>
-        public override VehicleStatModifiers GetStatModifiers()
-        {
-            // Power core doesn't contribute stats through the modifier system
-            // Energy is a resource managed directly by the power core
-            return VehicleStatModifiers.Zero;
-        }
-        
-        /// <summary>
         /// Get the stats to display in the UI for this power core.
         /// Uses StatCalculator for modified values.
         /// </summary>

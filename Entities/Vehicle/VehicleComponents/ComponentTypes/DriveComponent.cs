@@ -88,25 +88,6 @@ public class DriveComponent : VehicleComponent
     }
     
     /// <summary>
-    /// Drive provides Speed, Acceleration, and Stability to the vehicle.
-    /// Returns BASE values - StatCalculator handles modifiers at the vehicle level.
-    /// </summary>
-    public override VehicleStatModifiers GetStatModifiers()
-    {
-        // If drive is destroyed or disabled, it contributes nothing
-        if (isDestroyed || isDisabled)
-            return VehicleStatModifiers.Zero;
-        
-        // Return BASE values - modifiers are applied by StatCalculator when needed
-        var modifiers = new VehicleStatModifiers();
-        modifiers.Speed = maxSpeed;  // Base value, not modified
-        modifiers.SetStat("Acceleration", acceleration);
-        modifiers.Stability = stability;
-        
-        return modifiers;
-    }
-    
-    /// <summary>
     /// Get the stats to display in the UI for this drive component.
     /// Uses StatCalculator for modified values.
     /// </summary>
