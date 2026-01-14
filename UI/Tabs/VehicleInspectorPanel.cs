@@ -6,22 +6,61 @@ using System.Linq;
 using RacingGame.Events;
 using Assets.Scripts.Entities.Vehicle.VehicleComponents.ComponentTypes;
 using Assets.Scripts.Entities.Vehicle.VehicleComponents.Enums;
+using Assets.Scripts.Core;
+using Assets.Scripts.UI.Components;
 
 /// <summary>
 /// Inspector panel for detailed vehicle examination.
 /// Shows full stats, modifiers, skills, and event history.
 /// Refreshes on turn changes and vehicle selection.
+/// 
+/// NEW: Uses structured UI with StatValueDisplay components and dynamic ComponentEntry prefabs.
 /// </summary>
 public class VehicleInspectorPanel : MonoBehaviour
 {
-    [Header("UI References")]
+    [Header("Header")]
     public TMP_Dropdown vehicleDropdown;
-    public TextMeshProUGUI detailText;
     public Button refreshButton;
     
+    [Header("Basic Info Section")]
+    public TMP_Text vehicleNameText;
+    public TMP_Text controlValueText;
+    public TMP_Text statusValueText;
+    public TMP_Text stageValueText;
+    public Slider progressBar;
+    public TMP_Text progressText;
+    
+    [Header("Stats Section")]
+    public TMP_Text vehicleHPValueText;
+    public Slider vehicleHPBar;
+    public TMP_Text vehicleEnergyValueText;
+    public Slider vehicleEnergyBar;
+    public TMP_Text vehicleSpeedValueText;
+    public TMP_Text vehicleACValueText;
+    public TMP_Text vehicleEnergyRegenValueText;
+    
+    [Header("Components Section")]
+    public Transform componentListContainer;
+    public GameObject componentEntryPrefab;
+    
+    [Header("Dynamic Stat Field")]
+    [Tooltip("Prefab for dynamically created stat fields (must have ComponentStatField component)")]
+    public GameObject statFieldPrefab;
+    
+    [Header("Legacy Text Sections")]
+    public TMP_Text skillsSectionText;
+    public TMP_Text eventHistorySectionText;
+    
+    // Private state
     private List<Vehicle> allVehicles = new List<Vehicle>();
     private Vehicle selectedVehicle;
     private bool initialized = false;
+    
+    // Component entry pool
+    private List<GameObject> componentEntryInstances = new List<GameObject>();
+    
+    // Dirty tracking for refresh
+    private int lastEventCount = 0;
     
     void Start()
     {
@@ -30,174 +69,688 @@ public class VehicleInspectorPanel : MonoBehaviour
             refreshButton.onClick.AddListener(RefreshDetails);
         }
         
-   // Try to initialize, but don't fail if GameManager isn't ready yet
         TryInitialize();
+    }
+    
+    void OnEnable()
+    {
+        // Force refresh when panel becomes active
+        if (initialized)
+        {
+            RefreshDetails();
+        }
     }
 
     void Update()
     {
-        // Keep trying to initialize until successful
-    if (!initialized)
-      {
+        // Try to initialize if not ready
+        if (!initialized)
+        {
             TryInitialize();
-  }
+            return;
+        }
+        
+        // Simple polling: refresh when event count changes
+        if (RaceHistory.Instance != null)
+        {
+            int currentEventCount = RaceHistory.Instance.AllEvents.Count;
+            if (currentEventCount != lastEventCount)
+            {
+                lastEventCount = currentEventCount;
+                RefreshDetails();
+            }
+        }
     }
 
     private void TryInitialize()
     {
- var gameManager = FindFirstObjectByType<GameManager>();
-  if (gameManager != null)
+        var gameManager = FindFirstObjectByType<GameManager>();
+        if (gameManager != null)
         {
-          var vehicles = gameManager.GetVehicles();
+            var vehicles = gameManager.GetVehicles();
             
-   // Check if vehicles list is valid
-       if (vehicles != null && vehicles.Count > 0)
-    {
-       allVehicles = vehicles;
-     PopulateDropdown();
-       initialized = true;
-    }
+            if (vehicles != null && vehicles.Count > 0)
+            {
+                allVehicles = vehicles;
+                PopulateDropdown();
+                initialized = true;
+                
+                // Initialize event count
+                if (RaceHistory.Instance != null)
+                {
+                    lastEventCount = RaceHistory.Instance.AllEvents.Count;
+                }
+            }
         }
     }
     
     /// <summary>
-    /// Called externally (e.g., by GameManager) when turn state changes.
-    /// Public method so other systems can trigger refresh.
-/// </summary>
+    /// Called externally when turn state changes.
+    /// </summary>
     public void OnTurnChanged()
     {
-      if (initialized && gameObject.activeInHierarchy)
+        if (initialized && gameObject.activeInHierarchy)
         {
-     RefreshDetails();
+            RefreshDetails();
         }
     }
     
     private void PopulateDropdown()
-{
+    {
         if (vehicleDropdown == null) return;
   
-        // Safety check: ensure we have vehicles
         if (allVehicles == null || allVehicles.Count == 0)
         {
-  Debug.LogWarning("[VehicleInspectorPanel] No vehicles available to display");
+            Debug.LogWarning("[VehicleInspectorPanel] No vehicles available to display");
             return;
         }
  
         vehicleDropdown.ClearOptions();
-    
-        // Add listener first (before setting options)
         vehicleDropdown.onValueChanged.RemoveAllListeners();
         vehicleDropdown.onValueChanged.AddListener(OnVehicleSelected);
   
         List<string> options = new List<string>();
-   foreach (var vehicle in allVehicles)
+        foreach (var vehicle in allVehicles)
         {
-            if (vehicle == null) continue; // Skip null vehicles
+            if (vehicle == null) continue;
     
-    string statusIcon = vehicle.Status == VehicleStatus.Active ? "[OK]" : "[X]";
-   string typeIcon = vehicle.controlType == ControlType.Player ? "(P)" : "(AI)";
-        options.Add($"{statusIcon} {typeIcon} {vehicle.vehicleName}");
+            string statusIcon = vehicle.Status == VehicleStatus.Active ? "[OK]" : "[X]";
+            string typeIcon = vehicle.controlType == ControlType.Player ? "(P)" : "(AI)";
+            options.Add($"{statusIcon} {typeIcon} {vehicle.vehicleName}");
         }
       
-    vehicleDropdown.AddOptions(options);
+        vehicleDropdown.AddOptions(options);
         
-     if (allVehicles.Count > 0)
+        if (allVehicles.Count > 0)
         {
-      selectedVehicle = allVehicles[0];
-      RefreshDetails();
+            selectedVehicle = allVehicles[0];
+            RefreshDetails();
         }
     }
     
     private void OnVehicleSelected(int index)
     {
- if (index >= 0 && index < allVehicles.Count && allVehicles[index] != null)
+        if (index >= 0 && index < allVehicles.Count && allVehicles[index] != null)
         {
-  selectedVehicle = allVehicles[index];
-      RefreshDetails();
-}
+            selectedVehicle = allVehicles[index];
+            RefreshDetails();
+        }
     }
  
     public void RefreshDetails()
     {
-        if (detailText == null || selectedVehicle == null) return;
-    
-string display = BuildDetailedVehicleInfo();
-      detailText.text = display;
+        if (selectedVehicle == null) return;
+        
+        PopulateBasicInfo();
+        PopulateStats();
+        PopulateComponents();
+        PopulateSkills(); // Legacy text-based
+        PopulateEventHistory(); // Legacy text-based
     }
     
-    private string BuildDetailedVehicleInfo()
+    // ==================== BASIC INFO SECTION ====================
+    
+    private void PopulateBasicInfo()
     {
-        if (selectedVehicle == null)
+        if (vehicleNameText != null)
         {
-            return "<color=#888888>No vehicle selected</color>";
+            vehicleNameText.text = selectedVehicle.vehicleName;
         }
         
-        string info = $"<b><size=20>{selectedVehicle.vehicleName}</size></b>\n";
-        info += $"<color=#888888>========================</color>\n\n";
-        
-        // Basic Info
-        info += "<b>BASIC INFO:</b>\n";
-        info += $"  Control: {selectedVehicle.controlType}\n";
-        info += $"  Status: {GetStatusColor(selectedVehicle.Status)}\n";
-        
-        if (selectedVehicle.currentStage != null)
+        if (controlValueText != null)
         {
-            info += $"  Stage: {selectedVehicle.currentStage.stageName}\n";
-            info += $"  Progress: {selectedVehicle.progress:F1}/{selectedVehicle.currentStage.length:F0}m\n";
+            controlValueText.text = selectedVehicle.controlType.ToString();
         }
         
-        info += "\n";
-        
-        // Stats
-        info += "<b>STATS:</b>\n";
-        float healthPercent = selectedVehicle.health / (float)selectedVehicle.maxHealth;
-        string healthBar = GenerateBar(healthPercent, 15);
-        string healthColor = GetHealthColor(healthPercent);
-        info += $"  HP: <color={healthColor}>{healthBar} {selectedVehicle.health}/{selectedVehicle.maxHealth}</color>\n";
-        
-        float energyPercent = (float)selectedVehicle.energy / selectedVehicle.maxEnergy;
-        string energyBar = GenerateBar(energyPercent, 15);
-        info += $"  Energy: <color=#88DDFF>{energyBar} {selectedVehicle.energy}/{selectedVehicle.maxEnergy}</color>\n";
-        
-        info += $"  Speed: {selectedVehicle.speed:F1}\n";
-        info += $"  AC: {selectedVehicle.armorClass}\n";
-        info += $"  Magic Resist: 10\n"; // TODO: Move to component
-        info += $"  Energy Regen: {selectedVehicle.energyRegen:F1}\n";
-        
-        info += "\n";
-        
-        // Components
-        info += "<b>COMPONENTS:</b>\n";
-        info += BuildComponentsInfo();
-        
-        info += "\n";
-        
-        // Active Modifiers
-        var modifiers = selectedVehicle.GetActiveModifiers();
-        info += $"<b>ACTIVE MODIFIERS ({modifiers.Count}):</b>\n";
-        
-        if (modifiers.Count == 0)
+        if (statusValueText != null)
         {
-            info += "  <color=#888888>None</color>\n";
+            statusValueText.text = GetStatusString(selectedVehicle.Status);
+            statusValueText.color = GetStatusColor(selectedVehicle.Status);
         }
-        else
+        
+        if (stageValueText != null)
         {
-            foreach (var mod in modifiers)
+            if (selectedVehicle.currentStage != null)
             {
-                // NOTE: Duration display removed - will be handled by StatusEffect system in Phase 2
-                // For now, all modifiers shown as permanent (equipment-style)
-                string sourceText = mod.Source != null ? $" [from {mod.Source.name}]" : "";
-                info += $"  - {mod.Type} {mod.Attribute} {mod.Value:+0;-0} (permanent){sourceText}\n";
+                stageValueText.text = selectedVehicle.currentStage.stageName;
+            }
+            else
+            {
+                stageValueText.text = "N/A";
             }
         }
         
-        info += "\n";
+        if (progressBar != null && progressText != null && selectedVehicle.currentStage != null)
+        {
+            float progress = selectedVehicle.progress;
+            float length = selectedVehicle.currentStage.length;
+            float percent = length > 0 ? progress / length : 0f;
+            
+            progressBar.value = percent;
+            progressText.text = $"{progress:F1}/{length:F0}m";
+        }
+    }
+    
+    // ==================== STATS SECTION ====================
+    
+    private void PopulateStats()
+    {
+        // HP
+        if (vehicleHPValueText != null)
+        {
+            var hpDisplay = vehicleHPValueText.GetComponent<StatValueDisplay>();
+            if (hpDisplay != null)
+            {
+                // Use StatCalculator to get modified max HP
+                float baseMaxHP = selectedVehicle.chassis != null ? selectedVehicle.chassis.maxHealth : 100;
+                float modifiedMaxHP = selectedVehicle.maxHealth;
+                
+                hpDisplay.UpdateDisplay(
+                    selectedVehicle.chassis,
+                    Attribute.MaxHealth,
+                    baseMaxHP,
+                    modifiedMaxHP,
+                    $"{selectedVehicle.health}/{modifiedMaxHP}"
+                );
+            }
+            else
+            {
+                vehicleHPValueText.text = $"{selectedVehicle.health}/{selectedVehicle.maxHealth}";
+            }
+            
+            if (vehicleHPBar != null)
+            {
+                float percent = selectedVehicle.maxHealth > 0 
+                    ? (float)selectedVehicle.health / selectedVehicle.maxHealth 
+                    : 0f;
+                vehicleHPBar.value = percent;
+            }
+        }
         
-        // Skills (from components via roles)
+        // Energy
+        if (vehicleEnergyValueText != null)
+        {
+            var energyDisplay = vehicleEnergyValueText.GetComponent<StatValueDisplay>();
+            if (energyDisplay != null)
+            {
+                float baseMaxEnergy = selectedVehicle.powerCore != null ? selectedVehicle.powerCore.maxEnergy : 100;
+                float modifiedMaxEnergy = selectedVehicle.maxEnergy;
+                
+                energyDisplay.UpdateDisplay(
+                    selectedVehicle.powerCore,
+                    Attribute.MaxEnergy,
+                    baseMaxEnergy,
+                    modifiedMaxEnergy,
+                    $"{selectedVehicle.energy}/{modifiedMaxEnergy}"
+                );
+            }
+            else
+            {
+                vehicleEnergyValueText.text = $"{selectedVehicle.energy}/{selectedVehicle.maxEnergy}";
+            }
+            
+            if (vehicleEnergyBar != null)
+            {
+                float percent = selectedVehicle.maxEnergy > 0 
+                    ? (float)selectedVehicle.energy / selectedVehicle.maxEnergy 
+                    : 0f;
+                vehicleEnergyBar.value = percent;
+            }
+        }
+        
+        // Speed
+        if (vehicleSpeedValueText != null)
+        {
+            var speedDisplay = vehicleSpeedValueText.GetComponent<StatValueDisplay>();
+            if (speedDisplay != null && selectedVehicle.optionalComponents != null)
+            {
+                var drive = selectedVehicle.optionalComponents.OfType<DriveComponent>().FirstOrDefault();
+                if (drive != null)
+                {
+                    float baseSpeed = drive.maxSpeed;
+                    float modifiedSpeed = selectedVehicle.speed;
+                    
+                    speedDisplay.UpdateDisplay(
+                        drive,
+                        Attribute.Speed,
+                        baseSpeed,
+                        modifiedSpeed,
+                        $"{modifiedSpeed:F1}"
+                    );
+                }
+                else
+                {
+                    vehicleSpeedValueText.text = "0";
+                }
+            }
+            else
+            {
+                vehicleSpeedValueText.text = $"{selectedVehicle.speed:F1}";
+            }
+        }
+        
+        // AC
+        if (vehicleACValueText != null)
+        {
+            var acDisplay = vehicleACValueText.GetComponent<StatValueDisplay>();
+            if (acDisplay != null && selectedVehicle.chassis != null)
+            {
+                int baseAC = selectedVehicle.chassis.armorClass;
+                int modifiedAC = selectedVehicle.armorClass;
+                
+                acDisplay.UpdateDisplay(
+                    selectedVehicle.chassis,
+                    Attribute.ArmorClass,
+                    baseAC,
+                    modifiedAC,
+                    modifiedAC.ToString()
+                );
+            }
+            else
+            {
+                vehicleACValueText.text = selectedVehicle.armorClass.ToString();
+            }
+        }
+        
+        // Energy Regen - with StatValueDisplay tooltip support
+        if (vehicleEnergyRegenValueText != null)
+        {
+            var regenDisplay = vehicleEnergyRegenValueText.GetComponent<StatValueDisplay>();
+            if (regenDisplay != null && selectedVehicle.powerCore != null)
+            {
+                float baseRegen = selectedVehicle.powerCore.energyRegen;
+                float modifiedRegen = selectedVehicle.energyRegen;
+                
+                regenDisplay.UpdateDisplay(
+                    selectedVehicle.powerCore,
+                    Attribute.EnergyRegen,
+                    baseRegen,
+                    modifiedRegen,
+                    $"{modifiedRegen:F1}"
+                );
+            }
+            else
+            {
+                vehicleEnergyRegenValueText.text = $"{selectedVehicle.energyRegen:F1}";
+            }
+        }
+    }
+    
+    // ==================== COMPONENTS SECTION ====================
+    
+    private void PopulateComponents()
+    {
+        if (componentListContainer == null || componentEntryPrefab == null)
+        {
+            Debug.LogWarning("[VehicleInspectorPanel] Component list container or prefab not assigned!");
+            return;
+        }
+        
+        // Ensure ComponentListContainer has necessary components for dynamic sizing
+        var contentSizeFitter = componentListContainer.GetComponent<ContentSizeFitter>();
+        if (contentSizeFitter == null)
+        {
+            contentSizeFitter = componentListContainer.gameObject.AddComponent<ContentSizeFitter>();
+            contentSizeFitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
+            Debug.Log("[VehicleInspectorPanel] Added ContentSizeFitter to ComponentListContainer");
+        }
+        
+        var verticalLayout = componentListContainer.GetComponent<VerticalLayoutGroup>();
+        if (verticalLayout == null)
+        {
+            verticalLayout = componentListContainer.gameObject.AddComponent<VerticalLayoutGroup>();
+            verticalLayout.spacing = 12;
+            verticalLayout.childForceExpandWidth = true;
+            verticalLayout.childForceExpandHeight = false;
+            verticalLayout.childControlWidth = true;
+            verticalLayout.childControlHeight = true;
+            Debug.Log("[VehicleInspectorPanel] Added VerticalLayoutGroup to ComponentListContainer");
+        }
+        
+        // Clear existing component entries
+        foreach (var entry in componentEntryInstances)
+        {
+            if (entry != null)
+            {
+                Destroy(entry);
+            }
+        }
+        componentEntryInstances.Clear();
+        
+        // Create new component entries
+        var allComponents = selectedVehicle.AllComponents;
+        if (allComponents == null || allComponents.Count == 0)
+        {
+            return;
+        }
+        
+        foreach (var component in allComponents)
+        {
+            if (component == null) continue;
+            
+            GameObject entryObj = Instantiate(componentEntryPrefab, componentListContainer);
+            componentEntryInstances.Add(entryObj);
+            
+            PopulateComponentEntry(entryObj, component);
+        }
+        
+        // Force layout rebuild after creating all entries
+        StartCoroutine(ForceLayoutRebuild());
+    }
+    
+    /// <summary>
+    /// Force Unity's layout system to recalculate all sizes.
+    /// Needed because layout groups don't always update immediately when content changes.
+    /// </summary>
+    private System.Collections.IEnumerator ForceLayoutRebuild()
+    {
+        yield return null; // Wait one frame for instantiation to complete
+        
+        // Rebuild layout from bottom up
+        if (componentListContainer != null)
+        {
+            var rectTransform = componentListContainer as RectTransform;
+            float heightBefore = rectTransform.rect.height;
+            
+            LayoutRebuilder.ForceRebuildLayoutImmediate(rectTransform);
+            
+            float heightAfter = rectTransform.rect.height;
+            Debug.Log($"[VehicleInspectorPanel] ComponentListContainer height: {heightBefore} → {heightAfter}");
+        }
+        
+        // Rebuild parent content container
+        Transform content = componentListContainer?.parent;
+        while (content != null)
+        {
+            var contentSizeFitter = content.GetComponent<ContentSizeFitter>();
+            if (contentSizeFitter != null)
+            {
+                var rectTransform = content as RectTransform;
+                float heightBefore = rectTransform.rect.height;
+                
+                LayoutRebuilder.ForceRebuildLayoutImmediate(rectTransform);
+                
+                float heightAfter = rectTransform.rect.height;
+                Debug.Log($"[VehicleInspectorPanel] Content height: {heightBefore} → {heightAfter}");
+                break;
+            }
+            content = content.parent;
+        }
+    }
+    
+    private void PopulateComponentEntry(GameObject entryObj, VehicleComponent component)
+    {
+        // IMPORTANT: Ensure the entry has a Layout Element for proper sizing
+        var layoutElement = entryObj.GetComponent<LayoutElement>();
+        if (layoutElement == null)
+        {
+            layoutElement = entryObj.AddComponent<LayoutElement>();
+        }
+        layoutElement.minHeight = 80;
+        layoutElement.preferredHeight = -1;
+        
+        // ==================== COMPONENT HEADER ====================
+        var componentIcon = entryObj.transform.Find("ComponentHeader/ComponentIcon")?.GetComponent<Image>();
+        var componentName = entryObj.transform.Find("ComponentHeader/ComponentName")?.GetComponent<TMP_Text>();
+        var destroyedIcon = entryObj.transform.Find("ComponentHeader/StatusIconGroup/DestroyedIcon");
+        var disabledIcon = entryObj.transform.Find("ComponentHeader/StatusIconGroup/DisabledIcon");
+        
+        if (componentName != null)
+        {
+            componentName.text = component.name;
+        }
+        
+        // Leave component icon color as-is (don't override sprite colors)
+        
+        if (destroyedIcon != null)
+        {
+            destroyedIcon.gameObject.SetActive(component.isDestroyed);
+        }
+        
+        if (disabledIcon != null)
+        {
+            disabledIcon.gameObject.SetActive(component.isDisabled);
+        }
+        
+        // ==================== EXPOSURE (separate from stats) ====================
+        var exposureValueText = entryObj.transform.Find("ExposureRow/ExposureValueText")?.GetComponent<TMP_Text>()
+                             ?? entryObj.transform.Find("ComponentHeader/ExposureValueText")?.GetComponent<TMP_Text>()
+                             ?? entryObj.transform.Find("ExposureValueText")?.GetComponent<TMP_Text>();
+        
+        if (exposureValueText != null)
+        {
+            exposureValueText.text = GetExposureString(component.exposure);
+            exposureValueText.color = GetExposureColor(component.exposure);
+        }
+        
+        // ==================== UNIVERSAL STATS (HP, AC) ====================
+        
+        var hpValueText = entryObj.transform.Find("ComponentStatsRow/HPGroup/HPValueText")?.GetComponent<TMP_Text>();
+        var hpBar = entryObj.transform.Find("ComponentStatsRow/HPGroup/HPBar")?.GetComponent<Slider>();
+        var acValueText = entryObj.transform.Find("ComponentStatsRow/ACGroup/ACValueText")?.GetComponent<TMP_Text>();
+        
+        // HP Text - with StatValueDisplay tooltip support
+        if (hpValueText != null)
+        {
+            var hpDisplay = hpValueText.GetComponent<StatValueDisplay>();
+            if (hpDisplay != null)
+            {
+                hpDisplay.UpdateDisplay(
+                    component,
+                    Attribute.MaxHealth,
+                    component.maxHealth,
+                    component.maxHealth,
+                    $"{component.health}/{component.maxHealth}"
+                );
+            }
+            else
+            {
+                hpValueText.text = $"{component.health}/{component.maxHealth}";
+            }
+        }
+        
+        // HP Bar
+        if (hpBar != null)
+        {
+            float percent = component.maxHealth > 0 
+                ? (float)component.health / (float)component.maxHealth 
+                : 0f;
+            hpBar.minValue = 0f;
+            hpBar.maxValue = 1f;
+            hpBar.value = percent;
+        }
+        
+        // AC - with StatValueDisplay tooltip support
+        if (acValueText != null)
+        {
+            int baseAC = component.armorClass;
+            int modifiedAC = StatCalculator.GatherDefenseValue(component);
+            
+            var acDisplay = acValueText.GetComponent<StatValueDisplay>();
+            if (acDisplay != null)
+            {
+                acDisplay.UpdateDisplay(
+                    component,
+                    Attribute.ArmorClass,
+                    baseAC,
+                    modifiedAC,
+                    modifiedAC.ToString()
+                );
+            }
+            else
+            {
+                acValueText.text = modifiedAC.ToString();
+            }
+        }
+        
+        // ==================== DYNAMIC STATS (inline, to the right of HP/AC) ====================
+        // Look for DynamicStatsContainer inside ComponentStatsRow (same row, right side)
+        
+        var dynamicStatsContainer = entryObj.transform.Find("ComponentStatsRow/DynamicStatsContainer")
+                                 ?? entryObj.transform.Find("ComponentStatsRow/DynamicStats")
+                                 ?? entryObj.transform.Find("DynamicStatsRow");
+        
+        if (dynamicStatsContainer != null)
+        {
+            // Ensure container has HorizontalLayoutGroup for inline display
+            ConfigureStatsContainerLayout(dynamicStatsContainer);
+            
+            // Clear any previously created dynamic stat fields
+            ClearDynamicStatFields(dynamicStatsContainer);
+            
+            // Get display stats from component (each component type defines its own stats)
+            var displayStats = component.GetDisplayStats();
+            
+            foreach (var stat in displayStats)
+            {
+                CreateStatField(dynamicStatsContainer, component, stat);
+            }
+        }
+        
+        // ==================== STATUS EFFECT BAR ====================
+        var statusBar = entryObj.transform.Find("ComponentStatusEffectBar")?.GetComponent<StatusEffectBar>();
+        if (statusBar != null)
+        {
+            statusBar.SetEntity(component);
+            statusBar.Refresh();
+        }
+        
+        // ==================== ROLE INFO ROW (with Inaccessibility Warning) ====================
+        var roleInfoRow = entryObj.transform.Find("RoleInfoRow");
+        if (roleInfoRow != null)
+        {
+            var roleName = roleInfoRow.Find("RoleName")?.GetComponent<TMP_Text>();
+            var characterName = roleInfoRow.Find("CharacterName")?.GetComponent<TMP_Text>();
+            var warningText = roleInfoRow.Find("InaccessibilityWarning")?.GetComponent<TMP_Text>();
+            
+            bool showRoleInfo = component.enablesRole;
+            bool isAccessible = selectedVehicle.IsComponentAccessible(component);
+            bool showWarning = !component.isDestroyed && !isAccessible;
+            
+            roleInfoRow.gameObject.SetActive(showRoleInfo || showWarning);
+            
+            if (roleName != null)
+            {
+                roleName.gameObject.SetActive(showRoleInfo);
+                if (showRoleInfo) roleName.text = component.roleName;
+            }
+            
+            if (characterName != null)
+            {
+                characterName.gameObject.SetActive(showRoleInfo);
+                if (showRoleInfo)
+                {
+                    characterName.text = component.assignedCharacter != null 
+                        ? $"({component.assignedCharacter.characterName})" 
+                        : "(Unassigned)";
+                }
+            }
+            
+            if (warningText != null)
+            {
+                warningText.gameObject.SetActive(showWarning);
+                if (showWarning)
+                {
+                    string reason = selectedVehicle.GetInaccessibilityReason(component);
+                    warningText.text = $"⚠ {reason}";
+                }
+            }
+        }
+    }
+    
+    /// <summary>
+    /// Configure the stats container to use horizontal layout for inline stat display.
+    /// </summary>
+    private void ConfigureStatsContainerLayout(Transform container)
+    {
+        var layoutGroup = container.GetComponent<HorizontalLayoutGroup>();
+        if (layoutGroup == null)
+        {
+            layoutGroup = container.gameObject.AddComponent<HorizontalLayoutGroup>();
+        }
+        
+        layoutGroup.spacing = 8f;
+        layoutGroup.childAlignment = TextAnchor.MiddleLeft;
+        layoutGroup.childControlWidth = true;
+        layoutGroup.childControlHeight = true;
+        layoutGroup.childForceExpandWidth = false;
+        layoutGroup.childForceExpandHeight = false;
+        layoutGroup.padding = new RectOffset(0, 0, 0, 0);
+    }
+    
+    /// <summary>
+    /// Clear dynamically created stat fields (identified by name prefix).
+    /// </summary>
+    private void ClearDynamicStatFields(Transform container)
+    {
+        var toDestroy = new List<GameObject>();
+        foreach (Transform child in container)
+        {
+            // Only use name prefix - no tag required
+            if (child.name.StartsWith("DynStat_"))
+            {
+                toDestroy.Add(child.gameObject);
+            }
+        }
+        foreach (var go in toDestroy)
+        {
+            Destroy(go);
+        }
+    }
+    
+    /// <summary>
+    /// Create a stat field from a DisplayStat with tooltip support.
+    /// </summary>
+    private void CreateStatField(Transform container, VehicleComponent component, VehicleComponent.DisplayStat stat)
+    {
+        if (statFieldPrefab == null) return;
+        
+        var newField = Instantiate(statFieldPrefab, container);
+        newField.name = $"DynStat_{stat.Name}";
+        
+        // Add LayoutElement for proper sizing in horizontal layout
+        var layoutElement = newField.GetComponent<LayoutElement>();
+        if (layoutElement == null)
+        {
+            layoutElement = newField.AddComponent<LayoutElement>();
+        }
+        layoutElement.minWidth = 60f;
+        layoutElement.preferredWidth = 80f;
+        layoutElement.flexibleWidth = 0f;
+        
+        var statField = newField.GetComponent<ComponentStatField>();
+        if (statField != null)
+        {
+            // Configure with DisplayStat (includes attribute for tooltip)
+            statField.Configure(stat);
+            
+            // Update display with entity and stat data
+            statField.UpdateDisplay(component, stat, true);
+        }
+        else
+        {
+            // Fallback: find label and value text manually
+            var labelText = newField.transform.Find("Label")?.GetComponent<TMP_Text>()
+                         ?? newField.transform.Find("StatLabel")?.GetComponent<TMP_Text>();
+            var valueText = newField.transform.Find("Value")?.GetComponent<TMP_Text>()
+                         ?? newField.transform.Find("StatValue")?.GetComponent<TMP_Text>()
+                         ?? newField.GetComponentInChildren<TMP_Text>();
+            
+            if (labelText != null) labelText.text = stat.Label;
+            if (valueText != null) valueText.text = stat.Value;
+        }
+    }
+    
+    // ==================== LEGACY TEXT SECTIONS ====================
+    
+    private void PopulateSkills()
+    {
+        if (skillsSectionText == null) return;
+        
         var roles = selectedVehicle.GetAvailableRoles();
         int totalSkills = roles.Sum(r => r.availableSkills?.Count ?? 0);
         
-        info += $"<b>SKILLS ({totalSkills} from {roles.Count} roles):</b>\n";
+        string info = $"<b>SKILLS ({totalSkills} from {roles.Count} roles):</b>\n";
         
         if (totalSkills == 0)
         {
@@ -210,7 +763,6 @@ string display = BuildDetailedVehicleInfo();
                 if (role.availableSkills == null || role.availableSkills.Count == 0)
                     continue;
                 
-                // Role header
                 string characterName = role.assignedCharacter?.characterName ?? "Unassigned";
                 info += $"  <b>{role.roleName}</b> ({characterName}):\n";
                 
@@ -221,21 +773,20 @@ string display = BuildDetailedVehicleInfo();
                         bool canAfford = selectedVehicle.energy >= skill.energyCost;
                         string affordText = canAfford ? "" : " <color=#FF4444>(Can't afford)</color>";
                         info += $"    - <b>{skill.name}</b> ({skill.energyCost} EN){affordText}\n";
-                        
-                        if (!string.IsNullOrEmpty(skill.description))
-                        {
-                            info += $"      <color=#AAAAAA>{skill.description}</color>\n";
-                        }
                     }
                 }
             }
         }
         
-        info += "\n";
+        skillsSectionText.text = info;
+    }
+    
+    private void PopulateEventHistory()
+    {
+        if (eventHistorySectionText == null) return;
         
-        // Event History
         var vehicleEvents = RaceHistory.GetVehicleEvents(selectedVehicle);
-        info += $"<b>EVENT HISTORY ({vehicleEvents.Count} events):</b>\n";
+        string info = $"<b>EVENT HISTORY ({vehicleEvents.Count} events):</b>\n";
         
         if (vehicleEvents.Count == 0)
         {
@@ -243,7 +794,6 @@ string display = BuildDetailedVehicleInfo();
         }
         else
         {
-            // Show last 10 events
             var recentEvents = vehicleEvents.TakeLast(10).ToList();
             foreach (var evt in recentEvents)
             {
@@ -256,199 +806,52 @@ string display = BuildDetailedVehicleInfo();
             }
         }
         
-        info += "\n";
-        
-        // Story Summary
-        info += "<b>NARRATIVE SUMMARY:</b>\n";
-        string story = RaceHistory.GenerateVehicleStory(selectedVehicle);
-        info += story;
-        
-        return info;
+        eventHistorySectionText.text = info;
     }
     
-    // Helper methods
+    // ==================== HELPER METHODS ====================
     
-    /// <summary>
-    /// Builds detailed component information with health, AC, and accessibility.
-    /// Color-coded by health percentage: Green > 60%, Yellow 30-60%, Red < 30%.
-    /// </summary>
-    private string BuildComponentsInfo()
-    {
-        if (selectedVehicle == null)
-            return "  <color=#888888>No vehicle data</color>\n";
-        
-        var allComponents = selectedVehicle.AllComponents;
-        
-        if (allComponents == null || allComponents.Count == 0)
-        {
-            return "  <color=#888888>No components installed</color>\n";
-        }
-        
-        string componentInfo = "";
-        
-        foreach (var component in allComponents)
-        {
-            if (component == null) continue;
-            
-            // Component icon based on type
-            string icon = GetComponentIcon(component);
-            
-            // Component name from GameObject
-            string componentName = component.name;
-            
-            // HP bar and color using Entity fields
-            float hpPercent = component.maxHealth > 0 
-                ? (float)component.health / component.maxHealth 
-                : 0f;
-            string hpColor = GetHealthColor(hpPercent);
-            string hpBar = GenerateBar(hpPercent, 10);
-            string hpText = $"{component.health}/{component.maxHealth}";
-            
-            // Destroyed status
-            string statusText = "";
-            if (component.isDestroyed)
-            {
-                statusText = " <color=#FF4444>DESTROYED</color>";
-                hpColor = "#888888";
-            }
-            else if (component.isDisabled)
-            {
-                statusText = " <color=#FFAA44>DISABLED</color>";
-            }
-            
-            // Component line with HP bar
-            componentInfo += $"  {icon} <b>{componentName}</b> <color={hpColor}>{hpBar} {hpText}</color>{statusText}\n";
-            
-            // Component details (AC, exposure, role) using Entity.armorClass
-            componentInfo += $"    AC: {component.armorClass}";
-            
-            // Exposure/Accessibility
-            string exposureInfo = GetExposureInfo(component);
-            if (!string.IsNullOrEmpty(exposureInfo))
-            {
-                componentInfo += $" | {exposureInfo}";
-            }
-            
-            // Role info
-            if (component.enablesRole)
-            {
-                string roleName = component.roleName;
-                string characterName = component.assignedCharacter?.characterName ?? "Unassigned";
-                componentInfo += $" | Role: <color=#AADDFF>{roleName}</color> ({characterName})";
-            }
-            
-            componentInfo += "\n";
-            
-            // Show inaccessibility reason if applicable
-            if (!component.isDestroyed && !selectedVehicle.IsComponentAccessible(component))
-            {
-                string reason = selectedVehicle.GetInaccessibilityReason(component);
-                componentInfo += $"    <color=#FFAA44>! {reason}</color>\n";
-            }
-        }
-        
-        return componentInfo;
-    }
-    
-    /// <summary>
-    /// Gets an icon/emoji for a component based on its type and state.
-    /// </summary>
-    private string GetComponentIcon(VehicleComponent component)
-    {
-        if (component.isDestroyed)
-            return "[X]";
-        
-        // Icon based on component type
-        if (component is ChassisComponent)
-            return "[#]"; // Shield/armor
-        if (component is PowerCoreComponent)
-            return "[*]"; // Power/energy
-        if (component is DriveComponent)
-            return "[>]"; // Movement
-        if (component is WeaponComponent)
-            return "[!]"; // Weapon/attack
-        
-        // Generic component types
-        switch (component.componentType)
-        {
-            case ComponentType.ActiveDefense:
-                return "[#]";
-            case ComponentType.Sensors:
-                return "[?]";
-            case ComponentType.Communications:
-                return "[~]";
-            case ComponentType.Utility:
-                return "[+]";
-            default:
-                return "[o]";
-        }
-    }
-    
-    /// <summary>
-    /// Gets exposure/accessibility information for a component.
-    /// </summary>
-    private string GetExposureInfo(VehicleComponent component)
-    {
-        string exposureText = "";
-        
-        switch (component.exposure)
-        {
-            case ComponentExposure.External:
-                exposureText = "<color=#44FF44>External</color>";
-                break;
-            case ComponentExposure.Protected:
-                exposureText = "<color=#FFAA44>Protected</color>";
-                if (component.shieldedByComponent != null)
-                {
-                    exposureText += $" (by {component.shieldedByComponent.name})";
-                }
-                break;
-            case ComponentExposure.Internal:
-                exposureText = "<color=#FF8844>Internal</color>";
-                int threshold = Mathf.RoundToInt(component.internalAccessThreshold * 100);
-                exposureText += $" ({threshold}% dmg)";
-                break;
-            case ComponentExposure.Shielded:
-                exposureText = "<color=#88DDFF>Shielded</color>";
-                if (component.shieldedByComponent != null)
-                {
-                    exposureText += $" (by {component.shieldedByComponent.name})";
-                }
-                break;
-        }
-        
-        return exposureText;
-    }
-    
-    private string GetStatusColor(VehicleStatus status)
+    private string GetStatusString(VehicleStatus status)
     {
         return status switch
         {
-            VehicleStatus.Active => "<color=#44FF44>Active</color>",
-            VehicleStatus.Destroyed => "<color=#FF4444>Destroyed</color>",
+            VehicleStatus.Active => "Active",
+            VehicleStatus.Destroyed => "Destroyed",
             _ => status.ToString()
         };
     }
     
-    private string GetHealthColor(float percent)
+    private Color GetStatusColor(VehicleStatus status)
     {
-        if (percent > 0.6f) return "#44FF44";
-        if (percent > 0.3f) return "#FFFF44";
-        return "#FF4444";
+        return status switch
+        {
+            VehicleStatus.Active => new Color(0.27f, 1f, 0.27f),
+            VehicleStatus.Destroyed => new Color(1f, 0.27f, 0.27f),
+            _ => Color.white
+        };
     }
     
-    private string GenerateBar(float percent, int length)
+    private string GetExposureString(ComponentExposure exposure)
     {
-        int filled = Mathf.RoundToInt(percent * length);
-        filled = Mathf.Clamp(filled, 0, length);
-        
-        string bar = "[";
-        for (int i = 0; i < length; i++)
+        return exposure switch
         {
-            bar += i < filled ? "#" : "-"; // Changed from █ and ░
-        }
-        bar += "]";
-        
-        return bar;
+            ComponentExposure.External => "External",
+            ComponentExposure.Protected => "Protected",
+            ComponentExposure.Internal => "Internal",
+            ComponentExposure.Shielded => "Shielded",
+            _ => "Unknown"
+        };
+    }
+    
+    private Color GetExposureColor(ComponentExposure exposure)
+    {
+        return exposure switch
+        {
+            ComponentExposure.External => new Color(0.27f, 1f, 0.27f),
+            ComponentExposure.Protected => new Color(1f, 0.67f, 0.27f),
+            ComponentExposure.Internal => new Color(1f, 0.53f, 0.27f),
+            ComponentExposure.Shielded => new Color(0.53f, 0.87f, 1f),
+            _ => Color.white
+        };
     }
 }

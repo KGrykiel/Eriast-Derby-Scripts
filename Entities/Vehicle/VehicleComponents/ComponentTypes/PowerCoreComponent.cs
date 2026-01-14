@@ -65,25 +65,26 @@ namespace Assets.Scripts.Entities.Vehicle.VehicleComponents.ComponentTypes
         }
         
         /// <summary>
-        /// Get maximum energy capacity (with modifiers applied).
+        /// Get maximum energy capacity (with modifiers from StatCalculator).
         /// </summary>
         public int GetMaxEnergy()
         {
-            return Mathf.RoundToInt(ApplyModifiers(Attribute.MaxEnergy, maxEnergy));
+            float modified = Assets.Scripts.Core.StatCalculator.GatherAttributeValue(this, Attribute.MaxEnergy, maxEnergy);
+            return Mathf.RoundToInt(modified);
         }
         
         /// <summary>
-        /// Get energy regeneration rate (with modifiers applied).
+        /// Get energy regeneration rate (with modifiers from StatCalculator).
         /// </summary>
         public float GetEnergyRegen()
         {
-            return ApplyModifiers(Attribute.EnergyRegen, energyRegen);
+            return Assets.Scripts.Core.StatCalculator.GatherAttributeValue(this, Attribute.EnergyRegen, energyRegen);
         }
         
         /// <summary>
         /// Regenerates energy at the start of turn.
         /// Cannot regenerate if power core is destroyed.
-        /// Uses modifier-adjusted max energy and regen rate.
+        /// Uses StatCalculator for modifier-adjusted values.
         /// </summary>
         public void RegenerateEnergy()
         {
@@ -93,7 +94,7 @@ namespace Assets.Scripts.Entities.Vehicle.VehicleComponents.ComponentTypes
                 return;
             }
             
-            // Use modified regen rate and max capacity
+            // Use StatCalculator for modified regen rate and max capacity
             float regenRate = GetEnergyRegen();
             int maxCap = GetMaxEnergy();
             
@@ -137,6 +138,29 @@ namespace Assets.Scripts.Entities.Vehicle.VehicleComponents.ComponentTypes
             // Power core doesn't contribute stats through the modifier system
             // Energy is a resource managed directly by the power core
             return VehicleStatModifiers.Zero;
+        }
+        
+        /// <summary>
+        /// Get the stats to display in the UI for this power core.
+        /// Uses StatCalculator for modified values.
+        /// </summary>
+        public override List<DisplayStat> GetDisplayStats()
+        {
+            var stats = new List<DisplayStat>();
+            
+            // Get modified values from StatCalculator
+            float modifiedMaxEnergy = GetMaxEnergy();
+            float modifiedRegen = GetEnergyRegen();
+            
+            // Energy bar with tooltip for max energy modifiers
+            stats.Add(DisplayStat.BarWithTooltip("Energy", "EN", Attribute.MaxEnergy, currentEnergy, maxEnergy, modifiedMaxEnergy));
+            
+            // Regen with tooltip for regen modifiers
+            stats.Add(DisplayStat.WithTooltip("Regen", "REGEN", Attribute.EnergyRegen, energyRegen, modifiedRegen, "/turn"));
+            
+            // Don't add base class stats - power core generates power, doesn't consume it
+            
+            return stats;
         }
         
         /// <summary>

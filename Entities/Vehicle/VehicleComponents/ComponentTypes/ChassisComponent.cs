@@ -1,4 +1,5 @@
 using UnityEngine;
+using System.Collections.Generic;
 using RacingGame.Events;
 
 /// <summary>
@@ -65,6 +66,15 @@ public class ChassisComponent : VehicleComponent
     }
     
     /// <summary>
+    /// Get component space capacity (with modifiers from StatCalculator).
+    /// </summary>
+    public int GetComponentSpace()
+    {
+        float modified = Assets.Scripts.Core.StatCalculator.GatherAttributeValue(this, Attribute.ComponentSpace, componentSpace);
+        return Mathf.RoundToInt(modified);
+    }
+    
+    /// <summary>
     /// Chassis provides Component Space to the vehicle.
     /// Destroyed/disabled chassis provides nothing.
     /// </summary>
@@ -76,6 +86,27 @@ public class ChassisComponent : VehicleComponent
         // Chassis only provides component space (as negative value in componentSpace field)
         // HP and AC are accessed directly via GetMaxHP() and GetArmorClass()
         return VehicleStatModifiers.Zero;
+    }
+    
+    /// <summary>
+    /// Get the stats to display in the UI for this chassis.
+    /// Uses StatCalculator for modified values.
+    /// </summary>
+    public override List<DisplayStat> GetDisplayStats()
+    {
+        var stats = new List<DisplayStat>();
+        
+        // componentSpace is negative for chassis (provides space)
+        int baseSpace = -componentSpace;
+        int modifiedSpace = -GetComponentSpace();
+        if (baseSpace > 0 || modifiedSpace > 0)
+        {
+            stats.Add(DisplayStat.WithTooltip("Capacity", "CAP", Attribute.ComponentSpace, baseSpace, modifiedSpace));
+        }
+        
+        // Don't add base class stats - chassis doesn't draw power
+        
+        return stats;
     }
     
     /// <summary>

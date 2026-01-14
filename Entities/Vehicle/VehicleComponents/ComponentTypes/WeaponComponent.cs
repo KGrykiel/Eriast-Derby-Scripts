@@ -39,13 +39,40 @@ public class WeaponComponent : VehicleComponent
     public int currentAmmo;
     
     /// <summary>
+    /// Get attack bonus (with modifiers applied).
+    /// NOTE: For display purposes. Use StatCalculator for authoritative values.
+    /// </summary>
+    public int GetAttackBonus()
+    {
+        return attackBonus; // Base value - StatCalculator handles modifiers
+    }
+    
+    /// <summary>
+    /// Get damage bonus (with modifiers applied).
+    /// NOTE: For display purposes. Use StatCalculator for authoritative values.
+    /// </summary>
+    public int GetDamageBonus()
+    {
+        return damageBonus; // Base value - StatCalculator handles modifiers
+    }
+    
+    /// <summary>
+    /// Get max ammo.
+    /// NOTE: Ammo modifiers would be handled by StatCalculator if needed.
+    /// </summary>
+    public int GetMaxAmmo()
+    {
+        return ammo;
+    }
+    
+    /// <summary>
     /// Get damage string for display (e.g., "1d8+2 Physical")
     /// </summary>
     public string DamageString
     {
         get
         {
-            string bonus = damageBonus != 0 ? $"+{damageBonus}" : "";
+            string bonus = damageBonus != 0 ? $"{damageBonus:+0;-0}" : "";
             return $"{damageDice}d{damageDieSize}{bonus} {damageType}";
         }
     }
@@ -109,6 +136,41 @@ public class WeaponComponent : VehicleComponent
         // They provide combat power through componentSkills instead
         // Override in subclasses if needed (e.g., shield weapons might add AC)
         return VehicleStatModifiers.Zero;
+    }
+    
+    /// <summary>
+    /// Get the stats to display in the UI for this weapon.
+    /// Uses StatCalculator for modified values.
+    /// </summary>
+    public override List<DisplayStat> GetDisplayStats()
+    {
+        var stats = new List<DisplayStat>();
+        
+        // Get modified values from StatCalculator
+        float modifiedDamageBonus = Assets.Scripts.Core.StatCalculator.GatherAttributeValue(this, Attribute.DamageBonus, damageBonus);
+        float modifiedAttackBonus = Assets.Scripts.Core.StatCalculator.GatherAttributeValue(this, Attribute.AttackBonus, attackBonus);
+        
+        // Damage dice with bonus
+        string dmgStr = modifiedDamageBonus != 0 
+            ? $"{damageDice}d{damageDieSize}{modifiedDamageBonus:+0;-0}"
+            : $"{damageDice}d{damageDieSize}";
+        stats.Add(DisplayStat.WithTooltip("Damage", "DMG", Attribute.DamageBonus, damageBonus, modifiedDamageBonus, $" ({dmgStr})"));
+        
+        // Attack bonus
+        string attackStr = modifiedAttackBonus >= 0 ? $"+{modifiedAttackBonus:F0}" : $"{modifiedAttackBonus:F0}";
+        stats.Add(DisplayStat.WithTooltip("Attack", "HIT", Attribute.AttackBonus, attackBonus, modifiedAttackBonus, attackStr));
+        
+        // Ammo if not unlimited
+        if (ammo != -1)
+        {
+            float modifiedMaxAmmo = Assets.Scripts.Core.StatCalculator.GatherAttributeValue(this, Attribute.Ammo, ammo);
+            stats.Add(DisplayStat.BarWithTooltip("Ammo", "AMMO", Attribute.Ammo, currentAmmo, ammo, modifiedMaxAmmo));
+        }
+        
+        // Add base class stats (power draw)
+        stats.AddRange(base.GetDisplayStats());
+        
+        return stats;
     }
     
     /// <summary>

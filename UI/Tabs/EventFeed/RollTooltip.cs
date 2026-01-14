@@ -27,7 +27,7 @@ public class RollTooltip : MonoBehaviour
 
     [Header("Settings")]
     [Tooltip("Offset from target element")]
-    public Vector2 elementOffset = new Vector2(0f, 20f);
+    public Vector2 elementOffset = new Vector2(10f, -10f);
 
     [Tooltip("Padding from screen edges")]
     public float edgePadding = 10f;
@@ -166,47 +166,118 @@ public class RollTooltip : MonoBehaviour
 
     /// <summary>
     /// Updates tooltip position to align with target element while staying on screen.
+    /// Handles edge cases: flips horizontally if too close to left/right, flips vertically if too close to top/bottom.
     /// </summary>
     private void UpdatePosition()
     {
-        if (tooltipPanel == null || canvasRect == null) return;
+        if (tooltipPanel == null) return;
 
-        Vector2 targetPos;
-
+        // Force layout rebuild first to get accurate size
+        LayoutRebuilder.ForceRebuildLayoutImmediate(tooltipPanel);
+        
+        Vector2 tooltipSize = tooltipPanel.rect.size;
+        Vector2 screenSize = new Vector2(Screen.width, Screen.height);
+        float scaleFactor = parentCanvas != null ? parentCanvas.scaleFactor : 1f;
+        Vector2 scaledTooltipSize = tooltipSize * scaleFactor;
+        
+        Camera cam = parentCanvas?.renderMode == RenderMode.ScreenSpaceOverlay ? null : parentCanvas?.worldCamera;
+        
+        // Get target element bounds in screen space
+        Vector2 targetCenter;
+        Vector2 targetSize = Vector2.zero;
+        
         if (targetElement != null)
         {
-            // Position relative to the target element (centered on it)
-            targetPos = targetElement.position;
-            targetPos += elementOffset;
+            Vector3[] worldCorners = new Vector3[4];
+            targetElement.GetWorldCorners(worldCorners);
+            
+            // Convert corners to screen space
+            Vector2 minScreen = RectTransformUtility.WorldToScreenPoint(cam, worldCorners[0]);
+            Vector2 maxScreen = RectTransformUtility.WorldToScreenPoint(cam, worldCorners[2]);
+            
+            targetCenter = (minScreen + maxScreen) / 2f;
+            targetSize = new Vector2(Mathf.Abs(maxScreen.x - minScreen.x), Mathf.Abs(maxScreen.y - minScreen.y));
         }
         else
         {
-            // Fallback to cursor position if no target
-            Vector2 mousePos = Mouse.current != null ? Mouse.current.position.ReadValue() : Vector2.zero;
-            targetPos = mousePos + elementOffset;
+            // Fallback to cursor position
+            targetCenter = Mouse.current != null ? Mouse.current.position.ReadValue() : Vector2.zero;
         }
-
-        // Convert to canvas space
-        RectTransformUtility.ScreenPointToLocalPointInRectangle(
-            canvasRect,
-            targetPos,
-            parentCanvas.renderMode == RenderMode.ScreenSpaceOverlay ? null : parentCanvas.worldCamera,
-            out Vector2 localPoint
-        );
-
-        // Get tooltip size
-        Vector2 tooltipSize = tooltipPanel.sizeDelta;
-
-        // Clamp to screen bounds
-        float minX = -canvasRect.sizeDelta.x / 2 + edgePadding;
-        float maxX = canvasRect.sizeDelta.x / 2 - tooltipSize.x - edgePadding;
-        float minY = -canvasRect.sizeDelta.y / 2 + tooltipSize.y + edgePadding;
-        float maxY = canvasRect.sizeDelta.y / 2 - edgePadding;
-
-        localPoint.x = Mathf.Clamp(localPoint.x, minX, maxX);
-        localPoint.y = Mathf.Clamp(localPoint.y, minY, maxY);
-
-        tooltipPanel.anchoredPosition = localPoint;
+        
+        // Determine best position: try right of target first, then left
+        // Try below target first, then above
+        
+        Vector2 finalScreenPos;
+        
+        // Horizontal positioning
+        float rightX = targetCenter.x + targetSize.x / 2f + Mathf.Abs(elementOffset.x);
+        float leftX = targetCenter.x - targetSize.x / 2f - scaledTooltipSize.x - Mathf.Abs(elementOffset.x);
+        
+        bool canFitRight = (rightX + scaledTooltipSize.x + edgePadding) <= screenSize.x;
+        bool canFitLeft = (leftX - edgePadding) >= 0;
+        
+        float finalX;
+        if (canFitRight)
+        {
+            // Position to the right of target
+            finalX = rightX;
+        }
+        else if (canFitLeft)
+        {
+            // Position to the left of target
+            finalX = leftX;
+        }
+        else
+        {
+            // Can't fit on either side, clamp to screen
+            finalX = Mathf.Clamp(rightX, edgePadding, screenSize.x - scaledTooltipSize.x - edgePadding);
+        }
+        
+        // Vertical positioning
+        float belowY = targetCenter.y - targetSize.y / 2f + elementOffset.y;
+        float aboveY = targetCenter.y + targetSize.y / 2f + scaledTooltipSize.y - elementOffset.y;
+        
+        bool canFitBelow = (belowY - scaledTooltipSize.y - edgePadding) >= 0;
+        bool canFitAbove = (aboveY + edgePadding) <= screenSize.y;
+        
+        float finalY;
+        if (canFitBelow)
+        {
+            // Position below target (tooltip top-left corner at this Y)
+            finalY = belowY;
+        }
+        else if (canFitAbove)
+        {
+            // Position above target
+            finalY = aboveY;
+        }
+        else
+        {
+            // Can't fit above or below, clamp to screen
+            finalY = Mathf.Clamp(belowY, scaledTooltipSize.y + edgePadding, screenSize.y - edgePadding);
+        }
+        
+        finalScreenPos = new Vector2(finalX, finalY);
+        
+        // Convert screen position to local canvas space
+        if (canvasRect != null)
+        {
+            RectTransformUtility.ScreenPointToLocalPointInRectangle(
+                canvasRect,
+                finalScreenPos,
+                cam,
+                out Vector2 localPoint
+            );
+            
+            // Set position - assumes pivot is (0, 1) = top-left
+            // If pivot is different, adjust accordingly
+            Vector2 pivotOffset = new Vector2(
+                tooltipPanel.pivot.x * tooltipSize.x,
+                (tooltipPanel.pivot.y - 1f) * tooltipSize.y
+            );
+            
+            tooltipPanel.anchoredPosition = localPoint + pivotOffset;
+        }
     }
 
     /// <summary>

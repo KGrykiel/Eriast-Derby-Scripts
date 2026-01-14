@@ -93,6 +93,38 @@ public class CustomComponent : VehicleComponent
     }
     
     /// <summary>
+    /// Get the stats to display in the UI for this custom component.
+    /// Shows all non-zero bonus stats.
+    /// </summary>
+    public override List<DisplayStat> GetDisplayStats()
+    {
+        var stats = new List<DisplayStat>();
+        
+        if (hpBonus != 0)
+            stats.Add(DisplayStat.Simple("HP Bonus", "HP+", hpBonus));
+        
+        if (acBonus != 0)
+            stats.Add(DisplayStat.Simple("AC Bonus", "AC+", acBonus));
+        
+        if (speedBonus != 0)
+            stats.Add(DisplayStat.Simple("Speed Bonus", "SPD+", speedBonus));
+        
+        if (componentSpaceBonus != 0)
+            stats.Add(DisplayStat.Simple("Space", "SPACE", componentSpaceBonus));
+        
+        if (powerCapacityBonus != 0)
+            stats.Add(DisplayStat.Simple("Power Cap", "PWR+", powerCapacityBonus));
+        
+        if (powerDischargeBonus != 0)
+            stats.Add(DisplayStat.Simple("Discharge", "DISC", powerDischargeBonus));
+        
+        // Add base class stats (power draw)
+        stats.AddRange(base.GetDisplayStats());
+        
+        return stats;
+    }
+    
+    /// <summary>
     /// Called when custom component is destroyed.
     /// </summary>
     protected override void OnComponentDestroyed()
