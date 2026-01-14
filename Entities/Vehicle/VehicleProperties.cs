@@ -1,7 +1,7 @@
 ﻿using System.Linq;
 using UnityEngine;
 using Assets.Scripts.Entities.Vehicle.VehicleComponents.ComponentTypes;
-using Assets.Scripts.Combat.Attacks;
+using Assets.Scripts.Core;
 
 namespace Assets.Scripts.Entities.Vehicle
 {
@@ -9,7 +9,7 @@ namespace Assets.Scripts.Entities.Vehicle
     /// Convenience properties for Vehicle that delegate to components.
     /// Provides a clean API for accessing vehicle stats.
     /// 
-    /// NOTE: For AC with modifiers, use AttackCalculator.GatherDefenseValue().
+    /// NOTE: For AC with modifiers, use StatCalculator.GatherDefenseValue().
     /// These properties return base values or delegate to component methods.
     /// </summary>
     public static class VehicleProperties
@@ -113,39 +113,37 @@ namespace Assets.Scripts.Entities.Vehicle
 
         /// <summary>
         /// Get vehicle's effective AC (chassis AC with all modifiers applied).
-        /// Uses AttackCalculator for calculation.
+        /// Uses StatCalculator directly - the single source of truth.
         /// </summary>
         public static int GetArmorClass(global::Vehicle vehicle)
         {
             if (vehicle.chassis == null) return 10;
-            return AttackCalculator.GatherDefenseValue(vehicle.chassis);
+            return StatCalculator.GatherDefenseValue(vehicle.chassis);
         }
 
         /// <summary>
         /// Get AC for targeting a specific component (with all modifiers applied).
-        /// Uses AttackCalculator for calculation.
+        /// Uses StatCalculator directly - the single source of truth.
         /// </summary>
         public static int GetComponentAC(global::Vehicle vehicle, VehicleComponent targetComponent)
         {
             if (targetComponent == null)
                 return GetArmorClass(vehicle);
 
-            return AttackCalculator.GatherDefenseValue(targetComponent);
+            return StatCalculator.GatherDefenseValue(targetComponent);
         }
         
         /// <summary>
         /// Get AC with full breakdown for tooltips.
+        /// Uses StatCalculator directly - the single source of truth.
         /// </summary>
-        public static (int total, System.Collections.Generic.List<AttributeModifier> breakdown) GetArmorClassWithBreakdown(global::Vehicle vehicle)
+        public static (int total, float baseValue, System.Collections.Generic.List<AttributeModifier> modifiers) GetArmorClassWithBreakdown(global::Vehicle vehicle)
         {
             if (vehicle.chassis == null)
             {
-                return (10, new System.Collections.Generic.List<AttributeModifier> 
-                { 
-                    new AttributeModifier(Attribute.ArmorClass, ModifierType.Flat, 10, null)
-                });
+                return (10, 10f, new System.Collections.Generic.List<AttributeModifier>());
             }
-            return AttackCalculator.GatherDefenseValueWithBreakdown(vehicle.chassis);
+            return StatCalculator.GatherDefenseValueWithBreakdown(vehicle.chassis);
         }
     }
 }

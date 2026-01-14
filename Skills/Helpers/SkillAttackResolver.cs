@@ -2,6 +2,7 @@
 using UnityEngine;
 using Assets.Scripts.Combat;
 using Assets.Scripts.Combat.Attacks;
+using Assets.Scripts.Core;
 
 namespace Assets.Scripts.Skills.Helpers
 {
@@ -12,6 +13,9 @@ namespace Assets.Scripts.Skills.Helpers
     /// - Rolling attacks
     /// - Gathering modifiers
     /// - Evaluating hits
+    /// 
+    /// Uses StatCalculator for:
+    /// - Defense values (AC)
     /// 
     /// Handles skill-specific logic:
     /// - Two-stage component targeting
@@ -68,8 +72,8 @@ namespace Assets.Scripts.Skills.Helpers
             var componentModifiers = AttackCalculator.GatherAttackModifiers(attackerEntity, sourceComponent, skill);
             AttackCalculator.AddModifiers(componentRoll, componentModifiers);
             
-            // Evaluate against component AC
-            int componentAC = AttackCalculator.GatherDefenseValue(targetComponent);
+            // Evaluate against component AC (use StatCalculator directly)
+            int componentAC = StatCalculator.GatherDefenseValue(targetComponent);
             AttackCalculator.EvaluateAgainst(componentRoll, componentAC, "Component AC");
 
             if (componentRoll.success == true)
@@ -105,8 +109,8 @@ namespace Assets.Scripts.Skills.Helpers
             AttackCalculator.AddModifiers(chassisRoll, chassisModifiers);
             AttackCalculator.AddModifier(chassisRoll, "Component Targeting Penalty", -skill.componentTargetingPenalty, skill.name);
             
-            // Evaluate against chassis AC
-            int chassisAC = AttackCalculator.GatherDefenseValue(mainTarget.chassis);
+            // Evaluate against chassis AC (use StatCalculator directly)
+            int chassisAC = StatCalculator.GatherDefenseValue(mainTarget.chassis);
             AttackCalculator.EvaluateAgainst(chassisRoll, chassisAC, "Chassis AC");
 
             if (chassisRoll.success == true)

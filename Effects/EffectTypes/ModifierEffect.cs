@@ -38,7 +38,8 @@ public class AttributeModifierEffect : EffectBase
             attribute,
             type,
             value,
-            source
+            source,
+            ModifierCategory.Other  // Permanent modifiers from effects are "Other" category
         );
     }
 

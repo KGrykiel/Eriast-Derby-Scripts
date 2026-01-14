@@ -81,7 +81,8 @@ namespace Assets.Scripts.StatusEffects
                     modData.attribute,
                     modData.type,
                     modData.value,
-                    source: template  // StatusEffect is the source
+                    source: template,  // StatusEffect is the source
+                    category: ModifierCategory.StatusEffect  // Explicitly mark as status effect
                 );
                 
                 createdModifiers.Add(modifier);

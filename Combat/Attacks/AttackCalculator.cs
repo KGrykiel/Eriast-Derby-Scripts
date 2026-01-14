@@ -66,8 +66,8 @@ namespace Assets.Scripts.Combat.Attacks
                 AddModifier(result, "Targeting Penalty", -additionalPenalty, skill?.name);
             }
             
-            // Get target's defense value and evaluate (delegates to StatCalculator)
-            int defenseValue = GatherDefenseValue(target);
+            // Get target's defense value and evaluate (use StatCalculator directly)
+            int defenseValue = StatCalculator.GatherDefenseValue(target);
             EvaluateAgainst(result, defenseValue, "AC");
             
             return result;
@@ -150,29 +150,6 @@ namespace Assets.Scripts.Combat.Attacks
             }
             
             return modifiers;
-        }
-        
-        // ==================== DEFENSE VALUE GATHERING (DELEGATES TO StatCalculator) ====================
-        
-        /// <summary>
-        /// Gather target's effective defense value (AC) from all sources.
-        /// DELEGATES to StatCalculator - the single source of truth for ALL stat calculations.
-        /// Returns just the total - use GatherDefenseValueWithBreakdown() for tooltip data.
-        /// </summary>
-        public static int GatherDefenseValue(Entity target, string defenseType = "AC")
-        {
-            return StatCalculator.GatherDefenseValue(target);
-        }
-        
-        /// <summary>
-        /// Gather target's effective defense value with full breakdown for tooltips.
-        /// DELEGATES to StatCalculator - the single source of truth for ALL stat calculations.
-        /// </summary>
-        public static (int total, List<AttributeModifier> breakdown) GatherDefenseValueWithBreakdown(
-            Entity target, 
-            string defenseType = "AC")
-        {
-            return StatCalculator.GatherDefenseValueWithBreakdown(target, defenseType);
         }
         
         // ==================== MODIFIER SOURCES ====================

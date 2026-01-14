@@ -8,6 +8,43 @@ public enum ModifierType
 }
 
 /// <summary>
+/// Category of a modifier, indicating its source type and behavior.
+/// Used for grouping in tooltips, filtering for dispel, and semantic clarity.
+/// </summary>
+public enum ModifierCategory
+{
+    /// <summary>
+    /// Permanent modifier from equipment/components.
+    /// Not dispellable, persists as long as component is installed.
+    /// </summary>
+    Equipment,
+    
+    /// <summary>
+    /// Temporary modifier from status effects (buffs/debuffs).
+    /// Dispellable, has duration, tracked by AppliedStatusEffect.
+    /// </summary>
+    StatusEffect,
+    
+    /// <summary>
+    /// Modifier from nearby entities (auras, leadership bonuses).
+    /// Future enhancement - not yet implemented.
+    /// </summary>
+    Aura,
+    
+    /// <summary>
+    /// One-time bonus from skill use (not from status effect).
+    /// Future enhancement - not yet implemented.
+    /// </summary>
+    Skill,
+    
+    /// <summary>
+    /// Other/unknown source.
+    /// Fallback category for edge cases.
+    /// </summary>
+    Other
+}
+
+/// <summary>
 /// A simple stat change. Duration is tracked by StatusEffect (if applicable), not here.
 /// Source can be either a StatusEffect (temporary/indefinite) or a Component (permanent equipment).
 /// 
@@ -36,22 +73,44 @@ public class AttributeModifier
     // Source tracking (StatusEffect OR Component)
     public UnityEngine.Object Source;
     
+    // Category tracking (for grouping and filtering)
+    public ModifierCategory Category;
+    
     /// <summary>
     /// Display name for UI (shows source name or "Unknown")
     /// </summary>
     public string SourceDisplayName => Source?.name ?? "Unknown";
+    
+    /// <summary>
+    /// Is this modifier dispellable? (Status effects are, equipment is not)
+    /// </summary>
+    public bool IsDispellable => Category == ModifierCategory.StatusEffect || Category == ModifierCategory.Aura;
+    
+    /// <summary>
+    /// Is this modifier permanent? (Equipment is, status effects are not)
+    /// </summary>
+    public bool IsPermanent => Category == ModifierCategory.Equipment;
+    
+    /// <summary>
+    /// Is this modifier from a temporary effect?
+    /// </summary>
+    public bool IsTemporary => Category == ModifierCategory.StatusEffect || 
+                              Category == ModifierCategory.Aura || 
+                              Category == ModifierCategory.Skill;
 
     public AttributeModifier(
         Attribute attribute,
         ModifierType type,
         float value,
-        UnityEngine.Object source = null
+        UnityEngine.Object source = null,
+        ModifierCategory category = ModifierCategory.Other
     )
     {
         Attribute = attribute;
         Type = type;
         Value = value;
         Source = source;
+        Category = category;
     }
 }
 

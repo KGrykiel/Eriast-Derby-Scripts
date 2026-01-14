@@ -89,14 +89,14 @@ namespace Assets.Scripts.Combat
         /// Example output:
         /// AC Breakdown:
         ///   Base: 14 (Chassis)
-        ///   Shield Spell: +2 (Shield Spell)
-        ///   Armor Plating: +2 (Vehicle Components)
+        ///   Shield Spell: +2 (StatusEffect)
+        ///   Armor Plating: +2 (Equipment)
         ///   ─────────────
         ///   Total AC: 18
         /// </summary>
-        public static string FormatDefenseDetailed(int total, List<AttributeModifier> breakdown, string defenseName = "AC")
+        public static string FormatDefenseDetailed(int total, float baseValue, List<AttributeModifier> modifiers, string defenseName = "AC")
         {
-            if (breakdown == null || breakdown.Count == 0)
+            if (modifiers == null)
             {
                 return $"{defenseName}: {total}";
             }
@@ -104,19 +104,14 @@ namespace Assets.Scripts.Combat
             var sb = new StringBuilder();
             sb.AppendLine($"{defenseName} Breakdown:");
             
-            for (int i = 0; i < breakdown.Count; i++)
+            // Base value (not a modifier!)
+            sb.AppendLine($"  Base: {(int)baseValue}");
+            
+            // Actual modifiers
+            foreach (var mod in modifiers)
             {
-                var mod = breakdown[i];
-                // First entry (base) doesn't need sign
-                if (i == 0)
-                {
-                    sb.AppendLine($"  {mod.SourceDisplayName}: {(int)mod.Value} ({mod.Source?.name ?? "Base"})");
-                }
-                else
-                {
-                    string sign = mod.Value >= 0 ? "+" : "";
-                    sb.AppendLine($"  {mod.SourceDisplayName}: {sign}{(int)mod.Value} ({mod.Source?.name ?? "Unknown"})");
-                }
+                string sign = mod.Value >= 0 ? "+" : "";
+                sb.AppendLine($"  {mod.SourceDisplayName}: {sign}{(int)mod.Value} ({mod.Category})");
             }
             
             sb.AppendLine("  ─────────────");
@@ -130,8 +125,8 @@ namespace Assets.Scripts.Combat
         /// </summary>
         public static string FormatEntityDefense(Entity target, string defenseName = "AC")
         {
-            var (total, breakdown) = StatCalculator.GatherDefenseValueWithBreakdown(target, defenseName);
-            return FormatDefenseDetailed(total, breakdown, defenseName);
+            var (total, baseValue, modifiers) = StatCalculator.GatherDefenseValueWithBreakdown(target, defenseName);
+            return FormatDefenseDetailed(total, baseValue, modifiers, defenseName);
         }
         
         /// <summary>
@@ -277,13 +272,14 @@ namespace Assets.Scripts.Combat
             }
             
             // Use StatCalculator to gather modifiers (single source of truth)
-            var (calculatedTotal, modifiers) = StatCalculator.GatherAttributeValueWithBreakdown(
+            // Base value is now returned separately, not in the modifiers list
+            var (calculatedTotal, returnedBase, modifiers) = StatCalculator.GatherAttributeValueWithBreakdown(
                 entity, 
                 attribute, 
                 baseValue);
             
             // If no modifiers, show simple message
-            if (modifiers.Count <= 1) // Just base value
+            if (modifiers.Count == 0)
             {
                 return $"{attribute}: {baseValue}\n═══════════════════════════════\nBase value only (no modifiers)";
             }
@@ -291,30 +287,35 @@ namespace Assets.Scripts.Combat
             var sb = new StringBuilder();
             sb.AppendLine($"{attribute}: {finalValue}");
             sb.AppendLine("═══════════════════════════════");
-            sb.AppendLine($"Base:                      {baseValue}");
+            sb.AppendLine($"Base:                      {returnedBase}");
             sb.AppendLine();
             
-            // Group modifiers by source type
+            // Group modifiers by category
             var statusEffectMods = new List<AttributeModifier>();
             var equipmentMods = new List<AttributeModifier>();
-            var dynamicMods = new List<AttributeModifier>();
+            var auraMods = new List<AttributeModifier>();
+            var skillMods = new List<AttributeModifier>();
+            var otherMods = new List<AttributeModifier>();
             
-            // Skip first entry (base value)
-            foreach (var mod in modifiers.Skip(1))
+            foreach (var mod in modifiers)
             {
-                // Check if it's from a status effect
-                if (mod.Source is Assets.Scripts.StatusEffects.StatusEffect)
+                switch (mod.Category)
                 {
-                    statusEffectMods.Add(mod);
-                }
-                // Check if it's from a component (equipment)
-                else if (mod.Source is VehicleComponent || mod.Source is Vehicle)
-                {
-                    equipmentMods.Add(mod);
-                }
-                else
-                {
-                    dynamicMods.Add(mod);
+                    case ModifierCategory.StatusEffect:
+                        statusEffectMods.Add(mod);
+                        break;
+                    case ModifierCategory.Equipment:
+                        equipmentMods.Add(mod);
+                        break;
+                    case ModifierCategory.Aura:
+                        auraMods.Add(mod);
+                        break;
+                    case ModifierCategory.Skill:
+                        skillMods.Add(mod);
+                        break;
+                    default:
+                        otherMods.Add(mod);
+                        break;
                 }
             }
             
@@ -362,11 +363,55 @@ namespace Assets.Scripts.Combat
                 sb.AppendLine();
             }
             
-            // Dynamic section
-            if (dynamicMods.Count > 0)
+            // Aura section (future)
+            if (auraMods.Count > 0)
             {
-                sb.AppendLine("Dynamic:");
-                foreach (var mod in dynamicMods)
+                sb.AppendLine("Auras:");
+                foreach (var mod in auraMods)
+                {
+                    string sign = mod.Value >= 0 ? "+" : "";
+                    string typeStr = mod.Type == ModifierType.Multiplier ? "×" : "";
+                    string color = mod.Value >= 0 ? "#44FF44" : "#FF4444";
+                    
+                    if (mod.Type == ModifierType.Multiplier)
+                    {
+                        sb.AppendLine($"  <color={color}>{mod.SourceDisplayName,-25} {typeStr}{mod.Value}  {attribute}</color>");
+                    }
+                    else
+                    {
+                        sb.AppendLine($"  <color={color}>{mod.SourceDisplayName,-25} {sign}{mod.Value}  {attribute}</color>");
+                    }
+                }
+                sb.AppendLine();
+            }
+            
+            // Skill section (future)
+            if (skillMods.Count > 0)
+            {
+                sb.AppendLine("Skills:");
+                foreach (var mod in skillMods)
+                {
+                    string sign = mod.Value >= 0 ? "+" : "";
+                    string typeStr = mod.Type == ModifierType.Multiplier ? "×" : "";
+                    string color = mod.Value >= 0 ? "#44FF44" : "#FF4444";
+                    
+                    if (mod.Type == ModifierType.Multiplier)
+                    {
+                        sb.AppendLine($"  <color={color}>{mod.SourceDisplayName,-25} {typeStr}{mod.Value}  {attribute}</color>");
+                    }
+                    else
+                    {
+                        sb.AppendLine($"  <color={color}>{mod.SourceDisplayName,-25} {sign}{mod.Value}  {attribute}</color>");
+                    }
+                }
+                sb.AppendLine();
+            }
+            
+            // Other section
+            if (otherMods.Count > 0)
+            {
+                sb.AppendLine("Other:");
+                foreach (var mod in otherMods)
                 {
                     string sign = mod.Value >= 0 ? "+" : "";
                     string typeStr = mod.Type == ModifierType.Multiplier ? "×" : "";
@@ -385,7 +430,7 @@ namespace Assets.Scripts.Combat
             }
             
             // Total
-            float totalModifiers = finalValue - baseValue;
+            float totalModifiers = finalValue - returnedBase;
             string totalSign = totalModifiers >= 0 ? "+" : "";
             sb.AppendLine("═══════════════════════════════");
             sb.AppendLine($"Total Modifiers:          {totalSign}{totalModifiers}  {attribute}");

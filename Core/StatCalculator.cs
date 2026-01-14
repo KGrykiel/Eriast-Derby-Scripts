@@ -29,45 +29,37 @@ namespace Assets.Scripts.Core
         /// This is the SINGLE SOURCE OF TRUTH for stat calculations.
         /// 
         /// Sources gathered:
-        /// - Base value (from entity or component)
-        /// - Entity modifiers (from entityModifiers list)
-        /// - Status effect modifiers (from activeStatusEffects)
+        /// - Entity modifiers (from entityModifiers list, includes status effect modifiers)
         /// - Component bonuses (for vehicle components from other components)
         /// 
-        /// Returns: (final value, breakdown list for tooltips)
+        /// Returns: (final value, base value, modifier list for tooltips)
+        /// Base value is returned separately - it's NOT a modifier.
         /// </summary>
-        public static (float total, List<AttributeModifier> breakdown) GatherAttributeValueWithBreakdown(
+        public static (float total, float baseValue, List<AttributeModifier> modifiers) GatherAttributeValueWithBreakdown(
             Entity entity,
             Attribute attribute,
             float baseValue)
         {
-            var breakdown = new List<AttributeModifier>();
+            var modifiers = new List<AttributeModifier>();
             
             if (entity == null)
             {
-                breakdown.Add(new AttributeModifier(attribute, ModifierType.Flat, baseValue, null));
-                return (baseValue, breakdown);
+                return (baseValue, baseValue, modifiers);
             }
             
-            // 1. Base value
-            breakdown.Add(new AttributeModifier(attribute, ModifierType.Flat, baseValue, entity as UnityEngine.Object));
+            // 1. Gather entity modifiers (includes status effect modifiers - AppliedStatusEffect.OnApply() adds them)
+            GatherEntityModifiers(entity, attribute, modifiers);
             
-            // 2. Entity's direct modifiers (from entityModifiers list)
-            GatherEntityModifiers(entity, attribute, baseValue, breakdown);
-            
-            // 3. Status effect modifiers (from activeStatusEffects)
-            GatherStatusEffectModifiers(entity, attribute, baseValue, breakdown);
-            
-            // 4. Component bonuses (for vehicle components from other components)
+            // 2. Gather component bonuses (for vehicle components from other components)
             if (entity is VehicleComponent component && component.ParentVehicle != null)
             {
-                GatherComponentBonuses(component.ParentVehicle, attribute, breakdown);
+                GatherComponentBonuses(component.ParentVehicle, attribute, modifiers);
             }
             
-            // Calculate total
-            float total = breakdown.Sum(m => m.Type == ModifierType.Flat ? m.Value : baseValue * m.Value / 100f);
+            // 3. Calculate total: base + flat modifiers, then apply multipliers
+            float total = CalculateTotal(baseValue, modifiers);
             
-            return (total, breakdown);
+            return (total, baseValue, modifiers);
         }
         
         /// <summary>
@@ -76,7 +68,7 @@ namespace Assets.Scripts.Core
         /// </summary>
         public static float GatherAttributeValue(Entity entity, Attribute attribute, float baseValue)
         {
-            var (total, _) = GatherAttributeValueWithBreakdown(entity, attribute, baseValue);
+            var (total, _, _) = GatherAttributeValueWithBreakdown(entity, attribute, baseValue);
             return total;
         }
         
@@ -84,26 +76,22 @@ namespace Assets.Scripts.Core
         /// Gather defense value (AC) with breakdown - delegates to GatherAttributeValueWithBreakdown.
         /// Convenience method for attack/defense calculations.
         /// </summary>
-        public static (int total, List<AttributeModifier> breakdown) GatherDefenseValueWithBreakdown(
+        public static (int total, float baseValue, List<AttributeModifier> modifiers) GatherDefenseValueWithBreakdown(
             Entity target,
             string defenseType = "AC")
         {
             if (target == null)
             {
-                var defaultBreakdown = new List<AttributeModifier> 
-                { 
-                    new AttributeModifier(Attribute.ArmorClass, ModifierType.Flat, 10, null)
-                };
-                return (10, defaultBreakdown);
+                return (10, 10f, new List<AttributeModifier>());
             }
             
             // Delegate to main method
-            var (total, breakdown) = GatherAttributeValueWithBreakdown(
+            var (total, baseVal, modifiers) = GatherAttributeValueWithBreakdown(
                 target, 
                 Attribute.ArmorClass, 
                 target.armorClass);
             
-            return ((int)total, breakdown);
+            return ((int)total, baseVal, modifiers);
         }
         
         /// <summary>
@@ -111,7 +99,7 @@ namespace Assets.Scripts.Core
         /// </summary>
         public static int GatherDefenseValue(Entity target)
         {
-            var (total, _) = GatherDefenseValueWithBreakdown(target);
+            var (total, _, _) = GatherDefenseValueWithBreakdown(target);
             return total;
         }
         
@@ -119,12 +107,13 @@ namespace Assets.Scripts.Core
         
         /// <summary>
         /// Gather modifiers from entity's entityModifiers list.
+        /// This includes both direct modifiers AND modifiers created by status effects
+        /// (AppliedStatusEffect.OnApply() adds them to entityModifiers).
         /// </summary>
         private static void GatherEntityModifiers(
             Entity entity,
             Attribute attribute,
-            float baseValue,
-            List<AttributeModifier> breakdown)
+            List<AttributeModifier> modifiers)
         {
             foreach (var mod in entity.GetModifiers())
             {
@@ -132,37 +121,7 @@ namespace Assets.Scripts.Core
                 
                 if (mod.Value != 0)
                 {
-                    breakdown.Add(mod);
-                }
-            }
-        }
-        
-        /// <summary>
-        /// Gather modifiers from entity's active status effects.
-        /// </summary>
-        private static void GatherStatusEffectModifiers(
-            Entity entity,
-            Attribute attribute,
-            float baseValue,
-            List<AttributeModifier> breakdown)
-        {
-            foreach (var applied in entity.GetActiveStatusEffects())
-            {
-                foreach (var modData in applied.template.modifiers)
-                {
-                    if (modData.attribute != attribute) continue;
-                    
-                    if (modData.value != 0)
-                    {
-                        // Convert ModifierData to AttributeModifier
-                        var mod = new AttributeModifier(
-                            modData.attribute,
-                            modData.type,
-                            modData.value,
-                            applied.template);
-                        
-                        breakdown.Add(mod);
-                    }
+                    modifiers.Add(mod);
                 }
             }
         }
@@ -174,7 +133,7 @@ namespace Assets.Scripts.Core
         private static void GatherComponentBonuses(
             Vehicle vehicle,
             Attribute attribute,
-            List<AttributeModifier> breakdown)
+            List<AttributeModifier> modifiers)
         {
             // Map attributes to VehicleStatModifiers stat names
             var statName = MapAttributeToStatName(attribute);
@@ -187,10 +146,44 @@ namespace Assets.Scripts.Core
                     attribute,
                     ModifierType.Flat,
                     componentBonus,
-                    vehicle);
+                    vehicle,
+                    ModifierCategory.Equipment
+                );
                 
-                breakdown.Add(mod);
+                modifiers.Add(mod);
             }
+        }
+        
+        /// <summary>
+        /// Calculate total value from base + modifiers.
+        /// Application order (D&D standard):
+        /// 1. Start with base value
+        /// 2. Add all Flat modifiers
+        /// 3. Apply all Multiplier modifiers
+        /// </summary>
+        private static float CalculateTotal(float baseValue, List<AttributeModifier> modifiers)
+        {
+            float total = baseValue;
+            
+            // Step 1: Apply flat modifiers
+            foreach (var mod in modifiers)
+            {
+                if (mod.Type == ModifierType.Flat)
+                {
+                    total += mod.Value;
+                }
+            }
+            
+            // Step 2: Apply multiplier modifiers
+            foreach (var mod in modifiers)
+            {
+                if (mod.Type == ModifierType.Multiplier)
+                {
+                    total *= mod.Value;
+                }
+            }
+            
+            return total;
         }
         
         /// <summary>

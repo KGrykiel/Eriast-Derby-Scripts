@@ -392,7 +392,6 @@ public class VehicleInspectorPanel : MonoBehaviour
         {
             contentSizeFitter = componentListContainer.gameObject.AddComponent<ContentSizeFitter>();
             contentSizeFitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
-            Debug.Log("[VehicleInspectorPanel] Added ContentSizeFitter to ComponentListContainer");
         }
         
         var verticalLayout = componentListContainer.GetComponent<VerticalLayoutGroup>();
@@ -404,7 +403,6 @@ public class VehicleInspectorPanel : MonoBehaviour
             verticalLayout.childForceExpandHeight = false;
             verticalLayout.childControlWidth = true;
             verticalLayout.childControlHeight = true;
-            Debug.Log("[VehicleInspectorPanel] Added VerticalLayoutGroup to ComponentListContainer");
         }
         
         // Clear existing component entries
@@ -450,12 +448,7 @@ public class VehicleInspectorPanel : MonoBehaviour
         if (componentListContainer != null)
         {
             var rectTransform = componentListContainer as RectTransform;
-            float heightBefore = rectTransform.rect.height;
-            
             LayoutRebuilder.ForceRebuildLayoutImmediate(rectTransform);
-            
-            float heightAfter = rectTransform.rect.height;
-            Debug.Log($"[VehicleInspectorPanel] ComponentListContainer height: {heightBefore} → {heightAfter}");
         }
         
         // Rebuild parent content container
@@ -466,12 +459,7 @@ public class VehicleInspectorPanel : MonoBehaviour
             if (contentSizeFitter != null)
             {
                 var rectTransform = content as RectTransform;
-                float heightBefore = rectTransform.rect.height;
-                
                 LayoutRebuilder.ForceRebuildLayoutImmediate(rectTransform);
-                
-                float heightAfter = rectTransform.rect.height;
-                Debug.Log($"[VehicleInspectorPanel] Content height: {heightBefore} → {heightAfter}");
                 break;
             }
             content = content.parent;
