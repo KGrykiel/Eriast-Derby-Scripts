@@ -133,19 +133,19 @@ namespace Assets.Scripts.Entities.Vehicle.VehicleComponents.ComponentTypes
         /// Get the stats to display in the UI for this power core.
         /// Uses StatCalculator for modified values.
         /// </summary>
-        public override List<DisplayStat> GetDisplayStats()
+        public override List<VehicleComponentUI.DisplayStat> GetDisplayStats()
         {
-            var stats = new List<DisplayStat>();
+            var stats = new List<VehicleComponentUI.DisplayStat>();
             
             // Get modified values from StatCalculator
             float modifiedMaxEnergy = GetMaxEnergy();
             float modifiedRegen = GetEnergyRegen();
             
             // Energy bar with tooltip for max energy modifiers
-            stats.Add(DisplayStat.BarWithTooltip("Energy", "EN", Attribute.MaxEnergy, currentEnergy, maxEnergy, modifiedMaxEnergy));
+            stats.Add(VehicleComponentUI.DisplayStat.BarWithTooltip("Energy", "EN", Attribute.MaxEnergy, currentEnergy, maxEnergy, modifiedMaxEnergy));
             
             // Regen with tooltip for regen modifiers
-            stats.Add(DisplayStat.WithTooltip("Regen", "REGEN", Attribute.EnergyRegen, energyRegen, modifiedRegen, "/turn"));
+            stats.Add(VehicleComponentUI.DisplayStat.WithTooltip("Regen", "REGEN", Attribute.EnergyRegen, energyRegen, modifiedRegen, "/turn"));
             
             // Don't add base class stats - power core generates power, doesn't consume it
             

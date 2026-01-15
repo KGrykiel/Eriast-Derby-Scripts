@@ -689,7 +689,7 @@ public class VehicleInspectorPanel : MonoBehaviour
     /// <summary>
     /// Create a stat field from a DisplayStat with tooltip support.
     /// </summary>
-    private void CreateStatField(Transform container, VehicleComponent component, VehicleComponent.DisplayStat stat)
+    private void CreateStatField(Transform container, VehicleComponent component, VehicleComponentUI.DisplayStat stat)
     {
         if (statFieldPrefab == null) return;
         

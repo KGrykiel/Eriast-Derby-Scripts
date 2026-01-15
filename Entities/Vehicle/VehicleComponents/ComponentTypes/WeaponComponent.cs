@@ -125,9 +125,9 @@ public class WeaponComponent : VehicleComponent
     /// Get the stats to display in the UI for this weapon.
     /// Uses StatCalculator for modified values.
     /// </summary>
-    public override List<DisplayStat> GetDisplayStats()
+    public override List<VehicleComponentUI.DisplayStat> GetDisplayStats()
     {
-        var stats = new List<DisplayStat>();
+        var stats = new List<VehicleComponentUI.DisplayStat>();
         
         // Get modified values from StatCalculator
         float modifiedDamageBonus = Assets.Scripts.Core.StatCalculator.GatherAttributeValue(this, Attribute.DamageBonus, damageBonus);
@@ -137,17 +137,17 @@ public class WeaponComponent : VehicleComponent
         string dmgStr = modifiedDamageBonus != 0 
             ? $"{damageDice}d{damageDieSize}{modifiedDamageBonus:+0;-0}"
             : $"{damageDice}d{damageDieSize}";
-        stats.Add(DisplayStat.WithTooltip("Damage", "DMG", Attribute.DamageBonus, damageBonus, modifiedDamageBonus, $" ({dmgStr})"));
+        stats.Add(VehicleComponentUI.DisplayStat.WithTooltip("Damage", "DMG", Attribute.DamageBonus, damageBonus, modifiedDamageBonus, $" ({dmgStr})"));
         
         // Attack bonus
         string attackStr = modifiedAttackBonus >= 0 ? $"+{modifiedAttackBonus:F0}" : $"{modifiedAttackBonus:F0}";
-        stats.Add(DisplayStat.WithTooltip("Attack", "HIT", Attribute.AttackBonus, attackBonus, modifiedAttackBonus, attackStr));
+        stats.Add(VehicleComponentUI.DisplayStat.WithTooltip("Attack", "HIT", Attribute.AttackBonus, attackBonus, modifiedAttackBonus, attackStr));
         
         // Ammo if not unlimited
         if (ammo != -1)
         {
             float modifiedMaxAmmo = Assets.Scripts.Core.StatCalculator.GatherAttributeValue(this, Attribute.Ammo, ammo);
-            stats.Add(DisplayStat.BarWithTooltip("Ammo", "AMMO", Attribute.Ammo, currentAmmo, ammo, modifiedMaxAmmo));
+            stats.Add(VehicleComponentUI.DisplayStat.BarWithTooltip("Ammo", "AMMO", Attribute.Ammo, currentAmmo, ammo, modifiedMaxAmmo));
         }
         
         // Add base class stats (power draw)
@@ -211,9 +211,9 @@ public class WeaponComponent : VehicleComponent
     /// <summary>
     /// Get status summary including ammo count and damage.
     /// </summary>
-    public override string GetStatusSummary()
+    public string GetStatusSummary()
     {
-        string status = base.GetStatusSummary();
+        string status = VehicleComponentUI.GetStatusSummary(this);
         
         // Add damage info
         status += $"Damage: {DamageString}\n";

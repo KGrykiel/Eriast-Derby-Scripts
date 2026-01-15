@@ -454,136 +454,6 @@ public abstract class VehicleComponent : Entity
     // ==================== UI HELPERS ====================
     
     /// <summary>
-    /// Represents a stat to display in the UI.
-    /// </summary>
-    public struct DisplayStat
-    {
-        public string Name;           // Internal name (e.g., "Speed")
-        public string Label;          // Display label (e.g., "SPD")
-        public string Value;          // Formatted value string (e.g., "10.5", "2d8+3")
-        public float? Current;        // For bar display: current value
-        public float? Max;            // For bar display: max value
-        public bool ShowBar;          // Whether to show as a bar
-        public Attribute? Attribute;  // Optional attribute for tooltip support
-        public float BaseValue;       // Base value (for tooltip modifier display)
-        public float FinalValue;      // Final value after modifiers (for tooltip)
-        
-        /// <summary>
-        /// Create a simple stat display (just a value, no tooltip).
-        /// </summary>
-        public static DisplayStat Simple(string name, string label, float value, string suffix = "")
-        {
-            return new DisplayStat
-            {
-                Name = name,
-                Label = label,
-                Value = $"{value:F1}{suffix}",
-                Current = value,
-                Max = null,
-                ShowBar = false,
-                Attribute = null,
-                BaseValue = value,
-                FinalValue = value
-            };
-        }
-        
-        /// <summary>
-        /// Create a simple stat display with integer value (no tooltip).
-        /// </summary>
-        public static DisplayStat Simple(string name, string label, int value, string suffix = "")
-        {
-            return new DisplayStat
-            {
-                Name = name,
-                Label = label,
-                Value = $"{value}{suffix}",
-                Current = value,
-                Max = null,
-                ShowBar = false,
-                Attribute = null,
-                BaseValue = value,
-                FinalValue = value
-            };
-        }
-        
-        /// <summary>
-        /// Create a simple stat display with string value (for dice notation, etc., no tooltip).
-        /// </summary>
-        public static DisplayStat Simple(string name, string label, string value)
-        {
-            return new DisplayStat
-            {
-                Name = name,
-                Label = label,
-                Value = value,
-                Current = null,
-                Max = null,
-                ShowBar = false,
-                Attribute = null,
-                BaseValue = 0,
-                FinalValue = 0
-            };
-        }
-        
-        /// <summary>
-        /// Create a stat display with tooltip support (shows modifier breakdown on hover).
-        /// </summary>
-        public static DisplayStat WithTooltip(string name, string label, Attribute attribute, float baseValue, float finalValue, string suffix = "")
-        {
-            return new DisplayStat
-            {
-                Name = name,
-                Label = label,
-                Value = $"{finalValue:F1}{suffix}",
-                Current = finalValue,
-                Max = null,
-                ShowBar = false,
-                Attribute = attribute,
-                BaseValue = baseValue,
-                FinalValue = finalValue
-            };
-        }
-        
-        /// <summary>
-        /// Create a bar stat display (current/max with optional bar, no tooltip).
-        /// </summary>
-        public static DisplayStat Bar(string name, string label, float current, float max)
-        {
-            return new DisplayStat
-            {
-                Name = name,
-                Label = label,
-                Value = $"{current:F0}/{max:F0}",
-                Current = current,
-                Max = max,
-                ShowBar = true,
-                Attribute = null,
-                BaseValue = max,
-                FinalValue = max
-            };
-        }
-        
-        /// <summary>
-        /// Create a bar stat display with tooltip support.
-        /// </summary>
-        public static DisplayStat BarWithTooltip(string name, string label, Attribute attribute, float current, float baseMax, float finalMax)
-        {
-            return new DisplayStat
-            {
-                Name = name,
-                Label = label,
-                Value = $"{current:F0}/{finalMax:F0}",
-                Current = current,
-                Max = finalMax,
-                ShowBar = true,
-                Attribute = attribute,
-                BaseValue = baseMax,
-                FinalValue = finalMax
-            };
-        }
-    }
-    
-    /// <summary>
     /// Get power draw per turn (with modifiers from StatCalculator).
     /// </summary>
     public int GetPowerDraw()
@@ -598,42 +468,17 @@ public abstract class VehicleComponent : Entity
     /// Base implementation returns common stats (power draw if non-zero).
     /// Uses StatCalculator for modified values.
     /// </summary>
-    public virtual List<DisplayStat> GetDisplayStats()
+    public virtual List<VehicleComponentUI.DisplayStat> GetDisplayStats()
     {
-        var stats = new List<DisplayStat>();
+        var stats = new List<VehicleComponentUI.DisplayStat>();
         
         // Add power draw if non-zero (common to many components)
         if (powerDrawPerTurn > 0)
         {
             int modifiedPower = GetPowerDraw();
-            stats.Add(DisplayStat.WithTooltip("Power", "PWR", Attribute.PowerDraw, powerDrawPerTurn, modifiedPower, "/turn"));
+            stats.Add(VehicleComponentUI.DisplayStat.WithTooltip("Power", "PWR", Attribute.PowerDraw, powerDrawPerTurn, modifiedPower, "/turn"));
         }
         
         return stats;
-    }
-    
-    /// <summary>
-    /// Get component status summary for debugging/UI.
-    /// </summary>
-    public virtual string GetStatusSummary()
-    {
-        string status = $"<b>{name}</b> ({componentType})\n";
-        status += $"HP: {health}/{maxHealth} | AC: {armorClass}\n";
-        
-        if (isDestroyed)
-            status += "<color=red>[DESTROYED]</color>\n";
-        else if (isDisabled)
-            status += "<color=yellow>[DISABLED]</color>\n";
-        
-        if (enablesRole)
-            status += $"Enables: {roleName}\n";
-        
-        if (assignedCharacter != null)
-            status += $"Operated by: {assignedCharacter.characterName}\n";
-        
-        if (componentSkills.Count > 0)
-            status += $"Skills: {componentSkills.Count}\n";
-        
-        return status;
     }
 }

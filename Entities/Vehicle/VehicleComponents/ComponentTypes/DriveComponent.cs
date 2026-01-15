@@ -91,9 +91,9 @@ public class DriveComponent : VehicleComponent
     /// Get the stats to display in the UI for this drive component.
     /// Uses StatCalculator for modified values.
     /// </summary>
-    public override List<DisplayStat> GetDisplayStats()
+    public override List<VehicleComponentUI.DisplayStat> GetDisplayStats()
     {
-        var stats = new List<DisplayStat>();
+        var stats = new List<VehicleComponentUI.DisplayStat>();
         
         // Get modified values from StatCalculator
         float modifiedSpeed = Assets.Scripts.Core.StatCalculator.GatherAttributeValue(this, Attribute.Speed, maxSpeed);
@@ -101,9 +101,9 @@ public class DriveComponent : VehicleComponent
         float modifiedStab = Assets.Scripts.Core.StatCalculator.GatherAttributeValue(this, Attribute.Stability, stability);
         
         // All stats support modifiers and tooltips
-        stats.Add(DisplayStat.WithTooltip("Speed", "SPD", Attribute.Speed, maxSpeed, modifiedSpeed));
-        stats.Add(DisplayStat.WithTooltip("Acceleration", "ACCEL", Attribute.Acceleration, acceleration, modifiedAccel));
-        stats.Add(DisplayStat.WithTooltip("Stability", "STAB", Attribute.Stability, stability, modifiedStab));
+        stats.Add(VehicleComponentUI.DisplayStat.WithTooltip("Speed", "SPD", Attribute.Speed, maxSpeed, modifiedSpeed));
+        stats.Add(VehicleComponentUI.DisplayStat.WithTooltip("Acceleration", "ACCEL", Attribute.Acceleration, acceleration, modifiedAccel));
+        stats.Add(VehicleComponentUI.DisplayStat.WithTooltip("Stability", "STAB", Attribute.Stability, stability, modifiedStab));
         
         // Add base class stats (power draw)
         stats.AddRange(base.GetDisplayStats());

@@ -64,7 +64,7 @@ namespace Assets.Scripts.UI.Components
         /// <summary>
         /// Configure this field with a DisplayStat (includes attribute for tooltip).
         /// </summary>
-        public void Configure(VehicleComponent.DisplayStat stat)
+        public void Configure(VehicleComponentUI.DisplayStat stat)
         {
             runtimeStatName = stat.Name;
             displayLabel = stat.Label;
@@ -87,7 +87,7 @@ namespace Assets.Scripts.UI.Components
         /// <summary>
         /// Update this stat field with a DisplayStat.
         /// </summary>
-        public void UpdateDisplay(Entity entity, VehicleComponent.DisplayStat stat, bool hasThisStat)
+        public void UpdateDisplay(Entity entity, VehicleComponentUI.DisplayStat stat, bool hasThisStat)
         {
             gameObject.SetActive(hasThisStat);
             

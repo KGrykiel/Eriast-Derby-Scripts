@@ -72,16 +72,16 @@ public class ChassisComponent : VehicleComponent
     /// Get the stats to display in the UI for this chassis.
     /// Uses StatCalculator for modified values.
     /// </summary>
-    public override List<DisplayStat> GetDisplayStats()
+    public override List<VehicleComponentUI.DisplayStat> GetDisplayStats()
     {
-        var stats = new List<DisplayStat>();
+        var stats = new List<VehicleComponentUI.DisplayStat>();
         
         // componentSpace is negative for chassis (provides space)
         int baseSpace = -componentSpace;
         int modifiedSpace = -GetComponentSpace();
         if (baseSpace > 0 || modifiedSpace > 0)
         {
-            stats.Add(DisplayStat.WithTooltip("Capacity", "CAP", Attribute.ComponentSpace, baseSpace, modifiedSpace));
+            stats.Add(VehicleComponentUI.DisplayStat.WithTooltip("Capacity", "CAP", Attribute.ComponentSpace, baseSpace, modifiedSpace));
         }
         
         // Don't add base class stats - chassis doesn't draw power

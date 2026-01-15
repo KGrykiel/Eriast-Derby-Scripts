@@ -67,34 +67,34 @@ public class CustomComponent : VehicleComponent
     /// Get the stats to display in the UI for this custom component.
     /// Shows all non-zero bonus stats (legacy) and providedModifiers.
     /// </summary>
-    public override List<DisplayStat> GetDisplayStats()
+    public override List<VehicleComponentUI.DisplayStat> GetDisplayStats()
     {
-        var stats = new List<DisplayStat>();
+        var stats = new List<VehicleComponentUI.DisplayStat>();
         
         // Legacy bonus display (for backward compatibility)
         if (hpBonus != 0)
-            stats.Add(DisplayStat.Simple("HP Bonus", "HP+", hpBonus));
+            stats.Add(VehicleComponentUI.DisplayStat.Simple("HP Bonus", "HP+", hpBonus));
         
         if (acBonus != 0)
-            stats.Add(DisplayStat.Simple("AC Bonus", "AC+", acBonus));
+            stats.Add(VehicleComponentUI.DisplayStat.Simple("AC Bonus", "AC+", acBonus));
         
         if (speedBonus != 0)
-            stats.Add(DisplayStat.Simple("Speed Bonus", "SPD+", speedBonus));
+            stats.Add(VehicleComponentUI.DisplayStat.Simple("Speed Bonus", "SPD+", speedBonus));
         
         if (componentSpaceBonus != 0)
-            stats.Add(DisplayStat.Simple("Space", "SPACE", componentSpaceBonus));
+            stats.Add(VehicleComponentUI.DisplayStat.Simple("Space", "SPACE", componentSpaceBonus));
         
         if (powerCapacityBonus != 0)
-            stats.Add(DisplayStat.Simple("Power Cap", "PWR+", powerCapacityBonus));
+            stats.Add(VehicleComponentUI.DisplayStat.Simple("Power Cap", "PWR+", powerCapacityBonus));
         
         if (powerDischargeBonus != 0)
-            stats.Add(DisplayStat.Simple("Discharge", "DISC", powerDischargeBonus));
+            stats.Add(VehicleComponentUI.DisplayStat.Simple("Discharge", "DISC", powerDischargeBonus));
         
         // Show providedModifiers summary
         foreach (var mod in providedModifiers)
         {
             string sign = mod.value >= 0 ? "+" : "";
-            stats.Add(DisplayStat.Simple($"{mod.attribute} to {mod.targetMode}", "", $"{sign}{mod.value}"));
+            stats.Add(VehicleComponentUI.DisplayStat.Simple($"{mod.attribute} to {mod.targetMode}", "", $"{sign}{mod.value}"));
         }
         
         // Add base class stats (power draw)
