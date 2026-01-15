@@ -4,13 +4,13 @@ using System.Linq;
 using System.Text;
 using UnityEngine;
 using RacingGame.Events;
-using Assets.Scripts.StatusEffects;
-using Assets.Scripts.Combat.Attacks;
-using Assets.Scripts.Combat.Damage;
-using Assets.Scripts.Core;
+using StatusEffects;
+using Combat.Attacks;
+using Combat.Damage;
+using Core;
 using EventType = RacingGame.Events.EventType;
 
-namespace Assets.Scripts.Combat
+namespace Combat
 {
     /// <summary>
     /// Central manager for all combat logging and formatting.

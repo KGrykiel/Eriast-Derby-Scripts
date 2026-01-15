@@ -1,10 +1,10 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
-using Assets.Scripts.Combat;
-using Assets.Scripts.Combat.Attacks;
+using Combat;
+using Combat.Attacks;
 
-namespace Assets.Scripts.Skills.Helpers
+namespace Skills.Helpers
 {
     /// <summary>
     /// Executes skills by orchestrating validation, rolls, and effect application.

@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 
-namespace Assets.Scripts.Combat
+namespace Combat
 {
     /// <summary>
     /// Represents a single combat action (skill use, attack, etc.).

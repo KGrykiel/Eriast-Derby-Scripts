@@ -3,9 +3,10 @@ using System.Linq;
 using UnityEngine;
 using RacingGame.Events;
 using EventType = RacingGame.Events.EventType;
-using Assets.Scripts.Entities.Vehicle.VehicleComponents.Enums;
-using Assets.Scripts.Entities.Vehicle.VehicleComponents;
-using Assets.Scripts.Entities.Vehicle.VehicleComponents.ComponentTypes;
+using Entities.Vehicle.VehicleComponents.Enums;
+using Entities.Vehicle.VehicleComponents;
+using Entities.Vehicle.VehicleComponents.ComponentTypes;
+using System;
 
 /// <summary>
 /// Base class for all vehicle components.
@@ -285,17 +286,27 @@ public abstract class VehicleComponent : Entity
     
     /// <summary>
     /// Can this component perform actions? (checks for stun/disable effects + component state)
-    /// NOTE: This is component-specific behavior, not applicable to all entities (barrels, props, etc.)
+    /// Checks both this component's status effects AND the vehicle's chassis (where vehicle-wide stuns are applied).
     /// </summary>
     public virtual bool CanAct()
     {
         if (isDestroyed || isDisabled) return false;
         
-        // Check if any status effect prevents actions
+        // Check this component's own status effects
         foreach (var statusEffect in activeStatusEffects)
         {
             if (statusEffect.PreventsActions)
                 return false;
+        }
+        
+        // Also check chassis status effects (vehicle-wide stuns are applied to chassis)
+        if (parentVehicle?.chassis != null && parentVehicle.chassis != this)
+        {
+            foreach (var statusEffect in parentVehicle.chassis.GetActiveStatusEffects())
+            {
+                if (statusEffect.PreventsActions)
+                    return false;
+            }
         }
         
         return true;
@@ -304,17 +315,28 @@ public abstract class VehicleComponent : Entity
     /// <summary>
     /// Can this component contribute to vehicle movement?
     /// Checks component state and status effects that prevent movement.
-    /// NOTE: Vehicle.CanMove() is the authoritative check - it verifies DriveComponent exists and is functional.
+    /// Also checks chassis status effects (vehicle-wide immobilization).
     /// </summary>
     public virtual bool CanContributeToMovement()
     {
         if (isDestroyed || isDisabled) return false;
         
-        // Check if any status effect prevents movement
+        // Check this component's own status effects
         foreach (var statusEffect in activeStatusEffects)
         {
+            Debug.Log(statusEffect.PreventsMovement);
             if (statusEffect.PreventsMovement)
                 return false;
+        }
+        
+        // Also check chassis status effects (vehicle-wide immobilization)
+        if (parentVehicle?.chassis != null && parentVehicle.chassis != this)
+        {
+            foreach (var statusEffect in parentVehicle.chassis.GetActiveStatusEffects())
+            {
+                if (statusEffect.PreventsMovement)
+                    return false;
+            }
         }
         
         return true;
@@ -442,7 +464,7 @@ public abstract class VehicleComponent : Entity
     /// </summary>
     public int GetPowerDraw()
     {
-        float modified = Assets.Scripts.Core.StatCalculator.GatherAttributeValue(this, Attribute.PowerDraw, powerDrawPerTurn);
+        float modified = Core.StatCalculator.GatherAttributeValue(this, Attribute.PowerDraw, powerDrawPerTurn);
         return Mathf.RoundToInt(modified);
     }
     

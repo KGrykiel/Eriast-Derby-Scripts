@@ -2,7 +2,7 @@
 using System.Linq;
 using UnityEngine;
 
-namespace Assets.Scripts.Core
+namespace Core
 {
     /// <summary>
     /// Central calculator for all stat/attribute value calculations with modifiers.

@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 
-namespace Assets.Scripts.Combat.Attacks
+namespace Combat.Attacks
 {
     /// <summary>
     /// Category of attack roll for display purposes.

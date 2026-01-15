@@ -1,9 +1,9 @@
 ﻿using UnityEngine;
 using TMPro;
 using UnityEngine.UI;
-using Assets.Scripts.Core;
+using Core;
 
-namespace Assets.Scripts.UI.Components
+namespace UI.Components
 {
     /// <summary>
     /// Represents a single stat field for a component (HP, AC, Speed, Energy, etc.)

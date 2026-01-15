@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Text;
 using UnityEngine;
 
-namespace Assets.Scripts.Combat.Damage
+namespace Combat.Damage
 {
     /// <summary>
     /// Handles all damage calculation logic.

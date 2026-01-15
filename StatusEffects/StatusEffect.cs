@@ -1,9 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
 using UnityEngine;
-using Assets.Scripts.Entities;
+using Entities;
 
-namespace Assets.Scripts.StatusEffects
+namespace StatusEffects
 {
     /// <summary>
     /// ScriptableObject template defining a named status effect (buff, debuff, condition).

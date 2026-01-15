@@ -5,10 +5,10 @@ using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.EventSystems;
 using TMPro;
-using Assets.Scripts.Combat;
-using Assets.Scripts.Core;
+using Combat;
+using Core;
 
-namespace Assets.Scripts.UI.Components
+namespace UI.Components
 {
     /// <summary>
     /// UI component for displaying a stat value with color coding and tooltip.

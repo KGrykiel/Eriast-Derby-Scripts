@@ -1,9 +1,9 @@
 ﻿using System.Linq;
 using UnityEngine;
-using Assets.Scripts.Entities.Vehicle.VehicleComponents.ComponentTypes;
-using Assets.Scripts.Core;
+using Entities.Vehicle.VehicleComponents.ComponentTypes;
+using Core;
 
-namespace Assets.Scripts.Entities.Vehicle
+namespace Entities.Vehicle
 {
     /// <summary>
     /// Convenience properties for Vehicle that delegate to components.

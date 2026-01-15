@@ -1,6 +1,6 @@
 using UnityEngine;
 using System.Collections.Generic;
-using Assets.Scripts.Combat.Attacks;
+using Combat.Attacks;
 
 [CreateAssetMenu(menuName = "Racing/EventCards/RollEventCard")]
 public class RollEventCard : EventCard

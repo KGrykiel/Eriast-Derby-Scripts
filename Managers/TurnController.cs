@@ -149,6 +149,24 @@ public class TurnController : MonoBehaviour
             return;
         }
         
+        // Check if vehicle can move (drive operational + not immobilized by status effects)
+        if (!vehicle.CanMove())
+        {
+            string reason = vehicle.GetCannotMoveReason();
+            RaceHistory.Log(
+                EventType.Movement,
+                EventImportance.Medium,
+                $"{vehicle.vehicleName} cannot move: {reason}",
+                vehicle.currentStage,
+                vehicle
+            ).WithMetadata("cannotMove", true)
+             .WithMetadata("reason", reason);
+            
+            // Update modifiers even if can't move (status effects still tick)
+            vehicle.UpdateModifiers();
+            return;
+        }
+        
         // Add movement
         float speed = vehicle.speed;
         vehicle.progress += speed;
@@ -195,6 +213,7 @@ public class TurnController : MonoBehaviour
         if (vehicle == null || vehicle.currentStage == null) return;
         
         // Check if vehicle can move (has operational drive)
+        Debug.Log($"Processing movement for {vehicle.vehicleName}. CanMove: {vehicle.CanMove()}");
         if (!vehicle.CanMove())
         {
             // Only log the first time per turn

@@ -1,10 +1,10 @@
 ﻿using System.Collections.Generic;
 using UnityEngine;
-using Assets.Scripts.Combat;
-using Assets.Scripts.Combat.Attacks;
-using Assets.Scripts.Core;
+using Combat;
+using Combat.Attacks;
+using Core;
 
-namespace Assets.Scripts.Skills.Helpers
+namespace Skills.Helpers
 {
     /// <summary>
     /// High-level orchestrator for skill-based attacks.

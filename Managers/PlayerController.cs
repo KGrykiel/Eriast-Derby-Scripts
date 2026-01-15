@@ -4,7 +4,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using RacingGame.Events;
 using EventType = RacingGame.Events.EventType;
-using Assets.Scripts.Entities.Vehicle.VehicleComponents;
+using Entities.Vehicle.VehicleComponents;
 
 /// <summary>
 /// Manages player input, UI interactions, and immediate action resolution.
@@ -251,15 +251,26 @@ public class PlayerController : MonoBehaviour
                 VehicleRole role = availableRoles[i];
                 roleTabButtons[i].gameObject.SetActive(true);
                 
-                // Build tab text: "[v] Driver (Alice)" or "[ ] Gunner 1 (Bob)"
-                string statusIcon = role.sourceComponent.hasActedThisTurn ? "[v]" : "[ ]";
+                // Check if component can act (not destroyed, not disabled, no stun effects)
+                bool canAct = role.sourceComponent.CanAct();
+                bool hasActed = role.sourceComponent.hasActedThisTurn;
+                
+                // Build tab text with status indicators
+                string statusIcon;
+                if (!canAct)
+                    statusIcon = "[X]";  // Stunned/disabled
+                else if (hasActed)
+                    statusIcon = "[v]";  // Already acted
+                else
+                    statusIcon = "[ ]";  // Ready to act
+                
                 string characterName = role.assignedCharacter?.characterName ?? "Unassigned";
                 string tabText = $"{statusIcon} {role.roleName} ({characterName})";
                 
                 roleTabButtons[i].GetComponentInChildren<TextMeshProUGUI>().text = tabText;
                 
-                // Greyed out if already acted
-                roleTabButtons[i].interactable = !role.sourceComponent.hasActedThisTurn;
+                // Greyed out if already acted OR cannot act (stunned/disabled)
+                roleTabButtons[i].interactable = canAct && !hasActed;
                 
                 int roleIndex = i;
                 roleTabButtons[i].onClick.RemoveAllListeners();
@@ -653,10 +664,10 @@ public class PlayerController : MonoBehaviour
     private string BuildComponentButtonText(Vehicle targetVehicle, VehicleComponent component)
     {
         // Get modified AC from StatCalculator
-        var (modifiedAC, _, _) = Assets.Scripts.Core.StatCalculator.GatherDefenseValueWithBreakdown(component);
+        var (modifiedAC, _, _) = Core.StatCalculator.GatherDefenseValueWithBreakdown(component);
         
         // HP info using Entity fields (current health) and modified max HP
-        int modifiedMaxHP = Mathf.RoundToInt(Assets.Scripts.Core.StatCalculator.GatherAttributeValue(
+        int modifiedMaxHP = Mathf.RoundToInt(Core.StatCalculator.GatherAttributeValue(
             component, Attribute.MaxHealth, component.maxHealth));
         
         string text = $"{component.name} (HP: {component.health}/{modifiedMaxHP}, AC: {modifiedAC})";

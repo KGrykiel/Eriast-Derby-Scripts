@@ -4,10 +4,10 @@ using UnityEngine.UI;
 using System.Collections.Generic;
 using System.Linq;
 using RacingGame.Events;
-using Assets.Scripts.Entities.Vehicle.VehicleComponents.ComponentTypes;
-using Assets.Scripts.Entities.Vehicle.VehicleComponents.Enums;
-using Assets.Scripts.Core;
-using Assets.Scripts.UI.Components;
+using Entities.Vehicle.VehicleComponents.ComponentTypes;
+using Entities.Vehicle.VehicleComponents.Enums;
+using Core;
+using UI.Components;
 
 /// <summary>
 /// Inspector panel for detailed vehicle examination.
@@ -497,7 +497,12 @@ public class VehicleInspectorPanel : MonoBehaviour
         
         if (disabledIcon != null)
         {
-            disabledIcon.gameObject.SetActive(component.isDisabled);
+            // Show disabled icon if:
+            // - Manually disabled (isDisabled = true), OR
+            // - Cannot act due to status effects (stunned, etc.)
+            // But not if destroyed (destroyed icon takes priority)
+            bool showDisabled = !component.isDestroyed && !component.CanAct();
+            disabledIcon.gameObject.SetActive(showDisabled);
         }
         
         // ==================== EXPOSURE (separate from stats) ====================

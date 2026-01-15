@@ -2,8 +2,8 @@
 using System.Collections.Generic;
 using System.Text;
 using UnityEngine;
-using Assets.Scripts.StatusEffects;
-using StatusEffectTemplate = Assets.Scripts.StatusEffects.StatusEffect;
+using StatusEffects;
+using StatusEffectTemplate = StatusEffects.StatusEffect;
 
 /// <summary>
 /// Effect that applies a StatusEffect to an entity.

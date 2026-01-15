@@ -1,10 +1,10 @@
 ﻿using System;
 using UnityEngine;
-using Assets.Scripts.StatusEffects;
-using Assets.Scripts.Combat.Attacks;
-using Assets.Scripts.Combat.Damage;
+using StatusEffects;
+using Combat.Attacks;
+using Combat.Damage;
 
-namespace Assets.Scripts.Combat
+namespace Combat
 {
     /// <summary>
     /// Base class for all combat events.

@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 
-namespace Assets.Scripts.Combat.Damage
+namespace Combat.Damage
 {
     /// <summary>
     /// Complete result of a damage calculation.

@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Assets.Scripts.Entities
+namespace Entities
 {
     /// <summary>
     /// Feature flags for entity capabilities and properties.

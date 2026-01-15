@@ -3,9 +3,9 @@ using UnityEngine.UI;
 using TMPro;
 using UnityEngine.EventSystems;
 using UnityEngine.InputSystem;
-using Assets.Scripts.Combat;
-using Assets.Scripts.Combat.Attacks;
-using Assets.Scripts.Combat.Damage;
+using Combat;
+using Combat.Attacks;
+using Combat.Damage;
 
 /// <summary>
 /// Tooltip panel that displays detailed roll/damage breakdowns on hover.

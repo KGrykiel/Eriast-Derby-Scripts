@@ -1,8 +1,8 @@
 ﻿using System.Collections.Generic;
 using UnityEngine;
-using Assets.Scripts.Combat.Damage;
+using Combat.Damage;
 
-namespace Assets.Scripts.StatusEffects
+namespace StatusEffects
 {
     /// <summary>
     /// Runtime instance of an active status effect on an entity.

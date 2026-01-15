@@ -2,9 +2,9 @@
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
-using Assets.Scripts.StatusEffects;
+using StatusEffects;
 
-namespace Assets.Scripts.UI.Components
+namespace UI.Components
 {
     /// <summary>
     /// Container for displaying multiple status effect icons in a horizontal row.

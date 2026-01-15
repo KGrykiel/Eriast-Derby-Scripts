@@ -4,9 +4,9 @@ using RacingGame.Events;
 using System.Collections.Generic;
 using System.Linq;
 using EventType = RacingGame.Events.EventType;
-using Assets.Scripts.Entities.Vehicle.VehicleComponents;
-using Assets.Scripts.Entities.Vehicle.VehicleComponents.ComponentTypes;
-using Assets.Scripts.Entities.Vehicle.VehicleComponents.Enums;
+using Entities.Vehicle.VehicleComponents;
+using Entities.Vehicle.VehicleComponents.ComponentTypes;
+using Entities.Vehicle.VehicleComponents.Enums;
 
 public enum ControlType
 {
@@ -53,14 +53,14 @@ public class Vehicle : MonoBehaviour
     public List<VehicleComponent> optionalComponents = new List<VehicleComponent>();
 
     // Component coordinator (handles component management)
-    private Assets.Scripts.Entities.Vehicle.VehicleComponentCoordinator componentCoordinator;
+    private Entities.Vehicle.VehicleComponentCoordinator componentCoordinator;
     
     public VehicleStatus Status { get; private set; } = VehicleStatus.Active;
 
     void Awake()
     {
         // Initialize component coordinator
-        componentCoordinator = new Assets.Scripts.Entities.Vehicle.VehicleComponentCoordinator(this);
+        componentCoordinator = new Entities.Vehicle.VehicleComponentCoordinator(this);
         componentCoordinator.InitializeComponents();
 
         var labelTransform = transform.Find("NameLabel");
@@ -88,28 +88,28 @@ public class Vehicle : MonoBehaviour
     
     public int health
     {
-        get => Assets.Scripts.Entities.Vehicle.VehicleProperties.GetHealth(this);
-        set => Assets.Scripts.Entities.Vehicle.VehicleProperties.SetHealth(this, value);
+        get => Entities.Vehicle.VehicleProperties.GetHealth(this);
+        set => Entities.Vehicle.VehicleProperties.SetHealth(this, value);
     }
     
-    public int maxHealth => Assets.Scripts.Entities.Vehicle.VehicleProperties.GetMaxHealth(this);
+    public int maxHealth => Entities.Vehicle.VehicleProperties.GetMaxHealth(this);
     
     public int energy
     {
-        get => Assets.Scripts.Entities.Vehicle.VehicleProperties.GetEnergy(this);
-        set => Assets.Scripts.Entities.Vehicle.VehicleProperties.SetEnergy(this, value);
+        get => Entities.Vehicle.VehicleProperties.GetEnergy(this);
+        set => Entities.Vehicle.VehicleProperties.SetEnergy(this, value);
     }
     
-    public int maxEnergy => Assets.Scripts.Entities.Vehicle.VehicleProperties.GetMaxEnergy(this);
+    public int maxEnergy => Entities.Vehicle.VehicleProperties.GetMaxEnergy(this);
     
-    public float energyRegen => Assets.Scripts.Entities.Vehicle.VehicleProperties.GetEnergyRegen(this);
+    public float energyRegen => Entities.Vehicle.VehicleProperties.GetEnergyRegen(this);
     
-    public float speed => Assets.Scripts.Entities.Vehicle.VehicleProperties.GetSpeed(this);
+    public float speed => Entities.Vehicle.VehicleProperties.GetSpeed(this);
     
-    public int armorClass => Assets.Scripts.Entities.Vehicle.VehicleProperties.GetArmorClass(this);
+    public int armorClass => Entities.Vehicle.VehicleProperties.GetArmorClass(this);
     
     public int GetComponentAC(VehicleComponent targetComponent) 
-        => Assets.Scripts.Entities.Vehicle.VehicleProperties.GetComponentAC(this, targetComponent);
+        => Entities.Vehicle.VehicleProperties.GetComponentAC(this, targetComponent);
 
     // ==================== COMPONENT ACCESS (delegate to coordinator) ====================
     
@@ -457,6 +457,12 @@ public class Vehicle : MonoBehaviour
             return false;
         }
         
+        // Check if drive is prevented from moving by status effects (e.g., frozen, immobilized)
+        if (!driveComponent.CanContributeToMovement())
+        {
+            return false;
+        }
+        
         return true;
     }
     
@@ -473,6 +479,10 @@ public class Vehicle : MonoBehaviour
             return "Drive system destroyed";
         if (driveComponent.isDisabled)
             return "Drive system disabled";
+        
+        // Check for status effects preventing movement
+        if (!driveComponent.CanContributeToMovement())
+            return "Drive system immobilized by status effect";
         
         return null;
     }

@@ -1,11 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
 using UnityEngine;
-using Assets.Scripts.StatusEffects;
-using Assets.Scripts.Combat.Attacks;
-using Assets.Scripts.Combat.Damage;
+using StatusEffects;
+using Combat.Attacks;
+using Combat.Damage;
 
-namespace Assets.Scripts.Combat
+namespace Combat
 {
     /// <summary>
     /// Central event bus for combat events.

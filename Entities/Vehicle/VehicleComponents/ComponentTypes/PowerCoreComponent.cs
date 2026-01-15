@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Text;
 using UnityEngine;
 
-namespace Assets.Scripts.Entities.Vehicle.VehicleComponents.ComponentTypes
+namespace Entities.Vehicle.VehicleComponents.ComponentTypes
 {
     /// <summary>
     /// Power Core component - the energy source of a vehicle.
@@ -69,7 +69,7 @@ namespace Assets.Scripts.Entities.Vehicle.VehicleComponents.ComponentTypes
         /// </summary>
         public int GetMaxEnergy()
         {
-            float modified = Assets.Scripts.Core.StatCalculator.GatherAttributeValue(this, Attribute.MaxEnergy, maxEnergy);
+            float modified = Core.StatCalculator.GatherAttributeValue(this, Attribute.MaxEnergy, maxEnergy);
             return Mathf.RoundToInt(modified);
         }
         
@@ -78,7 +78,7 @@ namespace Assets.Scripts.Entities.Vehicle.VehicleComponents.ComponentTypes
         /// </summary>
         public float GetEnergyRegen()
         {
-            return Assets.Scripts.Core.StatCalculator.GatherAttributeValue(this, Attribute.EnergyRegen, energyRegen);
+            return Core.StatCalculator.GatherAttributeValue(this, Attribute.EnergyRegen, energyRegen);
         }
         
         /// <summary>

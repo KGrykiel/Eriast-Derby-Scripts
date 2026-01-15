@@ -1,9 +1,9 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
-using Assets.Scripts.Core;
+using Core;
 
-namespace Assets.Scripts.Combat.Attacks
+namespace Combat.Attacks
 {
     /// <summary>
     /// Central calculator for all attack roll logic.

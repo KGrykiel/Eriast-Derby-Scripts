@@ -66,7 +66,7 @@ public class DriveComponent : VehicleComponent
     /// </summary>
     public float GetSpeed()
     {
-        return Assets.Scripts.Core.StatCalculator.GatherAttributeValue(this, Attribute.Speed, maxSpeed);
+        return Core.StatCalculator.GatherAttributeValue(this, Attribute.Speed, maxSpeed);
     }
     
     /// <summary>
@@ -75,7 +75,7 @@ public class DriveComponent : VehicleComponent
     /// </summary>
     public float GetAcceleration()
     {
-        return Assets.Scripts.Core.StatCalculator.GatherAttributeValue(this, Attribute.Acceleration, acceleration);
+        return Core.StatCalculator.GatherAttributeValue(this, Attribute.Acceleration, acceleration);
     }
     
     /// <summary>
@@ -84,7 +84,7 @@ public class DriveComponent : VehicleComponent
     /// </summary>
     public float GetStability()
     {
-        return Assets.Scripts.Core.StatCalculator.GatherAttributeValue(this, Attribute.Stability, stability);
+        return Core.StatCalculator.GatherAttributeValue(this, Attribute.Stability, stability);
     }
     
     /// <summary>
@@ -96,9 +96,9 @@ public class DriveComponent : VehicleComponent
         var stats = new List<VehicleComponentUI.DisplayStat>();
         
         // Get modified values from StatCalculator
-        float modifiedSpeed = Assets.Scripts.Core.StatCalculator.GatherAttributeValue(this, Attribute.Speed, maxSpeed);
-        float modifiedAccel = Assets.Scripts.Core.StatCalculator.GatherAttributeValue(this, Attribute.Acceleration, acceleration);
-        float modifiedStab = Assets.Scripts.Core.StatCalculator.GatherAttributeValue(this, Attribute.Stability, stability);
+        float modifiedSpeed = Core.StatCalculator.GatherAttributeValue(this, Attribute.Speed, maxSpeed);
+        float modifiedAccel = Core.StatCalculator.GatherAttributeValue(this, Attribute.Acceleration, acceleration);
+        float modifiedStab = Core.StatCalculator.GatherAttributeValue(this, Attribute.Stability, stability);
         
         // All stats support modifiers and tooltips
         stats.Add(VehicleComponentUI.DisplayStat.WithTooltip("Speed", "SPD", Attribute.Speed, maxSpeed, modifiedSpeed));

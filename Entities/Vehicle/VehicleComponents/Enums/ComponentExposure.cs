@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace Assets.Scripts.Entities.Vehicle.VehicleComponents.Enums
+namespace Entities.Vehicle.VehicleComponents.Enums
 {
     /// <summary>
     /// Defines how exposed/accessible a component is for targeting in combat.

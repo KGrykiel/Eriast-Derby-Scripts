@@ -1,6 +1,6 @@
 using System;
 using UnityEngine;
-using Assets.Scripts.Combat;
+using Combat;
 
 /// <summary>
 /// Universal resource restoration/drain effect.

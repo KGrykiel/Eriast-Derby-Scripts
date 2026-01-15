@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace Assets.Scripts.Combat.Damage
+namespace Combat.Damage
 {
     /// <summary>
     /// A single source of damage within a damage calculation.

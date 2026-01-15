@@ -5,7 +5,7 @@ using RacingGame.Events;
 using EventType = RacingGame.Events.EventType;
 using UnityEngine;
 
-namespace Assets.Scripts.Skills.Helpers
+namespace Skills.Helpers
 {
     /// <summary>
     /// Validates skill targets and component accessibility.

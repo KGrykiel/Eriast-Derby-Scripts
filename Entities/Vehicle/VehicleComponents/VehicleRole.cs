@@ -2,7 +2,7 @@
 using System;
 using System.Text;
 
-namespace Assets.Scripts.Entities.Vehicle.VehicleComponents
+namespace Entities.Vehicle.VehicleComponents
 {
     /// <summary>
     /// Represents an emergent role discovered from vehicle components at runtime.

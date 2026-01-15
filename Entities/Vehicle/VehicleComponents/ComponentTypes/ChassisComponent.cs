@@ -55,7 +55,7 @@ public class ChassisComponent : VehicleComponent
     /// </summary>
     public int GetMaxHP()
     {
-        float modified = Assets.Scripts.Core.StatCalculator.GatherAttributeValue(this, Attribute.MaxHealth, maxHealth);
+        float modified = Core.StatCalculator.GatherAttributeValue(this, Attribute.MaxHealth, maxHealth);
         return Mathf.RoundToInt(modified);
     }
     
@@ -64,7 +64,7 @@ public class ChassisComponent : VehicleComponent
     /// </summary>
     public int GetComponentSpace()
     {
-        float modified = Assets.Scripts.Core.StatCalculator.GatherAttributeValue(this, Attribute.ComponentSpace, componentSpace);
+        float modified = Core.StatCalculator.GatherAttributeValue(this, Attribute.ComponentSpace, componentSpace);
         return Mathf.RoundToInt(modified);
     }
     

@@ -1,6 +1,6 @@
 ﻿using UnityEngine;
 using System.Collections.Generic;
-using Assets.Scripts.Skills.Helpers;
+using Skills.Helpers;
 
 /// <summary>
 /// Base skill data container (ScriptableObject).
