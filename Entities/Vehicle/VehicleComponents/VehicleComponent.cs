@@ -460,15 +460,6 @@ public abstract class VehicleComponent : Entity
     // ==================== UI HELPERS ====================
     
     /// <summary>
-    /// Get power draw per turn (with modifiers from StatCalculator).
-    /// </summary>
-    public int GetPowerDraw()
-    {
-        float modified = Core.StatCalculator.GatherAttributeValue(this, Attribute.PowerDraw, powerDrawPerTurn);
-        return Mathf.RoundToInt(modified);
-    }
-    
-    /// <summary>
     /// Get the stats to display in the UI for this component.
     /// Override in subclasses to provide component-specific stats.
     /// Base implementation returns common stats (power draw if non-zero).
@@ -481,7 +472,7 @@ public abstract class VehicleComponent : Entity
         // Add power draw if non-zero (common to many components)
         if (powerDrawPerTurn > 0)
         {
-            int modifiedPower = GetPowerDraw();
+            float modifiedPower = Core.StatCalculator.GatherAttributeValue(this, Attribute.PowerDraw, powerDrawPerTurn);
             stats.Add(VehicleComponentUI.DisplayStat.WithTooltip("Power", "PWR", Attribute.PowerDraw, powerDrawPerTurn, modifiedPower, "/turn"));
         }
         

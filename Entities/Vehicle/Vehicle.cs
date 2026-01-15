@@ -7,6 +7,7 @@ using EventType = RacingGame.Events.EventType;
 using Entities.Vehicle.VehicleComponents;
 using Entities.Vehicle.VehicleComponents.ComponentTypes;
 using Entities.Vehicle.VehicleComponents.Enums;
+using Core;
 
 public enum ControlType
 {
@@ -21,10 +22,11 @@ public enum ControlType
 /// The vehicle aggregates stats from components and provides convenience properties.
 /// Damage to "the vehicle" is actually damage to its chassis component.
 /// 
-/// MODIFIER SYSTEM: Modifiers are stored on individual components, not the vehicle.
-/// When a modifier is applied to a vehicle, it's automatically routed to the correct component
-/// based on attribute type (HP modifiers → Chassis, Speed modifiers → Drive, etc.)
-/// Vehicle.GetActiveModifiers() aggregates modifiers from all components for UI display.
+/// MODIFIER SYSTEM:
+/// - Components provide cross-component modifiers (e.g., Armor Plating → Chassis +2 AC)
+/// - Skills/Stages apply StatusEffects to components (StatusEffects create AttributeModifiers)
+/// - All modifiers are stored on individual components, not the vehicle
+/// - StatCalculator is the single source of truth for calculating modified values
 /// 
 /// For targeting:
 /// - Target Vehicle → actually targets chassis (the "body" of the vehicle)
@@ -84,32 +86,64 @@ public class Vehicle : MonoBehaviour
         }
     }
     
-    // ==================== CONVENIENCE PROPERTIES (delegate to VehicleProperties) ====================
+    // ==================== CONVENIENCE PROPERTIES (use StatCalculator directly) ====================
     
     public int health
     {
-        get => Entities.Vehicle.VehicleProperties.GetHealth(this);
-        set => Entities.Vehicle.VehicleProperties.SetHealth(this, value);
+        get => chassis?.health ?? 0;
+        set
+        {
+            if (chassis == null) return;
+            int maxHP = Mathf.RoundToInt(StatCalculator.GatherAttributeValue(chassis, Attribute.MaxHealth, chassis.maxHealth));
+            chassis.health = Mathf.Clamp(value, 0, maxHP);
+            if (chassis.health <= 0 && !chassis.isDestroyed)
+            {
+                chassis.isDestroyed = true;
+                DestroyVehicle();
+            }
+        }
     }
     
-    public int maxHealth => Entities.Vehicle.VehicleProperties.GetMaxHealth(this);
+    public int maxHealth => chassis != null 
+        ? Mathf.RoundToInt(StatCalculator.GatherAttributeValue(chassis, Attribute.MaxHealth, chassis.maxHealth)) 
+        : 0;
     
     public int energy
     {
-        get => Entities.Vehicle.VehicleProperties.GetEnergy(this);
-        set => Entities.Vehicle.VehicleProperties.SetEnergy(this, value);
+        get => powerCore?.currentEnergy ?? 0;
+        set
+        {
+            if (powerCore == null) return;
+            int maxE = Mathf.RoundToInt(StatCalculator.GatherAttributeValue(powerCore, Attribute.MaxEnergy, powerCore.maxEnergy));
+            powerCore.currentEnergy = Mathf.Clamp(value, 0, maxE);
+        }
     }
     
-    public int maxEnergy => Entities.Vehicle.VehicleProperties.GetMaxEnergy(this);
+    public int maxEnergy => powerCore != null 
+        ? Mathf.RoundToInt(StatCalculator.GatherAttributeValue(powerCore, Attribute.MaxEnergy, powerCore.maxEnergy)) 
+        : 0;
     
-    public float energyRegen => Entities.Vehicle.VehicleProperties.GetEnergyRegen(this);
+    public float energyRegen => powerCore != null 
+        ? StatCalculator.GatherAttributeValue(powerCore, Attribute.EnergyRegen, powerCore.energyRegen) 
+        : 0f;
     
-    public float speed => Entities.Vehicle.VehicleProperties.GetSpeed(this);
+    public float speed
+    {
+        get
+        {
+            var drive = optionalComponents.OfType<DriveComponent>().FirstOrDefault();
+            if (drive != null && !drive.isDestroyed && !drive.isDisabled)
+                return StatCalculator.GatherAttributeValue(drive, Attribute.Speed, drive.maxSpeed);
+            return 0f;
+        }
+    }
     
-    public int armorClass => Entities.Vehicle.VehicleProperties.GetArmorClass(this);
+    public int armorClass => chassis != null 
+        ? StatCalculator.GatherDefenseValue(chassis) 
+        : 10;
     
     public int GetComponentAC(VehicleComponent targetComponent) 
-        => Entities.Vehicle.VehicleProperties.GetComponentAC(this, targetComponent);
+        => targetComponent != null ? StatCalculator.GatherDefenseValue(targetComponent) : armorClass;
 
     // ==================== COMPONENT ACCESS (delegate to coordinator) ====================
     
@@ -139,11 +173,12 @@ public class Vehicle : MonoBehaviour
             .ToList();
     }
 
-    // ==================== MODIFIER SYSTEM ====================
+    // ==================== CROSS-COMPONENT MODIFIER SYSTEM ====================
 
     /// <summary>
     /// Initialize all component-provided modifiers.
     /// Called once during vehicle initialization after all components are discovered.
+    /// Components provide modifiers to OTHER components (e.g., Armor Plating → Chassis +2 AC).
     /// For runtime changes (destroy/disable), components handle their own modifier cleanup.
     /// </summary>
     public void InitializeComponentModifiers()
@@ -157,81 +192,12 @@ public class Vehicle : MonoBehaviour
             }
         }
     }
-
-    public List<AttributeModifier> GetActiveModifiers()
-    {
-        List<AttributeModifier> allModifiers = new List<AttributeModifier>();
-        
-        foreach (var component in AllComponents)
-        {
-            allModifiers.AddRange(component.GetModifiers());
-        }
-        
-        return allModifiers;
-    }
     
-    public void AddModifier(AttributeModifier modifier)
-    {
-        VehicleComponent targetComponent = ResolveModifierTarget(modifier.Attribute);
-        
-        if (targetComponent == null)
-        {
-            Debug.LogWarning($"[Vehicle] {vehicleName}: No component found to apply {modifier.Attribute} modifier!");
-            return;
-        }
-        
-        targetComponent.AddModifier(modifier);
-    }
-
-    public void RemoveModifier(AttributeModifier modifier)
-    {
-        foreach (var component in AllComponents)
-        {
-            component.RemoveModifier(modifier);
-        }
-    }
-
-    public void RemoveModifiersFromSource(Object source, bool localOnly)
-    {
-        int totalRemoved = 0;
-        
-        foreach (var component in AllComponents)
-        {
-            var modifiers = component.GetModifiers();
-            
-            for (int i = modifiers.Count - 1; i >= 0; i--)
-            {
-                var mod = modifiers[i];
-                
-                // TODO (Phase 2): 'localOnly' parameter was for stage-specific modifiers
-                // When StatusEffect system is implemented, this will be handled by AppliedStatusEffect.applier
-                // For now, just check source match
-                bool shouldRemove = mod.Source == source;
-                
-                if (shouldRemove)
-                {
-                    component.RemoveModifier(mod);
-                    totalRemoved++;
-                }
-            }
-        }
-        
-        if (totalRemoved > 0)
-        {
-            string sourceText = source != null ? source.name : "unknown source";
-            
-            RaceHistory.Log(
-                EventType.Modifier,
-                EventImportance.Low,
-                $"{vehicleName} lost {totalRemoved} modifier(s) from {sourceText}",
-                currentStage,
-                this
-            ).WithMetadata("removedCount", totalRemoved)
-             .WithMetadata("source", sourceText);
-        }
-    }
-    
-    public void UpdateModifiers()
+    /// <summary>
+    /// Update status effects on all components (tick durations, periodic effects, remove expired).
+    /// Called at the end of each turn.
+    /// </summary>
+    public void UpdateStatusEffects()
     {
         foreach (var component in AllComponents)
         {
@@ -239,6 +205,10 @@ public class Vehicle : MonoBehaviour
         }
     }
     
+    /// <summary>
+    /// Resolve which component should receive a modifier based on the attribute being modified.
+    /// Used by cross-component modifiers and effect routing.
+    /// </summary>
     public VehicleComponent ResolveModifierTarget(Attribute attribute)
     {
         return attribute switch
@@ -253,44 +223,66 @@ public class Vehicle : MonoBehaviour
         };
     }
     
-    public Entity RouteEffectTarget(IEffect effect, Entity defaultTarget)
+    /// <summary>
+    /// Route an effect to the appropriate component based on targeting precision and effect type.
+    /// </summary>
+    /// <param name="effect">The effect being applied</param>
+    /// <param name="precision">How precise the skill's targeting is</param>
+    /// <param name="playerSelectedComponent">Component selected by player (for Precise targeting)</param>
+    /// <returns>The entity that should receive the effect</returns>
+    public Entity RouteEffectTarget(IEffect effect, TargetPrecision precision, VehicleComponent playerSelectedComponent = null)
+    {
+        // Precise targeting: Use exactly what player selected (or fallback to chassis)
+        if (precision == TargetPrecision.Precise)
+            return playerSelectedComponent ?? chassis;
+        
+        // Vehicle-only targeting: Always chassis (non-precise attacks)
+        if (precision == TargetPrecision.VehicleOnly)
+            return chassis;
+        
+        // Auto targeting: Route based on effect type and attributes
+        return RouteEffectByAttribute(effect);
+    }
+    
+    /// <summary>
+    /// Route effect to appropriate component by analyzing its attributes.
+    /// Used for Auto targeting mode.
+    /// </summary>
+    private Entity RouteEffectByAttribute(IEffect effect)
     {
         if (effect == null)
-            return defaultTarget;
+            return chassis;
         
+        // Direct damage always goes to chassis
+        if (effect is DamageEffect)
+            return chassis;
+        
+        // Healing/restoration goes to chassis
+        if (effect is ResourceRestorationEffect)
+            return chassis;
+        
+        // Attribute modifiers route by attribute
         if (effect is AttributeModifierEffect modifierEffect)
         {
             VehicleComponent component = ResolveModifierTarget(modifierEffect.attribute);
-            return component ?? defaultTarget;
+            return component ?? chassis;
         }
         
+        // Status effects route by their first modifier's attribute
         if (effect is ApplyStatusEffect statusEffect)
         {
-            // Route status effect based on what attributes it modifies
-            if (statusEffect.statusEffect == null || statusEffect.statusEffect.modifiers == null || statusEffect.statusEffect.modifiers.Count == 0)
+            if (statusEffect.statusEffect?.modifiers != null && statusEffect.statusEffect.modifiers.Count > 0)
             {
-                // No modifiers or can't determine - default to chassis
-                return chassis ?? defaultTarget;
+                var firstModifier = statusEffect.statusEffect.modifiers[0];
+                VehicleComponent component = ResolveModifierTarget(firstModifier.attribute);
+                return component ?? chassis;
             }
-            
-            // Use the first modifier's attribute to determine routing
-            // (Most status effects modify a single component's stats)
-            var firstModifier = statusEffect.statusEffect.modifiers[0];
-            VehicleComponent component = ResolveModifierTarget(firstModifier.attribute);
-            return component ?? chassis ?? defaultTarget;
+            // No modifiers - default to chassis for behavioral effects (stun, etc.)
+            return chassis;
         }
         
-        if (effect is DamageEffect)
-        {
-            return chassis ?? defaultTarget;
-        }
-        
-        if (effect is ResourceRestorationEffect)
-        {
-            return chassis ?? defaultTarget;
-        }
-        
-        return defaultTarget;
+        // Unknown effect type - default to chassis
+        return chassis;
     }
 
     // ==================== STAGE MANAGEMENT ====================

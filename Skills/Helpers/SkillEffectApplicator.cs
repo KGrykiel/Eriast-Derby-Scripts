@@ -41,7 +41,8 @@ namespace Skills.Helpers
                         mainTarget,
                         sourceComponent,
                         targetComponentOverride,
-                        invocation.effect);
+                        invocation.effect,
+                        skill);
                     
                     foreach (var targetEntity in targetEntities)
                     {
@@ -64,7 +65,7 @@ namespace Skills.Helpers
         /// <summary>
         /// Resolves effect target(s) based on EffectTarget enum.
         /// Returns list because some targets (Both, AllEnemies) resolve to multiple entities.
-        /// Uses Vehicle.RouteEffectTarget() to automatically route effects to correct components.
+        /// Uses Vehicle.RouteEffectTarget() with skill's precision mode to route effects.
         /// </summary>
         private static List<Entity> ResolveTargets(
             EffectTarget target,
@@ -72,9 +73,11 @@ namespace Skills.Helpers
             Vehicle mainTarget,
             VehicleComponent sourceComponent,
             VehicleComponent targetComponentOverride,
-            IEffect effect)
+            IEffect effect,
+            Skill skill)
         {
             var targets = new List<Entity>();
+            TargetPrecision precision = skill?.targetPrecision ?? TargetPrecision.Auto;
             
             switch (target)
             {
@@ -84,49 +87,47 @@ namespace Skills.Helpers
                     break;
                     
                 case EffectTarget.SourceVehicle:
-                    // Route based on effect type (damage→chassis, speed→drive, etc.)
+                    // Route based on precision and effect type
                     if (user.chassis != null)
-                        targets.Add(user.RouteEffectTarget(effect, user.chassis));
+                        targets.Add(user.RouteEffectTarget(effect, precision, null));
                     break;
                     
                 case EffectTarget.SelectedTarget:
-                    // Respects component targeting if specified, otherwise routes based on effect type
-                    if (targetComponentOverride != null)
-                        targets.Add(targetComponentOverride);
-                    else if (mainTarget.chassis != null)
-                        targets.Add(mainTarget.RouteEffectTarget(effect, mainTarget.chassis));
+                    // Respects player-selected component for Precise targeting
+                    if (mainTarget.chassis != null)
+                        targets.Add(mainTarget.RouteEffectTarget(effect, precision, targetComponentOverride));
                     break;
                     
                 case EffectTarget.TargetVehicle:
-                    // Always routes based on effect type (ignores player component selection)
+                    // Always routes based on precision mode (ignores player component selection for VehicleOnly)
                     if (mainTarget.chassis != null)
-                        targets.Add(mainTarget.RouteEffectTarget(effect, mainTarget.chassis));
+                        targets.Add(mainTarget.RouteEffectTarget(effect, precision, null));
                     break;
                     
                 case EffectTarget.Both:
-                    // Both source and target, each routed based on effect type
+                    // Both source and target, each routed based on precision and effect type
                     if (user.chassis != null)
-                        targets.Add(user.RouteEffectTarget(effect, user.chassis));
+                        targets.Add(user.RouteEffectTarget(effect, precision, null));
                     if (mainTarget.chassis != null)
-                        targets.Add(mainTarget.RouteEffectTarget(effect, mainTarget.chassis));
+                        targets.Add(mainTarget.RouteEffectTarget(effect, precision, targetComponentOverride));
                     break;
                     
                 case EffectTarget.AllEnemiesInStage:
-                    // All enemy vehicles in stage, each routed based on effect type
+                    // All enemy vehicles in stage, each routed based on precision and effect type
                     if (user.currentStage != null && user.currentStage.vehiclesInStage != null)
                     {
                         foreach (var vehicle in user.currentStage.vehiclesInStage)
                         {
                             if (vehicle != user && vehicle.Status == VehicleStatus.Active && vehicle.chassis != null)
                             {
-                                targets.Add(vehicle.RouteEffectTarget(effect, vehicle.chassis));
+                                targets.Add(vehicle.RouteEffectTarget(effect, precision, null));
                             }
                         }
                     }
                     break;
                     
                 case EffectTarget.AllAlliesInStage:
-                    // All allied vehicles in stage (including self), each routed based on effect type
+                    // All allied vehicles in stage (including self), each routed based on precision and effect type
                     if (user.currentStage != null && user.currentStage.vehiclesInStage != null)
                     {
                         foreach (var vehicle in user.currentStage.vehiclesInStage)
@@ -134,7 +135,7 @@ namespace Skills.Helpers
                             if (vehicle.Status == VehicleStatus.Active && vehicle.chassis != null)
                             {
                                 // TODO: Add faction/team check when implemented
-                                targets.Add(vehicle.RouteEffectTarget(effect, vehicle.chassis));
+                                targets.Add(vehicle.RouteEffectTarget(effect, precision, null));
                             }
                         }
                     }

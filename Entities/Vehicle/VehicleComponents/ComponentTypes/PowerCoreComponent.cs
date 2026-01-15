@@ -65,23 +65,6 @@ namespace Entities.Vehicle.VehicleComponents.ComponentTypes
         }
         
         /// <summary>
-        /// Get maximum energy capacity (with modifiers from StatCalculator).
-        /// </summary>
-        public int GetMaxEnergy()
-        {
-            float modified = Core.StatCalculator.GatherAttributeValue(this, Attribute.MaxEnergy, maxEnergy);
-            return Mathf.RoundToInt(modified);
-        }
-        
-        /// <summary>
-        /// Get energy regeneration rate (with modifiers from StatCalculator).
-        /// </summary>
-        public float GetEnergyRegen()
-        {
-            return Core.StatCalculator.GatherAttributeValue(this, Attribute.EnergyRegen, energyRegen);
-        }
-        
-        /// <summary>
         /// Regenerates energy at the start of turn.
         /// Cannot regenerate if power core is destroyed.
         /// Uses StatCalculator for modifier-adjusted values.
@@ -95,8 +78,8 @@ namespace Entities.Vehicle.VehicleComponents.ComponentTypes
             }
             
             // Use StatCalculator for modified regen rate and max capacity
-            float regenRate = GetEnergyRegen();
-            int maxCap = GetMaxEnergy();
+            float regenRate = Core.StatCalculator.GatherAttributeValue(this, Attribute.EnergyRegen, energyRegen);
+            int maxCap = Mathf.RoundToInt(Core.StatCalculator.GatherAttributeValue(this, Attribute.MaxEnergy, maxEnergy));
             
             int oldEnergy = currentEnergy;
             currentEnergy = Mathf.Min(currentEnergy + Mathf.RoundToInt(regenRate), maxCap);
@@ -138,8 +121,8 @@ namespace Entities.Vehicle.VehicleComponents.ComponentTypes
             var stats = new List<VehicleComponentUI.DisplayStat>();
             
             // Get modified values from StatCalculator
-            float modifiedMaxEnergy = GetMaxEnergy();
-            float modifiedRegen = GetEnergyRegen();
+            float modifiedMaxEnergy = Core.StatCalculator.GatherAttributeValue(this, Attribute.MaxEnergy, maxEnergy);
+            float modifiedRegen = Core.StatCalculator.GatherAttributeValue(this, Attribute.EnergyRegen, energyRegen);
             
             // Energy bar with tooltip for max energy modifiers
             stats.Add(VehicleComponentUI.DisplayStat.BarWithTooltip("Energy", "EN", Attribute.MaxEnergy, currentEnergy, maxEnergy, modifiedMaxEnergy));

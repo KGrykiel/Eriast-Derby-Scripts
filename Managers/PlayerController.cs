@@ -570,7 +570,7 @@ public class PlayerController : MonoBehaviour
 
     /// <summary>
     /// Handles target button click. 
-    /// If skill allows component targeting, shows component selection.
+    /// If skill has Precise targeting, shows component selection.
     /// Otherwise executes skill immediately.
     /// </summary>
     private void OnTargetButtonClicked(Vehicle v)
@@ -580,15 +580,15 @@ public class PlayerController : MonoBehaviour
         if (targetSelectionPanel != null)
             targetSelectionPanel.SetActive(false);
 
-        // Check if selected skill allows component targeting
-        if (selectedSkill != null && selectedSkill.allowsComponentTargeting)
+        // Check if selected skill requires precise component targeting
+        if (selectedSkill != null && selectedSkill.targetPrecision == TargetPrecision.Precise)
         {
-            // Show component selection UI
+            // Show component selection UI for precise targeting
             ShowComponentSelection(v);
         }
         else
         {
-            // Execute skill immediately with vehicle target
+            // VehicleOnly or Auto targeting - execute immediately
             ExecuteSkillImmediately();
         }
     }

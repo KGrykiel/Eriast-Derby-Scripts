@@ -2,6 +2,31 @@
 using System.Collections.Generic;
 using Skills.Helpers;
 
+public enum TargetPrecision
+{
+    /// <summary>
+    /// Vehicle-only targeting. Always hits chassis regardless of player selection.
+    /// Used for: Area attacks, cannons, non-precise weapons.
+    /// UI: No component selector shown.
+    /// </summary>
+    VehicleOnly,
+
+    /// <summary>
+    /// Automatic routing based on effect attributes. Player targets vehicle, system routes to appropriate component.
+    /// Used for: Debuffs (Slow → Drive), buffs (Shield → Chassis), most abilities.
+    /// UI: No component selector shown.
+    /// </summary>
+    Auto,
+
+    /// <summary>
+    /// Precise targeting. Player must select specific component.
+    /// Used for: Sniper rifles, targeted abilities, surgical strikes.
+    /// UI: Component selector shown.
+    /// </summary>
+    Precise
+}
+
+
 /// <summary>
 /// Base skill data container (ScriptableObject).
 /// Execution logic is handled by SkillExecutor.
@@ -19,11 +44,11 @@ public abstract class Skill : ScriptableObject
     [SerializeField]
     public List<EffectInvocation> effectInvocations = new List<EffectInvocation>();
     
-    [Header("Component Targeting")]
-    [Tooltip("Can this skill target specific vehicle components?")]
-    public bool allowsComponentTargeting = false;
+    [Header("Targeting")]
+    [Tooltip("How precisely can this skill target components?")]
+    public TargetPrecision targetPrecision = TargetPrecision.Auto;
     
-    [Tooltip("Penalty when targeting components (applied only to chassis fallback roll)")]
+    [Tooltip("Penalty when targeting protected/internal components (applied to chassis fallback)")]
     [Range(0, 10)]
     public int componentTargetingPenalty = 2;
     

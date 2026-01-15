@@ -162,15 +162,15 @@ public class TurnController : MonoBehaviour
             ).WithMetadata("cannotMove", true)
              .WithMetadata("reason", reason);
             
-            // Update modifiers even if can't move (status effects still tick)
-            vehicle.UpdateModifiers();
+            // Update status effects even if can't move (duration ticks, periodic effects)
+            vehicle.UpdateStatusEffects();
             return;
         }
         
         // Add movement
         float speed = vehicle.speed;
         vehicle.progress += speed;
-        vehicle.UpdateModifiers();
+        vehicle.UpdateStatusEffects();
 
         // Movement logging removed - only log significant events (stage transitions)
         // This prevents granular low-importance clutter
@@ -235,7 +235,7 @@ public class TurnController : MonoBehaviour
 
         float speed = vehicle.speed;
         vehicle.progress += speed;
-        vehicle.UpdateModifiers();
+        vehicle.UpdateStatusEffects();
     }
 
     /// <summary>

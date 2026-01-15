@@ -85,6 +85,9 @@ public class Stage : MonoBehaviour
         // Stage entry logging removed - already handled by TurnController
         // This prevents duplicate "entered stage" events
 
+        // TODO: Convert onEnterModifiers to StatusEffects
+        // Stage hazards should apply StatusEffects to components, not direct modifiers
+        /*
         // Apply on-enter modifiers
         if (onEnterModifiers != null && onEnterModifiers.Count > 0)
         {
@@ -99,6 +102,7 @@ public class Stage : MonoBehaviour
                 }
             }
         }
+        */
 
         // Draw and trigger event card
         DrawAndTriggerEventCard(vehicle);
@@ -132,8 +136,9 @@ public class Stage : MonoBehaviour
              .WithMetadata("vehicleCount", vehiclesInStage.Count);
         }
 
-        // Remove all modifiers applied by this stage (using 'this' as the source)
-        vehicle.RemoveModifiersFromSource(this, true);
+        // TODO: Remove StatusEffects applied by this stage when leaving
+        // Stage hazards should use StatusEffects with stage as applier source
+        // vehicle.RemoveStatusEffectsFromSource(this);
 
         // Trigger Unity events
         onLeave?.Invoke();

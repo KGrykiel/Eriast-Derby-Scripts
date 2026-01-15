@@ -86,16 +86,20 @@ public class FocusPanel : MonoBehaviour
         status += $"<b>Armor Class:</b> {playerVehicle.armorClass:F0}\n";
         status += $"<b>Magic Resistance:</b> 10 \n\n"; // TODO: Replace with actual MR attribute
 
-        // Active Modifiers
-        var modifiers = playerVehicle.GetActiveModifiers();
-        if (modifiers.Count > 0)
+        // Active Status Effects across all components
+        var allStatusEffects = new List<StatusEffects.AppliedStatusEffect>();
+        foreach (var component in playerVehicle.AllComponents)
         {
-            status += $"<b>Active Modifiers ({modifiers.Count}):</b>\n";
-            foreach (var mod in modifiers)
+            allStatusEffects.AddRange(component.GetActiveStatusEffects());
+        }
+        
+        if (allStatusEffects.Count > 0)
+        {
+            status += $"<b>Active Status Effects ({allStatusEffects.Count}):</b>\n";
+            foreach (var applied in allStatusEffects)
             {
-                // NOTE: Duration display removed - will be handled by StatusEffect system in Phase 2
-                // ∞ symbol indicates permanent (equipment-style) modifiers
-                status += $"  • {mod.Type} {mod.Attribute} {mod.Value:+0;-0} (∞)\n";
+                string duration = applied.IsIndefinite ? "∞" : $"{applied.turnsRemaining}t";
+                status += $"  • {applied.template.effectName} ({duration})\n";
             }
         }
         else

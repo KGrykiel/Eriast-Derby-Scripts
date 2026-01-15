@@ -60,32 +60,6 @@ public class DriveComponent : VehicleComponent
         roleType = RoleType.Driver;
     }
     
-    /// <summary>
-    /// Get speed value with modifiers applied.
-    /// Uses StatCalculator for consistent modifier application.
-    /// </summary>
-    public float GetSpeed()
-    {
-        return Core.StatCalculator.GatherAttributeValue(this, Attribute.Speed, maxSpeed);
-    }
-    
-    /// <summary>
-    /// Get acceleration value with modifiers applied.
-    /// Uses StatCalculator for consistent modifier application.
-    /// </summary>
-    public float GetAcceleration()
-    {
-        return Core.StatCalculator.GatherAttributeValue(this, Attribute.Acceleration, acceleration);
-    }
-    
-    /// <summary>
-    /// Get stability value with modifiers applied.
-    /// Uses StatCalculator for consistent modifier application.
-    /// </summary>
-    public float GetStability()
-    {
-        return Core.StatCalculator.GatherAttributeValue(this, Attribute.Stability, stability);
-    }
     
     /// <summary>
     /// Get the stats to display in the UI for this drive component.

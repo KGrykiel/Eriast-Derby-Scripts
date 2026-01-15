@@ -31,13 +31,15 @@ namespace Skills.Helpers
             if (!SkillValidator.ValidateTarget(skill, user, mainTarget))
                 return false;
 
-            // Determine resolution strategy
-            if (skill.allowsComponentTargeting && targetComponent != null)
+            // Determine resolution strategy based on targeting precision
+            // Precise targeting with component selected uses special handling
+            if (skill.targetPrecision == TargetPrecision.Precise && targetComponent != null)
             {
                 return ExecuteComponentTargeted(skill, user, mainTarget, sourceComponent, targetComponent);
             }
             else
             {
+                // VehicleOnly and Auto both use standard targeting
                 return ExecuteStandardTargeting(skill, user, mainTarget, sourceComponent);
             }
         }

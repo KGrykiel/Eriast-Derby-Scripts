@@ -50,25 +50,6 @@ public class ChassisComponent : VehicleComponent
     // ==================== STATS ====================
     
     /// <summary>
-    /// Get maximum HP for this chassis (base + modifiers from status effects and equipment).
-    /// Uses StatCalculator for consistent modifier application.
-    /// </summary>
-    public int GetMaxHP()
-    {
-        float modified = Core.StatCalculator.GatherAttributeValue(this, Attribute.MaxHealth, maxHealth);
-        return Mathf.RoundToInt(modified);
-    }
-    
-    /// <summary>
-    /// Get component space capacity (with modifiers from StatCalculator).
-    /// </summary>
-    public int GetComponentSpace()
-    {
-        float modified = Core.StatCalculator.GatherAttributeValue(this, Attribute.ComponentSpace, componentSpace);
-        return Mathf.RoundToInt(modified);
-    }
-    
-    /// <summary>
     /// Get the stats to display in the UI for this chassis.
     /// Uses StatCalculator for modified values.
     /// </summary>
@@ -78,7 +59,7 @@ public class ChassisComponent : VehicleComponent
         
         // componentSpace is negative for chassis (provides space)
         int baseSpace = -componentSpace;
-        int modifiedSpace = -GetComponentSpace();
+        float modifiedSpace = -Core.StatCalculator.GatherAttributeValue(this, Attribute.ComponentSpace, componentSpace);
         if (baseSpace > 0 || modifiedSpace > 0)
         {
             stats.Add(VehicleComponentUI.DisplayStat.WithTooltip("Capacity", "CAP", Attribute.ComponentSpace, baseSpace, modifiedSpace));

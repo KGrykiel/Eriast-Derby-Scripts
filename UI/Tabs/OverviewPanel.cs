@@ -118,12 +118,12 @@ public class OverviewPanel : MonoBehaviour
                 display += $" Speed:{speed:F1}";
             }
 
-            // Modifier count (inline)
+            // Status effect count (inline)
             if (showModifiers)
             {
-                int modCount = vehicle.GetActiveModifiers().Count;
-                if (modCount > 0)
-                    display += $" Buffs:x{modCount}";
+                int statusCount = vehicle.AllComponents.Sum(c => c.GetActiveStatusEffects().Count);
+                if (statusCount > 0)
+                    display += $" Effects:x{statusCount}";
             }
 
             display += "\n";
