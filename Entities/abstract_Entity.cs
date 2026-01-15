@@ -93,8 +93,15 @@ public abstract class Entity : MonoBehaviour
     /// </summary>
     public virtual ResistanceLevel GetResistance(DamageType type)
     {
-        var resistance = resistances.FirstOrDefault(r => r.type == type);
-        return resistance.level != default ? resistance.level : ResistanceLevel.Normal;
+        // Find resistance entry for this damage type
+        foreach (var resistance in resistances)
+        {
+            if (resistance.type == type)
+                return resistance.level;
+        }
+        
+        // No resistance defined - return normal
+        return ResistanceLevel.Normal;
     }
 
     // ==================== DAMAGE & HEALING ====================

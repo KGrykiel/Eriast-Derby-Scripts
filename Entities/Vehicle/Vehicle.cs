@@ -256,8 +256,9 @@ public class Vehicle : MonoBehaviour
         // Direct damage always goes to chassis
         if (effect is DamageEffect)
             return chassis;
-        
+
         // Healing/restoration goes to chassis
+        // TODO: Consider energy restoration routing to power core?
         if (effect is ResourceRestorationEffect)
             return chassis;
         

@@ -84,6 +84,7 @@ namespace StatusEffects
     /// <summary>
     /// Defines a periodic effect (DoT, HoT, energy drain, etc.).
     /// Triggered at the start of each turn while the status effect is active.
+    /// Uses dice notation: 1d6+2 for variable, 0d0+5 for flat values.
     /// </summary>
     [Serializable]
     public class PeriodicEffectData
@@ -91,11 +92,44 @@ namespace StatusEffects
         [Tooltip("Type of periodic effect")]
         public PeriodicEffectType type;
         
-        [Tooltip("Value (damage/healing/energy amount)")]
-        public int value;
+        [Header("Value (Dice Notation)")]
+        [Tooltip("Number of dice (0 for flat value only)")]
+        public int diceCount = 0;
         
+        [Tooltip("Die size (4, 6, 8, 10, 12, 20)")]
+        public int dieSize = 6;
+        
+        [Tooltip("Flat bonus (for 0d0+5 or 2d6+3)")]
+        public int bonus = 5;
+        
+        [Header("Damage Type")]
         [Tooltip("Damage type (only used if type is Damage)")]
         public DamageType damageType = DamageType.Fire;
+        
+        /// <summary>
+        /// Get the total value for this periodic effect by rolling dice.
+        /// </summary>
+        public int RollValue()
+        {
+            if (diceCount <= 0)
+                return bonus; // Flat value only (0d0+5)
+            
+            return RollUtility.RollDice(diceCount, dieSize) + bonus;
+        }
+        
+        /// <summary>
+        /// Get dice notation string for display (e.g., "2d6+3" or "5" for flat).
+        /// </summary>
+        public string GetNotation()
+        {
+            if (diceCount <= 0)
+                return bonus.ToString();
+            
+            string notation = $"{diceCount}d{dieSize}";
+            if (bonus != 0)
+                notation += $"{bonus:+0;-0}";
+            return notation;
+        }
     }
 
     /// <summary>

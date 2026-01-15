@@ -506,12 +506,13 @@ namespace Combat
             {
                 foreach (var periodic in effect.periodicEffects)
                 {
+                    string notation = periodic.GetNotation();
                     string effectText = periodic.type switch
                     {
-                        PeriodicEffectType.Damage => $"  • <color=#FF4444>{periodic.value} {periodic.damageType} damage per turn</color>",
-                        PeriodicEffectType.Healing => $"  • <color=#44FF44>{periodic.value} healing per turn</color>",
-                        PeriodicEffectType.EnergyDrain => $"  • <color=#FF4444>-{periodic.value} energy per turn</color>",
-                        PeriodicEffectType.EnergyRestore => $"  • <color=#88DDFF>+{periodic.value} energy per turn</color>",
+                        PeriodicEffectType.Damage => $"  • <color=#FF4444>{notation} {periodic.damageType} damage per turn</color>",
+                        PeriodicEffectType.Healing => $"  • <color=#44FF44>{notation} healing per turn</color>",
+                        PeriodicEffectType.EnergyDrain => $"  • <color=#FF4444>-{notation} energy per turn</color>",
+                        PeriodicEffectType.EnergyRestore => $"  • <color=#88DDFF>+{notation} energy per turn</color>",
                         _ => ""
                     };
                     if (!string.IsNullOrEmpty(effectText))

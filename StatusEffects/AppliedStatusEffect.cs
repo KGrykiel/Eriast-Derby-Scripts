@@ -151,43 +151,61 @@ namespace StatusEffects
         
         /// <summary>
         /// Applies a single periodic effect to the target.
+        /// Uses the damage pipeline for proper resistance calculation and dice tracking.
         /// </summary>
         private void ApplyPeriodicEffect(PeriodicEffectData periodicEffect)
         {
             switch (periodicEffect.type)
             {
                 case PeriodicEffectType.Damage:
-                    ApplyPeriodicDamage(periodicEffect.value, periodicEffect.damageType);
+                    ApplyPeriodicDamage(periodicEffect);
                     break;
                 
                 case PeriodicEffectType.Healing:
-                    ApplyPeriodicHealing(periodicEffect.value);
+                    int healing = periodicEffect.RollValue();
+                    ApplyPeriodicHealing(healing);
                     break;
                 
                 case PeriodicEffectType.EnergyDrain:
-                    ApplyPeriodicEnergyDrain(periodicEffect.value);
+                    int drainAmount = periodicEffect.RollValue();
+                    ApplyPeriodicEnergyDrain(drainAmount);
                     break;
                 
                 case PeriodicEffectType.EnergyRestore:
-                    ApplyPeriodicEnergyRestore(periodicEffect.value);
+                    int restoreAmount = periodicEffect.RollValue();
+                    ApplyPeriodicEnergyRestore(restoreAmount);
                     break;
             }
         }
         
-        private void ApplyPeriodicDamage(int damage, DamageType damageType)
+        private void ApplyPeriodicDamage(PeriodicEffectData periodicEffect)
         {
-            // Apply environmental damage (no attacker entity)
-            // Uses flat damage for now - future enhancement: support dice in PeriodicEffectData
-            var result = DamageApplicator.ApplyEnvironmentalFlat(
-                damage: damage,
-                damageType: damageType,
-                target: target,
-                causalSource: template,
-                sourceType: DamageSource.Effect
-            );
-            
-            // TODO: Log periodic damage
-            // RaceHistory.Log($"{target.GetDisplayName()} takes {result.finalDamage} {damageType} damage from {template.effectName}");
+            // Use the proper damage pipeline with dice notation
+            // This handles rolling, resistance, HP reduction, and event emission
+            if (periodicEffect.diceCount > 0)
+            {
+                // Dice-based damage (e.g., 2d6+3)
+                DamageApplicator.ApplyEnvironmentalDice(
+                    diceCount: periodicEffect.diceCount,
+                    dieSize: periodicEffect.dieSize,
+                    bonus: periodicEffect.bonus,
+                    damageType: periodicEffect.damageType,
+                    target: target,
+                    causalSource: template,
+                    sourceType: DamageSource.Effect
+                );
+            }
+            else
+            {
+                // Flat damage (0d0+5)
+                DamageApplicator.ApplyEnvironmentalFlat(
+                    damage: periodicEffect.bonus,
+                    damageType: periodicEffect.damageType,
+                    target: target,
+                    causalSource: template,
+                    sourceType: DamageSource.Effect
+                );
+            }
         }
         
         private void ApplyPeriodicHealing(int healing)

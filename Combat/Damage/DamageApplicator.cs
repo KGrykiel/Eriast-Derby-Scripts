@@ -27,6 +27,7 @@ namespace Combat.Damage
         /// Apply damage using a pre-calculated result.
         /// This is the CORE method - all other methods funnel through here.
         /// Emits DamageEvent for logging (aggregated by CombatEventBus).
+        /// Always logs damage even if 0 (important for showing IMMUNE feedback).
         /// </summary>
         /// <param name="result">Pre-calculated damage with dice info</param>
         /// <param name="target">Entity receiving damage</param>
@@ -48,23 +49,24 @@ namespace Combat.Damage
                 return result ?? CreateEmptyResult(DamageType.Physical);
             }
             
-            if (result == null || result.RawTotal <= 0)
+            if (result == null)
             {
-                return result ?? CreateEmptyResult(DamageType.Physical);
+                result = CreateEmptyResult(DamageType.Physical);
             }
             
             // Get resistance level from target and apply it
             ResistanceLevel resistance = DamageCalculator.GetResistance(target, result.damageType);
             DamageCalculator.ApplyResistance(result, resistance);
             
-            // Apply damage to target
-            target.TakeDamage(result.finalDamage);
-            
-            // Emit event for logging (CombatEventBus handles aggregation)
+            // Apply damage to target (even if 0 - entity tracks this)
             if (result.finalDamage > 0)
             {
-                CombatEventBus.EmitDamage(result, attacker, target, causalSource, sourceType);
+                target.TakeDamage(result.finalDamage);
             }
+            
+            // ALWAYS emit event for logging, even if damage is 0
+            // This is critical for showing IMMUNE/RESISTANT feedback to players
+            CombatEventBus.EmitDamage(result, attacker, target, causalSource, sourceType);
             
             return result;
         }
