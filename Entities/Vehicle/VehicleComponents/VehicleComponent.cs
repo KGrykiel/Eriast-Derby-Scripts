@@ -323,22 +323,6 @@ public abstract class VehicleComponent : Entity
     // ==================== DAMAGE HANDLING (Override Entity) ====================
     
     /// <summary>
-    /// Override Entity.TakeDamage for component-specific damage handling.
-    /// </summary>
-    public override void TakeDamage(int damage)
-    {
-        if (isDestroyed) return;
-        
-        int oldHP = health;
-        health = Mathf.Max(health - damage, 0);
-        if (health <= 0 && !isDestroyed)
-        {
-            isDestroyed = true;
-            OnEntityDestroyed();
-        }
-    }
-    
-    /// <summary>
     /// Called when this component is destroyed (HP reaches 0).
     /// Override in subclasses for component-specific destruction effects.
     /// </summary>

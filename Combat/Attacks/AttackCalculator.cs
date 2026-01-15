@@ -162,21 +162,16 @@ namespace Assets.Scripts.Combat.Attacks
         
         private static void GatherStatusEffectModifiers(Entity entity, Attribute attribute, List<AttributeModifier> modifiers)
         {
-            foreach (var applied in entity.GetActiveStatusEffects())
+            // Delegate to StatCalculator - single source of truth for modifier gathering
+            // Get all modifiers for this attribute, then filter to only status effects
+            var (_, _, allModifiers) = StatCalculator.GatherAttributeValueWithBreakdown(entity, attribute, 0f);
+            
+            // Only add status effect modifiers (exclude cross-component equipment modifiers)
+            foreach (var mod in allModifiers)
             {
-                foreach (var modData in applied.template.modifiers)
+                if (mod.Category == ModifierCategory.StatusEffect && mod.Value != 0)
                 {
-                    if (modData.attribute == attribute)
-                    {
-                        if (modData.value != 0)
-                        {
-                            modifiers.Add(new AttributeModifier(
-                                modData.attribute,
-                                modData.type,
-                                modData.value,
-                                applied.template));
-                        }
-                    }
+                    modifiers.Add(mod);
                 }
             }
         }
