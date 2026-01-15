@@ -48,7 +48,7 @@ namespace Entities.Vehicle.VehicleComponents.ComponentTypes
             
             // Power core does NOT enable a role
             enablesRole = false;
-            roleName = "";
+            roleType = RoleType.None;
         }
         
         void Awake()
@@ -61,7 +61,7 @@ namespace Entities.Vehicle.VehicleComponents.ComponentTypes
             
             // Ensure role settings
             enablesRole = false;
-            roleName = "";
+            roleType = RoleType.None;
         }
         
         /// <summary>

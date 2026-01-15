@@ -13,9 +13,9 @@ namespace Entities.Vehicle.VehicleComponents
     public struct VehicleRole
     {
         /// <summary>
-        /// Name of the role (e.g., "Driver", "Gunner", "Navigator", "Engineer", or custom).
+        /// Type of the role (e.g., Driver, Gunner, Navigator, Technician).
         /// </summary>
-        public string roleName;
+        public RoleType roleType;
         
         /// <summary>
         /// The component that enables this role.
@@ -87,9 +87,9 @@ namespace Entities.Vehicle.VehicleComponents
         {
             if (assignedCharacter != null)
             {
-                return $"{assignedCharacter.characterName} ({roleName})";
+                return $"{assignedCharacter.characterName} ({roleType})";
             }
-            return $"[Unassigned] ({roleName})";
+            return $"[Unassigned] ({roleType})";
         }
         
         /// <summary>

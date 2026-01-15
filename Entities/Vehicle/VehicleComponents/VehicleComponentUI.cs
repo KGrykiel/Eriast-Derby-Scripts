@@ -155,7 +155,7 @@ public static class VehicleComponentUI
             status += "<color=yellow>[DISABLED]</color>\n";
         
         if (component.enablesRole)
-            status += $"Enables: {component.roleName}\n";
+            status += $"Enables: {component.roleType}\n";
         
         if (component.assignedCharacter != null)
             status += $"Operated by: {component.assignedCharacter.characterName}\n";

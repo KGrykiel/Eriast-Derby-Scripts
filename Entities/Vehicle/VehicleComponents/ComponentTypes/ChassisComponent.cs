@@ -34,7 +34,7 @@ public class ChassisComponent : VehicleComponent
         
         // Chassis does NOT enable a role
         enablesRole = false;
-        roleName = "";
+        roleType = RoleType.None;
     }
     
     void Awake()
@@ -44,7 +44,7 @@ public class ChassisComponent : VehicleComponent
         
         // Ensure role settings
         enablesRole = false;
-        roleName = "";
+        roleType = RoleType.None;
     }
     
     // ==================== STATS ====================

@@ -53,13 +53,13 @@ public class CustomComponent : VehicleComponent
         
         // Custom components don't enable roles by default
         enablesRole = false;
-        roleName = "";
+        roleType = RoleType.None;
     }
     
     void Awake()
     {
         // For custom components, don't lock the type
-        // User can change componentType, enablesRole, and roleName in Inspector
+        // User can change componentType, enablesRole, and roleType in Inspector
         // (via the CustomComponentEditor which overrides [ReadOnly])
     }
     

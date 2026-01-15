@@ -105,7 +105,7 @@ public class WeaponComponent : VehicleComponent
         
         // Each weapon ENABLES ONE "Gunner" role slot
         enablesRole = true;
-        roleName = "Gunner";
+        roleType = RoleType.Gunner;
     }
     
     void Awake()
@@ -115,7 +115,7 @@ public class WeaponComponent : VehicleComponent
         
         // Each weapon ENABLES ONE "Gunner" role slot
         enablesRole = true;
-        roleName = "Gunner";
+        roleType = RoleType.Gunner;
         
         // Initialize ammo
         currentAmmo = ammo;

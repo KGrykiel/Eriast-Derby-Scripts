@@ -60,9 +60,9 @@ public abstract class VehicleComponent : Entity
     [ReadOnly]
     public bool enablesRole = false;
     
-    [Tooltip("Name of the role this component enables (locked for specific component types)")]
+    [Tooltip("Type of role this component enables (locked for specific component types)")]
     [ReadOnly]
-    public string roleName = "";
+    public RoleType roleType = RoleType.None;
     
     [Header("Skills")]
     [Tooltip("Skills provided by this component (assigned in Inspector)")]
@@ -97,7 +97,7 @@ public abstract class VehicleComponent : Entity
         // Log component initialization
         if (enablesRole)
         {
-            Debug.Log($"[Component] {name} initialized on {vehicle.vehicleName}, enables role: {roleName}");
+            Debug.Log($"[Component] {name} initialized on {vehicle.vehicleName}, enables role: {roleType}");
         }
     }
     
@@ -366,7 +366,7 @@ public abstract class VehicleComponent : Entity
         // If this component enabled a role, that role is now unavailable
         if (enablesRole)
         {
-            Debug.Log($"[Component] Role '{roleName}' is no longer available on {vehicleName}");
+            Debug.Log($"[Component] Role '{roleType}' is no longer available on {vehicleName}");
         }
         
         // Notify subclasses

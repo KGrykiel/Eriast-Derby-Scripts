@@ -47,7 +47,7 @@ public class DriveComponent : VehicleComponent
         
         // Drive ENABLES the "Driver" role
         enablesRole = true;
-        roleName = "Driver";
+        roleType = RoleType.Driver;
     }
     
     void Awake()
@@ -57,7 +57,7 @@ public class DriveComponent : VehicleComponent
         
         // Drive ENABLES the "Driver" role
         enablesRole = true;
-        roleName = "Driver";
+        roleType = RoleType.Driver;
     }
     
     /// <summary>

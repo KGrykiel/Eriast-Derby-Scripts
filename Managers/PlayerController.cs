@@ -265,7 +265,7 @@ public class PlayerController : MonoBehaviour
                     statusIcon = "[ ]";  // Ready to act
                 
                 string characterName = role.assignedCharacter?.characterName ?? "Unassigned";
-                string tabText = $"{statusIcon} {role.roleName} ({characterName})";
+                string tabText = $"{statusIcon} {role.roleType} ({characterName})";
                 
                 roleTabButtons[i].GetComponentInChildren<TextMeshProUGUI>().text = tabText;
                 
@@ -298,7 +298,7 @@ public class PlayerController : MonoBehaviour
         {
             string characterName = currentRole.Value.assignedCharacter?.characterName ?? "Unassigned";
             string status = currentRole.Value.sourceComponent.hasActedThisTurn ? "- ACTED" : "- Ready";
-            currentRoleText.text = $"<b>{currentRole.Value.roleName}</b> ({characterName}) {status}";
+            currentRoleText.text = $"<b>{currentRole.Value.roleType}</b> ({characterName}) {status}";
         }
 
         // Show skills for this role
@@ -316,7 +316,7 @@ public class PlayerController : MonoBehaviour
         List<Skill> availableSkills = currentRole.Value.availableSkills;
         if (availableSkills == null)
         {
-            Debug.LogWarning($"[PlayerController] No available skills for role {currentRole.Value.roleName}");
+            Debug.LogWarning($"[PlayerController] No available skills for role {currentRole.Value.roleType}");
             return;
         }
 
@@ -337,7 +337,7 @@ public class PlayerController : MonoBehaviour
                 Skill skill = availableSkills[i];
                 if (skill == null)
                 {
-                    Debug.LogWarning($"[PlayerController] Null skill at index {i} for role {currentRole.Value.roleName}");
+                    Debug.LogWarning($"[PlayerController] Null skill at index {i} for role {currentRole.Value.roleType}");
                     skillButtons[i].gameObject.SetActive(false);
                     continue;
                 }
@@ -488,9 +488,9 @@ public class PlayerController : MonoBehaviour
     {
         if (!currentRole.HasValue) return;
         
-        string roleName = currentRole.Value.roleName;
+        string roleTypeName = currentRole.Value.roleType.ToString();
         string characterName = currentRole.Value.assignedCharacter?.characterName ?? "Unassigned";
-        string fullRoleName = $"{roleName} ({characterName})";
+        string fullRoleName = $"{roleTypeName} ({characterName})";
         
         if (skillSucceeded)
         {
@@ -501,7 +501,7 @@ public class PlayerController : MonoBehaviour
                 $"{fullRoleName} used {selectedSkill.name}",
                 playerVehicle.currentStage,
                 playerVehicle
-            ).WithMetadata("roleName", roleName)
+            ).WithMetadata("roleType", roleTypeName)
              .WithMetadata("skillName", selectedSkill.name)
              .WithMetadata("componentName", selectedSkillSourceComponent.name);
         }
@@ -514,7 +514,7 @@ public class PlayerController : MonoBehaviour
                 $"{fullRoleName} used {selectedSkill.name} but missed!",
                 playerVehicle.currentStage,
                 playerVehicle
-            ).WithMetadata("roleName", roleName)
+            ).WithMetadata("roleType", roleTypeName)
              .WithMetadata("skillName", selectedSkill.name)
              .WithMetadata("componentName", selectedSkillSourceComponent.name)
              .WithMetadata("missed", true);

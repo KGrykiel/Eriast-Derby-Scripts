@@ -94,7 +94,7 @@ namespace Entities.Vehicle
 
                 roles.Add(new VehicleRole
                 {
-                    roleName = component.roleName,
+                    roleType = component.roleType,
                     sourceComponent = component,
                     assignedCharacter = component.assignedCharacter,
                     availableSkills = component.GetAllSkills()

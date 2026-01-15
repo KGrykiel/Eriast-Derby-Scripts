@@ -625,7 +625,7 @@ public class VehicleInspectorPanel : MonoBehaviour
             if (roleName != null)
             {
                 roleName.gameObject.SetActive(showRoleInfo);
-                if (showRoleInfo) roleName.text = component.roleName;
+                if (showRoleInfo) roleName.text = component.roleType.ToString();
             }
             
             if (characterName != null)
@@ -757,7 +757,7 @@ public class VehicleInspectorPanel : MonoBehaviour
                     continue;
                 
                 string characterName = role.assignedCharacter?.characterName ?? "Unassigned";
-                info += $"  <b>{role.roleName}</b> ({characterName}):\n";
+                info += $"  <b>{role.roleType}</b> ({characterName}):\n";
                 
                 foreach (var skill in role.availableSkills)
                 {
