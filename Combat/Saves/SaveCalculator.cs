@@ -21,46 +21,54 @@ namespace Combat.Saves
     /// </summary>
     public static class SaveCalculator
     {
-        // ==================== SAVING THROWS ====================
+        // ==================== SAVE ROLLING ====================
         
         /// <summary>
-        /// Perform a saving throw. Target rolls d20 + save bonus vs DC.
-        /// Returns SaveResult with full breakdown for logging/tooltips.
+        /// Perform a saving throw for a skill. Calculates DC from skill and user.
+        /// This is the primary method for skill-based saves.
         /// </summary>
-        public static SaveResult PerformSavingThrow(
-            Entity target,
-            SaveType saveType,
-            int dc,
-            string sourceName = "Effect")
+        public static SaveResult PerformSavingThrow(Entity target, Skill skill, Entity dcSource)
         {
-            // Roll d20
-            int roll = RollUtility.RollD20();
+            int dc = CalculateSaveDC(skill, dcSource);
+            return PerformSavingThrow(target, skill.saveType, dc);
+        }
+        
+        /// <summary>
+        /// Perform a saving throw with explicit DC.
+        /// Use this for non-skill saves (environmental hazards, traps with fixed DC).
+        /// </summary>
+        public static SaveResult PerformSavingThrow(Entity target, SaveType saveType, int dc)
+        {
+            // Roll the d20
+            var result = RollSavingThrow(saveType);
             
-            // Create result
-            var result = SaveResult.FromD20(roll, saveType);
-            result.targetValue = dc;
-            
-            // Gather save modifiers (single source of truth)
+            // Gather and add save modifiers
             var modifiers = GatherSaveModifiers(target, saveType);
-            
-            // Add modifiers to result
-            foreach (var mod in modifiers)
-            {
-                result.modifiers.Add(mod);
-            }
+            AddModifiers(result, modifiers);
             
             // Evaluate: Success if Total >= DC
-            result.success = result.Total >= dc;
+            EvaluateAgainstDC(result, dc);
             
             return result;
+        }
+        
+        /// <summary>
+        /// Roll a d20 saving throw and create a save result.
+        /// </summary>
+        public static SaveResult RollSavingThrow(SaveType saveType)
+        {
+            int roll = RollUtility.RollD20();
+            return SaveResult.FromD20(roll, saveType);
         }
         
         // ==================== SAVE MODIFIER GATHERING ====================
         
         /// <summary>
-        /// Gather ALL save modifiers from all sources.
-        /// This is the SINGLE SOURCE OF TRUTH for save bonuses.
-        /// Returns list of AttributeModifiers for the save attribute.
+        /// Gather save modifiers from all sources.
+        /// 
+        /// Sources:
+        /// - Intrinsic (chassis): Base save value from chassis design
+        /// - Applied (buffs, debuffs): Pre-existing modifiers on entity
         /// </summary>
         public static List<AttributeModifier> GatherSaveModifiers(
             Entity target,
@@ -68,13 +76,13 @@ namespace Combat.Saves
         {
             var modifiers = new List<AttributeModifier>();
             
-            // 1. Base save from chassis
-            GatherBaseSaveModifiers(target, saveType, modifiers);
+            // 1. Intrinsic: Base save from chassis
+            GatherBaseSaveBonus(target, saveType, modifiers);
             
-            // 2. Entity modifiers (status effects + equipment bonuses from components)
+            // 2. Applied: Status effects and equipment
             if (target != null)
             {
-                GatherEntitySaveModifiers(target, saveType, modifiers);
+                GatherAppliedModifiers(target, saveType, modifiers);
             }
             
             return modifiers;
@@ -82,7 +90,10 @@ namespace Combat.Saves
         
         // ==================== MODIFIER SOURCES ====================
         
-        private static void GatherBaseSaveModifiers(Entity target, SaveType saveType, List<AttributeModifier> modifiers)
+        /// <summary>
+        /// Intrinsic: Chassis's base save value (vehicle design).
+        /// </summary>
+        private static void GatherBaseSaveBonus(Entity target, SaveType saveType, List<AttributeModifier> modifiers)
         {
             float baseSave = GetEntityBaseSave(target, saveType);
             
@@ -96,10 +107,12 @@ namespace Combat.Saves
             }
         }
         
-        private static void GatherEntitySaveModifiers(Entity target, SaveType saveType, List<AttributeModifier> modifiers)
+        /// <summary>
+        /// Applied: Status effects and equipment modifiers already on the entity.
+        /// Delegates to StatCalculator (single source of truth).
+        /// </summary>
+        private static void GatherAppliedModifiers(Entity target, SaveType saveType, List<AttributeModifier> modifiers)
         {
-            // Delegate to StatCalculator - single source of truth for modifier gathering
-            // Returns ALL modifiers on the entity for this save (status effects + equipment)
             var (_, _, allModifiers) = StatCalculator.GatherAttributeValueWithBreakdown(
                 target, 
                 SaveTypeToAttribute(saveType), 
@@ -112,6 +125,25 @@ namespace Combat.Saves
                     modifiers.Add(mod);
                 }
             }
+        }
+        
+        // ==================== RESULT HELPERS ====================
+        
+        private static void AddModifiers(SaveResult result, List<AttributeModifier> modifiers)
+        {
+            foreach (var mod in modifiers)
+            {
+                if (mod.Value != 0)
+                {
+                    result.modifiers.Add(mod);
+                }
+            }
+        }
+        
+        private static void EvaluateAgainstDC(SaveResult result, int dc)
+        {
+            result.targetValue = dc;
+            result.success = result.Total >= dc;
         }
         
         // ==================== DC CALCULATION ====================

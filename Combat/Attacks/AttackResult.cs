@@ -4,21 +4,6 @@ using System.Linq;
 namespace Combat.Attacks
 {
     /// <summary>
-    /// Category of attack roll for display purposes.
-    /// </summary>
-    public enum AttackCategory
-    {
-        /// <summary>Attack roll: d20 + attack bonus vs target AC</summary>
-        Attack,
-        
-        /// <summary>Skill check: d20 + skill bonus vs DC (future)</summary>
-        SkillCheck,
-        
-        /// <summary>Miscellaneous rolls</summary>
-        Other
-    }
-    
-    /// <summary>
     /// Result of an attack roll (d20 + attack bonus vs AC).
     /// 
     /// Flow: Attacker rolls d20 + attack bonus vs target's AC
@@ -31,9 +16,6 @@ namespace Combat.Attacks
     [System.Serializable]
     public class AttackResult
     {
-        /// <summary>Category of this roll (Attack, SkillCheck, etc.)</summary>
-        public AttackCategory category;
-        
         /// <summary>The actual d20 result (1-20)</summary>
         public int baseRoll;
         
@@ -49,9 +31,6 @@ namespace Combat.Attacks
         /// <summary>Target AC to beat</summary>
         public int targetValue;
         
-        /// <summary>Display name of target value ("AC" for attacks)</summary>
-        public string targetName = "AC";
-        
         /// <summary>Whether the attack hit (null if not yet evaluated)</summary>
         public bool? success;
         
@@ -66,20 +45,18 @@ namespace Combat.Attacks
             modifiers = new List<AttributeModifier>();
             dieSize = 20;
             diceCount = 1;
-            targetName = "AC";
         }
         
         /// <summary>
         /// Create an attack result from a d20 roll.
         /// </summary>
-        public static AttackResult FromD20(int baseRoll, AttackCategory category = AttackCategory.Attack)
+        public static AttackResult FromD20(int baseRoll)
         {
             return new AttackResult
             {
                 baseRoll = baseRoll,
                 dieSize = 20,
                 diceCount = 1,
-                category = category,
                 modifiers = new List<AttributeModifier>()
             };
         }

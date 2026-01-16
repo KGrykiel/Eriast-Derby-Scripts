@@ -34,8 +34,8 @@ namespace Skills.Helpers
                 return false;
             }
             
-            // Perform the saving throw
-            SaveResult saveRoll = PerformSavingThrow(skill, user, targetEntity);
+            // Perform the saving throw (SaveCalculator handles DC calculation)
+            SaveResult saveRoll = SaveCalculator.PerformSavingThrow(targetEntity, skill, user.chassis);
             
             // Emit event
             EmitSaveEvent(saveRoll, user, sourceComponent, targetEntity, targetComponent, skill);
@@ -67,22 +67,6 @@ namespace Skills.Helpers
         }
         
         /// <summary>
-        /// Perform the saving throw roll.
-        /// </summary>
-        private static SaveResult PerformSavingThrow(Skill skill, Vehicle user, Entity targetEntity)
-        {
-            // Calculate DC based on skill configuration and user
-            int dc = SaveCalculator.CalculateSaveDC(skill, user.chassis);
-            
-            // Target makes the save
-            return SaveCalculator.PerformSavingThrow(
-                target: targetEntity,
-                saveType: skill.saveType,
-                dc: dc,
-                sourceName: skill.name);
-        }
-        
-        /// <summary>
         /// Emit the appropriate combat event.
         /// </summary>
         private static void EmitSaveEvent(
@@ -94,13 +78,15 @@ namespace Skills.Helpers
             Skill skill)
         {
             Entity sourceEntity = sourceComponent != null ? sourceComponent : user.chassis;
+            string targetComponentName = targetComponent?.name;
             
             CombatEventBus.EmitSavingThrow(
                 saveRoll,
                 sourceEntity,
                 targetEntity,
                 skill,
-                succeeded: saveRoll.Succeeded);
+                succeeded: saveRoll.Succeeded,
+                targetComponentName: targetComponentName);
         }
     }
 }

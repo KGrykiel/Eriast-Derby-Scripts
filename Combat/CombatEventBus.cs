@@ -169,9 +169,10 @@ namespace Combat
             Entity source,
             Entity target,
             UnityEngine.Object causalSource,
-            bool succeeded)
+            bool succeeded,
+            string targetComponentName = null)
         {
-            Emit(new SavingThrowEvent(result, source, target, causalSource, succeeded));
+            Emit(new SavingThrowEvent(result, source, target, causalSource, succeeded, targetComponentName));
         }
         
         // ==================== UTILITY ====================

@@ -59,14 +59,18 @@ namespace Combat.Attacks
         public static AttackResult RollAttack()
         {
             int roll = RollUtility.RollD20();
-            return AttackResult.FromD20(roll, AttackCategory.Attack);
+            return AttackResult.FromD20(roll);
         }
         
         // ==================== ATTACK MODIFIER GATHERING ====================
         
         /// <summary>
-        /// Gather ALL attack modifiers from all sources.
-        /// Single source of truth for attack bonuses.
+        /// Gather attack modifiers from all sources.
+        /// 
+        /// Sources:
+        /// - Intrinsic (weapon, character): Raw values converted to modifiers here
+        /// - Applied (buffs, debuffs): Pre-existing modifiers on entity
+        /// - Skill-specific: Skill grants bonus/penalty (future)
         /// </summary>
         public static List<AttributeModifier> GatherAttackModifiers(
             Entity attacker,
@@ -75,22 +79,22 @@ namespace Combat.Attacks
         {
             var modifiers = new List<AttributeModifier>();
             
-            // 1. Weapon enhancement bonus
-            GatherWeaponAttackModifiers(sourceComponent, modifiers);
+            // 1. Intrinsic: Weapon enhancement bonus
+            GatherWeaponBonus(sourceComponent, modifiers);
             
-            // 2. Character attack bonus
-            GatherCharacterAttackModifiers(sourceComponent, modifiers);
+            // 2. Intrinsic: Character skill bonus
+            GatherCharacterBonus(sourceComponent, modifiers);
             
-            // 3. Entity modifiers (status effects + equipment)
+            // 3. Applied: Status effects and equipment
             if (attacker != null)
             {
-                GatherEntityAttackModifiers(attacker, modifiers);
+                GatherAppliedModifiers(attacker, modifiers);
             }
             
             // 4. Skill-specific modifiers (future)
             if (skill != null)
             {
-                GatherSkillAttackModifiers(skill, modifiers);
+                GatherSkillModifiers(skill, modifiers);
             }
             
             return modifiers;
@@ -98,7 +102,10 @@ namespace Combat.Attacks
         
         // ==================== MODIFIER SOURCES ====================
         
-        private static void GatherWeaponAttackModifiers(VehicleComponent sourceComponent, List<AttributeModifier> modifiers)
+        /// <summary>
+        /// Intrinsic: Weapon's inherent accuracy bonus.
+        /// </summary>
+        private static void GatherWeaponBonus(VehicleComponent sourceComponent, List<AttributeModifier> modifiers)
         {
             if (sourceComponent is WeaponComponent weapon && weapon.attackBonus != 0)
             {
@@ -110,7 +117,10 @@ namespace Combat.Attacks
             }
         }
         
-        private static void GatherCharacterAttackModifiers(VehicleComponent sourceComponent, List<AttributeModifier> modifiers)
+        /// <summary>
+        /// Intrinsic: Character's base attack bonus (skill).
+        /// </summary>
+        private static void GatherCharacterBonus(VehicleComponent sourceComponent, List<AttributeModifier> modifiers)
         {
             if (sourceComponent?.assignedCharacter != null)
             {
@@ -126,7 +136,11 @@ namespace Combat.Attacks
             }
         }
         
-        private static void GatherEntityAttackModifiers(Entity entity, List<AttributeModifier> modifiers)
+        /// <summary>
+        /// Applied: Status effects and equipment modifiers already on the entity.
+        /// Delegates to StatCalculator (single source of truth).
+        /// </summary>
+        private static void GatherAppliedModifiers(Entity entity, List<AttributeModifier> modifiers)
         {
             var (_, _, allModifiers) = StatCalculator.GatherAttributeValueWithBreakdown(entity, Attribute.AttackBonus, 0f);
             
@@ -139,9 +153,12 @@ namespace Combat.Attacks
             }
         }
         
-        private static void GatherSkillAttackModifiers(Skill skill, List<AttributeModifier> modifiers)
+        /// <summary>
+        /// Skill-specific: Skill grants attack bonus/penalty (e.g., "Power Attack").
+        /// </summary>
+        private static void GatherSkillModifiers(Skill skill, List<AttributeModifier> modifiers)
         {
-            // Future: Skill-specific attack bonuses (e.g., "Power Attack")
+            // Future: Skill-specific attack bonuses
         }
         
         // ==================== RESULT HELPERS ====================
@@ -172,7 +189,6 @@ namespace Combat.Attacks
         private static void EvaluateAgainstAC(AttackResult result, int ac)
         {
             result.targetValue = ac;
-            result.targetName = "AC";
             result.success = result.Total >= ac;
         }
         

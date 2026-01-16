@@ -43,7 +43,7 @@ namespace Combat
             
             if (result.targetValue > 0 && result.success.HasValue)
             {
-                output += $" vs {result.targetName} {result.targetValue}";
+                output += $" vs AC {result.targetValue}";
                 output += result.success.Value ? " - HIT" : " - MISS";
             }
             
@@ -58,8 +58,8 @@ namespace Combat
             if (result == null) return "No roll data";
             
             var sb = new StringBuilder();
-            sb.AppendLine($"Roll Breakdown ({result.category}):");
-            sb.AppendLine($"  Base {result.diceCount}d{result.dieSize}: {result.baseRoll}");
+            sb.AppendLine("Attack Roll Breakdown:");
+            sb.AppendLine($"  Base d{result.dieSize}: {result.baseRoll}");
             
             foreach (var mod in result.modifiers)
             {
@@ -75,10 +75,10 @@ namespace Combat
             
             if (result.targetValue > 0)
             {
-                sb.AppendLine($"  vs {result.targetName}: {result.targetValue}");
+                sb.AppendLine($"  vs AC: {result.targetValue}");
                 if (result.success.HasValue)
                 {
-                    sb.AppendLine($"  Result: {(result.success.Value ? "SUCCESS" : "FAILURE")}");
+                    sb.AppendLine($"  Result: {(result.success.Value ? "HIT" : "MISS")}");
                 }
             }
             

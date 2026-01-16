@@ -34,9 +34,6 @@ namespace Combat.Saves
         /// <summary>DC to beat</summary>
         public int targetValue;
         
-        /// <summary>Display name of target value (always "DC" for saves)</summary>
-        public string targetName = "DC";
-        
         /// <summary>Whether the save succeeded (null if not yet evaluated)</summary>
         public bool? success;
         
@@ -54,7 +51,6 @@ namespace Combat.Saves
             modifiers = new List<AttributeModifier>();
             dieSize = 20;
             diceCount = 1;
-            targetName = "DC";
         }
         
         /// <summary>
@@ -68,7 +64,6 @@ namespace Combat.Saves
                 dieSize = 20,
                 diceCount = 1,
                 saveType = saveType,
-                targetName = "DC",
                 modifiers = new List<AttributeModifier>()
             };
         }

@@ -193,18 +193,23 @@ namespace Combat
         /// <summary>Whether the target successfully saved (resisted the effect)</summary>
         public bool Succeeded { get; set; }
         
+        /// <summary>Name of targeted component (if component targeting)</summary>
+        public string TargetComponentName { get; set; }
+        
         public SavingThrowEvent(
             SaveResult result,
             Entity source,
             Entity target,
             UnityEngine.Object causalSource,
-            bool succeeded)
+            bool succeeded,
+            string targetComponentName = null)
         {
             Result = result;
             Source = source;
             Target = target;
             CausalSource = causalSource;
             Succeeded = succeeded;
+            TargetComponentName = targetComponentName;
         }
     }
 }
