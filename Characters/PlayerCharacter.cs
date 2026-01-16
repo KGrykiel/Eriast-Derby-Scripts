@@ -23,6 +23,10 @@ public class PlayerCharacter : ScriptableObject
     // public CharacterClass characterClass;
     // public int level = 1;
     
+    [Header("Combat Stats")]
+    [Tooltip("Base attack bonus (abstracts skill, proficiency, attributes, etc.)")]
+    public int baseAttackBonus = 0;
+    
     [Header("Character Skills")]
     [Tooltip("Personal skills this character brings (independent of component)")]
     public List<Skill> personalSkills = new List<Skill>();

@@ -662,6 +662,13 @@ namespace Combat
                   .WithMetadata("result", evt.IsHit ? "hit" : "miss")
                   .WithMetadata("rollBreakdown", evt.Result != null ? FormatAttackDetailed(evt.Result) : "");
             
+            // Add target's AC breakdown for tooltip
+            if (evt.Target != null)
+            {
+                var (totalAC, baseAC, acModifiers) = StatCalculator.GatherDefenseValueWithBreakdown(evt.Target);
+                logEvt.WithMetadata("defenseBreakdown", FormatDefenseDetailed(totalAC, baseAC, acModifiers, "AC"));
+            }
+            
             if (!string.IsNullOrEmpty(evt.TargetComponentName))
             {
                 logEvt.WithMetadata("targetComponent", evt.TargetComponentName);

@@ -106,7 +106,7 @@ namespace Combat.Attacks
         {
             var modifiers = new List<AttributeModifier>();
             
-            // 1. Weapon attack bonus
+            // 1. Weapon enhancement bonus (inherent weapon accuracy)
             if (sourceComponent is WeaponComponent weapon && weapon.attackBonus != 0)
             {
                 modifiers.Add(new AttributeModifier(
@@ -116,20 +116,8 @@ namespace Combat.Attacks
                     weapon));
             }
             
-            // 2. Vehicle/Character base attack bonus
-            Vehicle attackerVehicle = GetVehicleFromEntity(attacker);
-            if (attackerVehicle != null)
-            {
-                int vehicleBonus = GetVehicleAttackBonus(attackerVehicle);
-                if (vehicleBonus != 0)
-                {
-                    modifiers.Add(new AttributeModifier(
-                        Attribute.AttackBonus,
-                        ModifierType.Flat,
-                        vehicleBonus,
-                        attackerVehicle));
-                }
-            }
+            // 2. Character attack bonus (from component's assigned character)
+            GatherCharacterAttackModifiers(sourceComponent, modifiers);
             
             // 3. Status effect attack modifiers
             if (attacker != null)
@@ -137,7 +125,8 @@ namespace Combat.Attacks
                 GatherStatusEffectModifiers(attacker, Attribute.AttackBonus, modifiers);
             }
             
-            // 4. Component-based attack modifiers
+            // 4. Component-based attack modifiers (e.g., targeting computers)
+            Vehicle attackerVehicle = GetVehicleFromEntity(attacker);
             if (attackerVehicle != null)
             {
                 GatherComponentAttackModifiers(attackerVehicle, sourceComponent, modifiers);
@@ -154,10 +143,20 @@ namespace Combat.Attacks
         
         // ==================== MODIFIER SOURCES ====================
         
-        private static int GetVehicleAttackBonus(Vehicle vehicle)
+        private static void GatherCharacterAttackModifiers(VehicleComponent sourceComponent, List<AttributeModifier> modifiers)
         {
-            // Future: Pull from pilot stats, vehicle upgrades, etc.
-            return 0;
+            if (sourceComponent?.assignedCharacter != null)
+            {
+                int charBonus = sourceComponent.assignedCharacter.baseAttackBonus;
+                if (charBonus != 0)
+                {
+                    modifiers.Add(new AttributeModifier(
+                        Attribute.AttackBonus,
+                        ModifierType.Flat,
+                        charBonus,
+                        sourceComponent.assignedCharacter));
+                }
+            }
         }
         
         private static void GatherStatusEffectModifiers(Entity entity, Attribute attribute, List<AttributeModifier> modifiers)

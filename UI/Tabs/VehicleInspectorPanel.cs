@@ -320,7 +320,8 @@ public class VehicleInspectorPanel : MonoBehaviour
                 }
                 else
                 {
-                    vehicleSpeedValueText.text = "0";
+                    // No drive component - show 0 with no modifiers (resets color to white)
+                    speedDisplay.UpdateDisplaySimple(0, 0, "0");
                 }
             }
             else
@@ -346,6 +347,11 @@ public class VehicleInspectorPanel : MonoBehaviour
                     modifiedAC.ToString()
                 );
             }
+            else if (acDisplay != null)
+            {
+                // No chassis - show default AC with no modifiers (resets color to white)
+                acDisplay.UpdateDisplaySimple(10, 10, selectedVehicle.armorClass.ToString());
+            }
             else
             {
                 vehicleACValueText.text = selectedVehicle.armorClass.ToString();
@@ -368,6 +374,11 @@ public class VehicleInspectorPanel : MonoBehaviour
                     modifiedRegen,
                     $"{modifiedRegen:F1}"
                 );
+            }
+            else if (regenDisplay != null)
+            {
+                // No power core - show 0 with no modifiers (resets color to white)
+                regenDisplay.UpdateDisplaySimple(0, 0, $"{selectedVehicle.energyRegen:F1}");
             }
             else
             {

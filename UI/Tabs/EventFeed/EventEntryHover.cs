@@ -58,7 +58,16 @@ public class EventEntryHover : MonoBehaviour, IPointerEnterHandler, IPointerExit
         // Check for roll breakdown
         if (evt.metadata.ContainsKey("rollBreakdown") && evt.metadata["rollBreakdown"] is string rollBreakdown)
         {
+            sb.AppendLine("<b>Attack Roll:</b>");
             sb.AppendLine(rollBreakdown);
+        }
+        
+        // Check for defense breakdown (AC)
+        if (evt.metadata.ContainsKey("defenseBreakdown") && evt.metadata["defenseBreakdown"] is string defenseBreakdown)
+        {
+            if (sb.Length > 0) sb.AppendLine();
+            sb.AppendLine("<b>Target Defense:</b>");
+            sb.AppendLine(defenseBreakdown);
         }
 
         // Check for damage breakdown
