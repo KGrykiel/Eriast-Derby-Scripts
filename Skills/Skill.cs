@@ -1,6 +1,7 @@
 ﻿using UnityEngine;
 using System.Collections.Generic;
 using Skills.Helpers;
+using Combat.Saves;
 
 public enum TargetPrecision
 {
@@ -39,6 +40,13 @@ public abstract class Skill : ScriptableObject
     [Header("Roll Configuration")]
     [Tooltip("What type of roll does this skill require?")]
     public SkillRollType skillRollType = SkillRollType.None;
+    
+    [Header("Saving Throw Configuration")]
+    [Tooltip("If skillRollType = SavingThrow, what save must target make?")]
+    public SaveType saveType = SaveType.Mobility;
+    
+    [Tooltip("Base difficulty class for saving throw (before user bonuses)")]
+    public int saveDCBase = 15;
 
     [Header("Effects")]
     [SerializeField]

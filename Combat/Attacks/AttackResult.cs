@@ -8,52 +8,58 @@ namespace Combat.Attacks
     /// </summary>
     public enum AttackCategory
     {
-        Attack,         // d20 vs AC
-        SkillCheck,     // d20 vs DC
-        SavingThrow,    // d20 vs DC (future)
-        Other           // Misc rolls
+        /// <summary>Attack roll: d20 + attack bonus vs target AC</summary>
+        Attack,
+        
+        /// <summary>Skill check: d20 + skill bonus vs DC (future)</summary>
+        SkillCheck,
+        
+        /// <summary>Miscellaneous rolls</summary>
+        Other
     }
     
     /// <summary>
-    /// Complete result of a d20 attack roll.
-    /// Pure data class - use AttackCalculator for logic, CombatLogManager for display.
+    /// Result of an attack roll (d20 + attack bonus vs AC).
+    /// 
+    /// Flow: Attacker rolls d20 + attack bonus vs target's AC
+    /// Success = Total >= AC (attacker hits)
+    /// 
+    /// Pure data class:
+    /// - Use AttackCalculator for roll logic
+    /// - Use CombatLogManager for display formatting
     /// </summary>
     [System.Serializable]
     public class AttackResult
     {
-        /// <summary>Category of this roll</summary>
+        /// <summary>Category of this roll (Attack, SkillCheck, etc.)</summary>
         public AttackCategory category;
         
         /// <summary>The actual d20 result (1-20)</summary>
         public int baseRoll;
         
-        /// <summary>Size of die rolled (always 20 for attacks)</summary>
+        /// <summary>Size of die rolled (always 20)</summary>
         public int dieSize = 20;
         
-        /// <summary>Number of dice (always 1 for attacks)</summary>
+        /// <summary>Number of dice (always 1)</summary>
         public int diceCount = 1;
         
-        /// <summary>All bonuses and penalties applied (as AttributeModifiers)</summary>
+        /// <summary>All bonuses and penalties applied to the attack</summary>
         public List<AttributeModifier> modifiers;
         
-        /// <summary>Target AC/DC value</summary>
+        /// <summary>Target AC to beat</summary>
         public int targetValue;
         
-        /// <summary>Name of target value ("AC", "DC", etc.)</summary>
+        /// <summary>Display name of target value ("AC" for attacks)</summary>
         public string targetName = "AC";
         
-        /// <summary>Whether the attack succeeded (null if not yet evaluated)</summary>
+        /// <summary>Whether the attack hit (null if not yet evaluated)</summary>
         public bool? success;
         
-        /// <summary>
-        /// Total roll after all modifiers (baseRoll + sum of modifiers).
-        /// </summary>
-        public int Total => baseRoll + modifiers.Sum(m => (int)m.Value);
+        /// <summary>Total roll after all modifiers (baseRoll + sum of modifiers)</summary>
+        public int Total => baseRoll + TotalModifier;
         
-        /// <summary>
-        /// Sum of all modifiers (excluding base roll).
-        /// </summary>
-        public int TotalModifier => modifiers.Sum(m => (int)m.Value);
+        /// <summary>Sum of all modifiers (excluding base roll)</summary>
+        public int TotalModifier => modifiers?.Sum(m => (int)m.Value) ?? 0;
         
         public AttackResult()
         {

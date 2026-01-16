@@ -7,6 +7,7 @@ using RacingGame.Events;
 using StatusEffects;
 using Combat.Attacks;
 using Combat.Damage;
+using Combat.Saves;
 using Core;
 using EventType = RacingGame.Events.EventType;
 
@@ -80,6 +81,119 @@ namespace Combat
                     sb.AppendLine($"  Result: {(result.success.Value ? "SUCCESS" : "FAILURE")}");
                 }
             }
+            
+            return sb.ToString();
+        }
+        
+        /// <summary>
+        /// Format a saving throw result for display.
+        /// Short format: "18 (d20: 15, +3 Mobility) vs DC 15 - SAVED"
+        /// </summary>
+        public static string FormatSaveShort(SaveResult result)
+        {
+            if (result == null) return "No roll";
+            
+            string modStr = result.TotalModifier >= 0 
+                ? $"+{result.TotalModifier}" 
+                : $"{result.TotalModifier}";
+            string output = $"{result.Total} (d{result.dieSize}: {result.baseRoll}{modStr})";
+            
+            if (result.targetValue > 0 && result.success.HasValue)
+            {
+                output += $" vs DC {result.targetValue}";
+                output += result.Succeeded ? " - SAVED" : " - FAILED";
+            }
+            
+            return output;
+        }
+        
+        /// <summary>
+        /// Format a saving throw result with full breakdown for tooltips.
+        /// </summary>
+        public static string FormatSaveDetailed(SaveResult result)
+        {
+            if (result == null) return "No roll data";
+            
+            var sb = new StringBuilder();
+            sb.AppendLine($"{result.saveType} Save:");
+            sb.AppendLine($"  Base d{result.dieSize}: {result.baseRoll}");
+            
+            foreach (var mod in result.modifiers)
+            {
+                string sign = mod.Value >= 0 ? "+" : "";
+                string sourceInfo = mod.Source?.name != mod.SourceDisplayName 
+                    ? $" ({mod.Source?.name})" 
+                    : "";
+                sb.AppendLine($"  {mod.SourceDisplayName}: {sign}{(int)mod.Value}{sourceInfo}");
+            }
+            
+            sb.AppendLine("  ─────────────");
+            sb.AppendLine($"  Total: {result.Total}");
+            
+            if (result.targetValue > 0)
+            {
+                sb.AppendLine($"  vs DC: {result.targetValue}");
+                if (result.success.HasValue)
+                {
+                    string resultText = result.Succeeded ? "SAVED (resisted)" : "FAILED (affected)";
+                    sb.AppendLine($"  Result: {resultText}");
+                }
+            }
+            
+            return sb.ToString();
+        }
+        
+        /// <summary>
+        /// Format a save DC breakdown for tooltips.
+        /// Example output:
+        /// Save DC Breakdown:
+        ///   Base DC: 15 (Fireball)
+        ///   ─────────────
+        ///   Total DC: 15
+        /// </summary>
+        public static string FormatDCDetailed(int dc, string skillName, SaveType saveType)
+        {
+            var sb = new StringBuilder();
+            sb.AppendLine($"{saveType} Save DC Breakdown:");
+            sb.AppendLine($"  Base DC: {dc} ({skillName})");
+            // Future: Add user bonuses to DC here
+            sb.AppendLine("  ─────────────");
+            sb.AppendLine($"  Total DC: {dc}");
+            
+            return sb.ToString();
+        }
+        
+        /// <summary>
+        /// Format a save modifier breakdown for tooltips (target's save bonus).
+        /// </summary>
+        public static string FormatSaveModifiersDetailed(Entity target, SaveType saveType)
+        {
+            if (target == null)
+            {
+                return $"{saveType} Save: +0";
+            }
+            
+            var modifiers = SaveCalculator.GatherSaveModifiers(target, saveType);
+            int total = modifiers.Sum(m => (int)m.Value);
+            
+            var sb = new StringBuilder();
+            sb.AppendLine($"{saveType} Save Breakdown:");
+            
+            if (modifiers.Count == 0)
+            {
+                sb.AppendLine("  No modifiers (+0)");
+            }
+            else
+            {
+                foreach (var mod in modifiers)
+                {
+                    string sign = mod.Value >= 0 ? "+" : "";
+                    sb.AppendLine($"  {mod.SourceDisplayName}: {sign}{(int)mod.Value}");
+                }
+            }
+            
+            sb.AppendLine("  ─────────────");
+            sb.AppendLine($"  Total Bonus: {(total >= 0 ? "+" : "")}{total}");
             
             return sb.ToString();
         }
@@ -585,6 +699,7 @@ namespace Combat
             if (action == null || !action.HasEvents) return;
             
             LogAttackRolls(action);
+            LogSavingThrows(action);
             LogDamageByTarget(action);
             LogStatusEffects(action);
             LogRestorations(action);
@@ -611,6 +726,9 @@ namespace Combat
                     break;
                 case AttackRollEvent attack:
                     LogSingleAttackRoll(attack);
+                    break;
+                case SavingThrowEvent save:
+                    LogSingleSavingThrow(save);
                     break;
             }
         }
@@ -672,6 +790,62 @@ namespace Combat
             if (!string.IsNullOrEmpty(evt.TargetComponentName))
             {
                 logEvt.WithMetadata("targetComponent", evt.TargetComponentName);
+            }
+        }
+        
+        // ==================== SAVING THROW LOGGING ====================
+        
+        private static void LogSavingThrows(CombatAction action)
+        {
+            foreach (var saveEvent in action.GetSavingThrowEvents())
+            {
+                LogSingleSavingThrow(saveEvent, action);
+            }
+        }
+        
+        private static void LogSingleSavingThrow(SavingThrowEvent evt, CombatAction action = null)
+        {
+            Vehicle sourceVehicle = EntityHelpers.GetParentVehicle(evt.Source);
+            Vehicle targetVehicle = EntityHelpers.GetParentVehicle(evt.Target);
+            
+            string sourceName = sourceVehicle?.vehicleName ?? evt.Source?.GetDisplayName() ?? "Unknown";
+            string targetName = targetVehicle?.vehicleName ?? evt.Target?.GetDisplayName() ?? "Unknown";
+            string skillName = action?.SourceName ?? evt.CausalSource?.name ?? "effect";
+            
+            string saveTypeName = evt.Result?.saveType.ToString() ?? "Mobility";
+            
+            string resultText = evt.Succeeded 
+                ? "<color=#44FF44>Saved</color>" 
+                : "<color=#FF4444>Failed</color>";
+            
+            string message = $"{targetName} makes {saveTypeName} save vs {skillName}. {resultText}";
+            
+            // Failed saves are more impactful (effects will apply)
+            var importance = evt.Succeeded ? EventImportance.Medium : EventImportance.High;
+            
+            var logEvt = RaceHistory.Log(
+                EventType.Combat,
+                importance,
+                message,
+                targetVehicle?.currentStage,
+                sourceVehicle, targetVehicle
+            );
+            
+            logEvt.WithMetadata("skillName", skillName)
+                  .WithMetadata("result", evt.Succeeded ? "saved" : "failed")
+                  .WithMetadata("saveType", saveTypeName)
+                  .WithMetadata("rollBreakdown", evt.Result != null ? FormatSaveDetailed(evt.Result) : "");
+            
+            // Add DC breakdown for tooltip
+            if (evt.Result != null && evt.CausalSource is Skill skill)
+            {
+                logEvt.WithMetadata("dcBreakdown", FormatDCDetailed(evt.Result.targetValue, skill.name, evt.Result.saveType));
+            }
+            
+            // Add target's save modifier breakdown
+            if (evt.Target != null && evt.Result != null)
+            {
+                logEvt.WithMetadata("saveModifiersBreakdown", FormatSaveModifiersDetailed(evt.Target, evt.Result.saveType));
             }
         }
         

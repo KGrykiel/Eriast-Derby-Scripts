@@ -3,6 +3,7 @@ using UnityEngine;
 using StatusEffects;
 using Combat.Attacks;
 using Combat.Damage;
+using Combat.Saves;
 
 namespace Combat
 {
@@ -177,6 +178,33 @@ namespace Combat
             IsHit = isHit;
             TargetComponentName = targetComponentName;
             IsChassisFallback = isChassisFallback;
+        }
+    }
+    
+    /// <summary>
+    /// Event emitted when a saving throw is made (target resisting an effect).
+    /// Separate from attack rolls - saves are defensive reactions.
+    /// </summary>
+    public class SavingThrowEvent : CombatEvent
+    {
+        /// <summary>Full save result with modifiers</summary>
+        public SaveResult Result { get; set; }
+        
+        /// <summary>Whether the target successfully saved (resisted the effect)</summary>
+        public bool Succeeded { get; set; }
+        
+        public SavingThrowEvent(
+            SaveResult result,
+            Entity source,
+            Entity target,
+            UnityEngine.Object causalSource,
+            bool succeeded)
+        {
+            Result = result;
+            Source = source;
+            Target = target;
+            CausalSource = causalSource;
+            Succeeded = succeeded;
         }
     }
 }

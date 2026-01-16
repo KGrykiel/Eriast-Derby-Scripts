@@ -72,6 +72,10 @@ namespace Combat
         public IEnumerable<AttackRollEvent> GetAttackRollEvents() 
             => Events.OfType<AttackRollEvent>();
         
+        /// <summary>Get all saving throw events</summary>
+        public IEnumerable<SavingThrowEvent> GetSavingThrowEvents() 
+            => Events.OfType<SavingThrowEvent>();
+        
         /// <summary>Get damage events grouped by target</summary>
         public Dictionary<Entity, List<DamageEvent>> GetDamageByTarget()
         {

@@ -7,6 +7,7 @@ public enum Attribute
     Speed,
     ArmorClass,
     AttackBonus,
+    Mobility,      // Saving throw stat - dodging, evasion, reaction speed
     MaxHealth,
     MaxEnergy,
     EnergyRegen,

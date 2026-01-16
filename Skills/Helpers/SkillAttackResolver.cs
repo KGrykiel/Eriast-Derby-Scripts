@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 using Combat;
 using Combat.Attacks;
@@ -7,139 +8,175 @@ using Core;
 namespace Skills.Helpers
 {
     /// <summary>
-    /// High-level orchestrator for skill-based attacks.
+    /// Resolver for skills that use attack rolls.
     /// 
-    /// Uses AttackCalculator for:
-    /// - Rolling attacks
-    /// - Gathering modifiers
-    /// - Evaluating hits
+    /// Flow: User rolls d20 + attack bonus vs target's AC
+    /// - Hit = effects apply
+    /// - Miss = effects don't apply
     /// 
-    /// Uses StatCalculator for:
-    /// - Defense values (AC)
-    /// 
-    /// Handles skill-specific logic:
-    /// - Two-stage component targeting
-    /// - Emitting combat events
-    /// - Coordinating with SkillEffectApplicator
+    /// Handles:
+    /// - Standard attacks (vehicle targeting)
+    /// - Component attacks (single roll)
+    /// - Two-stage component attacks (component AC → chassis AC with penalty)
     /// </summary>
     public static class SkillAttackResolver
     {
         /// <summary>
-        /// Performs a skill roll if required. Returns null if no roll is needed.
-        /// Delegates to AttackCalculator for actual rolling and modifier gathering.
+        /// Execute an attack roll skill.
+        /// Returns true if effects were applied (attack hit).
         /// </summary>
-        public static AttackResult PerformSkillRoll(
+        public static bool Execute(
             Skill skill,
             Vehicle user,
-            Entity targetEntity,
-            VehicleComponent sourceComponent)
+            Vehicle mainTarget,
+            VehicleComponent sourceComponent,
+            VehicleComponent targetComponent)
         {
-            if (skill.skillRollType == SkillRollType.None)
-                return null;
+            // Special case: Precise component targeting with damage uses two-stage attack
+            if (skill.targetPrecision == TargetPrecision.Precise && 
+                targetComponent != null && 
+                HasDamageEffects(skill))
+            {
+                return ExecuteTwoStageAttack(skill, user, mainTarget, sourceComponent, targetComponent);
+            }
             
-            // Get the attacking entity (weapon or chassis)
+            // Standard attack (may target vehicle or component)
+            return ExecuteStandardAttack(skill, user, mainTarget, sourceComponent, targetComponent);
+        }
+        
+        // ==================== INTERNAL METHODS ====================
+        
+        /// <summary>
+        /// Standard attack - single roll against target's AC.
+        /// </summary>
+        private static bool ExecuteStandardAttack(
+            Skill skill,
+            Vehicle user,
+            Vehicle mainTarget,
+            VehicleComponent sourceComponent,
+            VehicleComponent targetComponent)
+        {
+            Entity targetEntity = ResolveTargetEntity(mainTarget, targetComponent);
             Entity attackerEntity = sourceComponent ?? user.chassis;
             
-            // Perform the attack using AttackCalculator
-            var result = AttackCalculator.PerformAttack(
+            var attackRoll = AttackCalculator.PerformAttack(
                 attacker: attackerEntity,
                 target: targetEntity,
                 sourceComponent: sourceComponent,
                 skill: skill);
             
-            return result;
+            // Emit event
+            EmitAttackEvent(attackRoll, attackerEntity, targetEntity, targetComponent, skill, isChassisFallback: false);
+            
+            if (attackRoll.success != true)
+            {
+                return false;
+            }
+            
+            // Hit - apply effects
+            SkillEffectApplicator.ApplyAllEffects(skill, user, mainTarget, sourceComponent, targetComponent);
+            return true;
         }
         
         /// <summary>
-        /// Attempts two-stage component attack: Component AC (no penalty) → Chassis AC (with penalty).
-        /// Effects are applied after successful hit via SkillEffectApplicator.
+        /// Two-stage component attack: Component AC (no penalty) → Chassis AC (with penalty).
         /// </summary>
-        public static bool AttemptTwoStageComponentAttack(
+        private static bool ExecuteTwoStageAttack(
             Skill skill,
             Vehicle user, 
             Vehicle mainTarget, 
-            VehicleComponent targetComponent,
-            string targetComponentName,
-            VehicleComponent sourceComponent)
+            VehicleComponent sourceComponent,
+            VehicleComponent targetComponent)
         {
             Entity attackerEntity = sourceComponent ?? user.chassis;
+            string targetComponentName = targetComponent.name;
             
             // ==================== STAGE 1: Component AC (NO PENALTY) ====================
             
-            var componentRoll = AttackCalculator.RollAttack(AttackCategory.Attack);
-            
-            // Gather modifiers (no penalty for direct component targeting)
-            var componentModifiers = AttackCalculator.GatherAttackModifiers(attackerEntity, sourceComponent, skill);
-            AttackCalculator.AddModifiers(componentRoll, componentModifiers);
-            
-            // Evaluate against component AC (use StatCalculator directly)
-            int componentAC = StatCalculator.GatherDefenseValue(targetComponent);
-            AttackCalculator.EvaluateAgainst(componentRoll, componentAC, "Component AC");
+            var componentRoll = AttackCalculator.PerformAttack(
+                attacker: attackerEntity,
+                target: targetComponent,
+                sourceComponent: sourceComponent,
+                skill: skill,
+                additionalPenalty: 0);
 
             if (componentRoll.success == true)
             {
-                // Component hit - emit event and apply effects
-                CombatEventBus.EmitAttackRoll(
-                    componentRoll, 
-                    attackerEntity, 
-                    targetComponent, 
-                    skill, 
-                    isHit: true, 
-                    targetComponentName);
-                
+                // Component hit - emit event and apply effects to component
+                EmitAttackEvent(componentRoll, attackerEntity, targetComponent, targetComponent, skill, isChassisFallback: false);
                 SkillEffectApplicator.ApplyAllEffects(skill, user, mainTarget, sourceComponent, targetComponent);
                 return true;
             }
 
             // Stage 1 Miss - emit event
-            CombatEventBus.EmitAttackRoll(
-                componentRoll, 
-                attackerEntity, 
-                targetComponent, 
-                skill, 
-                isHit: false, 
-                targetComponentName);
+            EmitAttackEvent(componentRoll, attackerEntity, targetComponent, targetComponent, skill, isChassisFallback: false);
 
             // ==================== STAGE 2: Chassis AC (WITH PENALTY) ====================
             
-            var chassisRoll = AttackCalculator.RollAttack(AttackCategory.Attack);
-            
-            // Gather modifiers WITH component targeting penalty
-            var chassisModifiers = AttackCalculator.GatherAttackModifiers(attackerEntity, sourceComponent, skill);
-            AttackCalculator.AddModifiers(chassisRoll, chassisModifiers);
-            AttackCalculator.AddModifier(chassisRoll, "Component Targeting Penalty", -skill.componentTargetingPenalty, skill.name);
-            
-            // Evaluate against chassis AC (use StatCalculator directly)
-            int chassisAC = StatCalculator.GatherDefenseValue(mainTarget.chassis);
-            AttackCalculator.EvaluateAgainst(chassisRoll, chassisAC, "Chassis AC");
+            var chassisRoll = AttackCalculator.PerformAttack(
+                attacker: attackerEntity,
+                target: mainTarget.chassis,
+                sourceComponent: sourceComponent,
+                skill: skill,
+                additionalPenalty: skill.componentTargetingPenalty);
 
             if (chassisRoll.success == true)
             {
-                // Chassis hit - emit event and apply effects
-                CombatEventBus.EmitAttackRoll(
-                    chassisRoll, 
-                    attackerEntity, 
-                    mainTarget.chassis, 
-                    skill, 
-                    isHit: true, 
-                    targetComponentName,
-                    isChassisFallback: true);
-                
+                // Chassis hit - emit event and apply effects to chassis (not component)
+                EmitAttackEvent(chassisRoll, attackerEntity, mainTarget.chassis, targetComponent, skill, isChassisFallback: true);
                 SkillEffectApplicator.ApplyAllEffects(skill, user, mainTarget, sourceComponent, null);
                 return true;
             }
 
             // Stage 2 Miss - emit event
-            CombatEventBus.EmitAttackRoll(
-                chassisRoll, 
-                attackerEntity, 
-                mainTarget.chassis, 
-                skill, 
-                isHit: false, 
-                targetComponentName,
-                isChassisFallback: true);
+            EmitAttackEvent(chassisRoll, attackerEntity, mainTarget.chassis, targetComponent, skill, isChassisFallback: true);
             
             return false;
+        }
+        
+        // ==================== HELPERS ====================
+        
+        /// <summary>
+        /// Resolve which entity the attack targets.
+        /// </summary>
+        private static Entity ResolveTargetEntity(Vehicle mainTarget, VehicleComponent targetComponent)
+        {
+            if (targetComponent != null)
+            {
+                return targetComponent;
+            }
+            return mainTarget?.chassis;
+        }
+        
+        /// <summary>
+        /// Emit attack roll event.
+        /// </summary>
+        private static void EmitAttackEvent(
+            AttackResult attackRoll,
+            Entity attackerEntity,
+            Entity targetEntity,
+            VehicleComponent targetComponent,
+            Skill skill,
+            bool isChassisFallback)
+        {
+            string targetCompName = targetComponent?.name;
+            
+            CombatEventBus.EmitAttackRoll(
+                attackRoll,
+                attackerEntity,
+                targetEntity,
+                skill,
+                isHit: attackRoll.success == true,
+                targetCompName,
+                isChassisFallback);
+        }
+        
+        /// <summary>
+        /// Check if skill has damage effects (determines two-stage behavior).
+        /// </summary>
+        private static bool HasDamageEffects(Skill skill)
+        {
+            return skill.effectInvocations.Any(e => e.effect is DamageEffect);
         }
     }
 }

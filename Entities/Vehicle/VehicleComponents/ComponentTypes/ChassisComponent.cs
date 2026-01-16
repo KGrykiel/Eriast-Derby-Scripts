@@ -11,6 +11,10 @@ using RacingGame.Events;
 /// </summary>
 public class ChassisComponent : VehicleComponent
 {
+    [Header("Chassis Stats")]
+    [Tooltip("Base mobility for saving throws (dodging, evasion). Higher = easier to dodge AOE/traps.")]
+    public int baseMobility = 8;
+    
     /// <summary>
     /// Called when component is first added or reset in Editor.
     /// Sets default values that appear immediately in Inspector.
@@ -27,6 +31,7 @@ public class ChassisComponent : VehicleComponent
         maxHealth = 100;      // This IS the vehicle's max HP
         health = 100;         // Start at full HP
         armorClass = 18;      // This IS the vehicle's AC
+        baseMobility = 8;     // Default mobility for saves
         componentSpace = -2000; // Provides space (negative value)
         
         // Chassis provides space, doesn't consume it
@@ -64,9 +69,10 @@ public class ChassisComponent : VehicleComponent
         {
             stats.Add(VehicleComponentUI.DisplayStat.WithTooltip("Capacity", "CAP", Attribute.ComponentSpace, baseSpace, modifiedSpace));
         }
-        
+
+        stats.Add(VehicleComponentUI.DisplayStat.WithTooltip("Mobility", "MBL", Attribute.Mobility, baseMobility, Core.StatCalculator.GatherAttributeValue(this, Attribute.Mobility, baseMobility)));
         // Don't add base class stats - chassis doesn't draw power
-        
+
         return stats;
     }
     

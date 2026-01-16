@@ -1,6 +1,5 @@
 using UnityEngine;
 using System.Collections.Generic;
-using Combat.Attacks;
 
 [CreateAssetMenu(menuName = "Racing/EventCards/RollEventCard")]
 public class RollEventCard : EventCard
@@ -16,13 +15,12 @@ public class RollEventCard : EventCard
 
     public override void Trigger(Vehicle vehicle, Stage stage)
     {
-        // Perform skill check using AttackCalculator
-        var result = AttackCalculator.PerformSkillCheck(
-            vehicle.chassis, 
-            difficulty, 
-            $"Event: {conditionDescription}");
+        // Simple d20 roll vs difficulty for stage events
+        // TODO: Replace with SkillCheckCalculator when implemented
+        int roll = RollUtility.RollD20();
+        bool success = roll >= difficulty;
 
-        if (result.success == true)
+        if (success)
         {
             ApplyEffectInvocations(rewardEffects, vehicle, stage);
         }

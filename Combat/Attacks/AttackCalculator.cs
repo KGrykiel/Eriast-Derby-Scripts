@@ -1,46 +1,26 @@
 ﻿using System.Collections.Generic;
-using System.Linq;
 using UnityEngine;
 using Core;
 
 namespace Combat.Attacks
 {
     /// <summary>
-    /// Central calculator for all attack roll logic.
+    /// Calculator for attack rolls (d20 + modifiers vs AC).
     /// 
     /// Responsibilities:
-    /// - Rolling d20 attacks (uses RollUtility)
+    /// - Rolling d20 attacks
     /// - Gathering attack modifiers from all sources
-    /// - Evaluating hit/miss
+    /// - Evaluating hit/miss against AC
     /// - Crit/fumble detection
     /// 
     /// DESIGN: Entities store raw base values. This calculator gathers modifiers
-    /// from all sources and computes final values. This keeps entities clean
-    /// and provides breakdown data for tooltips.
+    /// from all sources and computes final values. Provides breakdown data for tooltips.
     /// 
-    /// NOTE: Defense values (AC) are now delegated to StatCalculator (single source of truth).
+    /// NOTE: Defense values (AC) delegated to StatCalculator (single source of truth).
     /// </summary>
     public static class AttackCalculator
     {
         // ==================== ATTACK ROLLING ====================
-        
-        /// <summary>
-        /// Roll a d20 attack and create an attack result.
-        /// Uses RollUtility for the actual die roll.
-        /// </summary>
-        public static AttackResult RollAttack(AttackCategory category = AttackCategory.Attack)
-        {
-            int roll = RollUtility.RollD20();
-            return AttackResult.FromD20(roll, category);
-        }
-        
-        /// <summary>
-        /// Create an attack result from a specific roll value (for testing/predetermined rolls).
-        /// </summary>
-        public static AttackResult FromRoll(int baseRoll, AttackCategory category = AttackCategory.Attack)
-        {
-            return AttackResult.FromD20(baseRoll, category);
-        }
         
         /// <summary>
         /// Perform a complete attack roll with modifiers and evaluation.
@@ -54,7 +34,7 @@ namespace Combat.Attacks
             int additionalPenalty = 0)
         {
             // Roll the d20
-            var result = RollAttack(AttackCategory.Attack);
+            var result = RollAttack();
             
             // Gather and add attack modifiers
             var modifiers = GatherAttackModifiers(attacker, sourceComponent, skill);
@@ -63,41 +43,30 @@ namespace Combat.Attacks
             // Add any additional penalty (e.g., component targeting)
             if (additionalPenalty != 0)
             {
-                AddModifier(result, "Targeting Penalty", -additionalPenalty, skill?.name);
+                AddPenalty(result, additionalPenalty, "Targeting Penalty");
             }
             
-            // Get target's defense value and evaluate (use StatCalculator directly)
+            // Get target's defense value and evaluate
             int defenseValue = StatCalculator.GatherDefenseValue(target);
-            EvaluateAgainst(result, defenseValue, "AC");
+            EvaluateAgainstAC(result, defenseValue);
             
             return result;
         }
         
         /// <summary>
-        /// Perform a skill check (d20 vs DC).
+        /// Roll a d20 attack and create an attack result.
         /// </summary>
-        public static AttackResult PerformSkillCheck(
-            Entity checker,
-            int difficulty,
-            string checkName = "Skill Check")
+        public static AttackResult RollAttack()
         {
-            var result = RollAttack(AttackCategory.SkillCheck);
-            
-            // Future: gather skill check modifiers
-            // var modifiers = GatherSkillCheckModifiers(checker, checkName);
-            // AddModifiers(result, modifiers);
-            
-            EvaluateAgainst(result, difficulty, "DC");
-            
-            return result;
+            int roll = RollUtility.RollD20();
+            return AttackResult.FromD20(roll, AttackCategory.Attack);
         }
         
         // ==================== ATTACK MODIFIER GATHERING ====================
         
         /// <summary>
         /// Gather ALL attack modifiers from all sources.
-        /// This is the SINGLE SOURCE OF TRUTH for attack bonuses.
-        /// Returns list of AttributeModifiers for the AttackBonus attribute.
+        /// Single source of truth for attack bonuses.
         /// </summary>
         public static List<AttributeModifier> GatherAttackModifiers(
             Entity attacker,
@@ -106,33 +75,19 @@ namespace Combat.Attacks
         {
             var modifiers = new List<AttributeModifier>();
             
-            // 1. Weapon enhancement bonus (inherent weapon accuracy)
-            if (sourceComponent is WeaponComponent weapon && weapon.attackBonus != 0)
-            {
-                modifiers.Add(new AttributeModifier(
-                    Attribute.AttackBonus,
-                    ModifierType.Flat,
-                    weapon.attackBonus,
-                    weapon));
-            }
+            // 1. Weapon enhancement bonus
+            GatherWeaponAttackModifiers(sourceComponent, modifiers);
             
-            // 2. Character attack bonus (from component's assigned character)
+            // 2. Character attack bonus
             GatherCharacterAttackModifiers(sourceComponent, modifiers);
             
-            // 3. Status effect attack modifiers
+            // 3. Entity modifiers (status effects + equipment)
             if (attacker != null)
             {
-                GatherStatusEffectModifiers(attacker, Attribute.AttackBonus, modifiers);
+                GatherEntityAttackModifiers(attacker, modifiers);
             }
             
-            // 4. Component-based attack modifiers (e.g., targeting computers)
-            Vehicle attackerVehicle = GetVehicleFromEntity(attacker);
-            if (attackerVehicle != null)
-            {
-                GatherComponentAttackModifiers(attackerVehicle, sourceComponent, modifiers);
-            }
-            
-            // 5. Skill-specific modifiers
+            // 4. Skill-specific modifiers (future)
             if (skill != null)
             {
                 GatherSkillAttackModifiers(skill, modifiers);
@@ -142,6 +97,18 @@ namespace Combat.Attacks
         }
         
         // ==================== MODIFIER SOURCES ====================
+        
+        private static void GatherWeaponAttackModifiers(VehicleComponent sourceComponent, List<AttributeModifier> modifiers)
+        {
+            if (sourceComponent is WeaponComponent weapon && weapon.attackBonus != 0)
+            {
+                modifiers.Add(new AttributeModifier(
+                    Attribute.AttackBonus,
+                    ModifierType.Flat,
+                    weapon.attackBonus,
+                    weapon));
+            }
+        }
         
         private static void GatherCharacterAttackModifiers(VehicleComponent sourceComponent, List<AttributeModifier> modifiers)
         {
@@ -159,87 +126,28 @@ namespace Combat.Attacks
             }
         }
         
-        private static void GatherStatusEffectModifiers(Entity entity, Attribute attribute, List<AttributeModifier> modifiers)
+        private static void GatherEntityAttackModifiers(Entity entity, List<AttributeModifier> modifiers)
         {
-            // Delegate to StatCalculator - single source of truth for modifier gathering
-            // Get all modifiers for this attribute, then filter to only status effects
-            var (_, _, allModifiers) = StatCalculator.GatherAttributeValueWithBreakdown(entity, attribute, 0f);
+            var (_, _, allModifiers) = StatCalculator.GatherAttributeValueWithBreakdown(entity, Attribute.AttackBonus, 0f);
             
-            // Only add status effect modifiers (exclude cross-component equipment modifiers)
             foreach (var mod in allModifiers)
             {
-                if (mod.Category == ModifierCategory.StatusEffect && mod.Value != 0)
+                if (mod.Value != 0)
                 {
                     modifiers.Add(mod);
                 }
             }
         }
         
-        private static void GatherComponentAttackModifiers(Vehicle vehicle, VehicleComponent excludeComponent, List<AttributeModifier> modifiers)
-        {
-            // Future: Check for components that provide attack bonuses
-            // e.g., targeting systems, fire control computers
-        }
-        
         private static void GatherSkillAttackModifiers(Skill skill, List<AttributeModifier> modifiers)
         {
-            // Future: Skill-specific attack bonuses
-            // e.g., "Power Attack" adds bonus at cost of accuracy
+            // Future: Skill-specific attack bonuses (e.g., "Power Attack")
         }
         
-        private static int GatherSituationalDefenseModifiers(Entity target)
-        {
-            // Future: Cover bonuses, elevation, etc.
-            return 0;
-        }
+        // ==================== RESULT HELPERS ====================
         
-        private static Vehicle GetVehicleFromEntity(Entity entity)
+        private static void AddModifiers(AttackResult result, List<AttributeModifier> modifiers)
         {
-            if (entity is VehicleComponent component)
-            {
-                return component.ParentVehicle;
-            }
-            return null;
-        }
-        
-        // ==================== RESULT MODIFICATION ====================
-        
-        /// <summary>
-        /// Add a modifier to an attack result.
-        /// </summary>
-        public static void AddModifier(AttackResult result, string name, int value, string source = null)
-        {
-            if (value != 0)
-            {
-                result.modifiers.Add(new AttributeModifier(
-                    Attribute.AttackBonus,
-                    ModifierType.Flat,
-                    value,
-                    source != null ? null : null)); // Source is a string, not UnityEngine.Object
-            }
-        }
-        
-        /// <summary>
-        /// Add a modifier conditionally.
-        /// </summary>
-        public static void AddModifierIf(AttackResult result, bool condition, string name, int value, string source = null)
-        {
-            if (condition && value != 0)
-            {
-                result.modifiers.Add(new AttributeModifier(
-                    Attribute.AttackBonus,
-                    ModifierType.Flat,
-                    value,
-                    null));
-            }
-        }
-        
-        /// <summary>
-        /// Add multiple modifiers from a list.
-        /// </summary>
-        public static void AddModifiers(AttackResult result, IEnumerable<AttributeModifier> modifiers)
-        {
-            if (modifiers == null) return;
             foreach (var mod in modifiers)
             {
                 if (mod.Value != 0)
@@ -249,72 +157,31 @@ namespace Combat.Attacks
             }
         }
         
-        // ==================== EVALUATION ====================
-        
-        /// <summary>
-        /// Evaluate the roll against a target value (AC/DC).
-        /// Sets success to true if Total >= targetValue.
-        /// </summary>
-        public static void EvaluateAgainst(AttackResult result, int targetValue, string targetName = "AC")
+        private static void AddPenalty(AttackResult result, int penalty, string reason)
         {
-            result.targetValue = targetValue;
-            result.targetName = targetName;
-            result.success = result.Total >= targetValue;
+            if (penalty != 0)
+            {
+                result.modifiers.Add(new AttributeModifier(
+                    Attribute.AttackBonus,
+                    ModifierType.Flat,
+                    -penalty,
+                    null));
+            }
         }
         
-        /// <summary>
-        /// Check if this is a natural 20 (critical hit potential).
-        /// </summary>
+        private static void EvaluateAgainstAC(AttackResult result, int ac)
+        {
+            result.targetValue = ac;
+            result.targetName = "AC";
+            result.success = result.Total >= ac;
+        }
+        
+        // ==================== CRIT/FUMBLE ====================
+        
+        /// <summary>Check if this is a natural 20 (critical hit potential).</summary>
         public static bool IsNatural20(AttackResult result) => result.baseRoll == 20;
         
-        /// <summary>
-        /// Check if this is a natural 1 (automatic miss).
-        /// </summary>
+        /// <summary>Check if this is a natural 1 (automatic miss).</summary>
         public static bool IsNatural1(AttackResult result) => result.baseRoll == 1;
-        
-        // ==================== FLUENT BUILDER ====================
-        
-        /// <summary>
-        /// Create a modifier list builder for fluent API.
-        /// </summary>
-        public static AttackModifierBuilder BuildModifiers() => new AttackModifierBuilder();
-    }
-    
-    /// <summary>
-    /// Fluent builder for creating modifier lists.
-    /// </summary>
-    public class AttackModifierBuilder
-    {
-        private readonly List<AttributeModifier> modifiers = new List<AttributeModifier>();
-        
-        public AttackModifierBuilder Add(string name, int value, string source = null)
-        {
-            if (value != 0)
-            {
-                modifiers.Add(new AttributeModifier(
-                    Attribute.AttackBonus,
-                    ModifierType.Flat,
-                    value,
-                    null));
-            }
-            return this;
-        }
-        
-        public AttackModifierBuilder AddIf(bool condition, string name, int value, string source = null)
-        {
-            if (condition && value != 0)
-            {
-                modifiers.Add(new AttributeModifier(
-                    Attribute.AttackBonus,
-                    ModifierType.Flat,
-                    value,
-                    null));
-            }
-            return this;
-        }
-        
-        public List<AttributeModifier> Build() => modifiers;
-        
-        public static implicit operator List<AttributeModifier>(AttackModifierBuilder builder) => builder.Build();
     }
 }

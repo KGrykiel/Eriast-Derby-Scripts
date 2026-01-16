@@ -4,6 +4,7 @@ using UnityEngine;
 using StatusEffects;
 using Combat.Attacks;
 using Combat.Damage;
+using Combat.Saves;
 
 namespace Combat
 {
@@ -158,6 +159,19 @@ namespace Combat
             bool isChassisFallback = false)
         {
             Emit(new AttackRollEvent(result, source, target, causalSource, isHit, targetComponentName, isChassisFallback));
+        }
+        
+        /// <summary>
+        /// Emit a saving throw event.
+        /// </summary>
+        public static void EmitSavingThrow(
+            SaveResult result,
+            Entity source,
+            Entity target,
+            UnityEngine.Object causalSource,
+            bool succeeded)
+        {
+            Emit(new SavingThrowEvent(result, source, target, causalSource, succeeded));
         }
         
         // ==================== UTILITY ====================
