@@ -1,23 +1,28 @@
 using System;
 using UnityEngine;
 using Combat;
+using Entities.Vehicle.VehicleComponents.ComponentTypes;
 
 /// <summary>
 /// Universal resource restoration/drain effect.
-/// Restores or drains Health (chassis HP) or Energy (power core energy).
+/// Restores or drains Health or Energy from entities.
 /// 
 /// This effect is STATELESS - emits RestorationEvent for logging.
 /// 
-/// IMPORTANT: This effect should target the CHASSIS for health or POWER CORE for energy.
-/// The Vehicle.RouteEffectTarget() method handles routing if targeting the vehicle.
+/// DESIGN: This effect works DIRECTLY on the target entity passed to it. No routing!
+/// - Health: Restores entity.health
+/// - Energy: Restores entity.energy (if entity has energy property)
+/// 
+/// All routing logic is handled by SkillEffectApplicator.
+/// This effect is dumb - it just modifies whatever entity you give it.
 /// </summary>
 [System.Serializable]
 public class ResourceRestorationEffect : EffectBase
 {
     public enum ResourceType
     {
-        Health,   // Restores/drains chassis HP
-        Energy    // Restores/drains power core energy
+        Health,   // Restores/drains entity HP
+        Energy    // Restores/drains entity energy
     }
 
     [Header("Restoration Configuration")]
@@ -30,18 +35,17 @@ public class ResourceRestorationEffect : EffectBase
     /// <summary>
     /// Applies this restoration effect to the target entity.
     /// Emits RestorationEvent for logging via CombatEventBus.
+    /// Works ONLY on the entity passed - no routing!
     /// </summary>
     public override void Apply(Entity user, Entity target, UnityEngine.Object context = null, UnityEngine.Object source = null)
     {
-        // Get parent vehicle for context
-        Vehicle vehicle = GetParentVehicle(target);
-        if (vehicle == null) return;
+        if (target == null) return;
         
-        // Apply restoration based on resource type
+        // Apply restoration directly to target entity
         var breakdown = resourceType switch
         {
-            ResourceType.Health => ApplyHealthRestoration(vehicle),
-            ResourceType.Energy => ApplyEnergyRestoration(vehicle),
+            ResourceType.Health => ApplyHealthRestoration(target),
+            ResourceType.Energy => ApplyEnergyRestoration(target),
             _ => new RestorationBreakdown()
         };
         
@@ -57,26 +61,24 @@ public class ResourceRestorationEffect : EffectBase
     }
     
     /// <summary>
-    /// Apply health restoration to vehicle chassis.
+    /// Apply health restoration directly to entity.
+    /// No routing - just restores entity.health.
     /// </summary>
-    private RestorationBreakdown ApplyHealthRestoration(Vehicle vehicle)
+    private RestorationBreakdown ApplyHealthRestoration(Entity target)
     {
-        if (vehicle.chassis == null)
-            return new RestorationBreakdown();
-        
-        int oldValue = vehicle.health;
-        int maxValue = vehicle.maxHealth;
+        int oldValue = target.health;
+        int maxValue = target.maxHealth;
         int requestedChange = amount;
         
         // Clamp to valid range
-        vehicle.health = Mathf.Clamp(vehicle.health + amount, 0, maxValue);
+        target.health = Mathf.Clamp(target.health + amount, 0, maxValue);
         
-        int actualChange = vehicle.health - oldValue;
+        int actualChange = target.health - oldValue;
         
         return new RestorationBreakdown
         {
             oldValue = oldValue,
-            newValue = vehicle.health,
+            newValue = target.health,
             maxValue = maxValue,
             requestedChange = requestedChange,
             actualChange = actualChange
@@ -84,30 +86,35 @@ public class ResourceRestorationEffect : EffectBase
     }
     
     /// <summary>
-    /// Apply energy restoration to vehicle power core.
+    /// Apply energy restoration directly to entity.
+    /// Works on PowerCoreComponent (component.currentEnergy).
     /// </summary>
-    private RestorationBreakdown ApplyEnergyRestoration(Vehicle vehicle)
+    private RestorationBreakdown ApplyEnergyRestoration(Entity target)
     {
-        if (vehicle.powerCore == null)
-            return new RestorationBreakdown();
-        
-        int oldValue = vehicle.energy;
-        int maxValue = vehicle.maxEnergy;
-        int requestedChange = amount;
-        
-        // Clamp to valid range
-        vehicle.energy = Mathf.Clamp(vehicle.energy + amount, 0, maxValue);
-        
-        int actualChange = vehicle.energy - oldValue;
-        
-        return new RestorationBreakdown
+        // PowerCoreComponent stores energy
+        if (target is PowerCoreComponent powerCore)
         {
-            oldValue = oldValue,
-            newValue = vehicle.energy,
-            maxValue = maxValue,
-            requestedChange = requestedChange,
-            actualChange = actualChange
-        };
+            int oldValue = powerCore.currentEnergy;
+            int maxValue = powerCore.maxEnergy;
+            int requestedChange = amount;
+            
+            // Clamp to valid range
+            powerCore.currentEnergy = Mathf.Clamp(powerCore.currentEnergy + amount, 0, maxValue);
+            
+            int actualChange = powerCore.currentEnergy - oldValue;
+            
+            return new RestorationBreakdown
+            {
+                oldValue = oldValue,
+                newValue = powerCore.currentEnergy,
+                maxValue = maxValue,
+                requestedChange = requestedChange,
+                actualChange = actualChange
+            };
+        }
+        
+        Debug.LogWarning($"[ResourceRestorationEffect] Energy restoration requires PowerCoreComponent target. Got: {target.GetType().Name}");
+        return new RestorationBreakdown();
     }
     
     /// <summary>
@@ -149,3 +156,5 @@ public class RestorationBreakdown
         return $"{action} {Mathf.Abs(actualChange)} {resourceType} ({newValue}/{maxValue}){clampedText}";
     }
 }
+
+

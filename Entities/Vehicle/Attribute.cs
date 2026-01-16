@@ -7,7 +7,7 @@ public enum Attribute
     Speed,
     ArmorClass,
     AttackBonus,
-    Mobility,      // Saving throw stat - dodging, evasion, reaction speed
+    Mobility,      // Saving throw stat AND skill check stat - dodging, evasion, piloting, reaction speed
     MaxHealth,
     MaxEnergy,
     EnergyRegen,
@@ -31,6 +31,7 @@ public enum Attribute
     PhysicalResistance,
     
     // Add more as needed
+    // Future: Add Perception, Mechanics, etc. when you actually need them
 }
 
 public enum VehicleStatus

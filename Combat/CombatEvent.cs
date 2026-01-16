@@ -4,6 +4,7 @@ using StatusEffects;
 using Combat.Attacks;
 using Combat.Damage;
 using Combat.Saves;
+using Combat.SkillChecks;
 
 namespace Combat
 {
@@ -212,4 +213,31 @@ namespace Combat
             TargetComponentName = targetComponentName;
         }
     }
+    
+    /// <summary>
+    /// Event emitted when a skill check is made (character attempting a task).
+    /// Used for piloting, perception, mechanics, etc.
+    /// </summary>
+    public class SkillCheckEvent : CombatEvent
+    {
+        /// <summary>Full skill check result with modifiers</summary>
+        public SkillCheckResult Result { get; set; }
+        
+        /// <summary>Whether the check succeeded</summary>
+        public bool Succeeded { get; set; }
+        
+        public SkillCheckEvent(
+            SkillCheckResult result,
+            Entity source,
+            UnityEngine.Object causalSource,
+            bool succeeded)
+        {
+            Result = result;
+            Source = source;
+            Target = null; // Skill checks don't have a target
+            CausalSource = causalSource;
+            Succeeded = succeeded;
+        }
+    }
 }
+

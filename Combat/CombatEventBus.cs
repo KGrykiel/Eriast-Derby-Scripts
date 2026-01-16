@@ -5,6 +5,7 @@ using StatusEffects;
 using Combat.Attacks;
 using Combat.Damage;
 using Combat.Saves;
+using Combat.SkillChecks;
 
 namespace Combat
 {
@@ -173,6 +174,18 @@ namespace Combat
             string targetComponentName = null)
         {
             Emit(new SavingThrowEvent(result, source, target, causalSource, succeeded, targetComponentName));
+        }
+        
+        /// <summary>
+        /// Emit a skill check event.
+        /// </summary>
+        public static void EmitSkillCheck(
+            SkillCheckResult result,
+            Entity source,
+            UnityEngine.Object causalSource,
+            bool succeeded)
+        {
+            Emit(new SkillCheckEvent(result, source, causalSource, succeeded));
         }
         
         // ==================== UTILITY ====================

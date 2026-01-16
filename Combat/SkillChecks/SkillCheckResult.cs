@@ -1,23 +1,23 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 
-namespace Combat.Saves
+namespace Combat.SkillChecks
 {
     /// <summary>
-    /// Result of a saving throw (d20 + save bonus vs DC).
+    /// Result of a skill check (d20 + skill bonus vs DC).
     /// 
-    /// Flow: Target rolls d20 + save bonus vs effect's DC
-    /// Success = Total >= DC (target resists the effect)
+    /// Flow: Character rolls d20 + skill bonus vs challenge DC
+    /// Success = Total >= DC (character succeeds at the task)
     /// 
     /// Pure data class:
-    /// - Use SaveCalculator for roll logic
+    /// - Use SkillCheckCalculator for roll logic
     /// - Use CombatLogManager for display formatting
     /// </summary>
     [System.Serializable]
-    public class SaveResult : ID20RollResult
+    public class SkillCheckResult : ID20RollResult
     {
-        /// <summary>Type of save made (Mobility, etc.)</summary>
-        public SaveType saveType;
+        /// <summary>Type of skill being checked (Pilot, Perception, etc.)</summary>
+        public SkillCheckType checkType;
         
         /// <summary>The actual d20 result (1-20)</summary>
         public int baseRoll { get; set; }
@@ -28,13 +28,13 @@ namespace Combat.Saves
         /// <summary>Number of dice (always 1)</summary>
         public int diceCount { get; set; } = 1;
         
-        /// <summary>All bonuses and penalties applied to the save</summary>
+        /// <summary>All bonuses and penalties applied to the check</summary>
         public List<AttributeModifier> modifiers { get; set; }
         
         /// <summary>DC to beat</summary>
         public int targetValue { get; set; }
         
-        /// <summary>Whether the save succeeded (null if not yet evaluated)</summary>
+        /// <summary>Whether the check succeeded (null if not yet evaluated)</summary>
         public bool? success { get; set; }
         
         /// <summary>Total roll after all modifiers (baseRoll + sum of modifiers)</summary>
@@ -43,10 +43,10 @@ namespace Combat.Saves
         /// <summary>Sum of all modifiers (excluding base roll)</summary>
         public int TotalModifier => modifiers?.Sum(m => (int)m.Value) ?? 0;
         
-        /// <summary>Convenience property - true if the save succeeded (target resisted)</summary>
+        /// <summary>Convenience property - true if the check succeeded</summary>
         public bool Succeeded => success == true;
         
-        public SaveResult()
+        public SkillCheckResult()
         {
             modifiers = new List<AttributeModifier>();
             dieSize = 20;
@@ -54,16 +54,16 @@ namespace Combat.Saves
         }
         
         /// <summary>
-        /// Create a save result from a d20 roll.
+        /// Create a skill check result from a d20 roll.
         /// </summary>
-        public static SaveResult FromD20(int baseRoll, SaveType saveType)
+        public static SkillCheckResult FromD20(int baseRoll, SkillCheckType checkType)
         {
-            return new SaveResult
+            return new SkillCheckResult
             {
                 baseRoll = baseRoll,
                 dieSize = 20,
                 diceCount = 1,
-                saveType = saveType,
+                checkType = checkType,
                 modifiers = new List<AttributeModifier>()
             };
         }

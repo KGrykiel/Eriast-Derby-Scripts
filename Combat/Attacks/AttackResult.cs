@@ -14,25 +14,25 @@ namespace Combat.Attacks
     /// - Use CombatLogManager for display formatting
     /// </summary>
     [System.Serializable]
-    public class AttackResult
+    public class AttackResult : ID20RollResult
     {
         /// <summary>The actual d20 result (1-20)</summary>
-        public int baseRoll;
+        public int baseRoll { get; set; }
         
         /// <summary>Size of die rolled (always 20)</summary>
-        public int dieSize = 20;
+        public int dieSize { get; set; } = 20;
         
         /// <summary>Number of dice (always 1)</summary>
-        public int diceCount = 1;
+        public int diceCount { get; set; } = 1;
         
         /// <summary>All bonuses and penalties applied to the attack</summary>
-        public List<AttributeModifier> modifiers;
+        public List<AttributeModifier> modifiers { get; set; }
         
         /// <summary>Target AC to beat</summary>
-        public int targetValue;
+        public int targetValue { get; set; }
         
         /// <summary>Whether the attack hit (null if not yet evaluated)</summary>
-        public bool? success;
+        public bool? success { get; set; }
         
         /// <summary>Total roll after all modifiers (baseRoll + sum of modifiers)</summary>
         public int Total => baseRoll + TotalModifier;

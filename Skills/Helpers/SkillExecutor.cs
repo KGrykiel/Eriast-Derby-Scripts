@@ -4,6 +4,7 @@ using UnityEngine;
 using Combat;
 using Combat.Attacks;
 using Combat.Saves;
+using Combat.SkillChecks;
 
 namespace Skills.Helpers
 {
@@ -13,7 +14,7 @@ namespace Skills.Helpers
     /// Resolvers:
     /// - SkillAttackResolver: Attack rolls (user vs target AC)
     /// - SkillSaveResolver: Saving throws (target vs skill DC)
-    /// - (Future) SkillCheckResolver: Skill checks (user vs DC)
+    /// - SkillCheckResolver: Skill checks (user vs DC)
     /// - (Future) SkillOpposedResolver: Opposed checks (user vs target)
     /// 
     /// LOGGING: Events are emitted by individual resolvers via CombatEventBus.
@@ -45,7 +46,7 @@ namespace Skills.Helpers
             {
                 SkillRollType.AttackRoll => SkillAttackResolver.Execute(skill, user, mainTarget, sourceComponent, targetComponent),
                 SkillRollType.SavingThrow => SkillSaveResolver.Execute(skill, user, mainTarget, sourceComponent, targetComponent),
-                SkillRollType.SkillCheck => ExecuteSkillCheck(skill, user, mainTarget, sourceComponent, targetComponent),
+                SkillRollType.SkillCheck => SkillCheckResolver.Execute(skill, user, mainTarget, sourceComponent, targetComponent),
                 SkillRollType.OpposedCheck => ExecuteOpposedCheck(skill, user, mainTarget, sourceComponent, targetComponent),
                 SkillRollType.None => ExecuteNoRoll(skill, user, mainTarget, sourceComponent, targetComponent),
                 _ => false
@@ -69,21 +70,6 @@ namespace Skills.Helpers
         }
         
         /// <summary>
-        /// Handle skill check rolls.
-        /// TODO: Create SkillCheckResolver when skill check system is designed.
-        /// </summary>
-        private static bool ExecuteSkillCheck(
-            Skill skill,
-            Vehicle user,
-            Vehicle mainTarget,
-            VehicleComponent sourceComponent,
-            VehicleComponent targetComponent)
-        {
-            Debug.LogWarning($"[SkillExecutor] {skill.name}: Skill checks not yet implemented!");
-            return false;
-        }
-        
-        /// <summary>
         /// Handle opposed check rolls.
         /// TODO: Create SkillOpposedResolver when opposed check system is designed.
         /// </summary>
@@ -99,3 +85,5 @@ namespace Skills.Helpers
         }
     }
 }
+
+

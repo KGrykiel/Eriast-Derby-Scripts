@@ -44,10 +44,10 @@ namespace Combat.Saves
             
             // Gather and add save modifiers
             var modifiers = GatherSaveModifiers(target, saveType);
-            AddModifiers(result, modifiers);
+            D20RollHelpers.AddModifiers(result, modifiers);
             
             // Evaluate: Success if Total >= DC
-            EvaluateAgainstDC(result, dc);
+            D20RollHelpers.EvaluateAgainstTarget(result, dc);
             
             return result;
         }
@@ -79,10 +79,10 @@ namespace Combat.Saves
             // 1. Intrinsic: Base save from chassis
             GatherBaseSaveBonus(target, saveType, modifiers);
             
-            // 2. Applied: Status effects and equipment
+            // 2. Applied: Status effects and equipment (shared helper)
             if (target != null)
             {
-                GatherAppliedModifiers(target, saveType, modifiers);
+                D20RollHelpers.GatherAppliedModifiers(target, SaveTypeToAttribute(saveType), modifiers);
             }
             
             return modifiers;
@@ -91,61 +91,21 @@ namespace Combat.Saves
         // ==================== MODIFIER SOURCES ====================
         
         /// <summary>
-        /// Intrinsic: Chassis's base save value (vehicle design).
+        /// Intrinsic: Chassis's base mobility value (used for both saves and checks).
         /// </summary>
         private static void GatherBaseSaveBonus(Entity target, SaveType saveType, List<AttributeModifier> modifiers)
         {
-            float baseSave = GetEntityBaseSave(target, saveType);
-            
-            if (baseSave != 0)
+            // Source mobility directly from chassis
+            if (target is ChassisComponent chassis && chassis.baseMobility != 0)
             {
                 modifiers.Add(new AttributeModifier(
-                    SaveTypeToAttribute(saveType),
+                    Attribute.Mobility,
                     ModifierType.Flat,
-                    baseSave,
+                    chassis.baseMobility,
                     target));
             }
         }
-        
-        /// <summary>
-        /// Applied: Status effects and equipment modifiers already on the entity.
-        /// Delegates to StatCalculator (single source of truth).
-        /// </summary>
-        private static void GatherAppliedModifiers(Entity target, SaveType saveType, List<AttributeModifier> modifiers)
-        {
-            var (_, _, allModifiers) = StatCalculator.GatherAttributeValueWithBreakdown(
-                target, 
-                SaveTypeToAttribute(saveType), 
-                0f);
-            
-            foreach (var mod in allModifiers)
-            {
-                if (mod.Value != 0)
-                {
-                    modifiers.Add(mod);
-                }
-            }
-        }
-        
-        // ==================== RESULT HELPERS ====================
-        
-        private static void AddModifiers(SaveResult result, List<AttributeModifier> modifiers)
-        {
-            foreach (var mod in modifiers)
-            {
-                if (mod.Value != 0)
-                {
-                    result.modifiers.Add(mod);
-                }
-            }
-        }
-        
-        private static void EvaluateAgainstDC(SaveResult result, int dc)
-        {
-            result.targetValue = dc;
-            result.success = result.Total >= dc;
-        }
-        
+
         // ==================== DC CALCULATION ====================
         
         /// <summary>
@@ -166,23 +126,8 @@ namespace Combat.Saves
         // ==================== HELPERS ====================
         
         /// <summary>
-        /// Get base save value from entity based on save type.
-        /// </summary>
-        private static float GetEntityBaseSave(Entity entity, SaveType saveType)
-        {
-            if (entity is ChassisComponent chassis)
-            {
-                return saveType switch
-                {
-                    SaveType.Mobility => chassis.baseMobility,
-                    _ => 0f
-                };
-            }
-            return 0f;
-        }
-        
-        /// <summary>
         /// Map SaveType to corresponding Attribute for modifier gathering.
+        /// Currently only Mobility exists (same stat used for saves and checks).
         /// </summary>
         public static Attribute SaveTypeToAttribute(SaveType saveType)
         {

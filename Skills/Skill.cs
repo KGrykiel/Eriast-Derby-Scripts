@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using Skills.Helpers;
 using Combat.Saves;
+using Combat.SkillChecks;
 
 public enum TargetPrecision
 {
@@ -47,6 +48,13 @@ public abstract class Skill : ScriptableObject
     
     [Tooltip("Base difficulty class for saving throw (before user bonuses)")]
     public int saveDCBase = 15;
+    
+    [Header("Skill Check Configuration")]
+    [Tooltip("If skillRollType = SkillCheck, what check must user make?")]
+    public SkillCheckType checkType = SkillCheckType.Mobility;
+    
+    [Tooltip("Difficulty class for skill check")]
+    public int checkDC = 15;
 
     [Header("Effects")]
     [SerializeField]

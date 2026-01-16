@@ -8,6 +8,7 @@ using StatusEffects;
 using Combat.Attacks;
 using Combat.Damage;
 using Combat.Saves;
+using Combat.SkillChecks;
 using Core;
 using EventType = RacingGame.Events.EventType;
 
@@ -136,6 +137,64 @@ namespace Combat
                 if (result.success.HasValue)
                 {
                     string resultText = result.Succeeded ? "SAVED (resisted)" : "FAILED (affected)";
+                    sb.AppendLine($"  Result: {resultText}");
+                }
+            }
+            
+            return sb.ToString();
+        }
+        
+        /// <summary>
+        /// Format a skill check result for display.
+        /// Short format: "18 (d20: 15, +3 Mobility) vs DC 15 - SUCCESS"
+        /// </summary>
+        public static string FormatSkillCheckShort(SkillCheckResult result)
+        {
+            if (result == null) return "No roll";
+            
+            string modStr = result.TotalModifier >= 0 
+                ? $"+{result.TotalModifier}" 
+                : $"{result.TotalModifier}";
+            string output = $"{result.Total} (d{result.dieSize}: {result.baseRoll}{modStr})";
+            
+            if (result.targetValue > 0 && result.success.HasValue)
+            {
+                output += $" vs DC {result.targetValue}";
+                output += result.Succeeded ? " - SUCCESS" : " - FAILURE";
+            }
+            
+            return output;
+        }
+        
+        /// <summary>
+        /// Format a skill check result with full breakdown for tooltips.
+        /// </summary>
+        public static string FormatSkillCheckDetailed(SkillCheckResult result)
+        {
+            if (result == null) return "No roll data";
+            
+            var sb = new StringBuilder();
+            sb.AppendLine($"{result.checkType} Check:");
+            sb.AppendLine($"  Base d{result.dieSize}: {result.baseRoll}");
+            
+            foreach (var mod in result.modifiers)
+            {
+                string sign = mod.Value >= 0 ? "+" : "";
+                string sourceInfo = mod.Source?.name != mod.SourceDisplayName 
+                    ? $" ({mod.Source?.name})" 
+                    : "";
+                sb.AppendLine($"  {mod.SourceDisplayName}: {sign}{(int)mod.Value}{sourceInfo}");
+            }
+            
+            sb.AppendLine("  ─────────────");
+            sb.AppendLine($"  Total: {result.Total}");
+            
+            if (result.targetValue > 0)
+            {
+                sb.AppendLine($"  vs DC: {result.targetValue}");
+                if (result.success.HasValue)
+                {
+                    string resultText = result.Succeeded ? "SUCCESS" : "FAILURE";
                     sb.AppendLine($"  Result: {resultText}");
                 }
             }
@@ -700,6 +759,7 @@ namespace Combat
             
             LogAttackRolls(action);
             LogSavingThrows(action);
+            LogSkillChecks(action);
             LogDamageByTarget(action);
             LogStatusEffects(action);
             LogRestorations(action);
@@ -729,6 +789,9 @@ namespace Combat
                     break;
                 case SavingThrowEvent save:
                     LogSingleSavingThrow(save);
+                    break;
+                case SkillCheckEvent check:
+                    LogSingleSkillCheck(check);
                     break;
             }
         }
@@ -846,6 +909,54 @@ namespace Combat
             if (evt.Target != null && evt.Result != null)
             {
                 logEvt.WithMetadata("saveModifiersBreakdown", FormatSaveModifiersDetailed(evt.Target, evt.Result.saveType));
+            }
+        }
+        
+        // ==================== SKILL CHECK LOGGING ====================
+        
+        private static void LogSkillChecks(CombatAction action)
+        {
+            foreach (var checkEvent in action.GetSkillCheckEvents())
+            {
+                LogSingleSkillCheck(checkEvent, action);
+            }
+        }
+        
+        private static void LogSingleSkillCheck(SkillCheckEvent evt, CombatAction action = null)
+        {
+            Vehicle sourceVehicle = EntityHelpers.GetParentVehicle(evt.Source);
+            
+            string sourceName = sourceVehicle?.vehicleName ?? evt.Source?.GetDisplayName() ?? "Unknown";
+            string skillName = action?.SourceName ?? evt.CausalSource?.name ?? "task";
+            
+            string checkTypeName = evt.Result?.checkType.ToString() ?? "Mobility";
+            
+            string resultText = evt.Succeeded 
+                ? "<color=#44FF44>Success</color>" 
+                : "<color=#FF4444>Failure</color>";
+            
+            string message = $"{sourceName} makes {checkTypeName} check for {skillName}. {resultText}";
+            
+            // Failed checks are more impactful (effects won't apply)
+            var importance = evt.Succeeded ? EventImportance.Medium : EventImportance.High;
+            
+            var logEvt = RaceHistory.Log(
+                EventType.Combat,
+                importance,
+                message,
+                sourceVehicle?.currentStage,
+                sourceVehicle, null
+            );
+            
+            logEvt.WithMetadata("skillName", skillName)
+                  .WithMetadata("result", evt.Succeeded ? "success" : "failure")
+                  .WithMetadata("checkType", checkTypeName)
+                  .WithMetadata("rollBreakdown", evt.Result != null ? FormatSkillCheckDetailed(evt.Result) : "");
+            
+            // Add DC breakdown for tooltip
+            if (evt.Result != null && evt.CausalSource is Skill skill)
+            {
+                logEvt.WithMetadata("dcBreakdown", $"{checkTypeName} Check DC: {evt.Result.targetValue} ({skill.name})");
             }
         }
         

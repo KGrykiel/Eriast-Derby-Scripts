@@ -38,7 +38,7 @@ namespace Combat.Attacks
             
             // Gather and add attack modifiers
             var modifiers = GatherAttackModifiers(attacker, sourceComponent, skill);
-            AddModifiers(result, modifiers);
+            D20RollHelpers.AddModifiers(result, modifiers);
             
             // Add any additional penalty (e.g., component targeting)
             if (additionalPenalty != 0)
@@ -48,7 +48,7 @@ namespace Combat.Attacks
             
             // Get target's defense value and evaluate
             int defenseValue = StatCalculator.GatherDefenseValue(target);
-            EvaluateAgainstAC(result, defenseValue);
+            D20RollHelpers.EvaluateAgainstTarget(result, defenseValue);
             
             return result;
         }
@@ -85,10 +85,10 @@ namespace Combat.Attacks
             // 2. Intrinsic: Character skill bonus
             GatherCharacterBonus(sourceComponent, modifiers);
             
-            // 3. Applied: Status effects and equipment
+            // 3. Applied: Status effects and equipment (shared helper)
             if (attacker != null)
             {
-                GatherAppliedModifiers(attacker, modifiers);
+                D20RollHelpers.GatherAppliedModifiers(attacker, Attribute.AttackBonus, modifiers);
             }
             
             // 4. Skill-specific modifiers (future)
@@ -137,23 +137,6 @@ namespace Combat.Attacks
         }
         
         /// <summary>
-        /// Applied: Status effects and equipment modifiers already on the entity.
-        /// Delegates to StatCalculator (single source of truth).
-        /// </summary>
-        private static void GatherAppliedModifiers(Entity entity, List<AttributeModifier> modifiers)
-        {
-            var (_, _, allModifiers) = StatCalculator.GatherAttributeValueWithBreakdown(entity, Attribute.AttackBonus, 0f);
-            
-            foreach (var mod in allModifiers)
-            {
-                if (mod.Value != 0)
-                {
-                    modifiers.Add(mod);
-                }
-            }
-        }
-        
-        /// <summary>
         /// Skill-specific: Skill grants attack bonus/penalty (e.g., "Power Attack").
         /// </summary>
         private static void GatherSkillModifiers(Skill skill, List<AttributeModifier> modifiers)
@@ -162,17 +145,6 @@ namespace Combat.Attacks
         }
         
         // ==================== RESULT HELPERS ====================
-        
-        private static void AddModifiers(AttackResult result, List<AttributeModifier> modifiers)
-        {
-            foreach (var mod in modifiers)
-            {
-                if (mod.Value != 0)
-                {
-                    result.modifiers.Add(mod);
-                }
-            }
-        }
         
         private static void AddPenalty(AttackResult result, int penalty, string reason)
         {
@@ -186,18 +158,12 @@ namespace Combat.Attacks
             }
         }
         
-        private static void EvaluateAgainstAC(AttackResult result, int ac)
-        {
-            result.targetValue = ac;
-            result.success = result.Total >= ac;
-        }
-        
         // ==================== CRIT/FUMBLE ====================
         
         /// <summary>Check if this is a natural 20 (critical hit potential).</summary>
-        public static bool IsNatural20(AttackResult result) => result.baseRoll == 20;
+        public static bool IsNatural20(AttackResult result) => D20RollHelpers.IsNatural20(result);
         
         /// <summary>Check if this is a natural 1 (automatic miss).</summary>
-        public static bool IsNatural1(AttackResult result) => result.baseRoll == 1;
+        public static bool IsNatural1(AttackResult result) => D20RollHelpers.IsNatural1(result);
     }
 }
