@@ -32,6 +32,9 @@ public enum EffectTarget
     [Tooltip("The user's vehicle (routes based on effect type: damage?chassis, speed?drive, energy?power core)")]
     SourceVehicle,
     
+    [Tooltip("Player-selected component on user's vehicle (shows component selection UI)")]
+    SourceComponentSelection,
+    
     // Single targets - Selected target
     [Tooltip("Player-selected target (respects manual component targeting from UI if used)")]
     SelectedTarget,

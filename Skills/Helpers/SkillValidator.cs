@@ -64,6 +64,7 @@ namespace Skills.Helpers
         
         /// <summary>
         /// Validates component target accessibility.
+        /// Skips accessibility checks when self-targeting (user can always access own components).
         /// </summary>
         public static bool ValidateComponentTarget(Skill skill, Vehicle user, Vehicle mainTarget, VehicleComponent targetComponent, string targetComponentName)
         {
@@ -85,7 +86,9 @@ namespace Skills.Helpers
                 return false;
             }
 
-            if (!mainTarget.IsComponentAccessible(targetComponent))
+            // Self-targeting: Skip accessibility checks (can always access own components)
+            bool isSelfTargeting = user == mainTarget;
+            if (!isSelfTargeting && !mainTarget.IsComponentAccessible(targetComponent))
             {
                 string reason = mainTarget.GetInaccessibilityReason(targetComponent);
                 RaceHistory.Log(

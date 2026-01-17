@@ -92,6 +92,24 @@ namespace Skills.Helpers
                         targets.Add(user.RouteEffectTarget(effect, precision, null));
                     break;
                     
+                case EffectTarget.SourceComponentSelection:
+                    // Player-selected component on source vehicle (for self-targeting skills)
+                    // When user == mainTarget, targetComponentOverride is the selected source component
+                    if (user.chassis != null)
+                    {
+                        if (user == mainTarget && targetComponentOverride != null)
+                        {
+                            // Self-targeting: targetComponentOverride is the selected source component
+                            targets.Add(targetComponentOverride);
+                        }
+                        else
+                        {
+                            // Fallback to routing if not self-targeting
+                            targets.Add(user.RouteEffectTarget(effect, precision, null));
+                        }
+                    }
+                    break;
+                    
                 case EffectTarget.SelectedTarget:
                     // Respects player-selected component for Precise targeting
                     if (mainTarget.chassis != null)

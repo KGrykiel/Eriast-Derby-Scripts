@@ -381,6 +381,13 @@ public class PlayerController : MonoBehaviour
         selectedSkill = availableSkills[skillIndex];
         selectedSkillSourceComponent = currentRole.Value.sourceComponent;
 
+        // Check if skill needs source component selection first
+        if (SkillNeedsSourceComponentSelection(selectedSkill))
+        {
+            ShowSourceComponentSelection();
+            return;
+        }
+
         // Check if skill needs target selection
         bool needsTarget = SkillNeedsTarget(selectedSkill);
         
@@ -707,6 +714,84 @@ public class PlayerController : MonoBehaviour
 
     #endregion
 
+    #region Source Component Selection UI
+
+    /// <summary>
+    /// Displays source component selection UI for the player's own vehicle.
+    /// Allows player to pick which component on their vehicle to target with a self-targeting skill.
+    /// </summary>
+    private void ShowSourceComponentSelection()
+    {
+        if (targetSelectionPanel == null || targetButtonContainer == null || targetButtonPrefab == null)
+            return;
+
+        // Reuse target selection panel for source component selection
+        targetSelectionPanel.SetActive(true);
+
+        // Clear existing buttons
+        foreach (Transform child in targetButtonContainer)
+            Destroy(child.gameObject);
+
+        // Option 1: Target Chassis (vehicle HP)
+        Button chassisBtn = Instantiate(targetButtonPrefab, targetButtonContainer);
+        chassisBtn.GetComponentInChildren<TextMeshProUGUI>().text = 
+            $"[#] Chassis (HP: {playerVehicle.health}/{playerVehicle.maxHealth}, AC: {playerVehicle.armorClass})";
+        chassisBtn.onClick.AddListener(() => OnSourceComponentButtonClicked(null)); // null = chassis
+
+        // Option 2: All Components (EXCEPT chassis - it's already shown above)
+        foreach (var component in playerVehicle.AllComponents)
+        {
+            if (component == null) continue;
+            
+            // Skip chassis - it's already shown as the first option
+            if (component is ChassisComponent) continue;
+
+            Button btn = Instantiate(targetButtonPrefab, targetButtonContainer);
+            
+            // Build component button text
+            string componentText = BuildComponentButtonText(playerVehicle, component);
+            btn.GetComponentInChildren<TextMeshProUGUI>().text = componentText;
+            
+            // All components are accessible on own vehicle
+            btn.interactable = !component.isDestroyed;
+            
+            // Add click handler
+            VehicleComponent comp = component; // Capture for lambda
+            btn.onClick.AddListener(() => OnSourceComponentButtonClicked(comp));
+        }
+    }
+
+    /// <summary>
+    /// Handles source component button click.
+    /// Sets target to self (playerVehicle) and stores selected component in targetComponent.
+    /// After selection, proceeds to target selection if needed, or executes immediately.
+    /// </summary>
+    private void OnSourceComponentButtonClicked(VehicleComponent component)
+    {
+        // For source component selection, we're self-targeting
+        selectedTarget = playerVehicle;
+        selectedTargetComponent = component;
+        
+        if (targetSelectionPanel != null)
+            targetSelectionPanel.SetActive(false);
+
+        // After selecting source component, check if skill also needs enemy target selection
+        bool needsEnemyTarget = SkillNeedsTarget(selectedSkill);
+        
+        if (needsEnemyTarget)
+        {
+            // Skill needs to target an enemy vehicle - show normal target selection
+            ShowTargetSelection();
+        }
+        else
+        {
+            // Pure self-targeted skill - execute immediately
+            ExecuteSkillImmediately();
+        }
+    }
+
+    #endregion
+
     #region Stage Selection UI
 
     /// <summary>
@@ -798,6 +883,21 @@ public class PlayerController : MonoBehaviour
                 invocation.target == EffectTarget.Both ||
                 invocation.target == EffectTarget.AllEnemiesInStage ||
                 invocation.target == EffectTarget.AllAlliesInStage)
+                return true;
+        }
+        return false;
+    }
+
+    /// <summary>
+    /// Checks if a skill requires source component selection (player picks which component to affect on their own vehicle).
+    /// </summary>
+    private bool SkillNeedsSourceComponentSelection(Skill skill)
+    {
+        if (skill.effectInvocations == null) return false;
+
+        foreach (var invocation in skill.effectInvocations)
+        {
+            if (invocation.target == EffectTarget.SourceComponentSelection)
                 return true;
         }
         return false;
