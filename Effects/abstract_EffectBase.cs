@@ -1,4 +1,5 @@
 using UnityEngine;
+using Effects;
 
 /// <summary>
 /// Abstract base class for all effects.
@@ -7,7 +8,7 @@ using UnityEngine;
 [System.Serializable]
 public abstract class EffectBase : IEffect
 {
-    public abstract void Apply(Entity user, Entity target, object context = null, Object source = null);
+    public abstract void Apply(Entity user, Entity target, EffectContext? context = null, Object source = null);
     
     // ==================== HELPER METHODS (Delegates to EntityHelpers) ====================
     

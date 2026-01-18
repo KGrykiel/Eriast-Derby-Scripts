@@ -45,7 +45,7 @@ public class RollEventCard : EventCard
         {
             if (invocation.effect != null)
             {
-                invocation.effect.Apply(targetEntity, targetEntity, stage, this);
+                invocation.effect.Apply(targetEntity, targetEntity,null, this);
             }
         }
     }

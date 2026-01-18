@@ -1,8 +1,9 @@
 ﻿using UnityEngine;
 using Combat;
 using Combat.Saves;
+using Skills.Helpers;
 
-namespace Skills.Helpers
+namespace Skills.Helpers.Resolvers
 {
     /// <summary>
     /// Resolver for skills that use saving throws.

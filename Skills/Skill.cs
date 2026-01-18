@@ -57,7 +57,6 @@ public abstract class Skill : ScriptableObject
     public int checkDC = 15;
 
     [Header("Effects")]
-    [SerializeField]
     public List<EffectInvocation> effectInvocations = new List<EffectInvocation>();
     
     [Header("Targeting")]

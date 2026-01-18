@@ -2,6 +2,7 @@
 using UnityEngine;
 using StatusEffects;
 using Combat;
+using Effects;
 
 namespace Skills.Helpers
 {
@@ -29,8 +30,8 @@ namespace Skills.Helpers
             // Begin action scope - all events will be aggregated
             CombatEventBus.BeginAction(sourceComponent ?? user.chassis, skill, mainTarget);
             
-            // Build skill context for effects that need situational/combat state
-            var context = new SkillContext
+            // Build effect context for situational/combat state
+            var context = new EffectContext
             {
                 isCriticalHit = isCriticalHit
             };
@@ -53,7 +54,7 @@ namespace Skills.Helpers
                     
                     foreach (var targetEntity in targetEntities)
                     {
-                        // Apply effect - pass SkillContext for situational data (crits, etc.)
+                        // Apply effect - pass EffectContext for situational data (crits, etc.)
                         // Note: Weapon is NOT in context - effects extract it from user parameter
                         invocation.effect.Apply(
                             sourceComponent ?? user.chassis,

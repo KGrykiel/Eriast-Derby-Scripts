@@ -5,6 +5,7 @@ using Combat;
 using Combat.Attacks;
 using Combat.Saves;
 using Combat.SkillChecks;
+using Skills.Helpers.Resolvers;
 
 namespace Skills.Helpers
 {
@@ -47,41 +48,10 @@ namespace Skills.Helpers
                 SkillRollType.AttackRoll => SkillAttackResolver.Execute(skill, user, mainTarget, sourceComponent, targetComponent),
                 SkillRollType.SavingThrow => SkillSaveResolver.Execute(skill, user, mainTarget, sourceComponent, targetComponent),
                 SkillRollType.SkillCheck => SkillCheckResolver.Execute(skill, user, mainTarget, sourceComponent, targetComponent),
-                SkillRollType.OpposedCheck => ExecuteOpposedCheck(skill, user, mainTarget, sourceComponent, targetComponent),
-                SkillRollType.None => ExecuteNoRoll(skill, user, mainTarget, sourceComponent, targetComponent),
+                SkillRollType.OpposedCheck => SkillOpposedCheckResolver.Execute(skill, user, mainTarget, sourceComponent, targetComponent),
+                SkillRollType.None => SkillNoRollResolver.Execute(skill, user, mainTarget, sourceComponent, targetComponent),
                 _ => false
             };
-        }
-        
-        // ==================== ROLL TYPE HANDLERS (stubs for future) ====================
-        
-        /// <summary>
-        /// Handle no-roll skills (auto-success).
-        /// </summary>
-        private static bool ExecuteNoRoll(
-            Skill skill,
-            Vehicle user,
-            Vehicle mainTarget,
-            VehicleComponent sourceComponent,
-            VehicleComponent targetComponent)
-        {
-            SkillEffectApplicator.ApplyAllEffects(skill, user, mainTarget, sourceComponent, targetComponent);
-            return true;
-        }
-        
-        /// <summary>
-        /// Handle opposed check rolls.
-        /// TODO: Create SkillOpposedResolver when opposed check system is designed.
-        /// </summary>
-        private static bool ExecuteOpposedCheck(
-            Skill skill,
-            Vehicle user,
-            Vehicle mainTarget,
-            VehicleComponent sourceComponent,
-            VehicleComponent targetComponent)
-        {
-            Debug.LogWarning($"[SkillExecutor] {skill.name}: Opposed checks not yet implemented!");
-            return false;
         }
     }
 }

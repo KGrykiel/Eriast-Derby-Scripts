@@ -1,6 +1,7 @@
 using System;
 using UnityEngine;
 using RacingGame.Events;
+using Effects;
 
 /// <summary>
 /// Applies a PERMANENT stat modifier with no duration or visual status.
@@ -54,7 +55,7 @@ public class AttributeModifierEffect : EffectBase
     /// - context: Additional context (usually null)
     /// - source: Skill/EventCard that triggered this (for modifier source tracking)
     /// </summary>
-    public override void Apply(Entity user, Entity target, object context = null, UnityEngine.Object source = null)
+    public override void Apply(Entity user, Entity target, EffectContext? context = null, UnityEngine.Object source = null)
     {
         if (target == null)
         {
@@ -62,8 +63,8 @@ public class AttributeModifierEffect : EffectBase
             return;
         }
         
-        // Source should be the skill/eventcard that applied this effect
-        UnityEngine.Object actualSource = source ?? (context as UnityEngine.Object);
+        // Source should be the skill/eventcard that applied this effect (context is no longer Unity.Object)
+        UnityEngine.Object actualSource = source;
         
         // Target should already be routed to the correct component by Skill.Use()
         // Just apply the modifier directly

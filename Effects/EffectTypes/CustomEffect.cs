@@ -1,5 +1,6 @@
 using System;
 using UnityEngine;
+using Effects;
 using UnityEngine.Events;
 using RacingGame.Events;
 
@@ -12,7 +13,7 @@ public class CustomEffect : EffectBase
     // This UnityEvent can be set up in the Inspector to call any method with these parameters.
     public UnityEvent<Entity, Entity> specialEvent;
 
-    public override void Apply(Entity user, Entity target, object context = null, UnityEngine.Object source = null)
+    public override void Apply(Entity user, Entity target, EffectContext? context = null, UnityEngine.Object source = null)
     {
         if (specialEvent != null)
         {

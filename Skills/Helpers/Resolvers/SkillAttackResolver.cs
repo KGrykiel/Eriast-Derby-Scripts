@@ -4,8 +4,9 @@ using UnityEngine;
 using Combat;
 using Combat.Attacks;
 using Core;
+using Skills.Helpers;
 
-namespace Skills.Helpers
+namespace Skills.Helpers.Resolvers
 {
     /// <summary>
     /// Resolver for skills that use attack rolls.
