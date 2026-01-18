@@ -73,8 +73,8 @@ namespace Skills.Helpers
                 return false;
             }
             
-            // Hit - apply effects
-            SkillEffectApplicator.ApplyAllEffects(skill, user, mainTarget, sourceComponent, targetComponent);
+            // Hit - apply effects (pass crit flag for damage doubling)
+            SkillEffectApplicator.ApplyAllEffects(skill, user, mainTarget, sourceComponent, targetComponent, attackRoll.isCriticalHit);
             return true;
         }
         
@@ -102,9 +102,9 @@ namespace Skills.Helpers
 
             if (componentRoll.success == true)
             {
-                // Component hit - emit event and apply effects to component
+                // Component hit - emit event and apply effects to component (pass crit flag)
                 EmitAttackEvent(componentRoll, attackerEntity, targetComponent, targetComponent, skill, isChassisFallback: false);
-                SkillEffectApplicator.ApplyAllEffects(skill, user, mainTarget, sourceComponent, targetComponent);
+                SkillEffectApplicator.ApplyAllEffects(skill, user, mainTarget, sourceComponent, targetComponent, componentRoll.isCriticalHit);
                 return true;
             }
 
@@ -122,9 +122,9 @@ namespace Skills.Helpers
 
             if (chassisRoll.success == true)
             {
-                // Chassis hit - emit event and apply effects to chassis (not component)
+                // Chassis hit - emit event and apply effects to chassis (pass crit flag)
                 EmitAttackEvent(chassisRoll, attackerEntity, mainTarget.chassis, targetComponent, skill, isChassisFallback: true);
-                SkillEffectApplicator.ApplyAllEffects(skill, user, mainTarget, sourceComponent, null);
+                SkillEffectApplicator.ApplyAllEffects(skill, user, mainTarget, sourceComponent, null, chassisRoll.isCriticalHit);
                 return true;
             }
 

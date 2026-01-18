@@ -36,7 +36,7 @@ public class ApplyStatusEffect : EffectBase
     /// - context: Additional context (usually null for status effects)
     /// - source: Skill/EventCard/Stage that triggered this (for logging)
     /// </summary>
-    public override void Apply(Entity user, Entity target, UnityEngine.Object context = null, UnityEngine.Object source = null)
+    public override void Apply(Entity user, Entity target, object context = null, UnityEngine.Object source = null)
     {
         if (statusEffect == null)
         {

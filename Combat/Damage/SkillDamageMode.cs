@@ -22,12 +22,5 @@ public enum SkillDamageMode
     /// Use for: Power attacks, enhanced shots.
     /// Example: Weapon 1d8 + Skill 1d6 = 1d8+1d6
     /// </summary>
-    WeaponPlusSkill,
-    
-    /// <summary>
-    /// Skill multiplies the weapon's dice count.
-    /// Use for: Critical hits, sneak attacks.
-    /// Example: Weapon 1d8 × 2.0 = 2d8
-    /// </summary>
-    WeaponMultiplied
+    WeaponPlusSkill
 }

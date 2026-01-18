@@ -7,7 +7,7 @@ public interface IEffect
     /// </summary>
     /// <param name="user">The entity causing the effect (e.g., Vehicle, Obstacle, etc.)</param>
     /// <param name="target">The entity receiving the effect (e.g., Vehicle, Obstacle, etc.)</param>
-    /// <param name="context">Optional context, such as the current stage or other relevant object.</param>
+    /// <param name="context">Optional context, such as SkillContext for combat state, Stage for environmental modifiers, etc.</param>
     /// <param name="source">The source of the effect (e.g., Skill, EventCard, Stage, etc.)</param>
-    void Apply(Entity user, Entity target, Object context = null, Object source = null);
+    void Apply(Entity user, Entity target, object context = null, Object source = null);
 }

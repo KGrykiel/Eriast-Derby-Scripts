@@ -34,6 +34,12 @@ namespace Combat.Attacks
         /// <summary>Whether the attack hit (null if not yet evaluated)</summary>
         public bool? success { get; set; }
         
+        /// <summary>Whether this is a critical hit (natural 20, auto-hit, double dice)</summary>
+        public bool isCriticalHit { get; set; }
+        
+        /// <summary>Whether this is a critical miss (natural 1, auto-miss)</summary>
+        public bool isCriticalMiss { get; set; }
+        
         /// <summary>Total roll after all modifiers (baseRoll + sum of modifiers)</summary>
         public int Total => baseRoll + TotalModifier;
         

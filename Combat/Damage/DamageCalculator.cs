@@ -98,20 +98,6 @@ namespace Combat.Damage
         }
         
         /// <summary>
-        /// Create a damage result from a weapon with multiplied dice (for crits, sneak attack).
-        /// </summary>
-        public static DamageResult FromWeaponMultiplied(WeaponComponent weapon, float multiplier)
-        {
-            int multipliedDice = Mathf.RoundToInt(weapon.damageDice * multiplier);
-            int rolled = RollUtility.RollDice(multipliedDice, weapon.damageDieSize);
-            
-            var result = DamageResult.Create(weapon.damageType);
-            AddSource(result, $"Weapon ×{multiplier}", multipliedDice, weapon.damageDieSize, weapon.damageBonus, rolled, weapon.name);
-            
-            return result;
-        }
-        
-        /// <summary>
         /// Create a flat damage result (for environmental/DoT).
         /// </summary>
         public static DamageResult FromFlat(int damage, DamageType damageType, string sourceName)

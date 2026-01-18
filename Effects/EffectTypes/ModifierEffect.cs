@@ -54,7 +54,7 @@ public class AttributeModifierEffect : EffectBase
     /// - context: Additional context (usually null)
     /// - source: Skill/EventCard that triggered this (for modifier source tracking)
     /// </summary>
-    public override void Apply(Entity user, Entity target, UnityEngine.Object context = null, UnityEngine.Object source = null)
+    public override void Apply(Entity user, Entity target, object context = null, UnityEngine.Object source = null)
     {
         if (target == null)
         {
@@ -63,7 +63,7 @@ public class AttributeModifierEffect : EffectBase
         }
         
         // Source should be the skill/eventcard that applied this effect
-        UnityEngine.Object actualSource = source ?? context;
+        UnityEngine.Object actualSource = source ?? (context as UnityEngine.Object);
         
         // Target should already be routed to the correct component by Skill.Use()
         // Just apply the modifier directly

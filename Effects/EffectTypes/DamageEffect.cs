@@ -24,26 +24,25 @@ public class DamageEffect : EffectBase
     /// Logging is handled automatically by DamageApplicator.
     /// 
     /// Parameter convention:
-    /// - user: The Entity dealing damage (attacker)
+    /// - user: The Entity dealing damage (attacker) - may be a WeaponComponent
     /// - target: The Entity receiving damage
-    /// - context: WeaponComponent (for damage calculations) or null
+    /// - context: SkillContext with situational data (crits, stage modifiers, etc.)
     /// - source: Skill/EventCard that triggered this (for logging "Destroyed by X")
     /// </summary>
-    public override void Apply(Entity user, Entity target, Object context = null, Object source = null)
+    public override void Apply(Entity user, Entity target, object context = null, Object source = null)
     {
-        // Extract weapon from context (if weapon-based skill)
-        WeaponComponent weapon = context as WeaponComponent;
+        // Extract weapon from user (if it's a weapon component)
+        WeaponComponent weapon = user as WeaponComponent;
         
-        // Calculate damage using appropriate method
-        DamageResult result;
-        if (weapon != null && formula.mode != SkillDamageMode.SkillOnly)
+        // Extract skill context for situational modifiers (crits, etc.)
+        bool isCriticalHit = false;
+        if (context is Skills.Helpers.SkillContext skillContext)
         {
-            result = formula.ComputeWithWeapon(weapon);
+            isCriticalHit = skillContext.isCriticalHit;
         }
-        else
-        {
-            result = formula.ComputeSkillOnly();
-        }
+        
+        // Calculate damage - formula handles all modes automatically
+        DamageResult result = formula.Compute(weapon, isCriticalHit);
         
         if (result.RawTotal <= 0)
         {
@@ -61,13 +60,5 @@ public class DamageEffect : EffectBase
             causalSource: source ?? weapon,
             sourceType: sourceType
         );
-    }
-
-    /// <summary>
-    /// Get a description of this damage for UI/logging.
-    /// </summary>
-    public string GetDamageDescription(WeaponComponent weapon = null)
-    {
-        return formula.GetDescription(weapon);
     }
 }

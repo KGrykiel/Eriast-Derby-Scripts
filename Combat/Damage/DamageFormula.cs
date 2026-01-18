@@ -26,10 +26,6 @@ public class DamageFormula
     [Tooltip("Flat bonus added to skill damage")]
     public int skillBonus = 0;
 
-    [Header("Weapon Multiplier (for WeaponMultiplied mode)")]
-    [Tooltip("Multiplier for weapon dice count (e.g., 2.0 for double dice on crit)")]
-    public float weaponMultiplier = 2.0f;
-
     [Header("Damage Type")]
     [Tooltip("If true, use weapon's damage type when weapon is present")]
     public bool useWeaponDamageType = true;
@@ -38,62 +34,64 @@ public class DamageFormula
     public DamageType skillDamageType = DamageType.Physical;
 
     /// <summary>
-    /// Compute damage for a skill-only formula (no weapon).
-    /// Used for spells, abilities, and other non-weapon skills.
+    /// Compute damage based on the formula's mode.
+    /// Handles all damage modes: skill-only, weapon-only, weapon+skill.
+    /// Critical hits double ALL dice (weapon + skill), not flat bonuses.
     /// </summary>
-    public DamageResult ComputeSkillOnly()
+    /// <param name="weapon">Weapon component (required for weapon-based modes, ignored for SkillOnly)</param>
+    /// <param name="isCriticalHit">If true, doubles all dice (weapon + skill), not flat bonuses</param>
+    public DamageResult Compute(WeaponComponent weapon = null, bool isCriticalHit = false)
     {
-        if (mode != SkillDamageMode.SkillOnly)
-        {
-            Debug.LogWarning($"[DamageFormula] ComputeSkillOnly() called but mode is {mode}. Use ComputeWithWeapon() instead.");
-        }
-        
-        int rolled = RollUtility.RollDice(skillDice, skillDieSize);
-        
-        var result = DamageResult.Create(skillDamageType);
-        DamageCalculator.AddSource(result, "Skill", skillDice, skillDieSize, skillBonus, rolled, "Skill Effect");
-        DamageCalculator.ApplyResistance(result, ResistanceLevel.Normal);
-        
-        return result;
-    }
-
-    /// <summary>
-    /// Compute damage with weapon integration.
-    /// Used for weapon attacks and weapon-enhanced skills.
-    /// </summary>
-    public DamageResult ComputeWithWeapon(WeaponComponent weapon)
-    {
-        if (weapon == null)
-        {
-            Debug.LogWarning($"[DamageFormula] ComputeWithWeapon() called with null weapon. Falling back to skill-only.");
-            return ComputeSkillOnly();
-        }
-        
         var result = DamageResult.Create(skillDamageType);
 
         switch (mode)
         {
             case SkillDamageMode.SkillOnly:
-                // Should use ComputeSkillOnly() instead, but handle gracefully
-                Debug.LogWarning("[DamageFormula] SkillOnly mode called with weapon. Use ComputeSkillOnly() instead.");
-                return ComputeSkillOnly();
+                // Skill dice only, weapon ignored (double dice on crit)
+                if (skillDice > 0 && skillDieSize > 0)
+                {
+                    var (diceCount, label) = ApplyCritMultiplier(skillDice, "Skill", isCriticalHit);
+                    int rolled = RollUtility.RollDice(diceCount, skillDieSize);
+                    DamageCalculator.AddSource(result, label, diceCount, skillDieSize, skillBonus, rolled, "Skill Effect");
+                }
+                else if (skillBonus != 0)
+                {
+                    DamageCalculator.AddFlat(result, "Skill Bonus", skillBonus, "Skill Effect");
+                }
+                break;
 
             case SkillDamageMode.WeaponOnly:
-                // Just weapon dice, no skill contribution
-                int weaponRolled = RollUtility.RollDice(weapon.damageDice, weapon.damageDieSize);
-                DamageCalculator.AddSource(result, "Weapon", weapon.damageDice, weapon.damageDieSize, weapon.damageBonus, weaponRolled, weapon.name);
+                if (weapon == null)
+                {
+                    Debug.LogWarning("[DamageFormula] WeaponOnly mode requires a weapon!");
+                    return result; // Empty result
+                }
+                
+                // Weapon dice (double on crit, flat bonus never doubled)
+                var (weaponDice, weaponLabel) = ApplyCritMultiplier(weapon.damageDice, "Weapon", isCriticalHit);
+                int weaponRolled = RollUtility.RollDice(weaponDice, weapon.damageDieSize);
+                DamageCalculator.AddSource(result, weaponLabel, weaponDice, weapon.damageDieSize, weapon.damageBonus, weaponRolled, weapon.name);
                 result.damageType = weapon.damageType;
                 break;
 
             case SkillDamageMode.WeaponPlusSkill:
-                // Weapon dice + skill dice combined
-                int weaponRolled2 = RollUtility.RollDice(weapon.damageDice, weapon.damageDieSize);
-                DamageCalculator.AddSource(result, "Weapon", weapon.damageDice, weapon.damageDieSize, weapon.damageBonus, weaponRolled2, weapon.name);
+                if (weapon == null)
+                {
+                    Debug.LogWarning("[DamageFormula] WeaponPlusSkill mode requires a weapon!");
+                    return result; // Empty result
+                }
                 
+                // Weapon dice (double on crit, flat bonus never doubled)
+                var (weaponDice2, weaponLabel2) = ApplyCritMultiplier(weapon.damageDice, "Weapon", isCriticalHit);
+                int weaponRolled2 = RollUtility.RollDice(weaponDice2, weapon.damageDieSize);
+                DamageCalculator.AddSource(result, weaponLabel2, weaponDice2, weapon.damageDieSize, weapon.damageBonus, weaponRolled2, weapon.name);
+                
+                // Skill dice (also doubled on crit!)
                 if (skillDice > 0 && skillDieSize > 0)
                 {
-                    int skillRolled = RollUtility.RollDice(skillDice, skillDieSize);
-                    DamageCalculator.AddSource(result, "Skill Bonus", skillDice, skillDieSize, skillBonus, skillRolled, "Skill Effect");
+                    var (skillDiceCount, skillLabel) = ApplyCritMultiplier(skillDice, "Skill Bonus", isCriticalHit);
+                    int skillRolled = RollUtility.RollDice(skillDiceCount, skillDieSize);
+                    DamageCalculator.AddSource(result, skillLabel, skillDiceCount, skillDieSize, skillBonus, skillRolled, "Skill Effect");
                 }
                 else if (skillBonus != 0)
                 {
@@ -102,62 +100,22 @@ public class DamageFormula
                 
                 result.damageType = useWeaponDamageType ? weapon.damageType : skillDamageType;
                 break;
-
-            case SkillDamageMode.WeaponMultiplied:
-                // Weapon dice multiplied (e.g., crits, sneak attack)
-                int multipliedDice = Mathf.RoundToInt(weapon.damageDice * weaponMultiplier);
-                int multipliedRolled = RollUtility.RollDice(multipliedDice, weapon.damageDieSize);
-                DamageCalculator.AddSource(result, $"Weapon ×{weaponMultiplier}", multipliedDice, weapon.damageDieSize, weapon.damageBonus, multipliedRolled, weapon.name);
-                result.damageType = weapon.damageType;
-                break;
         }
 
         DamageCalculator.ApplyResistance(result, ResistanceLevel.Normal);
         return result;
     }
-
+    
     /// <summary>
-    /// Get a description of this formula for UI/tooltips.
+    /// Apply critical hit multiplier to dice count and update label.
+    /// Doubles dice on crit, appends "(CRIT)" to label.
     /// </summary>
-    public string GetDescription(WeaponComponent weapon = null)
+    private static (int diceCount, string label) ApplyCritMultiplier(int baseDice, string baseLabel, bool isCrit)
     {
-        switch (mode)
+        if (isCrit)
         {
-            case SkillDamageMode.SkillOnly:
-                return FormatDice(skillDice, skillDieSize, skillBonus, skillDamageType);
-
-            case SkillDamageMode.WeaponOnly:
-                if (weapon != null)
-                    return weapon.DamageString;
-                return "Weapon damage";
-
-            case SkillDamageMode.WeaponPlusSkill:
-                string skillPart = FormatDice(skillDice, skillDieSize, skillBonus, null);
-                if (weapon != null)
-                {
-                    return $"{weapon.DamageString} + {skillPart}";
-                }
-                return $"Weapon + {skillPart}";
-
-            case SkillDamageMode.WeaponMultiplied:
-                if (weapon != null)
-                {
-                    int dice = Mathf.RoundToInt(weapon.damageDice * weaponMultiplier);
-                    return FormatDice(dice, weapon.damageDieSize, weapon.damageBonus, weapon.damageType);
-                }
-                return $"Weapon ×{weaponMultiplier}";
-
-            default:
-                return "Unknown";
+            return (baseDice * 2, $"{baseLabel} (CRIT)");
         }
-    }
-
-    private string FormatDice(int dice, int size, int bonus, DamageType? type)
-    {
-        string result = $"{dice}d{size}";
-        if (bonus > 0) result += $"+{bonus}";
-        else if (bonus < 0) result += $"{bonus}";
-        if (type.HasValue) result += $" {type.Value}";
-        return result;
+        return (baseDice, baseLabel);
     }
 }

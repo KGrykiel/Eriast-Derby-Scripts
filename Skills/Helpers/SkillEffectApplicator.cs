@@ -23,10 +23,17 @@ namespace Skills.Helpers
             Vehicle user,
             Vehicle mainTarget,
             VehicleComponent sourceComponent,
-            VehicleComponent targetComponentOverride = null)
+            VehicleComponent targetComponentOverride = null,
+            bool isCriticalHit = false)
         {
             // Begin action scope - all events will be aggregated
             CombatEventBus.BeginAction(sourceComponent ?? user.chassis, skill, mainTarget);
+            
+            // Build skill context for effects that need situational/combat state
+            var context = new SkillContext
+            {
+                isCriticalHit = isCriticalHit
+            };
             
             try
             {
@@ -46,11 +53,12 @@ namespace Skills.Helpers
                     
                     foreach (var targetEntity in targetEntities)
                     {
-                        // Apply effect - effects emit events to CombatEventBus
+                        // Apply effect - pass SkillContext for situational data (crits, etc.)
+                        // Note: Weapon is NOT in context - effects extract it from user parameter
                         invocation.effect.Apply(
                             sourceComponent ?? user.chassis,
                             targetEntity,
-                            sourceComponent as WeaponComponent,
+                            context,
                             skill);
                     }
                 }

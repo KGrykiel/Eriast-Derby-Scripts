@@ -25,6 +25,7 @@ namespace Combat.Attacks
         /// <summary>
         /// Perform a complete attack roll with modifiers and evaluation.
         /// This is the primary method for making attacks.
+        /// Handles critical hits (natural 20) and critical misses (natural 1).
         /// </summary>
         public static AttackResult PerformAttack(
             Entity attacker,
@@ -46,9 +47,26 @@ namespace Combat.Attacks
                 AddPenalty(result, additionalPenalty, "Targeting Penalty");
             }
             
-            // Get target's defense value and evaluate
+            // Get target's defense value
             int defenseValue = StatCalculator.GatherDefenseValue(target);
-            D20RollHelpers.EvaluateAgainstTarget(result, defenseValue);
+            result.targetValue = defenseValue;
+            
+            // Evaluate: Critical hit (natural 20) auto-hits, critical miss (natural 1) auto-misses
+            if (IsNatural20(result))
+            {
+                result.success = true;
+                result.isCriticalHit = true;
+            }
+            else if (IsNatural1(result))
+            {
+                result.success = false;
+                result.isCriticalMiss = true;
+            }
+            else
+            {
+                // Normal evaluation
+                D20RollHelpers.EvaluateAgainstTarget(result, defenseValue);
+            }
             
             return result;
         }
@@ -145,6 +163,15 @@ namespace Combat.Attacks
         }
         
         // ==================== RESULT HELPERS ====================
+        
+        /// <summary>
+        /// Check if an attack roll is within the critical threat range.
+        /// Currently only natural 20, but expandable to 19-20, 18-20, etc.
+        /// </summary>
+        public static bool IsCriticalThreat(AttackResult result, int criticalRange = 20)
+        {
+            return result.baseRoll >= criticalRange;
+        }
         
         private static void AddPenalty(AttackResult result, int penalty, string reason)
         {
