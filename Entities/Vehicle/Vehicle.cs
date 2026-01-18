@@ -6,14 +6,7 @@ using System.Linq;
 using EventType = RacingGame.Events.EventType;
 using Entities.Vehicle.VehicleComponents;
 using Entities.Vehicle.VehicleComponents.ComponentTypes;
-using Entities.Vehicle.VehicleComponents.Enums;
 using Core;
-
-public enum ControlType
-{
-    Player,
-    AI
-}
 
 /// <summary>
 /// Vehicle is a CONTAINER/COORDINATOR for Entity components.

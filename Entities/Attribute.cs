@@ -33,9 +33,3 @@ public enum Attribute
     // Add more as needed
     // Future: Add Perception, Mechanics, etc. when you actually need them
 }
-
-public enum VehicleStatus
-{
-    Active,
-    Destroyed,
-}

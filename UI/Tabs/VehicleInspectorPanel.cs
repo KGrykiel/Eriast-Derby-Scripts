@@ -4,8 +4,6 @@ using UnityEngine.UI;
 using System.Collections.Generic;
 using System.Linq;
 using RacingGame.Events;
-using Entities.Vehicle.VehicleComponents.ComponentTypes;
-using Entities.Vehicle.VehicleComponents.Enums;
 using Core;
 using UI.Components;
 

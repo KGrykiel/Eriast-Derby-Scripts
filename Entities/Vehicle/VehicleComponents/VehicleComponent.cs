@@ -3,9 +3,7 @@ using System.Linq;
 using UnityEngine;
 using RacingGame.Events;
 using EventType = RacingGame.Events.EventType;
-using Entities.Vehicle.VehicleComponents.Enums;
 using Entities.Vehicle.VehicleComponents;
-using Entities.Vehicle.VehicleComponents.ComponentTypes;
 using System;
 
 /// <summary>

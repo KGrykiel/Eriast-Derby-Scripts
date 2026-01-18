@@ -3,7 +3,6 @@ using System.Linq;
 using UnityEngine;
 using Entities.Vehicle.VehicleComponents;
 using Entities.Vehicle.VehicleComponents.ComponentTypes;
-using Entities.Vehicle.VehicleComponents.Enums;
 
 namespace Entities.Vehicle
 {
