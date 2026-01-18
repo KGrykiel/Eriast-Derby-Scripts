@@ -24,9 +24,25 @@ namespace Combat
     /// - Formatting attack results, damage results, status effects, defense values
     /// - Logging combat events to RaceHistory
     /// - Aggregating multiple events within an action
+    /// 
+    /// MESSAGE PATTERNS:
+    /// - Different entities: "{Source} [Vehicle] {verb} {Target} [Vehicle]"
+    /// - Same vehicle:       "{Target} [Vehicle] takes/gains {effect}"
+    /// - Same entity:        "{Entity} [Vehicle] takes/gains {effect}"
     /// </summary>
     public static class CombatLogManager
     {
+        // ==================== COLOR CONSTANTS ====================
+        
+        private static class Colors
+        {
+            public const string Success = "#44FF44";   // Green - hits, saves, buffs
+            public const string Failure = "#FF4444";   // Red - misses, failures, debuffs
+            public const string Damage = "#FFA500";    // Orange - damage numbers
+            public const string Energy = "#88DDFF";    // Blue - energy values
+            public const string Health = "#44FF44";    // Green - health values
+        }
+        
         // ==================== PUBLIC FORMATTING API ====================
         
         /// <summary>
@@ -498,18 +514,7 @@ namespace Combat
                 sb.AppendLine("Status Effects:");
                 foreach (var mod in statusEffectMods)
                 {
-                    string sign = mod.Value >= 0 ? "+" : "";
-                    string typeStr = mod.Type == ModifierType.Multiplier ? "×" : "";
-                    string color = mod.Value >= 0 ? "#44FF44" : "#FF4444";
-                    
-                    if (mod.Type == ModifierType.Multiplier)
-                    {
-                        sb.AppendLine($"  <color={color}>{mod.SourceDisplayName,-25} {typeStr}{mod.Value}  {attribute}</color>");
-                    }
-                    else
-                    {
-                        sb.AppendLine($"  <color={color}>{mod.SourceDisplayName,-25} {sign}{mod.Value}  {attribute}</color>");
-                    }
+                    sb.AppendLine(FormatModifierLine(mod, attribute));
                 }
                 sb.AppendLine();
             }
@@ -520,18 +525,7 @@ namespace Combat
                 sb.AppendLine("Equipment:");
                 foreach (var mod in equipmentMods)
                 {
-                    string sign = mod.Value >= 0 ? "+" : "";
-                    string typeStr = mod.Type == ModifierType.Multiplier ? "×" : "";
-                    string color = mod.Value >= 0 ? "#44FF44" : "#FF4444";
-                    
-                    if (mod.Type == ModifierType.Multiplier)
-                    {
-                        sb.AppendLine($"  <color={color}>{mod.SourceDisplayName,-25} {typeStr}{mod.Value}  {attribute}</color>");
-                    }
-                    else
-                    {
-                        sb.AppendLine($"  <color={color}>{mod.SourceDisplayName,-25} {sign}{mod.Value}  {attribute}</color>");
-                    }
+                    sb.AppendLine(FormatModifierLine(mod, attribute));
                 }
                 sb.AppendLine();
             }
@@ -542,18 +536,7 @@ namespace Combat
                 sb.AppendLine("Auras:");
                 foreach (var mod in auraMods)
                 {
-                    string sign = mod.Value >= 0 ? "+" : "";
-                    string typeStr = mod.Type == ModifierType.Multiplier ? "×" : "";
-                    string color = mod.Value >= 0 ? "#44FF44" : "#FF4444";
-                    
-                    if (mod.Type == ModifierType.Multiplier)
-                    {
-                        sb.AppendLine($"  <color={color}>{mod.SourceDisplayName,-25} {typeStr}{mod.Value}  {attribute}</color>");
-                    }
-                    else
-                    {
-                        sb.AppendLine($"  <color={color}>{mod.SourceDisplayName,-25} {sign}{mod.Value}  {attribute}</color>");
-                    }
+                    sb.AppendLine(FormatModifierLine(mod, attribute));
                 }
                 sb.AppendLine();
             }
@@ -564,18 +547,7 @@ namespace Combat
                 sb.AppendLine("Skills:");
                 foreach (var mod in skillMods)
                 {
-                    string sign = mod.Value >= 0 ? "+" : "";
-                    string typeStr = mod.Type == ModifierType.Multiplier ? "×" : "";
-                    string color = mod.Value >= 0 ? "#44FF44" : "#FF4444";
-                    
-                    if (mod.Type == ModifierType.Multiplier)
-                    {
-                        sb.AppendLine($"  <color={color}>{mod.SourceDisplayName,-25} {typeStr}{mod.Value}  {attribute}</color>");
-                    }
-                    else
-                    {
-                        sb.AppendLine($"  <color={color}>{mod.SourceDisplayName,-25} {sign}{mod.Value}  {attribute}</color>");
-                    }
+                    sb.AppendLine(FormatModifierLine(mod, attribute));
                 }
                 sb.AppendLine();
             }
@@ -586,18 +558,7 @@ namespace Combat
                 sb.AppendLine("Other:");
                 foreach (var mod in otherMods)
                 {
-                    string sign = mod.Value >= 0 ? "+" : "";
-                    string typeStr = mod.Type == ModifierType.Multiplier ? "×" : "";
-                    string color = mod.Value >= 0 ? "#44FF44" : "#FF4444";
-                    
-                    if (mod.Type == ModifierType.Multiplier)
-                    {
-                        sb.AppendLine($"  <color={color}>{mod.SourceDisplayName,-25} {typeStr}{mod.Value}  {attribute}</color>");
-                    }
-                    else
-                    {
-                        sb.AppendLine($"  <color={color}>{mod.SourceDisplayName,-25} {sign}{mod.Value}  {attribute}</color>");
-                    }
+                    sb.AppendLine(FormatModifierLine(mod, attribute));
                 }
                 sb.AppendLine();
             }
@@ -811,23 +772,17 @@ namespace Combat
             Vehicle attackerVehicle = EntityHelpers.GetParentVehicle(evt.Source);
             Vehicle targetVehicle = EntityHelpers.GetParentVehicle(evt.Target);
             
-            string attackerName = attackerVehicle?.vehicleName ?? evt.Source?.GetDisplayName() ?? "Unknown";
-            string targetName = targetVehicle?.vehicleName ?? evt.Target?.GetDisplayName() ?? "Unknown";
-            string sourceName = action?.SourceName ?? evt.CausalSource?.name ?? "attack";
-            
-            string componentText = "";
-            if (!string.IsNullOrEmpty(evt.TargetComponentName))
-            {
-                componentText = evt.IsChassisFallback 
-                    ? "'s chassis" 
-                    : $"'s {evt.TargetComponentName}";
-            }
+            // Format source and target with component names and vehicle context
+            string sourceName = FormatEntityWithVehicle(evt.Source, attackerVehicle);
+            string targetName = FormatEntityWithVehicle(evt.Target, targetVehicle);
+            string skillName = action?.SourceName ?? evt.CausalSource?.name ?? "attack";
             
             string resultText = evt.IsHit 
-                ? "<color=#44FF44>Hit</color>" 
-                : "<color=#FF4444>Miss</color>";
+                ? $"<color={Colors.Success}>Hit</color>" 
+                : $"<color={Colors.Failure}>Miss</color>";
             
-            string message = $"{attackerName} attacks {targetName}{componentText}. {resultText}";
+            // Pattern: "{Source} attacks {Target}. {Result}"
+            string message = $"{sourceName} attacks {targetName}. {resultText}";
             
             var importance = evt.IsHit ? EventImportance.High : EventImportance.Medium;
             
@@ -839,7 +794,7 @@ namespace Combat
                 attackerVehicle, targetVehicle
             );
             
-            logEvt.WithMetadata("skillName", sourceName)
+            logEvt.WithMetadata("skillName", skillName)
                   .WithMetadata("result", evt.IsHit ? "hit" : "miss")
                   .WithMetadata("rollBreakdown", evt.Result != null ? FormatAttackDetailed(evt.Result) : "");
             
@@ -850,9 +805,13 @@ namespace Combat
                 logEvt.WithMetadata("defenseBreakdown", FormatDefenseDetailed(totalAC, baseAC, acModifiers, "AC"));
             }
             
-            if (!string.IsNullOrEmpty(evt.TargetComponentName))
+            if (evt.Source is VehicleComponent sourceComp)
             {
-                logEvt.WithMetadata("targetComponent", evt.TargetComponentName);
+                logEvt.WithMetadata("sourceComponent", sourceComp.name);
+            }
+            if (evt.Target is VehicleComponent targetComp)
+            {
+                logEvt.WithMetadata("targetComponent", targetComp.name);
             }
         }
         
@@ -871,17 +830,16 @@ namespace Combat
             Vehicle sourceVehicle = EntityHelpers.GetParentVehicle(evt.Source);
             Vehicle targetVehicle = EntityHelpers.GetParentVehicle(evt.Target);
             
-            string sourceName = sourceVehicle?.vehicleName ?? evt.Source?.GetDisplayName() ?? "Unknown";
-            string targetName = targetVehicle?.vehicleName ?? evt.Target?.GetDisplayName() ?? "Unknown";
+            string targetName = FormatEntityWithVehicle(evt.Target, targetVehicle);
             string skillName = action?.SourceName ?? evt.CausalSource?.name ?? "effect";
-            
             string saveTypeName = evt.Result?.saveType.ToString() ?? "Mobility";
             
             string resultText = evt.Succeeded 
-                ? "<color=#44FF44>Saved</color>" 
-                : "<color=#FF4444>Failed</color>";
+                ? $"<color={Colors.Success}>Saved</color>" 
+                : $"<color={Colors.Failure}>Failed</color>";
             
-            string message = $"{targetName} makes {saveTypeName} save vs {skillName}. {resultText}";
+            // Pattern: "{Target} attempts {Type} save vs {Skill}. {Result}"
+            string message = $"{targetName} attempts {saveTypeName} save vs {skillName}. {resultText}";
             
             // Failed saves are more impactful (effects will apply)
             var importance = evt.Succeeded ? EventImportance.Medium : EventImportance.High;
@@ -926,16 +884,16 @@ namespace Combat
         {
             Vehicle sourceVehicle = EntityHelpers.GetParentVehicle(evt.Source);
             
-            string sourceName = sourceVehicle?.vehicleName ?? evt.Source?.GetDisplayName() ?? "Unknown";
+            string sourceName = FormatEntityWithVehicle(evt.Source, sourceVehicle);
             string skillName = action?.SourceName ?? evt.CausalSource?.name ?? "task";
-            
             string checkTypeName = evt.Result?.checkType.ToString() ?? "Mobility";
             
             string resultText = evt.Succeeded 
-                ? "<color=#44FF44>Success</color>" 
-                : "<color=#FF4444>Failure</color>";
+                ? $"<color={Colors.Success}>Success</color>" 
+                : $"<color={Colors.Failure}>Failure</color>";
             
-            string message = $"{sourceName} makes {checkTypeName} check for {skillName}. {resultText}";
+            // Pattern: "{Source} attempts {Type} check for {Skill}. {Result}"
+            string message = $"{sourceName} attempts {checkTypeName} check for {skillName}. {resultText}";
             
             // Failed checks are more impactful (effects won't apply)
             var importance = evt.Succeeded ? EventImportance.Medium : EventImportance.High;
@@ -979,20 +937,22 @@ namespace Combat
         
         private static void LogCombinedDamage(List<DamageEvent> damages, CombatAction action, Entity target)
         {
+            Entity sourceEntity = action.Actor;
             Vehicle attackerVehicle = action.ActorVehicle;
             Vehicle targetVehicle = EntityHelpers.GetParentVehicle(target);
             
-            string attackerName = attackerVehicle?.vehicleName ?? "Unknown";
-            string targetName = GetTargetDisplayName(target, targetVehicle);
+            string sourceName = FormatEntityWithVehicle(sourceEntity, attackerVehicle);
+            string targetName = FormatEntityWithVehicle(target, targetVehicle);
             
-            bool isSelfDamage = attackerVehicle != null && attackerVehicle == targetVehicle;
+            bool isSelfDamage = IsSelfDamage(sourceEntity, target, attackerVehicle, targetVehicle);
             
             string damageText = BuildCombinedDamageText(damages);
             int totalDamage = damages.Sum(d => d.Result.finalDamage);
             
+            // Pattern: Self-damage uses passive voice, otherwise active voice
             string message = isSelfDamage
                 ? $"{targetName} takes {damageText}"
-                : $"{attackerName} deals {damageText} to {targetName}";
+                : $"{sourceName} deals {damageText} to {targetName}";
             
             var logEvt = RaceHistory.Log(
                 EventType.Combat,
@@ -1011,9 +971,13 @@ namespace Combat
                   .WithMetadata("isSelfDamage", isSelfDamage)
                   .WithMetadata("damageBreakdown", breakdown);
             
-            if (target is VehicleComponent comp)
+            if (sourceEntity is VehicleComponent sourceComp)
             {
-                logEvt.WithMetadata("targetComponent", comp.name);
+                logEvt.WithMetadata("sourceComponent", sourceComp.name);
+            }
+            if (target is VehicleComponent targetComp)
+            {
+                logEvt.WithMetadata("targetComponent", targetComp.name);
             }
         }
         
@@ -1022,8 +986,8 @@ namespace Combat
             Vehicle attackerVehicle = EntityHelpers.GetParentVehicle(evt.Source);
             Vehicle targetVehicle = EntityHelpers.GetParentVehicle(evt.Target);
             
-            string targetName = GetTargetDisplayName(evt.Target, targetVehicle);
-            string sourceName = evt.CausalSource?.name ?? "Unknown";
+            string targetName = FormatEntityWithVehicle(evt.Target, targetVehicle);
+            string causalSourceName = evt.CausalSource?.name ?? "Unknown";
             
             int damage = evt.Result.finalDamage;
             string damageType = evt.Result.damageType.ToString();
@@ -1031,16 +995,17 @@ namespace Combat
             string message;
             if (evt.Source == null)
             {
-                message = $"{targetName} takes <color=#FFA500>{damage}</color> {damageType} damage from {sourceName}";
+                // Environmental/no-source damage
+                message = $"{targetName} takes <color={Colors.Damage}>{damage}</color> {damageType} damage from {causalSourceName}";
             }
             else
             {
-                string attackerName = attackerVehicle?.vehicleName ?? evt.Source.GetDisplayName();
-                bool isSelfDamage = attackerVehicle != null && attackerVehicle == targetVehicle;
+                string sourceName = FormatEntityWithVehicle(evt.Source, attackerVehicle);
+                bool isSelfDamage = IsSelfDamage(evt.Source, evt.Target, attackerVehicle, targetVehicle);
                 
                 message = isSelfDamage
-                    ? $"{targetName} takes <color=#FFA500>{damage}</color> {damageType} damage"
-                    : $"{attackerName} deals <color=#FFA500>{damage}</color> {damageType} damage to {targetName}";
+                    ? $"{targetName} takes <color={Colors.Damage}>{damage}</color> {damageType} damage"
+                    : $"{sourceName} deals <color={Colors.Damage}>{damage}</color> {damageType} damage to {targetName}";
             }
             
             bool playerInvolved = (attackerVehicle?.controlType == ControlType.Player) ||
@@ -1056,7 +1021,7 @@ namespace Combat
             
             logEvt.WithMetadata("damage", damage)
                   .WithMetadata("damageType", damageType)
-                  .WithMetadata("source", sourceName)
+                  .WithMetadata("source", causalSourceName)
                   .WithMetadata("damageBreakdown", FormatDamageDetailed(evt.Result));
         }
         
@@ -1080,28 +1045,32 @@ namespace Combat
             Vehicle sourceVehicle = EntityHelpers.GetParentVehicle(evt.Source);
             Vehicle targetVehicle = EntityHelpers.GetParentVehicle(evt.Target);
             
-            string targetName = GetTargetDisplayName(evt.Target, targetVehicle);
+            string sourceName = FormatEntityWithVehicle(evt.Source, sourceVehicle);
+            string targetName = FormatEntityWithVehicle(evt.Target, targetVehicle);
             
             bool isBuff = DetermineIfBuff(effect);
-            string color = isBuff ? "#44FF44" : "#FF4444";
+            string color = isBuff ? Colors.Success : Colors.Failure;
             string durationText = applied.IsIndefinite ? "indefinite" : $"{applied.turnsRemaining} turns";
             
-            bool isSelfTarget = sourceVehicle != null && sourceVehicle == targetVehicle;
+            bool isSelfTarget = IsSelfDamage(evt.Source, evt.Target, sourceVehicle, targetVehicle);
             string message;
             
-            if (sourceVehicle == null)
+            if (evt.Source == null)
             {
-                string sourceName = evt.CausalSource?.name ?? action?.SourceName ?? "Unknown";
-                message = $"{targetName} gains <color={color}>{effect.effectName}</color> from {sourceName} ({durationText})";
+                // No source (environmental, etc.)
+                string causalName = evt.CausalSource?.name ?? action?.SourceName ?? "Unknown";
+                message = $"{targetName} gains <color={color}>{effect.effectName}</color> from {causalName} ({durationText})";
             }
             else if (isSelfTarget)
             {
-                message = $"{sourceVehicle.vehicleName} gains <color={color}>{effect.effectName}</color> ({durationText})";
+                // Self-targeting: passive voice
+                message = $"{targetName} gains <color={color}>{effect.effectName}</color> ({durationText})";
             }
             else
             {
+                // Different targets: active voice
                 string actionVerb = isBuff ? "grants" : "inflicts";
-                message = $"{sourceVehicle.vehicleName} {actionVerb} <color={color}>{effect.effectName}</color> on {targetName} ({durationText})";
+                message = $"{sourceName} {actionVerb} <color={color}>{effect.effectName}</color> on {targetName} ({durationText})";
             }
             
             bool playerInvolved = (sourceVehicle?.controlType == ControlType.Player) ||
@@ -1126,13 +1095,14 @@ namespace Combat
                   .WithMetadata("duration", applied.turnsRemaining)
                   .WithMetadata("isIndefinite", applied.IsIndefinite)
                   .WithMetadata("isBuff", isBuff)
-                  .WithMetadata("isSelfTarget", isSelfTarget);
+                  .WithMetadata("isSelfTarget", isSelfTarget)
+                  .WithMetadata("effectBreakdown", FormatStatusEffectTooltip(applied));  // Add tooltip!
         }
         
         private static void LogStatusExpired(StatusEffectExpiredEvent evt)
         {
             Vehicle targetVehicle = EntityHelpers.GetParentVehicle(evt.Target);
-            string targetName = targetVehicle?.vehicleName ?? evt.Target?.GetDisplayName() ?? "Unknown";
+            string targetName = FormatEntityWithVehicle(evt.Target, targetVehicle);
             
             var logEvt = RaceHistory.Log(
                 EventType.StatusEffect,
@@ -1143,7 +1113,8 @@ namespace Combat
             );
             
             logEvt.WithMetadata("statusEffectName", evt.Expired.template.effectName)
-                  .WithMetadata("expired", true);
+                  .WithMetadata("expired", true)
+                  .WithMetadata("effectBreakdown", FormatStatusEffectTooltip(evt.Expired));
         }
         
         // ==================== RESTORATION LOGGING ====================
@@ -1163,11 +1134,13 @@ namespace Combat
         
         private static void LogCombinedRestoration(List<RestorationEvent> restorations, CombatAction action, Entity target)
         {
+            Entity sourceEntity = action.Actor;
             Vehicle sourceVehicle = action.ActorVehicle;
             Vehicle targetVehicle = EntityHelpers.GetParentVehicle(target);
             
-            string targetName = targetVehicle?.vehicleName ?? target?.GetDisplayName() ?? "Unknown";
-            bool isSelfTarget = sourceVehicle != null && sourceVehicle == targetVehicle;
+            string sourceName = FormatEntityWithVehicle(sourceEntity, sourceVehicle);
+            string targetName = FormatEntityWithVehicle(target, targetVehicle);
+            bool isSelfTarget = IsSelfDamage(sourceEntity, target, sourceVehicle, targetVehicle);
             
             var healthRestorations = restorations.Where(r => r.Breakdown.resourceType == ResourceRestorationEffect.ResourceType.Health).ToList();
             var energyRestorations = restorations.Where(r => r.Breakdown.resourceType == ResourceRestorationEffect.ResourceType.Energy).ToList();
@@ -1180,7 +1153,7 @@ namespace Combat
                 if (totalHealth != 0)
                 {
                     string action_verb = totalHealth > 0 ? "restores" : "drains";
-                    parts.Add($"{action_verb} <color=#44FF44>{Math.Abs(totalHealth)}</color> HP");
+                    parts.Add($"{action_verb} <color={Colors.Health}>{Math.Abs(totalHealth)}</color> HP");
                 }
             }
             
@@ -1190,16 +1163,18 @@ namespace Combat
                 if (totalEnergy != 0)
                 {
                     string action_verb = totalEnergy > 0 ? "restores" : "drains";
-                    parts.Add($"{action_verb} <color=#88DDFF>{Math.Abs(totalEnergy)}</color> energy");
+                    parts.Add($"{action_verb} <color={Colors.Energy}>{Math.Abs(totalEnergy)}</color> energy");
                 }
             }
             
             if (parts.Count == 0) return;
             
             string restorationText = string.Join(" and ", parts);
-            string message = (isSelfTarget || sourceVehicle == null)
+            
+            // Pattern: Self-target uses passive voice, otherwise active voice
+            string message = (isSelfTarget || sourceEntity == null)
                 ? $"{targetName} {restorationText}"
-                : $"{sourceVehicle.vehicleName} {restorationText} for {targetName}";
+                : $"{sourceName} {restorationText} to {targetName}";
             
             bool playerInvolved = (sourceVehicle?.controlType == ControlType.Player) ||
                                   (targetVehicle?.controlType == ControlType.Player);
@@ -1222,10 +1197,10 @@ namespace Combat
             Vehicle sourceVehicle = EntityHelpers.GetParentVehicle(evt.Source);
             Vehicle targetVehicle = EntityHelpers.GetParentVehicle(evt.Target);
             
-            string targetName = targetVehicle?.vehicleName ?? evt.Target?.GetDisplayName() ?? "Unknown";
+            string targetName = FormatEntityWithVehicle(evt.Target, targetVehicle);
             
             string resourceName = evt.Breakdown.resourceType == ResourceRestorationEffect.ResourceType.Health ? "HP" : "energy";
-            string color = evt.Breakdown.resourceType == ResourceRestorationEffect.ResourceType.Health ? "#44FF44" : "#88DDFF";
+            string color = evt.Breakdown.resourceType == ResourceRestorationEffect.ResourceType.Health ? Colors.Health : Colors.Energy;
             string action_verb = evt.Breakdown.actualChange > 0 ? "restores" : "drains";
             int absChange = Math.Abs(evt.Breakdown.actualChange);
             
@@ -1247,14 +1222,64 @@ namespace Combat
         
         // ==================== PRIVATE HELPERS ====================
         
+        /// <summary>
+        /// Format an entity with its parent vehicle in brackets.
+        /// Components: "ComponentName [VehicleName]"
+        /// Vehicles: "VehicleName"
+        /// </summary>
+        private static string FormatEntityWithVehicle(Entity entity, Vehicle parentVehicle = null)
+        {
+            parentVehicle ??= EntityHelpers.GetParentVehicle(entity);
+            string vehicleName = parentVehicle?.vehicleName ?? "Unknown";
+            
+            if (entity is VehicleComponent component)
+            {
+                return $"{component.name} [{vehicleName}]";
+            }
+            
+            return vehicleName;
+        }
+        
+        /// <summary>
+        /// Check if source and target represent self-damage.
+        /// Returns true if same entity OR same vehicle.
+        /// </summary>
+        private static bool IsSelfDamage(Entity source, Entity target, Vehicle sourceVehicle, Vehicle targetVehicle)
+        {
+            // Same entity (component attacking itself)
+            if (source != null && source == target)
+                return true;
+            
+            // Same vehicle (component attacking different component on same vehicle)
+            if (sourceVehicle != null && sourceVehicle == targetVehicle)
+                return true;
+            
+            return false;
+        }
+        
+        /// <summary>
+        /// Format a single modifier line for stat breakdowns.
+        /// Eliminates duplication in FormatStatBreakdown.
+        /// </summary>
+        private static string FormatModifierLine(AttributeModifier mod, Attribute attribute)
+        {
+            string sign = mod.Value >= 0 ? "+" : "";
+            string typeStr = mod.Type == ModifierType.Multiplier ? "×" : "";
+            string color = mod.Value >= 0 ? Colors.Success : Colors.Failure;
+            
+            if (mod.Type == ModifierType.Multiplier)
+            {
+                return $"  <color={color}>{mod.SourceDisplayName,-25} {typeStr}{mod.Value}  {attribute}</color>";
+            }
+            return $"  <color={color}>{mod.SourceDisplayName,-25} {sign}{mod.Value}  {attribute}</color>";
+        }
+        
+        /// <summary>
+        /// Legacy helper - kept for compatibility, uses new FormatEntityWithVehicle internally.
+        /// </summary>
         private static string GetTargetDisplayName(Entity target, Vehicle targetVehicle)
         {
-            if (target is VehicleComponent component)
-            {
-                string vehicleName = targetVehicle?.vehicleName ?? "Unknown";
-                return $"{vehicleName}'s {component.name}";
-            }
-            return targetVehicle?.vehicleName ?? target?.GetDisplayName() ?? "Unknown";
+            return FormatEntityWithVehicle(target, targetVehicle);
         }
         
         private static string BuildCombinedDamageText(List<DamageEvent> damages)
@@ -1264,15 +1289,15 @@ namespace Combat
             if (damages.Count == 1)
             {
                 var d = damages[0].Result;
-                return $"<color=#FFA500>{d.finalDamage}</color> {d.damageType} damage";
+                return $"<color={Colors.Damage}>{d.finalDamage}</color> {d.damageType} damage";
             }
             
             var parts = damages.Select(d => 
-                $"<color=#FFA500>{d.Result.finalDamage}</color> {d.Result.damageType}");
+                $"<color={Colors.Damage}>{d.Result.finalDamage}</color> {d.Result.damageType}");
             
             int total = damages.Sum(d => d.Result.finalDamage);
             
-            return $"{string.Join(" + ", parts)} (<color=#FFA500>{total} total</color>) damage";
+            return $"{string.Join(" + ", parts)} (<color={Colors.Damage}>{total} total</color>) damage";
         }
         
         private static string BuildDiceNotation(DamageSourceEntry source)

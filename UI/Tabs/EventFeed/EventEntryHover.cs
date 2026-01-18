@@ -77,6 +77,38 @@ public class EventEntryHover : MonoBehaviour, IPointerEnterHandler, IPointerExit
             sb.AppendLine(damageBreakdown);
         }
 
+        // Check for status effect breakdown (shows what the effect does)
+        if (evt.metadata.ContainsKey("effectBreakdown") && evt.metadata["effectBreakdown"] is string effectBreakdown)
+        {
+            if (sb.Length > 0) sb.AppendLine();
+            sb.AppendLine(effectBreakdown);
+        }
+        
+        // Check for DC breakdown (saving throw difficulty)
+        if (evt.metadata.ContainsKey("dcBreakdown") && evt.metadata["dcBreakdown"] is string dcBreakdown)
+        {
+            if (sb.Length > 0) sb.AppendLine();
+            sb.AppendLine(dcBreakdown);
+        }
+        
+        // Check for save modifiers breakdown (target's save bonus)
+        if (evt.metadata.ContainsKey("saveModifiersBreakdown") && evt.metadata["saveModifiersBreakdown"] is string saveModBreakdown)
+        {
+            if (sb.Length > 0) sb.AppendLine();
+            sb.AppendLine(saveModBreakdown);
+        }
+        
+        // Check for restoration/resource data
+        if (evt.metadata.ContainsKey("actualChange") && evt.metadata.ContainsKey("resourceType"))
+        {
+            if (sb.Length > 0) sb.AppendLine();
+            int change = System.Convert.ToInt32(evt.metadata["actualChange"]);
+            string resourceType = evt.metadata["resourceType"].ToString();
+            string verb = change > 0 ? "Restored" : "Drained";
+            sb.AppendLine($"<b>Resource Change:</b>");
+            sb.AppendLine($"  {verb}: {System.Math.Abs(change)} {resourceType}");
+        }
+
         // Check for component targeting breakdowns
         if (evt.metadata.ContainsKey("componentRollBreakdown") && evt.metadata["componentRollBreakdown"] is string compRoll)
         {
