@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 
-namespace RacingGame.Events
+namespace Assets.Scripts.Logging
 {
     /// <summary>
     /// Central event logging system for the race.

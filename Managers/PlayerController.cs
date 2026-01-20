@@ -2,9 +2,9 @@ using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
-using RacingGame.Events;
-using EventType = RacingGame.Events.EventType;
+using EventType = Assets.Scripts.Logging.EventType;
 using Entities.Vehicle.VehicleComponents;
+using Assets.Scripts.Logging;
 
 /// <summary>
 /// Manages player input, UI interactions, and immediate action resolution.

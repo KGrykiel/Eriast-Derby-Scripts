@@ -2,7 +2,7 @@
 using TMPro;
 using System.Collections.Generic;
 using System.Linq;
-using RacingGame.Events;
+using Assets.Scripts.Logging;
 
 /// <summary>
 /// Focus panel showing player status and same-stage vehicles.

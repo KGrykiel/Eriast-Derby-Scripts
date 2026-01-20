@@ -1,4 +1,4 @@
-namespace RacingGame.Events
+namespace Assets.Scripts.Logging
 {
     /// <summary>
     /// Categorizes events by type for filtering and visualization.

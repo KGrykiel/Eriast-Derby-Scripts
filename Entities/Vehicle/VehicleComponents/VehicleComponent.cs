@@ -1,10 +1,10 @@
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
-using RacingGame.Events;
-using EventType = RacingGame.Events.EventType;
+using EventType = Assets.Scripts.Logging.EventType;
 using Entities.Vehicle.VehicleComponents;
 using System;
+using Assets.Scripts.Logging;
 
 /// <summary>
 /// Base class for all vehicle components.

@@ -2,7 +2,7 @@ using System;
 using UnityEngine;
 using Effects;
 using UnityEngine.Events;
-using RacingGame.Events;
+using Assets.Scripts.Logging;
 
 [Serializable]
 public class CustomEffect : EffectBase
@@ -26,7 +26,7 @@ public class CustomEffect : EffectBase
             string sourceText = source != null ? source.name : "unknown source";
   
             RaceHistory.Log(
-                RacingGame.Events.EventType.SkillUse,
+                Assets.Scripts.Logging.EventType.SkillUse,
                 EventImportance.Debug,
                 $"[CUSTOM] {effectName} triggered by {userName} on {targetName} from {sourceText}",
                 vehicle?.currentStage,

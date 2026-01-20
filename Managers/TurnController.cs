@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
-using RacingGame.Events;
-using EventType = RacingGame.Events.EventType;
+using EventType = Assets.Scripts.Logging.EventType;
+using Assets.Scripts.Logging;
 
 /// <summary>
 /// Handles turn order, turn progression, and vehicle movement.

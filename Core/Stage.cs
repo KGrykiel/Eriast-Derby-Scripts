@@ -1,8 +1,8 @@
 ﻿using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Events;
-using RacingGame.Events;
-using EventType = RacingGame.Events.EventType;
+using EventType = Assets.Scripts.Logging.EventType;
+using Assets.Scripts.Logging;
 
 public class Stage : MonoBehaviour
 {

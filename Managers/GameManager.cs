@@ -1,8 +1,8 @@
 using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
-using RacingGame.Events;
-using EventType = RacingGame.Events.EventType;
+using EventType = Assets.Scripts.Logging.EventType;
+using Assets.Scripts.Logging;
 
 /// <summary>
 /// Main game coordinator. Manages game initialization and delegates to specialized controllers.

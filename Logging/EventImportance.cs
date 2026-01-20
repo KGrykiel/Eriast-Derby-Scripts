@@ -1,4 +1,4 @@
-namespace RacingGame.Events
+namespace Assets.Scripts.Logging
 {
     /// <summary>
     /// Defines importance levels for race events.

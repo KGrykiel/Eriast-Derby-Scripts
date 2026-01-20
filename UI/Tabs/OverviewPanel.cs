@@ -2,8 +2,8 @@
 using TMPro;
 using System.Collections.Generic;
 using System.Linq;
-using RacingGame.Events;
-using EventType = RacingGame.Events.EventType;
+using EventType = Assets.Scripts.Logging.EventType;
+using Assets.Scripts.Logging;
 
 /// <summary>
 /// Overview panel showing race leaderboard and event summary.

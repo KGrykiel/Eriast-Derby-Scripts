@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Assets.Scripts.Logging;
+using System;
 using System.Collections.Generic;
 using System.Text;
 using UnityEngine;
@@ -88,9 +89,9 @@ namespace Entities.Vehicle.VehicleComponents.ComponentTypes
             
             if (regenAmount > 0 && parentVehicle != null)
             {
-                RacingGame.Events.RaceHistory.Log(
-                    RacingGame.Events.EventType.Resource,
-                    RacingGame.Events.EventImportance.Debug,
+                RaceHistory.Log(
+                    Assets.Scripts.Logging.EventType.Resource,
+                    EventImportance.Debug,
                     $"{parentVehicle.vehicleName} regenerated {regenAmount} energy ({currentEnergy}/{maxCap})",
                     parentVehicle.currentStage,
                     parentVehicle
@@ -152,9 +153,9 @@ namespace Entities.Vehicle.VehicleComponents.ComponentTypes
             // Log catastrophic failure
             Debug.LogError($"[PowerCore] CRITICAL: {parentVehicle.vehicleName}'s {name} destroyed! Vehicle has no power!");
             
-            RacingGame.Events.RaceHistory.Log(
-                RacingGame.Events.EventType.Combat,
-                RacingGame.Events.EventImportance.Critical,
+            RaceHistory.Log(
+                Assets.Scripts.Logging.EventType.Combat,
+                EventImportance.Critical,
                 $"[CRITICAL] {parentVehicle.vehicleName}'s Power Core destroyed! Vehicle is powerless!",
                 parentVehicle.currentStage,
                 parentVehicle

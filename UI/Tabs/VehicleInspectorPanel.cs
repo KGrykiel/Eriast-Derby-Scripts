@@ -3,9 +3,9 @@ using TMPro;
 using UnityEngine.UI;
 using System.Collections.Generic;
 using System.Linq;
-using RacingGame.Events;
 using Core;
 using UI.Components;
+using Assets.Scripts.Logging;
 
 /// <summary>
 /// Inspector panel for detailed vehicle examination.

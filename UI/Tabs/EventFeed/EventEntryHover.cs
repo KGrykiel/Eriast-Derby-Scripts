@@ -1,6 +1,6 @@
 ﻿using UnityEngine;
 using UnityEngine.EventSystems;
-using RacingGame.Events;
+using Assets.Scripts.Logging;
 
 /// <summary>
 /// Attach to event entry UI elements to show detailed breakdowns on hover.

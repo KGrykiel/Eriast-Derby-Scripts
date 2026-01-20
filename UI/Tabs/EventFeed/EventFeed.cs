@@ -3,7 +3,7 @@ using TMPro;
 using UnityEngine.UI;
 using System.Collections.Generic;
 using System.Linq;
-using RacingGame.Events;
+using Assets.Scripts.Logging;
 
 /// <summary>
 /// Displays filtered event feed to the DM.

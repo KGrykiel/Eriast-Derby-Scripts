@@ -1,6 +1,6 @@
 using UnityEngine;
 using System.Collections.Generic;
-using RacingGame.Events;
+using Assets.Scripts.Logging;
 
 /// <summary>
 /// Chassis component - the structural foundation of a vehicle.
@@ -88,9 +88,9 @@ public class ChassisComponent : VehicleComponent
         
         Debug.LogError($"[Chassis] CRITICAL: {parentVehicle.vehicleName}'s {name} destroyed! Vehicle structure collapsed!");
         
-        RacingGame.Events.RaceHistory.Log(
-            RacingGame.Events.EventType.Combat,
-            RacingGame.Events.EventImportance.Critical,
+        RaceHistory.Log(
+            Assets.Scripts.Logging.EventType.Combat,
+            EventImportance.Critical,
             $"[CRITICAL] {parentVehicle.vehicleName}'s Chassis destroyed! Vehicle structural collapse imminent!",
             parentVehicle.currentStage,
             parentVehicle

@@ -1,7 +1,7 @@
 ﻿using UnityEngine;
 using System.Collections.Generic;
 
-namespace RacingGame.Events
+namespace Assets.Scripts.Logging
 {
     /// <summary>
     /// Represents a single event that occurred during the race.

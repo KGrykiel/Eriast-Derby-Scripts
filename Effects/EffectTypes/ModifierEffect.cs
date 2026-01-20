@@ -1,6 +1,5 @@
 using System;
 using UnityEngine;
-using RacingGame.Events;
 using Effects;
 
 /// <summary>

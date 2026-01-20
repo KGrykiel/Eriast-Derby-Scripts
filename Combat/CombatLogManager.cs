@@ -3,14 +3,14 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using UnityEngine;
-using RacingGame.Events;
 using StatusEffects;
 using Combat.Attacks;
 using Combat.Damage;
 using Combat.Saves;
 using Combat.SkillChecks;
 using Core;
-using EventType = RacingGame.Events.EventType;
+using EventType = Assets.Scripts.Logging.EventType;
+using Assets.Scripts.Logging;
 
 namespace Combat
 {

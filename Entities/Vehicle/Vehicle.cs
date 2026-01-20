@@ -1,12 +1,12 @@
 ﻿using UnityEngine;
 using TMPro;
-using RacingGame.Events;
 using System.Collections.Generic;
 using System.Linq;
-using EventType = RacingGame.Events.EventType;
+using EventType = Assets.Scripts.Logging.EventType;
 using Entities.Vehicle.VehicleComponents;
 using Entities.Vehicle.VehicleComponents.ComponentTypes;
 using Core;
+using Assets.Scripts.Logging;
 
 /// <summary>
 /// Vehicle is a CONTAINER/COORDINATOR for Entity components.
