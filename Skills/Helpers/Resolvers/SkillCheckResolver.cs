@@ -1,9 +1,8 @@
 ﻿using UnityEngine;
-using Combat;
-using Combat.SkillChecks;
-using Skills.Helpers;
+using Assets.Scripts.Combat.SkillChecks;
+using Assets.Scripts.Combat;
 
-namespace Skills.Helpers.Resolvers
+namespace Assets.Scripts.Skills.Helpers.Resolvers
 {
     /// <summary>
     /// Resolver for skills that use skill checks.

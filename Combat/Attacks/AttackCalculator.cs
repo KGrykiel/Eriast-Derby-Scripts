@@ -1,8 +1,7 @@
 ﻿using System.Collections.Generic;
-using UnityEngine;
-using Core;
+using Assets.Scripts.Core;
 
-namespace Combat.Attacks
+namespace Assets.Scripts.Combat.Attacks
 {
     /// <summary>
     /// Calculator for attack rolls (d20 + modifiers vs AC).

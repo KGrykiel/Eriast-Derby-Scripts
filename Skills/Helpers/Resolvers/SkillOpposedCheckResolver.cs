@@ -1,6 +1,6 @@
 ﻿using UnityEngine;
 
-namespace Skills.Helpers.Resolvers
+namespace Assets.Scripts.Skills.Helpers.Resolvers
 {
     /// <summary>
     /// Resolver for skills that use opposed checks.

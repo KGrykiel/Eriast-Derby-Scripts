@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 
-namespace Combat
+namespace Assets.Scripts.Combat
 {
     /// <summary>
     /// Interface for all d20 roll result types (attacks, saves, skill checks, etc.).

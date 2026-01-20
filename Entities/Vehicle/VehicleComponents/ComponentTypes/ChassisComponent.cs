@@ -1,6 +1,7 @@
 using UnityEngine;
 using System.Collections.Generic;
 using Assets.Scripts.Logging;
+using Assets.Scripts.Core;
 
 /// <summary>
 /// Chassis component - the structural foundation of a vehicle.
@@ -64,13 +65,13 @@ public class ChassisComponent : VehicleComponent
         
         // componentSpace is negative for chassis (provides space)
         int baseSpace = -componentSpace;
-        float modifiedSpace = -Core.StatCalculator.GatherAttributeValue(this, Attribute.ComponentSpace, componentSpace);
+        float modifiedSpace = -StatCalculator.GatherAttributeValue(this, Attribute.ComponentSpace, componentSpace);
         if (baseSpace > 0 || modifiedSpace > 0)
         {
             stats.Add(VehicleComponentUI.DisplayStat.WithTooltip("Capacity", "CAP", Attribute.ComponentSpace, baseSpace, modifiedSpace));
         }
 
-        stats.Add(VehicleComponentUI.DisplayStat.WithTooltip("Mobility", "MBL", Attribute.Mobility, baseMobility, Core.StatCalculator.GatherAttributeValue(this, Attribute.Mobility, baseMobility)));
+        stats.Add(VehicleComponentUI.DisplayStat.WithTooltip("Mobility", "MBL", Attribute.Mobility, baseMobility, StatCalculator.GatherAttributeValue(this, Attribute.Mobility, baseMobility)));
         // Don't add base class stats - chassis doesn't draw power
 
         return stats;

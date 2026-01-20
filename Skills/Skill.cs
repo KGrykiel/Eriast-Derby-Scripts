@@ -1,8 +1,8 @@
 ﻿using UnityEngine;
 using System.Collections.Generic;
-using Skills.Helpers;
-using Combat.Saves;
-using Combat.SkillChecks;
+using Assets.Scripts.Skills.Helpers;
+using Assets.Scripts.Combat.SkillChecks;
+using Assets.Scripts.Combat.Saves;
 
 public enum TargetPrecision
 {

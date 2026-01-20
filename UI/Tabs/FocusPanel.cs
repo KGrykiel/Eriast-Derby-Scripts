@@ -3,6 +3,7 @@ using TMPro;
 using System.Collections.Generic;
 using System.Linq;
 using Assets.Scripts.Logging;
+using Assets.Scripts.StatusEffects;
 
 /// <summary>
 /// Focus panel showing player status and same-stage vehicles.
@@ -87,7 +88,7 @@ public class FocusPanel : MonoBehaviour
         status += $"<b>Magic Resistance:</b> 10 \n\n"; // TODO: Replace with actual MR attribute
 
         // Active Status Effects across all components
-        var allStatusEffects = new List<StatusEffects.AppliedStatusEffect>();
+        var allStatusEffects = new List<AppliedStatusEffect>();
         foreach (var component in playerVehicle.AllComponents)
         {
             allStatusEffects.AddRange(component.GetActiveStatusEffects());

@@ -3,10 +3,11 @@ using TMPro;
 using System.Collections.Generic;
 using System.Linq;
 using EventType = Assets.Scripts.Logging.EventType;
-using Entities.Vehicle.VehicleComponents;
-using Entities.Vehicle.VehicleComponents.ComponentTypes;
-using Core;
 using Assets.Scripts.Logging;
+using Assets.Scripts.Entities.Vehicle.VehicleComponents.ComponentTypes;
+using Assets.Scripts.Entities.Vehicle;
+using Assets.Scripts.Entities.Vehicle.VehicleComponents;
+using Assets.Scripts.Core;
 
 /// <summary>
 /// Vehicle is a CONTAINER/COORDINATOR for Entity components.
@@ -48,14 +49,14 @@ public class Vehicle : MonoBehaviour
     public List<VehicleComponent> optionalComponents = new List<VehicleComponent>();
 
     // Component coordinator (handles component management)
-    private Entities.Vehicle.VehicleComponentCoordinator componentCoordinator;
+    private VehicleComponentCoordinator componentCoordinator;
     
     public VehicleStatus Status { get; private set; } = VehicleStatus.Active;
 
     void Awake()
     {
         // Initialize component coordinator
-        componentCoordinator = new Entities.Vehicle.VehicleComponentCoordinator(this);
+        componentCoordinator = new Assets.Scripts.Entities.Vehicle.VehicleComponentCoordinator(this);
         componentCoordinator.InitializeComponents();
 
         var labelTransform = transform.Find("NameLabel");

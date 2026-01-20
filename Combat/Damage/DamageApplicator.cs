@@ -1,7 +1,6 @@
 ﻿using UnityEngine;
-using Combat;
 
-namespace Combat.Damage
+namespace Assets.Scripts.Combat.Damage
 {
     /// <summary>
     /// Central utility for applying damage through the pipeline.

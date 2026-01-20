@@ -1,12 +1,8 @@
-﻿using System.Collections.Generic;
-using System.Linq;
-using UnityEngine;
-using Combat;
-using Combat.Attacks;
-using Core;
-using Skills.Helpers;
+﻿using System.Linq;
+using Assets.Scripts.Combat;
+using Assets.Scripts.Combat.Attacks;
 
-namespace Skills.Helpers.Resolvers
+namespace Assets.Scripts.Skills.Helpers.Resolvers
 {
     /// <summary>
     /// Resolver for skills that use attack rolls.

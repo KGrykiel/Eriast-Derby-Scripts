@@ -1,5 +1,5 @@
 ﻿using UnityEngine;
-using Combat.Damage;
+using Assets.Scripts.Combat.Damage;
 
 /// <summary>
 /// Encapsulates damage calculation logic.

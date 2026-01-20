@@ -1,12 +1,11 @@
-﻿using System;
-using UnityEngine;
-using StatusEffects;
-using Combat.Attacks;
-using Combat.Damage;
-using Combat.Saves;
-using Combat.SkillChecks;
+﻿using UnityEngine;
+using Assets.Scripts.Combat.SkillChecks;
+using Assets.Scripts.Combat.Saves;
+using Assets.Scripts.Combat.Damage;
+using Assets.Scripts.StatusEffects;
+using Assets.Scripts.Combat.Attacks;
 
-namespace Combat
+namespace Assets.Scripts.Combat
 {
     /// <summary>
     /// Base class for all combat events.

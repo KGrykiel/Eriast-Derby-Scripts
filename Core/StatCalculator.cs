@@ -1,8 +1,6 @@
 ﻿using System.Collections.Generic;
-using System.Linq;
-using UnityEngine;
 
-namespace Core
+namespace Assets.Scripts.Core
 {
     /// <summary>
     /// Central calculator for all stat/attribute value calculations with modifiers.

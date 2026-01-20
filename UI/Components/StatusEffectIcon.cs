@@ -1,14 +1,11 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using UnityEngine;
+﻿using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.EventSystems;
 using TMPro;
-using StatusEffects;
-using Combat;
+using Assets.Scripts.StatusEffects;
+using Assets.Scripts.Combat;
 
-namespace UI.Components
+namespace Assets.Scripts.UI.Components
 {
     /// <summary>
     /// UI component for displaying a single status effect icon with turn counter.

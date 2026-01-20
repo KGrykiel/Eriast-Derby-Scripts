@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 
-namespace Combat.Saves
+namespace Assets.Scripts.Combat.Saves
 {
     /// <summary>
     /// Result of a saving throw (d20 + save bonus vs DC).

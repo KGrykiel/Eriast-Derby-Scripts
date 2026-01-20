@@ -1,6 +1,6 @@
 using System;
 using UnityEngine;
-using Effects;
+using Assets.Scripts.Effects;
 
 /// <summary>
 /// Applies a PERMANENT stat modifier with no duration or visual status.

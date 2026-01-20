@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using UnityEngine;
-
-namespace Combat.Damage
+﻿namespace Assets.Scripts.Combat.Damage
 {
     /// <summary>
     /// Handles all damage calculation logic.

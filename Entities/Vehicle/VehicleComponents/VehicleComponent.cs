@@ -2,9 +2,10 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 using EventType = Assets.Scripts.Logging.EventType;
-using Entities.Vehicle.VehicleComponents;
 using System;
 using Assets.Scripts.Logging;
+using Assets.Scripts.Core;
+using Assets.Scripts.Entities.Vehicle.VehicleComponents;
 
 /// <summary>
 /// Base class for all vehicle components.
@@ -470,7 +471,7 @@ public abstract class VehicleComponent : Entity
         // Add power draw if non-zero (common to many components)
         if (powerDrawPerTurn > 0)
         {
-            float modifiedPower = Core.StatCalculator.GatherAttributeValue(this, Attribute.PowerDraw, powerDrawPerTurn);
+            float modifiedPower = StatCalculator.GatherAttributeValue(this, Attribute.PowerDraw, powerDrawPerTurn);
             stats.Add(VehicleComponentUI.DisplayStat.WithTooltip("Power", "PWR", Attribute.PowerDraw, powerDrawPerTurn, modifiedPower, "/turn"));
         }
         

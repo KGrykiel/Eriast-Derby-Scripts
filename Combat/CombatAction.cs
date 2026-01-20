@@ -1,9 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 
-namespace Combat
+namespace Assets.Scripts.Combat
 {
     /// <summary>
     /// Represents a single combat action (skill use, attack, etc.).

@@ -1,4 +1,4 @@
-﻿namespace Combat.SkillChecks
+﻿namespace Assets.Scripts.Combat.SkillChecks
 {
     /// <summary>
     /// Types of skill checks in the game.

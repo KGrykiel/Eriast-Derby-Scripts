@@ -1,10 +1,9 @@
 ﻿using System.Collections.Generic;
-using System.Linq;
 using UnityEngine;
-using Entities.Vehicle.VehicleComponents;
-using Entities.Vehicle.VehicleComponents.ComponentTypes;
+using Assets.Scripts.Entities.Vehicle.VehicleComponents.ComponentTypes;
+using Assets.Scripts.Entities.Vehicle.VehicleComponents;
 
-namespace Entities.Vehicle
+namespace Assets.Scripts.Entities.Vehicle
 {
     /// <summary>
     /// Manages vehicle component discovery, initialization, role management, and accessibility.

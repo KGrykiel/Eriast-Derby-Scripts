@@ -1,8 +1,8 @@
 using System;
 using UnityEngine;
-using Effects;
 using UnityEngine.Events;
 using Assets.Scripts.Logging;
+using Assets.Scripts.Effects;
 
 [Serializable]
 public class CustomEffect : EffectBase

@@ -3,8 +3,9 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 using EventType = Assets.Scripts.Logging.EventType;
-using Entities.Vehicle.VehicleComponents;
 using Assets.Scripts.Logging;
+using Assets.Scripts.Entities.Vehicle.VehicleComponents;
+using Assets.Scripts.Core;
 
 /// <summary>
 /// Manages player input, UI interactions, and immediate action resolution.
@@ -671,10 +672,10 @@ public class PlayerController : MonoBehaviour
     private string BuildComponentButtonText(Vehicle targetVehicle, VehicleComponent component)
     {
         // Get modified AC from StatCalculator
-        var (modifiedAC, _, _) = Core.StatCalculator.GatherDefenseValueWithBreakdown(component);
+        var (modifiedAC, _, _) = StatCalculator.GatherDefenseValueWithBreakdown(component);
         
         // HP info using Entity fields (current health) and modified max HP
-        int modifiedMaxHP = Mathf.RoundToInt(Core.StatCalculator.GatherAttributeValue(
+        int modifiedMaxHP = Mathf.RoundToInt(StatCalculator.GatherAttributeValue(
             component, Attribute.MaxHealth, component.maxHealth));
         
         string text = $"{component.name} (HP: {component.health}/{modifiedMaxHP}, AC: {modifiedAC})";

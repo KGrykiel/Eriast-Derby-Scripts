@@ -1,6 +1,4 @@
-﻿using System;
-
-// ==================== VEHICLE ENUMS ====================
+﻿// ==================== VEHICLE ENUMS ====================
 // All vehicle-specific enums consolidated in one place.
 // System-wide enums (e.g., Attribute) are in separate files.
 

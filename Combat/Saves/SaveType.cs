@@ -1,4 +1,4 @@
-﻿namespace Combat.Saves
+﻿namespace Assets.Scripts.Combat.Saves
 {
     /// <summary>
     /// Types of saving throws in the game.

@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace Combat.Damage
+﻿namespace Assets.Scripts.Combat.Damage
 {
     /// <summary>
     /// A single source of damage within a damage calculation.

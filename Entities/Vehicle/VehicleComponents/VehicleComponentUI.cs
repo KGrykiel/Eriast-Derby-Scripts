@@ -1,7 +1,4 @@
-﻿using System.Collections.Generic;
-using UnityEngine;
-
-/// <summary>
+﻿/// <summary>
 /// UI utilities and data structures for VehicleComponent display.
 /// Separates UI concerns from component business logic.
 /// </summary>

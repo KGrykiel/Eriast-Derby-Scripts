@@ -1,6 +1,6 @@
-﻿using System;
+﻿using Assets.Scripts.Core;
+using System;
 using System.Collections.Generic;
-using System.Text;
 using UnityEngine;
 
 /// <summary>
@@ -130,8 +130,8 @@ public class WeaponComponent : VehicleComponent
         var stats = new List<VehicleComponentUI.DisplayStat>();
         
         // Get modified values from StatCalculator
-        float modifiedDamageBonus = Core.StatCalculator.GatherAttributeValue(this, Attribute.DamageBonus, damageBonus);
-        float modifiedAttackBonus = Core.StatCalculator.GatherAttributeValue(this, Attribute.AttackBonus, attackBonus);
+        float modifiedDamageBonus = StatCalculator.GatherAttributeValue(this, Attribute.DamageBonus, damageBonus);
+        float modifiedAttackBonus = StatCalculator.GatherAttributeValue(this, Attribute.AttackBonus, attackBonus);
         
         // Damage dice with bonus
         string dmgStr = modifiedDamageBonus != 0 
@@ -146,7 +146,7 @@ public class WeaponComponent : VehicleComponent
         // Ammo if not unlimited
         if (ammo != -1)
         {
-            float modifiedMaxAmmo = Core.StatCalculator.GatherAttributeValue(this, Attribute.Ammo, ammo);
+            float modifiedMaxAmmo = StatCalculator.GatherAttributeValue(this, Attribute.Ammo, ammo);
             stats.Add(VehicleComponentUI.DisplayStat.BarWithTooltip("Ammo", "AMMO", Attribute.Ammo, currentAmmo, ammo, modifiedMaxAmmo));
         }
         

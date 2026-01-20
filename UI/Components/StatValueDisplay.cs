@@ -1,14 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using UnityEngine;
-using UnityEngine.UI;
+﻿using UnityEngine;
 using UnityEngine.EventSystems;
 using TMPro;
-using Combat;
-using Core;
+using Assets.Scripts.Combat;
 
-namespace UI.Components
+namespace Assets.Scripts.UI.Components
 {
     /// <summary>
     /// UI component for displaying a stat value with color coding and tooltip.

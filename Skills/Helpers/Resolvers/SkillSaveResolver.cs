@@ -1,9 +1,8 @@
 ﻿using UnityEngine;
-using Combat;
-using Combat.Saves;
-using Skills.Helpers;
+using Assets.Scripts.Combat.Saves;
+using Assets.Scripts.Combat;
 
-namespace Skills.Helpers.Resolvers
+namespace Assets.Scripts.Skills.Helpers.Resolvers
 {
     /// <summary>
     /// Resolver for skills that use saving throws.

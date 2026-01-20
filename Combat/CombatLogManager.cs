@@ -2,17 +2,16 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using UnityEngine;
-using StatusEffects;
-using Combat.Attacks;
-using Combat.Damage;
-using Combat.Saves;
-using Combat.SkillChecks;
-using Core;
 using EventType = Assets.Scripts.Logging.EventType;
 using Assets.Scripts.Logging;
+using Assets.Scripts.Combat.SkillChecks;
+using Assets.Scripts.StatusEffects;
+using Assets.Scripts.Combat.Saves;
+using Assets.Scripts.Combat.Damage;
+using Assets.Scripts.Core;
+using Assets.Scripts.Combat.Attacks;
 
-namespace Combat
+namespace Assets.Scripts.Combat
 {
     /// <summary>
     /// Central manager for all combat logging and formatting.

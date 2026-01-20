@@ -3,9 +3,9 @@ using TMPro;
 using UnityEngine.UI;
 using System.Collections.Generic;
 using System.Linq;
-using Core;
-using UI.Components;
 using Assets.Scripts.Logging;
+using Assets.Scripts.UI.Components;
+using Assets.Scripts.Core;
 
 /// <summary>
 /// Inspector panel for detailed vehicle examination.

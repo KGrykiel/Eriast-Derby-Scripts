@@ -1,5 +1,5 @@
 using UnityEngine;
-using Effects;
+using Assets.Scripts.Effects;
 
 public interface IEffect
 {

@@ -1,6 +1,3 @@
-using System;
-using UnityEngine;
-
 public enum Attribute
 {
     // Core stats

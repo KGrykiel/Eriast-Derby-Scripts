@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 
-namespace Combat.SkillChecks
+namespace Assets.Scripts.Combat.SkillChecks
 {
     /// <summary>
     /// Result of a skill check (d20 + skill bonus vs DC).

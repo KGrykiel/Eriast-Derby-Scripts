@@ -1,10 +1,8 @@
 ﻿using System.Collections.Generic;
-using UnityEngine;
-using StatusEffects;
-using Combat;
-using Effects;
+using Assets.Scripts.Combat;
+using Assets.Scripts.Effects;
 
-namespace Skills.Helpers
+namespace Assets.Scripts.Skills.Helpers
 {
     /// <summary>
     /// Applies effects to targets with action scoping for aggregated logging.

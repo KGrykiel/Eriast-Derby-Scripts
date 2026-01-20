@@ -1,9 +1,9 @@
 using UnityEngine;
 using System.Collections.Generic;
 using System.Linq;
-using Entities;
-using StatusEffects;
-using Combat;
+using Assets.Scripts.StatusEffects;
+using Assets.Scripts.Entities;
+using Assets.Scripts.Combat;
 
 /// <summary>
 /// Abstract base class for all entities that can be damaged, targeted, or interact with skills.

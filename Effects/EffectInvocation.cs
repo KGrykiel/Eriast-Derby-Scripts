@@ -1,5 +1,5 @@
-using SerializeReferenceEditor;
 using UnityEngine;
+using SerializeReferenceEditor;
 
 /// <summary>
 /// Wraps an effect with explicit component-aware targeting.

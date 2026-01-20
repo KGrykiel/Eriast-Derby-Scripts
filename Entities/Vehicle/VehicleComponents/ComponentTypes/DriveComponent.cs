@@ -1,6 +1,5 @@
-﻿using System;
+﻿using Assets.Scripts.Core;
 using System.Collections.Generic;
-using System.Text;
 using UnityEngine;
 
 /// <summary>
@@ -70,9 +69,9 @@ public class DriveComponent : VehicleComponent
         var stats = new List<VehicleComponentUI.DisplayStat>();
         
         // Get modified values from StatCalculator
-        float modifiedSpeed = Core.StatCalculator.GatherAttributeValue(this, Attribute.Speed, maxSpeed);
-        float modifiedAccel = Core.StatCalculator.GatherAttributeValue(this, Attribute.Acceleration, acceleration);
-        float modifiedStab = Core.StatCalculator.GatherAttributeValue(this, Attribute.Stability, stability);
+        float modifiedSpeed = StatCalculator.GatherAttributeValue(this, Attribute.Speed, maxSpeed);
+        float modifiedAccel = StatCalculator.GatherAttributeValue(this, Attribute.Acceleration, acceleration);
+        float modifiedStab = StatCalculator.GatherAttributeValue(this, Attribute.Stability, stability);
         
         // All stats support modifiers and tooltips
         stats.Add(VehicleComponentUI.DisplayStat.WithTooltip("Speed", "SPD", Attribute.Speed, maxSpeed, modifiedSpeed));

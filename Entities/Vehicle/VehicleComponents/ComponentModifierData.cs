@@ -1,7 +1,7 @@
 ﻿using System;
 using UnityEngine;
 
-namespace Entities.Vehicle.VehicleComponents
+namespace Assets.Scripts.Entities.Vehicle.VehicleComponents
 {
     /// <summary>
     /// Defines a modifier that one component provides to another component.

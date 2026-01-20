@@ -1,8 +1,8 @@
 using System;
 using UnityEngine;
-using Combat;
-using Entities.Vehicle.VehicleComponents.ComponentTypes;
-using Effects;
+using Assets.Scripts.Entities.Vehicle.VehicleComponents.ComponentTypes;
+using Assets.Scripts.Effects;
+using Assets.Scripts.Combat;
 
 /// <summary>
 /// Universal resource restoration/drain effect.

@@ -1,11 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using EventType = Assets.Scripts.Logging.EventType;
-using UnityEngine;
+﻿using EventType = Assets.Scripts.Logging.EventType;
 using Assets.Scripts.Logging;
 
-namespace Skills.Helpers
+namespace Assets.Scripts.Skills.Helpers
 {
     /// <summary>
     /// Validates skill targets and component accessibility.

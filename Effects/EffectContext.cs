@@ -1,4 +1,4 @@
-﻿namespace Effects
+﻿namespace Assets.Scripts.Effects
 {
     /// <summary>
     /// Universal context for effect execution.

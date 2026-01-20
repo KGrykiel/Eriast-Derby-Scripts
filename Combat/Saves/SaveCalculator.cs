@@ -1,7 +1,6 @@
 ﻿using System.Collections.Generic;
-using Core;
 
-namespace Combat.Saves
+namespace Assets.Scripts.Combat.Saves
 {
     /// <summary>
     /// Central calculator for all saving throw logic.

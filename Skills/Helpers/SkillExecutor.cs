@@ -1,13 +1,6 @@
-﻿using System.Collections.Generic;
-using System.Linq;
-using UnityEngine;
-using Combat;
-using Combat.Attacks;
-using Combat.Saves;
-using Combat.SkillChecks;
-using Skills.Helpers.Resolvers;
+﻿using Assets.Scripts.Skills.Helpers.Resolvers;
 
-namespace Skills.Helpers
+namespace Assets.Scripts.Skills.Helpers
 {
     /// <summary>
     /// Routes skill execution to the appropriate resolver based on roll type.

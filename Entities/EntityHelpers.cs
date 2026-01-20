@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using UnityEngine;
-
-/// <summary>
+﻿/// <summary>
 /// Static utility class for common Entity-related helper methods.
 /// Used by effects, invocations, and other systems that work with Entities.
 /// </summary>

@@ -1,6 +1,6 @@
 using UnityEngine;
-using Combat.Damage;
-using Effects;
+using Assets.Scripts.Combat.Damage;
+using Assets.Scripts.Effects;
 
 /// <summary>
 /// Damage effect for skills and event cards.

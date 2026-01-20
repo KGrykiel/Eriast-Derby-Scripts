@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
-using Core;
+using Assets.Scripts.Core;
 
-namespace Combat
+namespace Assets.Scripts.Combat
 {
     /// <summary>
     /// Shared helper methods for all d20 roll calculators.

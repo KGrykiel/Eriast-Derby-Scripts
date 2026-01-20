@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 
-namespace Combat.Attacks
+namespace Assets.Scripts.Combat.Attacks
 {
     /// <summary>
     /// Result of an attack roll (d20 + attack bonus vs AC).

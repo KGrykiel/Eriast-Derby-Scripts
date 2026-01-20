@@ -1,5 +1,5 @@
 using UnityEngine;
-using Effects;
+using Assets.Scripts.Effects;
 
 /// <summary>
 /// Abstract base class for all effects.

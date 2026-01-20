@@ -1,7 +1,6 @@
 ﻿using System.Collections.Generic;
-using Core;
 
-namespace Combat.SkillChecks
+namespace Assets.Scripts.Combat.SkillChecks
 {
     /// <summary>
     /// Central calculator for all skill check logic.

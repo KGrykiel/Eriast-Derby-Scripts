@@ -1,4 +1,4 @@
-﻿namespace Skills.Helpers.Resolvers
+﻿namespace Assets.Scripts.Skills.Helpers.Resolvers
 {
     /// <summary>
     /// Resolver for skills that require no roll (auto-success).
