@@ -3,6 +3,7 @@ using UnityEngine;
 using UnityEngine.Events;
 using EventType = Assets.Scripts.Logging.EventType;
 using Assets.Scripts.Logging;
+using EventCard = Assets.Scripts.Events.EventCard.EventCard;
 
 public class Stage : MonoBehaviour
 {
