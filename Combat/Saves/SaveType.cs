@@ -6,6 +6,8 @@
     /// </summary>
     public enum SaveType
     {
+        None,      // No saving throw (used for event cards with no save required)
+        
         /// <summary>
         /// Dodging, evasion, and reaction speed.
         /// Used for: AOE attacks, traps, environmental hazards.

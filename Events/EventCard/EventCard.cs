@@ -1,5 +1,7 @@
 ﻿using System.Collections.Generic;
 using UnityEngine;
+using Assets.Scripts.Effects;
+
 namespace Assets.Scripts.Events.EventCard
 {
     /// <summary>
@@ -58,10 +60,8 @@ namespace Assets.Scripts.Events.EventCard
                 return;
             }
             
-            // Route to player or NPC resolution
-            // TODO: isPlayerVehicle property doesn't exist yet
-            // For now, always use regular Resolve (assume player)
-            bool isPlayer = true; // vehicle.isPlayerVehicle;
+            // Route to player or NPC resolution based on control type
+            bool isPlayer = vehicle.controlType == ControlType.Player;
             
             CardResolutionResult result = isPlayer 
                 ? Resolve(vehicle, stage) 
@@ -78,15 +78,43 @@ namespace Assets.Scripts.Events.EventCard
         
         /// <summary>
         /// Applies a list of effects to a vehicle.
-        /// Used by concrete card types to resolve success/failure effects.
+        /// Vehicle's routing logic determines which component receives each effect based on effect type.
         /// </summary>
         protected void ApplyEffects(List<EffectInvocation> effects, Vehicle vehicle)
         {
-            // TODO: Effect application needs proper integration
-            // For now, just log that effects would be applied
-            if (effects != null && effects.Count > 0)
+            if (effects == null || effects.Count == 0) return;
+            
+            foreach (var invocation in effects)
             {
-                Debug.LogWarning($"[EventCard] Effect application not yet implemented for {effects.Count} effects on {cardName}");
+                if (invocation.effect == null)
+                {
+                    Debug.LogWarning($"[EventCard] Null effect in {cardName} effect list");
+                    continue;
+                }
+                
+                // Route effect to appropriate target
+                // Use Auto precision - vehicle determines best component based on effect type
+                Entity targetEntity = vehicle.RouteEffectTarget(
+                    invocation.effect, 
+                    TargetPrecision.Auto, 
+                    null);
+                
+                if (targetEntity == null)
+                {
+                    Debug.LogWarning($"[EventCard] Failed to route effect target for {cardName}");
+                    continue;
+                }
+                
+                // Apply effect:
+                // - user: null (environmental effect - no attacker/caster)
+                // - target: routed component (determined by effect type and vehicle routing)
+                // - context: null (no special combat state)
+                // - source: this event card (for tracking)
+                invocation.effect.Apply(
+                    user: null,          // No user (environmental effect)
+                    target: targetEntity, // Target = routed by vehicle
+                    context: null,        // No special context needed
+                    source: this);        // Source = this card
             }
         }
         

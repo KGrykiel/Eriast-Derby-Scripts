@@ -26,36 +26,36 @@
 //        [Header("Role Challenges")]
 //        [Tooltip("Individual challenges for each role")]
 //        public List<RoleChallenge> roleChallenges = new List<RoleChallenge>();
-        
+
 //        [Header("Collaboration")]
 //        [Tooltip("How many successes needed for collaboration bonus")]
 //        public int requiredSuccesses = 3;
-        
+
 //        [Tooltip("Bonus effects if enough roles succeed")]
 //        public List<EffectInvocation> collaborationBonus = new List<EffectInvocation>();
-        
+
 //        [Tooltip("Effects if too few roles succeed")]
 //        public List<EffectInvocation> totalFailureEffects = new List<EffectInvocation>();
-        
+
 //        public override CardResolutionResult Resolve(Vehicle vehicle, Stage stage)
 //        {
 //            var results = new List<RoleChallengeResult>();
 //            int successes = 0;
-            
+
 //            // Each role attempts their challenge
 //            foreach (var challenge in roleChallenges)
 //            {
 //                Entity roller = GetRollerForRole(vehicle, challenge.targetRole);
-                
+
 //                if (roller == null)
 //                {
 //                    Debug.LogWarning($"[MultiRoleCard] Vehicle {vehicle.vehicleName} has no {challenge.targetRole} component!");
 //                    continue;
 //                }
-                
+
 //                // Perform skill check
 //                var checkResult = SkillCheckCalculator.PerformSkillCheck(roller, challenge.checkType, challenge.dc);
-                
+
 //                // Apply individual success/failure effects
 //                if (checkResult.Succeeded == true)
 //                {
@@ -66,14 +66,14 @@
 //                {
 //                    ApplyEffects(challenge.failureEffects, vehicle);
 //                }
-                
+
 //                // Track result for logging
 //                results.Add(new RoleChallengeResult(challenge.targetRole, checkResult));
 //            }
-            
+
 //            // Check collaboration threshold
 //            bool collaborationSuccess = successes >= requiredSuccesses;
-            
+
 //            if (collaborationSuccess)
 //            {
 //                ApplyEffects(collaborationBonus, vehicle);
@@ -91,7 +91,7 @@
 //                    results);
 //            }
 //        }
-        
+
 //        /// <summary>
 //        /// Gets the appropriate component/entity for a given role.
 //        /// </summary>
@@ -106,14 +106,14 @@
 //                _ => vehicle.chassis
 //            };
 //        }
-        
+
 //        public override CardResolutionResult AutoResolve(Vehicle vehicle, Stage stage)
 //        {
 //            // NPCs use same resolution - each role rolls independently
 //            return Resolve(vehicle, stage);
 //        }
 //    }
-    
+
 //    /// <summary>
 //    /// Represents a challenge for a single role within a MultiRoleCard.
 //    /// </summary>
@@ -122,22 +122,26 @@
 //    {
 //        [Tooltip("Which role faces this challenge")]
 //        public RoleType targetRole = RoleType.Driver;
-        
+
 //        [Tooltip("Description of what this role must do")]
 //        public string challengeDescription = "Make a check";
-        
+
 //        [Header("Skill Check")]
 //        [Tooltip("Type of check required")]
 //        public SkillCheckType checkType = SkillCheckType.Mobility;
-        
+
 //        [Tooltip("Difficulty class")]
 //        public int dc = 15;
-        
+
 //        [Header("Effects")]
 //        [Tooltip("Effects applied if this role succeeds")]
 //        public List<EffectInvocation> successEffects = new List<EffectInvocation>();
-        
+
 //        [Tooltip("Effects applied if this role fails")]
 //        public List<EffectInvocation> failureEffects = new List<EffectInvocation>();
 //    }
 //}
+
+
+
+//========================== DEFERRED FOR NOW ==========================//

@@ -6,6 +6,7 @@
     /// </summary>
     public enum SkillCheckType
     {
+        None,      // No skill check (used for event cards with no check required)
         Mobility
     }
 }

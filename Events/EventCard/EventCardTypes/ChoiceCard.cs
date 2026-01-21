@@ -4,6 +4,7 @@ using UnityEngine;
 using Assets.Scripts.Effects;
 using Assets.Scripts.Combat.SkillChecks;
 using Assets.Scripts.Combat.Saves;
+using Assets.Scripts.Combat;
 
 namespace Assets.Scripts.Events.EventCard.EventCardTypes
 {
@@ -32,17 +33,38 @@ namespace Assets.Scripts.Events.EventCard.EventCardTypes
         
         public override CardResolutionResult Resolve(Vehicle vehicle, Stage stage)
         {
-            // For players: Would present UI and wait for choice
-            // For now, just auto-pick first choice until UI is implemented
-            Debug.LogWarning($"[ChoiceCard] Player choice UI not implemented yet. Auto-selecting first choice for {cardName}");
-            
             if (choices.Count == 0)
             {
                 Debug.LogError($"[ChoiceCard] {cardName} has no choices defined!");
                 return new CardResolutionResult(false, "No choices available");
             }
             
-            return ResolveChoice(choices[0], vehicle, stage);
+            // Check if UI is available
+            if (UI.Components.EventCardUI.Instance == null)
+            {
+                Debug.LogWarning($"[ChoiceCard] EventCardUI not found! Auto-selecting first choice for {cardName}");
+                return ResolveChoice(choices[0], vehicle, stage);
+            }
+            
+            // Show UI and wait for player choice (async via callback)
+            UI.Components.EventCardUI.Instance.ShowChoices(this, choices, (selectedChoice) =>
+            {
+                // Resolve the chosen option (rolls dice, applies effects immediately)
+                var result = ResolveChoice(selectedChoice, vehicle, stage);
+                
+                // Show result in UI (effects already applied)
+                UI.Components.EventCardUI.Instance.ShowResult(result, () =>
+                {
+                    // Log to race history after acknowledgement
+                    if (result.IsDramatic())
+                    {
+                        LogCardEvent(vehicle, stage, result);
+                    }
+                });
+            });
+            
+            // Return "pending" result - actual resolution happens in callback
+            return new CardResolutionResult(true, "Awaiting player choice...");
         }
         
         public override CardResolutionResult AutoResolve(Vehicle vehicle, Stage stage)
@@ -59,7 +81,8 @@ namespace Assets.Scripts.Events.EventCard.EventCardTypes
         }
         
         /// <summary>
-        /// Executes a specific choice.
+        /// Executes a specific choice, rolls dice, and applies effects immediately.
+        /// Returns result for UI display.
         /// </summary>
         private CardResolutionResult ResolveChoice(CardChoice choice, Vehicle vehicle, Stage stage)
         {
@@ -67,7 +90,7 @@ namespace Assets.Scripts.Events.EventCard.EventCardTypes
             switch (choice.checkType)
             {
                 case ChoiceCheckType.None:
-                    // No check - guaranteed outcome
+                    // No check - apply effects and return success
                     ApplyEffects(choice.effects, vehicle);
                     return new CardResolutionResult(true, choice.outcomeNarrative);
                 
@@ -88,7 +111,7 @@ namespace Assets.Scripts.Events.EventCard.EventCardTypes
         /// </summary>
         private CardResolutionResult ResolveSkillCheck(CardChoice choice, Vehicle vehicle)
         {
-            if (!choice.skillCheckType.HasValue)
+            if (choice.skillCheckType == SkillCheckType.None)
             {
                 Debug.LogError($"[ChoiceCard] SkillCheck choice '{choice.choiceText}' has no skill type defined!");
                 return new CardResolutionResult(false, "Invalid skill check configuration");
@@ -103,8 +126,15 @@ namespace Assets.Scripts.Events.EventCard.EventCardTypes
             
             var checkResult = SkillCheckCalculator.PerformSkillCheck(
                 vehicle.chassis, 
-                choice.skillCheckType.Value, 
+                choice.skillCheckType, 
                 choice.dc);
+            
+            // Emit to CombatEventBus for logging
+            CombatEventBus.EmitSkillCheck(
+                checkResult,
+                vehicle.chassis,
+                this, // Event card is the source
+                checkResult.Succeeded);
             
             if (checkResult.Succeeded == true)
             {
@@ -123,7 +153,7 @@ namespace Assets.Scripts.Events.EventCard.EventCardTypes
         /// </summary>
         private CardResolutionResult ResolveSavingThrow(CardChoice choice, Vehicle vehicle)
         {
-            if (!choice.saveType.HasValue)
+            if (choice.saveType == SaveType.None)
             {
                 Debug.LogError($"[ChoiceCard] SavingThrow choice '{choice.choiceText}' has no save type defined!");
                 return new CardResolutionResult(false, "Invalid saving throw configuration");
@@ -138,8 +168,17 @@ namespace Assets.Scripts.Events.EventCard.EventCardTypes
             
             var saveResult = SaveCalculator.PerformSavingThrow(
                 vehicle.chassis, 
-                choice.saveType.Value, 
+                choice.saveType, 
                 choice.dc);
+            
+            // Emit to CombatEventBus for logging
+            CombatEventBus.EmitSavingThrow(
+                saveResult,
+                null,  // No source entity for environmental hazards
+                vehicle.chassis,
+                this,  // Event card is the causal source
+                saveResult.Succeeded,
+                "Chassis"); // Target component name
             
             if (saveResult.Succeeded == true)
             {
@@ -183,10 +222,10 @@ namespace Assets.Scripts.Events.EventCard.EventCardTypes
         public ChoiceCheckType checkType = ChoiceCheckType.None;
         
         [Tooltip("Skill check type (if checkType = SkillCheck)")]
-        public SkillCheckType? skillCheckType = null;
+        public SkillCheckType skillCheckType = SkillCheckType.None;
         
         [Tooltip("Save type (if checkType = SavingThrow)")]
-        public SaveType? saveType = null;
+        public SaveType saveType = SaveType.None;
         
         [Tooltip("Difficulty class for the check/save")]
         public int dc = 15;
