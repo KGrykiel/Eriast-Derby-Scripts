@@ -355,7 +355,7 @@ namespace Assets.Scripts.UI.Components
             // For damage effects, try to get damage formula if available
             if (invocation.effect is DamageEffect damageEffect && damageEffect.formula != null)
             {
-                description = $"Damage ({damageEffect.formula.skillDice}d{damageEffect.formula.skillDieSize}+{damageEffect.formula.skillBonus})";
+                description = $"Damage ({damageEffect.formula.baseDice}d{damageEffect.formula.dieSize}+{damageEffect.formula.bonus})";
             }
             else if (invocation.effect is ApplyStatusEffect statusEffect && statusEffect.statusEffect != null)
             {

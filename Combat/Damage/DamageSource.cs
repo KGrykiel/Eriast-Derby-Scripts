@@ -30,7 +30,7 @@
         /// <summary>
         /// Total damage from this source (rolled + bonus).
         /// </summary>
-        public int Total => rolled + bonus;
+        public readonly int Total => rolled + bonus;
         
         public DamageSourceEntry(string name, int diceCount, int dieSize, int bonus, int rolled, string sourceName = null)
         {
@@ -45,7 +45,7 @@
         /// <summary>
         /// Format as dice notation: "2d6+3" or "+5" for flat bonuses
         /// </summary>
-        public string ToDiceString()
+        public readonly string ToDiceString()
         {
             if (diceCount <= 0 || dieSize <= 0)
             {
@@ -59,6 +59,6 @@
             return result;
         }
         
-        public override string ToString() => $"{name}: {ToDiceString()} = {Total}";
+        public override readonly string ToString() => $"{name}: {ToDiceString()} = {Total}";
     }
 }

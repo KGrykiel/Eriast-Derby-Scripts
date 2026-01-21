@@ -7,60 +7,60 @@ using Assets.Scripts.Combat.Damage;
 /// Used by DamageEffect to keep damage calculation policy separate from application.
 /// 
 /// NOTE: All dice rolling is delegated to RollUtility for consistency.
-/// Weapon integration is handled through SkillDamageMode - weapons are OPTIONAL.
+/// Weapon integration is handled through DamageMode - weapons are OPTIONAL.
 /// </summary>
 [System.Serializable]
 public class DamageFormula
 {
-    [Header("Damage Mode")]
-    [Tooltip("How this damage interacts with weapons")]
-    public SkillDamageMode mode = SkillDamageMode.SkillOnly;
-
-    [Header("Skill Dice (used for SkillOnly and WeaponPlusSkill modes)")]
-    [Tooltip("Number of skill bonus dice")]
-    public int skillDice = 1;
+    [Header("Base Damage")]
+    [Tooltip("Number of dice to roll")]
+    public int baseDice = 1;
     
-    [Tooltip("Size of skill dice (4, 6, 8, 10, 12)")]
-    public int skillDieSize = 6;
+    [Tooltip("Size of each die (d4, d6, d8, d10, d12)")]
+    public int dieSize = 6;
     
-    [Tooltip("Flat bonus added to skill damage")]
-    public int skillBonus = 0;
+    [Tooltip("Flat bonus added to damage")]
+    public int bonus = 0;
 
     [Header("Damage Type")]
-    [Tooltip("If true, use weapon's damage type when weapon is present")]
-    public bool useWeaponDamageType = true;
+    [Tooltip("Type of damage dealt")]
+    public DamageType damageType = DamageType.Physical;
+
+    [Header("Weapon Integration (Optional)")]
+    [Tooltip("How this damage interacts with weapons")]
+    public DamageMode mode = DamageMode.BaseOnly;
     
-    [Tooltip("Damage type to use when no weapon or useWeaponDamageType is false")]
-    public DamageType skillDamageType = DamageType.Physical;
+    [Tooltip("Override damage type with weapon's type when mode uses weapon")]
+    public bool useWeaponDamageType = true;
 
     /// <summary>
     /// Compute damage based on the formula's mode.
-    /// Handles all damage modes: skill-only, weapon-only, weapon+skill.
-    /// Critical hits double ALL dice (weapon + skill), not flat bonuses.
+    /// Handles all damage modes: base-only, weapon-only, weapon+base.
+    /// Critical hits double ALL dice (weapon + base), not flat bonuses.
     /// </summary>
-    /// <param name="weapon">Weapon component (required for weapon-based modes, ignored for SkillOnly)</param>
-    /// <param name="isCriticalHit">If true, doubles all dice (weapon + skill), not flat bonuses</param>
+    /// <param name="weapon">Weapon component (required for weapon-based modes, ignored for BaseOnly)</param>
+    /// <param name="isCriticalHit">If true, doubles all dice (weapon + base), not flat bonuses</param>
     public DamageResult Compute(WeaponComponent weapon = null, bool isCriticalHit = false)
     {
-        var result = DamageResult.Create(skillDamageType);
+        var result = DamageResult.Create(damageType);
 
         switch (mode)
         {
-            case SkillDamageMode.SkillOnly:
-                // Skill dice only, weapon ignored (double dice on crit)
-                if (skillDice > 0 && skillDieSize > 0)
+            case DamageMode.BaseOnly:
+                // Base dice only, weapon ignored (double dice on crit)
+                if (baseDice > 0 && dieSize > 0)
                 {
-                    var (diceCount, label) = ApplyCritMultiplier(skillDice, "Skill", isCriticalHit);
-                    int rolled = RollUtility.RollDice(diceCount, skillDieSize);
-                    DamageCalculator.AddSource(result, label, diceCount, skillDieSize, skillBonus, rolled, "Skill Effect");
+                    var (diceCount, label) = ApplyCritMultiplier(baseDice, "Base", isCriticalHit);
+                    int rolled = RollUtility.RollDice(diceCount, dieSize);
+                    DamageCalculator.AddSource(result, label, diceCount, dieSize, bonus, rolled, "Damage Effect");
                 }
-                else if (skillBonus != 0)
+                else if (bonus != 0)
                 {
-                    DamageCalculator.AddFlat(result, "Skill Bonus", skillBonus, "Skill Effect");
+                    DamageCalculator.AddFlat(result, "Bonus", bonus, "Damage Effect");
                 }
                 break;
 
-            case SkillDamageMode.WeaponOnly:
+            case DamageMode.WeaponOnly:
                 if (weapon == null)
                 {
                     Debug.LogWarning("[DamageFormula] WeaponOnly mode requires a weapon!");
@@ -74,10 +74,10 @@ public class DamageFormula
                 result.damageType = weapon.damageType;
                 break;
 
-            case SkillDamageMode.WeaponPlusSkill:
+            case DamageMode.WeaponPlusBase:
                 if (weapon == null)
                 {
-                    Debug.LogWarning("[DamageFormula] WeaponPlusSkill mode requires a weapon!");
+                    Debug.LogWarning("[DamageFormula] WeaponPlusBase mode requires a weapon!");
                     return result; // Empty result
                 }
                 
@@ -86,19 +86,19 @@ public class DamageFormula
                 int weaponRolled2 = RollUtility.RollDice(weaponDice2, weapon.damageDieSize);
                 DamageCalculator.AddSource(result, weaponLabel2, weaponDice2, weapon.damageDieSize, weapon.damageBonus, weaponRolled2, weapon.name);
                 
-                // Skill dice (also doubled on crit!)
-                if (skillDice > 0 && skillDieSize > 0)
+                // Base dice (also doubled on crit!)
+                if (baseDice > 0 && dieSize > 0)
                 {
-                    var (skillDiceCount, skillLabel) = ApplyCritMultiplier(skillDice, "Skill Bonus", isCriticalHit);
-                    int skillRolled = RollUtility.RollDice(skillDiceCount, skillDieSize);
-                    DamageCalculator.AddSource(result, skillLabel, skillDiceCount, skillDieSize, skillBonus, skillRolled, "Skill Effect");
+                    var (baseDiceCount, baseLabel) = ApplyCritMultiplier(baseDice, "Bonus", isCriticalHit);
+                    int baseRolled = RollUtility.RollDice(baseDiceCount, dieSize);
+                    DamageCalculator.AddSource(result, baseLabel, baseDiceCount, dieSize, bonus, baseRolled, "Damage Effect");
                 }
-                else if (skillBonus != 0)
+                else if (bonus != 0)
                 {
-                    DamageCalculator.AddFlat(result, "Skill Bonus", skillBonus, "Skill Effect");
+                    DamageCalculator.AddFlat(result, "Bonus", bonus, "Damage Effect");
                 }
                 
-                result.damageType = useWeaponDamageType ? weapon.damageType : skillDamageType;
+                result.damageType = useWeaponDamageType ? weapon.damageType : damageType;
                 break;
         }
 

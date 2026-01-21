@@ -21,11 +21,11 @@ public class AttackSkill : Skill
                     {
                         formula = new DamageFormula
                         {
-                            mode = SkillDamageMode.SkillOnly,
-                            skillDice = 1,
-                            skillDieSize = 6,
-                            skillBonus = 0,
-                            skillDamageType = DamageType.Physical
+                            mode = DamageMode.BaseOnly,
+                            baseDice = 1,
+                            dieSize = 6,
+                            bonus = 0,
+                            damageType = DamageType.Physical
                         }
                     },
                     target = EffectTarget.SelectedTarget
