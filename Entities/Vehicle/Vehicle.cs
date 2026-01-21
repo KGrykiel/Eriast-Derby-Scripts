@@ -38,6 +38,11 @@ public class Vehicle : MonoBehaviour
 
     private TextMeshProUGUI nameLabel;
     
+    [Header("Crew & Seats")]
+    [Tooltip("Physical positions where characters sit and control components. " +
+             "Each seat references components it can operate and has an assigned character.")]
+    public List<VehicleSeat> seats = new List<VehicleSeat>();
+    
     [Header("Vehicle Components")]
     [Tooltip("Chassis - MANDATORY structural component (stores HP and AC)")]
     public ChassisComponent chassis;
@@ -56,7 +61,7 @@ public class Vehicle : MonoBehaviour
     void Awake()
     {
         // Initialize component coordinator
-        componentCoordinator = new Assets.Scripts.Entities.Vehicle.VehicleComponentCoordinator(this);
+        componentCoordinator = new VehicleComponentCoordinator(this);
         componentCoordinator.InitializeComponents();
 
         var labelTransform = transform.Find("NameLabel");
@@ -143,8 +148,6 @@ public class Vehicle : MonoBehaviour
     
     public List<VehicleComponent> AllComponents => componentCoordinator?.GetAllComponents() ?? new List<VehicleComponent>();
     
-    public List<VehicleRole> GetAvailableRoles() => componentCoordinator?.GetAvailableRoles() ?? new List<VehicleRole>();
-    
     public bool IsComponentAccessible(VehicleComponent target) => componentCoordinator?.IsComponentAccessible(target) ?? false;
     
     public string GetInaccessibilityReason(VehicleComponent target) => componentCoordinator?.GetInaccessibilityReason(target);
@@ -152,19 +155,63 @@ public class Vehicle : MonoBehaviour
     public void ResetComponentsForNewTurn()
     {
         hasLoggedMovementWarningThisTurn = false;
-        componentCoordinator?.ResetComponentsForNewTurn();
+        
+        // Reset seat turn state (seats track action usage now)
+        foreach (var seat in seats)
+        {
+            seat?.ResetTurnState();
+        }
     }
 
-    // ==================== ENTITY ACCESS (for targeting systems) ====================
+    // ==================== SEAT ACCESS ====================
     
-    public Entity GetPrimaryTarget() => chassis;
-    
-    public List<Entity> GetAllTargetableEntities()
+    /// <summary>
+    /// Get the seat that controls a specific component.
+    /// Returns null if component is not controlled by any seat.
+    /// </summary>
+    public VehicleSeat GetSeatForComponent(VehicleComponent component)
     {
-        return AllComponents
-            .Where(c => !c.isDestroyed)
-            .Cast<Entity>()
+        if (component == null) return null;
+        return seats.FirstOrDefault(s => s.controlledComponents.Contains(component));
+    }
+    
+    /// <summary>
+    /// Get the seat where a specific character is assigned.
+    /// Returns null if character is not assigned to any seat on this vehicle.
+    /// </summary>
+    public VehicleSeat GetSeatForCharacter(PlayerCharacter character)
+    {
+        if (character == null) return null;
+        return seats.FirstOrDefault(s => s.assignedCharacter == character);
+    }
+    
+    /// <summary>
+    /// Get all characters currently crewing this vehicle.
+    /// </summary>
+    public List<PlayerCharacter> GetCrew()
+    {
+        return seats
+            .Where(s => s?.assignedCharacter != null)
+            .Select(s => s.assignedCharacter)
             .ToList();
+    }
+    
+    /// <summary>
+    /// Get the character operating a specific component (via their seat).
+    /// Returns null if component has no operator.
+    /// </summary>
+    public PlayerCharacter GetOperatorForComponent(VehicleComponent component)
+    {
+        var seat = GetSeatForComponent(component);
+        return seat?.assignedCharacter;
+    }
+    
+    /// <summary>
+    /// Get all seats that can currently act (have character and operational components).
+    /// </summary>
+    public List<VehicleSeat> GetActiveSeats()
+    {
+        return seats.Where(s => s != null && s.CanAct()).ToList();
     }
 
     // ==================== CROSS-COMPONENT MODIFIER SYSTEM ====================

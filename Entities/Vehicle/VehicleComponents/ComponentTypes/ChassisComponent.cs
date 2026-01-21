@@ -39,7 +39,6 @@ public class ChassisComponent : VehicleComponent
         powerDrawPerTurn = 0;  // Passive structure
         
         // Chassis does NOT enable a role
-        enablesRole = false;
         roleType = RoleType.None;
     }
     
@@ -49,7 +48,6 @@ public class ChassisComponent : VehicleComponent
         componentType = ComponentType.Chassis;
         
         // Ensure role settings
-        enablesRole = false;
         roleType = RoleType.None;
     }
     

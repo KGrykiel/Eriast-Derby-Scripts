@@ -143,6 +143,7 @@ public static class VehicleComponentUI
     {
         if (component == null) return "[NULL COMPONENT]";
         
+        
         string status = $"<b>{component.name}</b> ({component.componentType})\n";
         status += $"HP: {component.health}/{component.maxHealth} | AC: {component.armorClass}\n";
         
@@ -151,11 +152,13 @@ public static class VehicleComponentUI
         else if (component.isDisabled)
             status += "<color=yellow>[DISABLED]</color>\n";
         
-        if (component.enablesRole)
+        if (component.roleType != RoleType.None)
             status += $"Enables: {component.roleType}\n";
         
-        if (component.assignedCharacter != null)
-            status += $"Operated by: {component.assignedCharacter.characterName}\n";
+        // Get character from seat that controls this component
+        var seat = component.ParentVehicle?.GetSeatForComponent(component);
+        if (seat?.assignedCharacter != null)
+            status += $"Operated by: {seat.assignedCharacter.characterName}\n";
         
         if (component.componentSkills != null && component.componentSkills.Count > 0)
             status += $"Skills: {component.componentSkills.Count}\n";

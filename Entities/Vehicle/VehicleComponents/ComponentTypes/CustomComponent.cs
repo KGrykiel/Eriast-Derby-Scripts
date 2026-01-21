@@ -52,14 +52,13 @@ public class CustomComponent : VehicleComponent
         powerDrawPerTurn = 0;
         
         // Custom components don't enable roles by default
-        enablesRole = false;
         roleType = RoleType.None;
     }
     
     void Awake()
     {
         // For custom components, don't lock the type
-        // User can change componentType, enablesRole, and roleType in Inspector
+        // User can change componentType and roleType in Inspector
         // (via the CustomComponentEditor which overrides [ReadOnly])
     }
     

@@ -2,26 +2,39 @@
 // All vehicle-specific enums consolidated in one place.
 // System-wide enums (e.g., Attribute) are in separate files.
 
+using System;
+
 /// <summary>
 /// Defines the types of roles that vehicle components can enable.
 /// Each role allows a character to perform specific actions during combat.
+/// 
+/// This is a [Flags] enum to support combined roles (e.g., Driver | Gunner for solo vehicles).
+/// Components set their roleType to indicate what role(s) they enable.
+/// Seats aggregate roles from all their controlled components.
 /// </summary>
+[Flags]
 public enum RoleType
 {
     /// <summary>No role enabled (default for most components)</summary>
     None = 0,
 
     /// <summary>Driver role - controls vehicle movement (enabled by DriveComponent)</summary>
-    Driver,
+    Driver = 1 << 0,      // 1
 
     /// <summary>Navigator role - assists with pathfinding and stage selection</summary>
-    Navigator,
+    Navigator = 1 << 1,   // 2
 
     /// <summary>Gunner role - operates weapons (enabled by WeaponComponent)</summary>
-    Gunner,
+    Gunner = 1 << 2,      // 4
 
     /// <summary>Technician role - repairs, manages power, enables/disables components</summary>
-    Technician
+    Technician = 1 << 3,  // 8
+    
+    // === EXTENSION SLOTS (for future custom roles) ===
+    // Custom1 = 1 << 4,  // 16 - e.g., Mystic
+    // Custom2 = 1 << 5,  // 32 - e.g., Medic
+    // Custom3 = 1 << 6,  // 64
+    // Custom4 = 1 << 7,  // 128
 }
 
 /// <summary>

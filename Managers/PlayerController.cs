@@ -1,9 +1,11 @@
 using System.Collections.Generic;
+using System.Linq;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 using EventType = Assets.Scripts.Logging.EventType;
 using Assets.Scripts.Logging;
+using Assets.Scripts.Entities.Vehicle;
 using Assets.Scripts.Entities.Vehicle.VehicleComponents;
 using Assets.Scripts.Core;
 
@@ -46,10 +48,10 @@ public class PlayerController : MonoBehaviour
     private Vehicle playerVehicle;
     private System.Action onPlayerTurnComplete;
 
-    // Role-based state
-    private List<VehicleRole> availableRoles = new List<VehicleRole>();
-    private int selectedRoleIndex = -1;
-    private VehicleRole? currentRole = null;
+    // Seat-based state (replaced VehicleRole system)
+    private List<VehicleSeat> availableSeats = new List<VehicleSeat>();
+    private int selectedSeatIndex = -1;
+    private VehicleSeat currentSeat = null;
 
     // Player selection state
     private Vehicle selectedTarget = null;
@@ -60,7 +62,7 @@ public class PlayerController : MonoBehaviour
     private bool isPlayerTurnActive = false;
 
     // UI button caches
-    private List<Button> roleTabButtons = new List<Button>();
+    private List<Button> seatTabButtons = new List<Button>();
     private List<Button> skillButtons = new List<Button>();
     private List<Button> stageButtons = new List<Button>();
 
@@ -152,8 +154,8 @@ public class PlayerController : MonoBehaviour
         // Reset all components for new turn
         playerVehicle.ResetComponentsForNewTurn();
         
-        // Discover available roles
-        availableRoles = playerVehicle.GetAvailableRoles();
+        // Get available seats (seats that can act)
+        availableSeats = playerVehicle.GetActiveSeats();
         
         ShowPlayerUI();
         UpdateTurnStatusDisplay();
@@ -195,7 +197,7 @@ public class PlayerController : MonoBehaviour
     #region Role & Skill Selection UI
 
     /// <summary>
-    /// Shows the player turn UI panel, role tabs, and skill selection.
+    /// Shows the player turn UI panel, seat tabs, and skill selection.
     /// </summary>
     private void ShowPlayerUI()
     {
@@ -205,12 +207,12 @@ public class PlayerController : MonoBehaviour
         if (endTurnButton != null)
             endTurnButton.interactable = true;
 
-        ShowRoleTabs();
+        ShowSeatTabs();
         
-        // Select first role by default
-        if (availableRoles.Count > 0)
+        // Select first seat by default
+        if (availableSeats.Count > 0)
         {
-            SelectRole(0);
+            SelectSeat(0);
         }
     }
 
@@ -230,98 +232,116 @@ public class PlayerController : MonoBehaviour
     }
 
     /// <summary>
-    /// Displays role tabs for all available roles.
-    /// Shows visual feedback for which roles have acted.
+    /// Displays seat tabs for all available seats.
+    /// Shows visual feedback for which seats have acted.
     /// </summary>
-    private void ShowRoleTabs()
+    private void ShowSeatTabs()
     {
         if (roleTabContainer == null || roleTabPrefab == null) return;
 
         // Ensure we have enough tab buttons
-        while (roleTabButtons.Count < availableRoles.Count)
+        while (seatTabButtons.Count < availableSeats.Count)
         {
             Button btn = Instantiate(roleTabPrefab, roleTabContainer);
-            roleTabButtons.Add(btn);
+            seatTabButtons.Add(btn);
         }
 
         // Update tab buttons
-        for (int i = 0; i < roleTabButtons.Count; i++)
+        for (int i = 0; i < seatTabButtons.Count; i++)
         {
-            if (i < availableRoles.Count)
+            if (i < availableSeats.Count)
             {
-                VehicleRole role = availableRoles[i];
-                roleTabButtons[i].gameObject.SetActive(true);
+                VehicleSeat seat = availableSeats[i];
+                seatTabButtons[i].gameObject.SetActive(true);
                 
-                // Check if component can act (not destroyed, not disabled, no stun effects)
-                bool canAct = role.sourceComponent.CanAct();
-                bool hasActed = role.sourceComponent.hasActedThisTurn;
+                // Check if seat can act
+                bool canAct = seat.CanAct();
+                bool hasActed = seat.HasActedThisTurn();
                 
                 // Build tab text with status indicators
                 string statusIcon;
                 if (!canAct)
-                    statusIcon = "[X]";  // Stunned/disabled
+                    statusIcon = "[X]";  // Cannot act
                 else if (hasActed)
                     statusIcon = "[v]";  // Already acted
                 else
                     statusIcon = "[ ]";  // Ready to act
                 
-                string characterName = role.assignedCharacter?.characterName ?? "Unassigned";
-                string tabText = $"{statusIcon} {role.roleType} ({characterName})";
+                string characterName = seat.assignedCharacter?.characterName ?? "Unassigned";
+                RoleType roles = seat.GetEnabledRoles();
+                string tabText = $"{statusIcon} {seat.seatName} ({characterName})";
                 
-                roleTabButtons[i].GetComponentInChildren<TextMeshProUGUI>().text = tabText;
+                seatTabButtons[i].GetComponentInChildren<TextMeshProUGUI>().text = tabText;
                 
-                // Greyed out if already acted OR cannot act (stunned/disabled)
-                roleTabButtons[i].interactable = canAct && !hasActed;
+                // Greyed out if already acted OR cannot act
+                seatTabButtons[i].interactable = canAct && !hasActed;
                 
-                int roleIndex = i;
-                roleTabButtons[i].onClick.RemoveAllListeners();
-                roleTabButtons[i].onClick.AddListener(() => SelectRole(roleIndex));
+                int seatIndex = i;
+                seatTabButtons[i].onClick.RemoveAllListeners();
+                seatTabButtons[i].onClick.AddListener(() => SelectSeat(seatIndex));
             }
             else
             {
-                roleTabButtons[i].gameObject.SetActive(false);
+                seatTabButtons[i].gameObject.SetActive(false);
             }
         }
     }
 
     /// <summary>
-    /// Selects a role and displays its available skills.
+    /// Selects a seat and displays its available skills.
     /// </summary>
-    private void SelectRole(int roleIndex)
+    private void SelectSeat(int seatIndex)
     {
-        if (roleIndex < 0 || roleIndex >= availableRoles.Count) return;
+        if (seatIndex < 0 || seatIndex >= availableSeats.Count) return;
 
-        selectedRoleIndex = roleIndex;
-        currentRole = availableRoles[roleIndex];
+        selectedSeatIndex = seatIndex;
+        currentSeat = availableSeats[seatIndex];
 
-        // Update current role display
+        // Update current seat display
         if (currentRoleText != null)
         {
-            string characterName = currentRole.Value.assignedCharacter?.characterName ?? "Unassigned";
-            string status = currentRole.Value.sourceComponent.hasActedThisTurn ? "- ACTED" : "- Ready";
-            currentRoleText.text = $"<b>{currentRole.Value.roleType}</b> ({characterName}) {status}";
+            string characterName = currentSeat.assignedCharacter?.characterName ?? "Unassigned";
+            string status = currentSeat.HasActedThisTurn() ? "- ACTED" : "- Ready";
+            currentRoleText.text = $"<b>{currentSeat.seatName}</b> ({characterName}) {status}";
         }
 
-        // Show skills for this role
+        // Show skills for this seat
         ShowSkillSelection();
     }
 
     /// <summary>
-    /// Displays skill selection UI for the currently selected role.
-    /// Shows all skills from the role's component and assigned character.
+    /// Displays skill selection UI for the currently selected seat.
+    /// Shows all skills from the seat's controlled components and assigned character.
     /// </summary>
     private void ShowSkillSelection()
     {
-        if (skillButtonContainer == null || skillButtonPrefab == null || !currentRole.HasValue) return;
+        if (skillButtonContainer == null || skillButtonPrefab == null || currentSeat == null) return;
 
-        List<Skill> availableSkills = currentRole.Value.availableSkills;
-        if (availableSkills == null)
+        // Gather all skills from seat's controlled components + character personal skills
+        List<Skill> availableSkills = new List<Skill>();
+        
+        foreach (var component in currentSeat.GetOperationalComponents())
         {
-            Debug.LogWarning($"[PlayerController] No available skills for role {currentRole.Value.roleType}");
+            availableSkills.AddRange(component.GetAllSkills());
+        }
+        
+        // Add character's personal skills
+        if (currentSeat.assignedCharacter != null)
+        {
+            var personalSkills = currentSeat.assignedCharacter.GetPersonalSkills();
+            if (personalSkills != null)
+            {
+                availableSkills.AddRange(personalSkills);
+            }
+        }
+
+        if (availableSkills.Count == 0)
+        {
+            Debug.LogWarning($"[PlayerController] No available skills for seat {currentSeat.seatName}");
             return;
         }
 
-        bool roleHasActed = currentRole.Value.sourceComponent.hasActedThisTurn;
+        bool seatHasActed = currentSeat.HasActedThisTurn();
 
         // Ensure we have enough skill buttons
         while (skillButtons.Count < availableSkills.Count)
@@ -338,7 +358,7 @@ public class PlayerController : MonoBehaviour
                 Skill skill = availableSkills[i];
                 if (skill == null)
                 {
-                    Debug.LogWarning($"[PlayerController] Null skill at index {i} for role {currentRole.Value.roleType}");
+                    Debug.LogWarning($"[PlayerController] Null skill at index {i} for seat {currentSeat.seatName}");
                     skillButtons[i].gameObject.SetActive(false);
                     continue;
                 }
@@ -353,9 +373,9 @@ public class PlayerController : MonoBehaviour
                     textComponent.text = skillText;
                 }
                 
-                // Disable if not enough energy OR role has already acted
+                // Disable if not enough energy OR seat has already acted
                 bool canAfford = playerVehicle.energy >= skill.energyCost;
-                bool canUse = canAfford && !roleHasActed;
+                bool canUse = canAfford && !seatHasActed;
                 skillButtons[i].interactable = canUse;
                 
                 int skillIndex = i;
@@ -374,13 +394,29 @@ public class PlayerController : MonoBehaviour
     /// </summary>
     private void OnSkillButtonClicked(int skillIndex)
     {
-        if (!currentRole.HasValue) return;
+        if (currentSeat == null) return;
 
-        List<Skill> availableSkills = currentRole.Value.availableSkills;
+        // Re-gather available skills for this seat (same logic as ShowSkillSelection)
+        List<Skill> availableSkills = new List<Skill>();
+        foreach (var component in currentSeat.GetOperationalComponents())
+        {
+            availableSkills.AddRange(component.GetAllSkills());
+        }
+        if (currentSeat.assignedCharacter != null)
+        {
+            var personalSkills = currentSeat.assignedCharacter.GetPersonalSkills();
+            if (personalSkills != null)
+            {
+                availableSkills.AddRange(personalSkills);
+            }
+        }
+        
         if (skillIndex < 0 || skillIndex >= availableSkills.Count) return;
 
         selectedSkill = availableSkills[skillIndex];
-        selectedSkillSourceComponent = currentRole.Value.sourceComponent;
+        
+        // Use first operational component as source (for skill execution)
+        selectedSkillSourceComponent = currentSeat.GetOperationalComponents().FirstOrDefault();
 
         // Check if skill needs source component selection first
         if (SkillNeedsSourceComponentSelection(selectedSkill))
@@ -480,25 +516,25 @@ public class PlayerController : MonoBehaviour
     }
     
     /// <summary>
-    /// Consumes energy and marks the component as acted.
+    /// Consumes energy and marks the seat as acted.
     /// Called after skill execution (even on miss - intended design).
     /// </summary>
     private void ConsumeSkillResources()
     {
         playerVehicle.energy -= selectedSkill.energyCost;
-        selectedSkillSourceComponent.hasActedThisTurn = true;
+        currentSeat?.MarkAsActed();
     }
     
     /// <summary>
-    /// Logs skill usage result to race history with role and component context.
+    /// Logs skill usage result to race history with seat and component context.
     /// </summary>
     private void LogSkillUsageResult(bool skillSucceeded)
     {
-        if (!currentRole.HasValue) return;
+        if (currentSeat == null) return;
         
-        string roleTypeName = currentRole.Value.roleType.ToString();
-        string characterName = currentRole.Value.assignedCharacter?.characterName ?? "Unassigned";
-        string fullRoleName = $"{roleTypeName} ({characterName})";
+        string seatName = currentSeat.seatName;
+        string characterName = currentSeat.assignedCharacter?.characterName ?? "Unassigned";
+        string fullSeatName = $"{seatName} ({characterName})";
         
         if (skillSucceeded)
         {
@@ -506,10 +542,10 @@ public class PlayerController : MonoBehaviour
             RaceHistory.Log(
                 EventType.SkillUse,
                 EventImportance.Medium,
-                $"{fullRoleName} used {selectedSkill.name}",
+                $"{fullSeatName} used {selectedSkill.name}",
                 playerVehicle.currentStage,
                 playerVehicle
-            ).WithMetadata("roleType", roleTypeName)
+            ).WithMetadata("seatName", seatName)
              .WithMetadata("skillName", selectedSkill.name)
              .WithMetadata("componentName", selectedSkillSourceComponent.name);
         }
@@ -519,10 +555,10 @@ public class PlayerController : MonoBehaviour
             RaceHistory.Log(
                 EventType.SkillUse,
                 EventImportance.Medium,
-                $"{fullRoleName} used {selectedSkill.name} but missed!",
+                $"{fullSeatName} used {selectedSkill.name} but missed!",
                 playerVehicle.currentStage,
                 playerVehicle
-            ).WithMetadata("roleType", roleTypeName)
+            ).WithMetadata("seatName", seatName)
              .WithMetadata("skillName", selectedSkill.name)
              .WithMetadata("componentName", selectedSkillSourceComponent.name)
              .WithMetadata("missed", true);
@@ -531,12 +567,12 @@ public class PlayerController : MonoBehaviour
     
     /// <summary>
     /// Refreshes all player UI elements after skill execution.
-    /// Updates turn status, role tabs, skill buttons, and DM panels.
+    /// Updates turn status, seat tabs, skill buttons, and DM panels.
     /// </summary>
     private void RefreshPlayerUIAfterSkill()
     {
         UpdateTurnStatusDisplay();
-        ShowRoleTabs();
+        ShowSeatTabs();
         ShowSkillSelection();
         gameManager.RefreshAllPanels();
     }

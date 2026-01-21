@@ -6,6 +6,7 @@ using System.Linq;
 using Assets.Scripts.Logging;
 using Assets.Scripts.UI.Components;
 using Assets.Scripts.Core;
+using Assets.Scripts.Entities.Vehicle;
 
 /// <summary>
 /// Inspector panel for detailed vehicle examination.
@@ -625,7 +626,7 @@ public class VehicleInspectorPanel : MonoBehaviour
             var characterName = roleInfoRow.Find("CharacterName")?.GetComponent<TMP_Text>();
             var warningText = roleInfoRow.Find("InaccessibilityWarning")?.GetComponent<TMP_Text>();
             
-            bool showRoleInfo = component.enablesRole;
+            bool showRoleInfo = component.roleType != RoleType.None;
             bool isAccessible = selectedVehicle.IsComponentAccessible(component);
             bool showWarning = !component.isDestroyed && !isAccessible;
             
@@ -642,8 +643,11 @@ public class VehicleInspectorPanel : MonoBehaviour
                 characterName.gameObject.SetActive(showRoleInfo);
                 if (showRoleInfo)
                 {
-                    characterName.text = component.assignedCharacter != null 
-                        ? $"({component.assignedCharacter.characterName})" 
+                    // Get character from seat that controls this component
+                    var seat = selectedVehicle.GetSeatForComponent(component);
+                    var character = seat?.assignedCharacter;
+                    characterName.text = character != null 
+                        ? $"({character.characterName})" 
                         : "(Unassigned)";
                 }
             }
@@ -749,33 +753,97 @@ public class VehicleInspectorPanel : MonoBehaviour
     {
         if (skillsSectionText == null) return;
         
-        var roles = selectedVehicle.GetAvailableRoles();
-        int totalSkills = roles.Sum(r => r.availableSkills?.Count ?? 0);
+        var seats = selectedVehicle.seats;
+        int totalSkills = 0;
         
-        string info = $"<b>SKILLS ({totalSkills} from {roles.Count} roles):</b>\n";
-        
-        if (totalSkills == 0)
+        // Count total skills from all seats
+        foreach (var seat in seats)
         {
-            info += "  <color=#888888>None</color>\n";
+            if (seat == null) continue;
+            foreach (var component in seat.GetOperationalComponents())
+            {
+                totalSkills += component.GetAllSkills().Count;
+            }
+            if (seat.assignedCharacter != null)
+            {
+                totalSkills += seat.assignedCharacter.GetPersonalSkills().Count;
+            }
+        }
+        
+        string info = $"<b>CREW & SKILLS ({seats.Count} seats, {totalSkills} skills):</b>\n";
+        
+        if (seats.Count == 0)
+        {
+            info += "  <color=#888888>No seats configured</color>\n";
         }
         else
         {
-            foreach (var role in roles)
+            foreach (var seat in seats)
             {
-                if (role.availableSkills == null || role.availableSkills.Count == 0)
-                    continue;
+                if (seat == null) continue;
                 
-                string characterName = role.assignedCharacter?.characterName ?? "Unassigned";
-                info += $"  <b>{role.roleType}</b> ({characterName}):\n";
-                
-                foreach (var skill in role.availableSkills)
+                // Seat status icon
+                string statusIcon;
+                string statusColor;
+                if (!seat.CanAct())
                 {
-                    if (skill != null)
+                    statusIcon = "❌";
+                    statusColor = "#FF6666";
+                }
+                else if (seat.HasActedThisTurn())
+                {
+                    statusIcon = "☑️";
+                    statusColor = "#888888";
+                }
+                else
+                {
+                    statusIcon = "✅";
+                    statusColor = "#66FF66";
+                }
+                
+                // Character name
+                string characterName = seat.assignedCharacter?.characterName ?? "<color=#FF6666>Unassigned</color>";
+                
+                // Roles enabled by this seat
+                RoleType roles = seat.GetEnabledRoles();
+                string roleText = roles != RoleType.None ? $" [{roles}]" : "";
+                
+                info += $"\n  <b><color={statusColor}>{statusIcon} {seat.seatName}</color></b>{roleText}\n";
+                info += $"    Operator: {characterName}\n";
+                
+                // Show reason if can't act
+                if (!seat.CanAct())
+                {
+                    string reason = seat.GetCannotActReason();
+                    info += $"    <color=#FF6666>⚠ {reason}</color>\n";
+                }
+                
+                // Gather all skills for this seat
+                var seatSkills = new List<Skill>();
+                foreach (var component in seat.GetOperationalComponents())
+                {
+                    seatSkills.AddRange(component.GetAllSkills());
+                }
+                if (seat.assignedCharacter != null)
+                {
+                    seatSkills.AddRange(seat.assignedCharacter.GetPersonalSkills());
+                }
+                
+                if (seatSkills.Count > 0)
+                {
+                    foreach (var skill in seatSkills)
                     {
-                        bool canAfford = selectedVehicle.energy >= skill.energyCost;
-                        string affordText = canAfford ? "" : " <color=#FF4444>(Can't afford)</color>";
-                        info += $"    - <b>{skill.name}</b> ({skill.energyCost} EN){affordText}\n";
+                        if (skill != null)
+                        {
+                            bool canAfford = selectedVehicle.energy >= skill.energyCost;
+                            string affordText = canAfford ? "" : " <color=#FF4444>(Can't afford)</color>";
+                            info += $"    • <b>{skill.name}</b> ({skill.energyCost} EN){affordText}\n";
+                        }
                     }
+                }
+                else
+                {
+                    info += $"    <color=#888888>No skills available</color>\n";
                 }
             }
         }

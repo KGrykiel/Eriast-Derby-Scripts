@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 using TMPro;
 using UnityEngine;
 using EventType = Assets.Scripts.Logging.EventType;
@@ -78,6 +79,27 @@ public class GameManager : MonoBehaviour
                 startStage,
                 vehicle
             );
+            
+            // Log crew composition if vehicle has seats
+            if (vehicle.seats.Count > 0)
+            {
+                var crewList = vehicle.seats
+                    .Where(s => s?.assignedCharacter != null)
+                    .Select(s => $"{s.assignedCharacter.characterName} ({s.seatName})")
+                    .ToList();
+                
+                if (crewList.Count > 0)
+                {
+                    RaceHistory.Log(
+                        EventType.System,
+                        EventImportance.Medium,
+                        $"{vehicle.vehicleName} crew: {string.Join(", ", crewList)}",
+                        startStage,
+                        vehicle
+                    ).WithMetadata("crewCount", crewList.Count)
+                     .WithMetadata("seatCount", vehicle.seats.Count);
+                }
+            }
         }
     }
 

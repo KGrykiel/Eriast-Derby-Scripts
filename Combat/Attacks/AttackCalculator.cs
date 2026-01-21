@@ -136,19 +136,26 @@ namespace Assets.Scripts.Combat.Attacks
         
         /// <summary>
         /// Intrinsic: Character's base attack bonus (skill).
+        /// Now queries through VehicleSeat system.
         /// </summary>
         private static void GatherCharacterBonus(VehicleComponent sourceComponent, List<AttributeModifier> modifiers)
         {
-            if (sourceComponent?.assignedCharacter != null)
+            if (sourceComponent?.ParentVehicle == null) return;
+            
+            // Get character from seat that controls this component
+            var seat = sourceComponent.ParentVehicle.GetSeatForComponent(sourceComponent);
+            var character = seat?.assignedCharacter;
+            
+            if (character != null)
             {
-                int charBonus = sourceComponent.assignedCharacter.baseAttackBonus;
+                int charBonus = character.baseAttackBonus;
                 if (charBonus != 0)
                 {
                     modifiers.Add(new AttributeModifier(
                         Attribute.AttackBonus,
                         ModifierType.Flat,
                         charBonus,
-                        sourceComponent.assignedCharacter));
+                        character));
                 }
             }
         }

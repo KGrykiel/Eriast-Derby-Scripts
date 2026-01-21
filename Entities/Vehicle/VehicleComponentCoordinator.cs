@@ -72,36 +72,6 @@ namespace Assets.Scripts.Entities.Vehicle
             Debug.Log($"[Vehicle] {vehicle.vehicleName} initialized with {GetAllComponents().Count} component(s)");
         }
 
-        // ==================== ROLE DISCOVERY ====================
-
-        /// <summary>
-        /// Get all available roles on this vehicle (emergent from components).
-        /// Roles are discovered dynamically based on which components enable them.
-        /// Returns one VehicleRole struct per component (even if role names are the same).
-        /// Example: Two weapons = two separate Gunner roles with different skills/characters.
-        /// </summary>
-        public List<VehicleRole> GetAvailableRoles()
-        {
-            List<VehicleRole> roles = new List<VehicleRole>();
-
-            foreach (var component in GetAllComponents())
-            {
-                // Skip if component doesn't enable a role or is destroyed
-                if (!component.enablesRole || component.isDestroyed)
-                    continue;
-
-                roles.Add(new VehicleRole
-                {
-                    roleType = component.roleType,
-                    sourceComponent = component,
-                    assignedCharacter = component.assignedCharacter,
-                    availableSkills = component.GetAllSkills()
-                });
-            }
-
-            return roles;
-        }
-
         // ==================== COMPONENT ACCESSIBILITY ====================
 
         /// <summary>
@@ -192,20 +162,6 @@ namespace Assets.Scripts.Entities.Vehicle
             if (vehicle.powerCore != null) all.Add(vehicle.powerCore);
             if (vehicle.optionalComponents != null) all.AddRange(vehicle.optionalComponents);
             return all;
-        }
-
-        // ==================== TURN MANAGEMENT ====================
-
-        /// <summary>
-        /// Reset all components for new turn.
-        /// Call at start of each round.
-        /// </summary>
-        public void ResetComponentsForNewTurn()
-        {
-            foreach (var component in GetAllComponents())
-            {
-                component.ResetTurnState();
-            }
         }
 
         // ==================== COMPONENT SPACE VALIDATION ====================

@@ -104,7 +104,6 @@ public class WeaponComponent : VehicleComponent
         attackBonus = 0;
         
         // Each weapon ENABLES ONE "Gunner" role slot
-        enablesRole = true;
         roleType = RoleType.Gunner;
     }
     
@@ -114,7 +113,6 @@ public class WeaponComponent : VehicleComponent
         componentType = ComponentType.Weapon;
         
         // Each weapon ENABLES ONE "Gunner" role slot
-        enablesRole = true;
         roleType = RoleType.Gunner;
         
         // Initialize ammo

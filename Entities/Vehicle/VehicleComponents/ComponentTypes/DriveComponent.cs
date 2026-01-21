@@ -45,7 +45,6 @@ public class DriveComponent : VehicleComponent
         // stability = 5f;
         
         // Drive ENABLES the "Driver" role
-        enablesRole = true;
         roleType = RoleType.Driver;
     }
     
@@ -55,7 +54,6 @@ public class DriveComponent : VehicleComponent
         componentType = ComponentType.Drive;
         
         // Drive ENABLES the "Driver" role
-        enablesRole = true;
         roleType = RoleType.Driver;
     }
     

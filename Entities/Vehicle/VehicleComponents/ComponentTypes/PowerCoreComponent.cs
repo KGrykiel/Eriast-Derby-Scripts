@@ -47,7 +47,6 @@ namespace Assets.Scripts.Entities.Vehicle.VehicleComponents.ComponentTypes
             energyRegen = 5f;
             
             // Power core does NOT enable a role
-            enablesRole = false;
             roleType = RoleType.None;
         }
         
@@ -60,7 +59,6 @@ namespace Assets.Scripts.Entities.Vehicle.VehicleComponents.ComponentTypes
             currentEnergy = maxEnergy;
             
             // Ensure role settings
-            enablesRole = false;
             roleType = RoleType.None;
         }
         

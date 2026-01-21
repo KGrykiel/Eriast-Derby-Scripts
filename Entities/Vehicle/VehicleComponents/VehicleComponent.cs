@@ -55,25 +55,12 @@ public abstract class VehicleComponent : Entity
     public bool isDisabled = false;
     
     [Header("Role Support")]
-    [Tooltip("Does this component enable a role? (locked for specific component types)")]
-    [ReadOnly]
-    public bool enablesRole = false;
-    
-    [Tooltip("Type of role this component enables (locked for specific component types)")]
-    [ReadOnly]
+    [Tooltip("Type of role this component enables. Set to None if component doesn't enable a role.")]
     public RoleType roleType = RoleType.None;
     
     [Header("Skills")]
     [Tooltip("Skills provided by this component (assigned in Inspector)")]
     public List<Skill> componentSkills = new List<Skill>();
-    
-    [Header("Character Assignment")]
-    [Tooltip("Player character operating this component (null for AI or unassigned, only used if component enables a role)")]
-    public PlayerCharacter assignedCharacter;
-    
-    [Header("Turn Tracking")]
-    [HideInInspector]
-    public bool hasActedThisTurn = false;
     
     // Reference to parent vehicle (set during initialization)
     protected Vehicle parentVehicle;
@@ -94,18 +81,10 @@ public abstract class VehicleComponent : Entity
         parentVehicle = vehicle;
         
         // Log component initialization
-        if (enablesRole)
+        if (roleType != RoleType.None)
         {
             Debug.Log($"[Component] {name} initialized on {vehicle.vehicleName}, enables role: {roleType}");
         }
-    }
-    
-    /// <summary>
-    /// Reset turn-specific state (called at start of each round).
-    /// </summary>
-    public virtual void ResetTurnState()
-    {
-        hasActedThisTurn = false;
     }
     
     // ==================== CROSS-COMPONENT MODIFIER SYSTEM ====================
@@ -253,14 +232,10 @@ public abstract class VehicleComponent : Entity
     
     /// <summary>
     /// Get display name (override Entity).
-    /// Shows component name + assigned character if present.
+    /// Shows component name. Character info comes from VehicleSeat now.
     /// </summary>
     public override string GetDisplayName()
     {
-        if (assignedCharacter != null)
-        {
-            return $"{name} ({assignedCharacter.characterName})";
-        }
         return name; // Unity's GameObject.name
     }
     
@@ -363,7 +338,7 @@ public abstract class VehicleComponent : Entity
         Debug.LogWarning($"[Component] {name} on {vehicleName} was destroyed!");
         
         // If this component enabled a role, that role is now unavailable
-        if (enablesRole)
+        if (roleType != RoleType.None)
         {
             Debug.Log($"[Component] Role '{roleType}' is no longer available on {vehicleName}");
         }
@@ -422,7 +397,8 @@ public abstract class VehicleComponent : Entity
     // ==================== SKILL MANAGEMENT ====================
     
     /// <summary>
-    /// Get all skills this component provides (component skills + character personal skills).
+    /// Get all skills this component provides.
+    /// Note: Character personal skills are now accessed via VehicleSeat.
     /// </summary>
     public virtual List<Skill> GetAllSkills()
     {
@@ -434,26 +410,17 @@ public abstract class VehicleComponent : Entity
             allSkills.AddRange(componentSkills);
         }
         
-        // Add character's personal skills (if character is assigned)
-        if (assignedCharacter != null)
-        {
-            var personalSkills = assignedCharacter.GetPersonalSkills();
-            if (personalSkills != null)
-            {
-                allSkills.AddRange(personalSkills);
-            }
-        }
-        
         return allSkills;
     }
     
     /// <summary>
     /// Can this component currently provide skills?
-    /// (Not destroyed, not disabled, and has a character assigned)
+    /// (Not destroyed, not disabled)
+    /// Note: Character assignment is now checked via VehicleSeat.
     /// </summary>
     public virtual bool CanProvideSkills()
     {
-        return !isDestroyed && !isDisabled && assignedCharacter != null;
+        return !isDestroyed && !isDisabled;
     }
     
     // ==================== UI HELPERS ====================
