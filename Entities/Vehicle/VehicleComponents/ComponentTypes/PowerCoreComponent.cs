@@ -161,5 +161,69 @@ namespace Assets.Scripts.Entities.Vehicle.VehicleComponents.ComponentTypes
              .WithMetadata("currentEnergy", 0)
              .WithMetadata("catastrophicFailure", true);
         }
+        
+        // ==================== POWER MANAGEMENT SYSTEM (Phase 1) ====================
+        
+        [Header("Power Distribution Limits (Optional)")]
+        [Tooltip("Maximum total power that can be drawn per turn by all components combined (0 = no limit)")]
+        public int maxPowerDrawPerTurn = 0;  // Default 0 = unlimited, for marathon resource model
+        
+        [Header("Runtime State")]
+        [ReadOnly]
+        [Tooltip("Total power drawn this turn (resets at start of turn)")]
+        public int currentTurnPowerDraw = 0;
+        
+        /// <summary>
+        /// Check if there's enough energy available for a draw request.
+        /// Validates both total energy and optional per-turn limit.
+        /// </summary>
+        public bool CanDrawPower(int amount, VehicleComponent requester = null)
+        {
+            // Primary constraint: Total energy available
+            if (currentEnergy < amount) return false;
+            
+            // Optional constraint: Per-turn limit (usually 0 for unlimited)
+            if (maxPowerDrawPerTurn > 0 && currentTurnPowerDraw + amount > maxPowerDrawPerTurn)
+                return false;
+            
+            return true;
+        }
+        
+        /// <summary>
+        /// Consume power. Returns true if successful.
+        /// Automatically logs power draw for debugging.
+        /// </summary>
+        public bool DrawPower(int amount, VehicleComponent requester, string reason)
+        {
+            if (!CanDrawPower(amount, requester)) return false;
+            
+            currentEnergy -= amount;
+            currentTurnPowerDraw += amount;
+            
+            // Log power draw (debug level)
+            if (parentVehicle != null)
+            {
+                RaceHistory.Log(
+                    Assets.Scripts.Logging.EventType.Resource,
+                    EventImportance.Debug,
+                    $"{parentVehicle.vehicleName}: {requester?.name ?? "Unknown"} drew {amount} power ({reason})",
+                    parentVehicle.currentStage,
+                    parentVehicle
+                ).WithMetadata("powerDrawn", amount)
+                 .WithMetadata("remainingEnergy", currentEnergy)
+                 .WithMetadata("turnDrawTotal", currentTurnPowerDraw);
+            }
+            
+            return true;
+        }
+        
+        /// <summary>
+        /// Reset per-turn tracking. Called at start of vehicle's turn.
+        /// </summary>
+        public void ResetTurnPowerTracking()
+        {
+            currentTurnPowerDraw = 0;
+        }
     }
 }
+

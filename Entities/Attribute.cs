@@ -13,6 +13,10 @@ public enum Attribute
     Acceleration,
     Stability,
     
+    // Physics stats
+    BaseFriction,     // Mechanical friction (on drive, modified by terrain/status effects)
+    DragCoefficient,  // Aerodynamic drag (on chassis, modified by components)
+    
     // Weapon stats
     DamageDice,
     DamageDieSize,

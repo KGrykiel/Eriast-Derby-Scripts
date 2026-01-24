@@ -16,6 +16,10 @@ public class ChassisComponent : VehicleComponent
     [Tooltip("Base mobility for saving throws (dodging, evasion). Higher = easier to dodge AOE/traps.")]
     public int baseMobility = 8;
     
+    [Header("Aerodynamic Properties")]
+    [Tooltip("Aerodynamic drag coefficient of vehicle body (0.05 = streamlined, 0.15 = bulky). Components can modify this.")]
+    public float dragCoefficient = 0.1f;
+    
     /// <summary>
     /// Called when component is first added or reset in Editor.
     /// Sets default values that appear immediately in Inspector.
@@ -70,6 +74,11 @@ public class ChassisComponent : VehicleComponent
         }
 
         stats.Add(VehicleComponentUI.DisplayStat.WithTooltip("Mobility", "MBL", Attribute.Mobility, baseMobility, StatCalculator.GatherAttributeValue(this, Attribute.Mobility, baseMobility)));
+        
+        // Aerodynamic properties
+        float modifiedDrag = StatCalculator.GatherAttributeValue(this, Attribute.DragCoefficient, dragCoefficient);
+        stats.Add(VehicleComponentUI.DisplayStat.WithTooltip("Drag", "DRAG", Attribute.DragCoefficient, dragCoefficient, modifiedDrag));
+        
         // Don't add base class stats - chassis doesn't draw power
 
         return stats;

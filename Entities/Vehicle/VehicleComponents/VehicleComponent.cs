@@ -32,8 +32,13 @@ public abstract class VehicleComponent : Entity
     [Tooltip("Component Space (positive = uses space, negative = provides space)")]
     public int componentSpace = 0;
     
-    [Tooltip("Power drawn per turn (0 = passive component, no power draw)")]
+    [Tooltip("Power drawn per turn (0 = passive component, no continuous draw)")]
     public int powerDrawPerTurn = 0;
+    
+    [Header("Power Draw State")]
+    [ReadOnly]
+    [Tooltip("Is this component currently enabled? (Can be toggled by Technician)")]
+    public bool isPowered = true;  // Default to ON
     
     [Header("Provided Modifiers")]
     [Tooltip("Modifiers this component provides to OTHER components. Used for cross-component bonuses like armor upgrades, boosters, etc.")]
@@ -444,4 +449,107 @@ public abstract class VehicleComponent : Entity
         
         return stats;
     }
+    
+    // ==================== POWER MANAGEMENT (Phase 1) ====================
+    
+    /// <summary>
+    /// Attempt to draw this component's per-turn power cost.
+    /// Returns true if successful, false if insufficient power.
+    /// Components with powerDrawPerTurn = 0 are skipped automatically.
+    /// </summary>
+    public virtual bool DrawTurnPower()
+    {
+        // Skip if disabled or destroyed
+        if (!isPowered || isDestroyed) return true;
+        
+        // Skip if no power core
+        var powerCore = parentVehicle?.powerCore;
+        if (powerCore == null) return true;
+        
+        // Calculate actual power draw (may be modified by status effects)
+        int actualDraw = GetActualPowerDraw();
+        if (actualDraw <= 0) return true;  // No continuous draw (weapons, passive components)
+        
+        // Attempt to draw power
+        bool success = powerCore.DrawPower(actualDraw, this, "Continuous operation");
+        
+        if (!success)
+        {
+            // Insufficient power - component shuts down
+            OnPowerStarved();
+        }
+        
+        return success;
+    }
+    
+    /// <summary>
+    /// Get the actual power draw for this component (base + modifiers).
+    /// Uses StatCalculator for modifier application.
+    /// </summary>
+    public virtual int GetActualPowerDraw()
+    {
+        if (!isPowered || isDestroyed) return 0;
+        
+        float modified = StatCalculator.GatherAttributeValue(
+            this, 
+            Attribute.PowerDraw, 
+            powerDrawPerTurn
+        );
+        
+        return Mathf.Max(0, Mathf.RoundToInt(modified));
+    }
+    
+    /// <summary>
+    /// Called when component cannot draw required power.
+    /// Default behavior: log warning.
+    /// Phase 1: Just warnings, no auto-disable.
+    /// </summary>
+    protected virtual void OnPowerStarved()
+    {
+        RaceHistory.Log(
+            EventType.Resource,
+            EventImportance.Medium,
+            $"{parentVehicle?.vehicleName}: {name} shut down due to insufficient power",
+            parentVehicle?.currentStage,
+            parentVehicle
+        ).WithMetadata("component", name)
+         .WithMetadata("requiredPower", GetActualPowerDraw())
+         .WithMetadata("reason", "InsufficientPower");
+        
+        // Component becomes temporarily disabled until power is restored
+        // (Or Technician manually re-enables it)
+    }
+    
+    /// <summary>
+    /// Toggle component power state. Only allowed for certain component types.
+    /// Returns false if toggling not allowed.
+    /// </summary>
+    public virtual bool TogglePower(bool enabled)
+    {
+        // Cannot power destroyed components
+        if (isDestroyed) return false;
+        
+        // Cannot disable mandatory components (Chassis, PowerCore)
+        if (componentType == ComponentType.Chassis || componentType == ComponentType.PowerCore)
+            return false;
+        
+        bool oldState = isPowered;
+        isPowered = enabled;
+        
+        if (oldState != isPowered && parentVehicle != null)
+        {
+            string state = isPowered ? "enabled" : "disabled";
+            RaceHistory.Log(
+                EventType.Resource,
+                EventImportance.Low,
+                $"{parentVehicle.vehicleName}: {name} {state}",
+                parentVehicle.currentStage,
+                parentVehicle
+            ).WithMetadata("component", name)
+             .WithMetadata("powered", isPowered);
+        }
+        
+        return true;
+    }
 }
+

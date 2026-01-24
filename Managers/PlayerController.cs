@@ -1,56 +1,33 @@
 using System.Collections.Generic;
 using System.Linq;
-using TMPro;
 using UnityEngine;
-using UnityEngine.UI;
 using EventType = Assets.Scripts.Logging.EventType;
 using Assets.Scripts.Logging;
 using Assets.Scripts.Entities.Vehicle;
-using Assets.Scripts.Entities.Vehicle.VehicleComponents;
-using Assets.Scripts.Core;
+using Assets.Scripts.Managers.PlayerUI;
 
 /// <summary>
-/// Manages player input, UI interactions, and immediate action resolution.
-/// Uses component-based role system with tabbed interface.
+/// Orchestrates player input and coordinates between UI controllers and game systems.
+/// UI display logic has been extracted to specialized controllers.
 /// </summary>
 public class PlayerController : MonoBehaviour
 {
     #region Fields & Configuration
     
     [Header("UI References")]
-    [Tooltip("Container for role tab buttons")]
-    public Transform roleTabContainer;
-    [Tooltip("Prefab for role tab buttons")]
-    public Button roleTabPrefab;
-    [Tooltip("Container for skill buttons (scrollable)")]
-    public Transform skillButtonContainer;
-    [Tooltip("Prefab for skill buttons")]
-    public Button skillButtonPrefab;
-    [Tooltip("Text showing current role info")]
-    public TextMeshProUGUI currentRoleText;
-    
-    public GameObject targetSelectionPanel;
-    public Transform targetButtonContainer;
-    public Button targetButtonPrefab;
-    public Button targetCancelButton;
-    public GameObject stageSelectionPanel;
-    public Transform stageButtonContainer;
-    public Button stageButtonPrefab;
-    public Button endTurnButton;
-    
-    [Header("Turn State UI")]
-    public GameObject playerTurnPanel;
-    public TextMeshProUGUI turnStatusText;
-    public TextMeshProUGUI actionsRemainingText;
+    [SerializeField]
+    private PlayerUIReferences ui;
 
     private TurnController turnController;
     private GameManager gameManager;
     private Vehicle playerVehicle;
     private System.Action onPlayerTurnComplete;
+    
+    // UI Coordinator (owns all UI sub-controllers)
+    private PlayerUICoordinator uiCoordinator;
 
-    // Seat-based state (replaced VehicleRole system)
+    // Seat-based state
     private List<VehicleSeat> availableSeats = new List<VehicleSeat>();
-    private int selectedSeatIndex = -1;
     private VehicleSeat currentSeat = null;
 
     // Player selection state
@@ -61,11 +38,6 @@ public class PlayerController : MonoBehaviour
     private bool isSelectingStage = false;
     private bool isPlayerTurnActive = false;
 
-    // UI button caches
-    private List<Button> seatTabButtons = new List<Button>();
-    private List<Button> skillButtons = new List<Button>();
-    private List<Button> stageButtons = new List<Button>();
-
     /// <summary>
     /// Initializes the player controller with required references.
     /// </summary>
@@ -75,20 +47,19 @@ public class PlayerController : MonoBehaviour
         turnController = controller;
         gameManager = manager;
         onPlayerTurnComplete = turnCompleteCallback;
+        
+        // Initialize UI coordinator (owns all UI sub-controllers)
+        uiCoordinator = new PlayerUICoordinator(ui);
 
-        if (targetCancelButton != null)
-            targetCancelButton.onClick.AddListener(OnTargetCancelClicked);
+        // Setup button listeners
+        if (ui.targetCancelButton != null)
+            ui.targetCancelButton.onClick.AddListener(OnTargetCancelClicked);
 
-        if (endTurnButton != null)
-            endTurnButton.onClick.AddListener(OnEndTurnClicked);
+        if (ui.endTurnButton != null)
+            ui.endTurnButton.onClick.AddListener(OnEndTurnClicked);
 
-        HidePlayerUI();
+        uiCoordinator.HideTurnUI();
     }
-
-    /// <summary>
-    /// Returns true if the player is currently making a decision.
-    /// </summary>
-    public bool IsAwaitingInput => isSelectingStage || isPlayerTurnActive;
     
     #endregion
 
@@ -135,7 +106,7 @@ public class PlayerController : MonoBehaviour
             else
             {
                 isSelectingStage = true;
-                ShowStageSelection(playerVehicle.currentStage.nextStages);
+                uiCoordinator.StageSelection.ShowStageSelection(playerVehicle.currentStage.nextStages, OnStageSelected);
                 return;
             }
         }
@@ -157,8 +128,9 @@ public class PlayerController : MonoBehaviour
         // Get available seats (seats that can act)
         availableSeats = playerVehicle.GetActiveSeats();
         
-        ShowPlayerUI();
-        UpdateTurnStatusDisplay();
+        // Show UI via coordinator
+        uiCoordinator.ShowTurnUI(availableSeats, playerVehicle, OnSeatSelected, OnSkillSelected);
+        uiCoordinator.UpdateTurnStatusDisplay(playerVehicle);
         
         RaceHistory.Log(
             EventType.System,
@@ -179,7 +151,7 @@ public class PlayerController : MonoBehaviour
 
         isPlayerTurnActive = false;
         ClearPlayerSelections();
-        HidePlayerUI();
+        uiCoordinator.HideTurnUI();
 
         RaceHistory.Log(
             EventType.System,
@@ -194,222 +166,30 @@ public class PlayerController : MonoBehaviour
 
     #endregion
 
-    #region Role & Skill Selection UI
+    #region Skill & Seat Callbacks
 
     /// <summary>
-    /// Shows the player turn UI panel, seat tabs, and skill selection.
+    /// Called when player selects a seat tab.
+    /// Updates current seat state and shows seat details.
     /// </summary>
-    private void ShowPlayerUI()
-    {
-        if (playerTurnPanel != null)
-            playerTurnPanel.SetActive(true);
-
-        if (endTurnButton != null)
-            endTurnButton.interactable = true;
-
-        ShowSeatTabs();
-        
-        // Select first seat by default
-        if (availableSeats.Count > 0)
-        {
-            SelectSeat(0);
-        }
-    }
-
-    /// <summary>
-    /// Hides the player turn UI panel.
-    /// </summary>
-    private void HidePlayerUI()
-    {
-        if (playerTurnPanel != null)
-            playerTurnPanel.SetActive(false);
-
-        if (targetSelectionPanel != null)
-            targetSelectionPanel.SetActive(false);
-
-        if (stageSelectionPanel != null)
-            stageSelectionPanel.SetActive(false);
-    }
-
-    /// <summary>
-    /// Displays seat tabs for all available seats.
-    /// Shows visual feedback for which seats have acted.
-    /// </summary>
-    private void ShowSeatTabs()
-    {
-        if (roleTabContainer == null || roleTabPrefab == null) return;
-
-        // Ensure we have enough tab buttons
-        while (seatTabButtons.Count < availableSeats.Count)
-        {
-            Button btn = Instantiate(roleTabPrefab, roleTabContainer);
-            seatTabButtons.Add(btn);
-        }
-
-        // Update tab buttons
-        for (int i = 0; i < seatTabButtons.Count; i++)
-        {
-            if (i < availableSeats.Count)
-            {
-                VehicleSeat seat = availableSeats[i];
-                seatTabButtons[i].gameObject.SetActive(true);
-                
-                // Check if seat can act
-                bool canAct = seat.CanAct();
-                bool hasActed = seat.HasActedThisTurn();
-                
-                // Build tab text with status indicators
-                string statusIcon;
-                if (!canAct)
-                    statusIcon = "[X]";  // Cannot act
-                else if (hasActed)
-                    statusIcon = "[v]";  // Already acted
-                else
-                    statusIcon = "[ ]";  // Ready to act
-                
-                string characterName = seat.assignedCharacter?.characterName ?? "Unassigned";
-                RoleType roles = seat.GetEnabledRoles();
-                string tabText = $"{statusIcon} {seat.seatName} ({characterName})";
-                
-                seatTabButtons[i].GetComponentInChildren<TextMeshProUGUI>().text = tabText;
-                
-                // Greyed out if already acted OR cannot act
-                seatTabButtons[i].interactable = canAct && !hasActed;
-                
-                int seatIndex = i;
-                seatTabButtons[i].onClick.RemoveAllListeners();
-                seatTabButtons[i].onClick.AddListener(() => SelectSeat(seatIndex));
-            }
-            else
-            {
-                seatTabButtons[i].gameObject.SetActive(false);
-            }
-        }
-    }
-
-    /// <summary>
-    /// Selects a seat and displays its available skills.
-    /// </summary>
-    private void SelectSeat(int seatIndex)
+    private void OnSeatSelected(int seatIndex)
     {
         if (seatIndex < 0 || seatIndex >= availableSeats.Count) return;
-
-        selectedSeatIndex = seatIndex;
+        
         currentSeat = availableSeats[seatIndex];
-
-        // Update current seat display
-        if (currentRoleText != null)
-        {
-            string characterName = currentSeat.assignedCharacter?.characterName ?? "Unassigned";
-            string status = currentSeat.HasActedThisTurn() ? "- ACTED" : "- Ready";
-            currentRoleText.text = $"<b>{currentSeat.seatName}</b> ({characterName}) {status}";
-        }
-
-        // Show skills for this seat
-        ShowSkillSelection();
+        uiCoordinator.ShowSeatDetails(seatIndex, availableSeats, playerVehicle, OnSkillSelected);
     }
 
     /// <summary>
-    /// Displays skill selection UI for the currently selected seat.
-    /// Shows all skills from the seat's controlled components and assigned character.
+    /// Called when player clicks a skill button.
+    /// Initiates skill targeting flow or executes immediately if self-targeted.
     /// </summary>
-    private void ShowSkillSelection()
-    {
-        if (skillButtonContainer == null || skillButtonPrefab == null || currentSeat == null) return;
-
-        // Gather all skills from seat's controlled components + character personal skills
-        List<Skill> availableSkills = new List<Skill>();
-        
-        foreach (var component in currentSeat.GetOperationalComponents())
-        {
-            availableSkills.AddRange(component.GetAllSkills());
-        }
-        
-        // Add character's personal skills
-        if (currentSeat.assignedCharacter != null)
-        {
-            var personalSkills = currentSeat.assignedCharacter.GetPersonalSkills();
-            if (personalSkills != null)
-            {
-                availableSkills.AddRange(personalSkills);
-            }
-        }
-
-        if (availableSkills.Count == 0)
-        {
-            Debug.LogWarning($"[PlayerController] No available skills for seat {currentSeat.seatName}");
-            return;
-        }
-
-        bool seatHasActed = currentSeat.HasActedThisTurn();
-
-        // Ensure we have enough skill buttons
-        while (skillButtons.Count < availableSkills.Count)
-        {
-            Button btn = Instantiate(skillButtonPrefab, skillButtonContainer);
-            skillButtons.Add(btn);
-        }
-
-        // Update skill buttons
-        for (int i = 0; i < skillButtons.Count; i++)
-        {
-            if (i < availableSkills.Count)
-            {
-                Skill skill = availableSkills[i];
-                if (skill == null)
-                {
-                    Debug.LogWarning($"[PlayerController] Null skill at index {i} for seat {currentSeat.seatName}");
-                    skillButtons[i].gameObject.SetActive(false);
-                    continue;
-                }
-
-                skillButtons[i].gameObject.SetActive(true);
-                
-                // Show skill name + energy cost
-                string skillText = $"{skill.name} ({skill.energyCost} EN)";
-                var textComponent = skillButtons[i].GetComponentInChildren<TextMeshProUGUI>();
-                if (textComponent != null)
-                {
-                    textComponent.text = skillText;
-                }
-                
-                // Disable if not enough energy OR seat has already acted
-                bool canAfford = playerVehicle.energy >= skill.energyCost;
-                bool canUse = canAfford && !seatHasActed;
-                skillButtons[i].interactable = canUse;
-                
-                int skillIndex = i;
-                skillButtons[i].onClick.RemoveAllListeners();
-                skillButtons[i].onClick.AddListener(() => OnSkillButtonClicked(skillIndex));
-            }
-            else
-            {
-                skillButtons[i].gameObject.SetActive(false);
-            }
-        }
-    }
-
-    /// <summary>
-    /// Handles skill button click. Shows target selection or executes immediately.
-    /// </summary>
-    private void OnSkillButtonClicked(int skillIndex)
+    private void OnSkillSelected(int skillIndex)
     {
         if (currentSeat == null) return;
 
-        // Re-gather available skills for this seat (same logic as ShowSkillSelection)
-        List<Skill> availableSkills = new List<Skill>();
-        foreach (var component in currentSeat.GetOperationalComponents())
-        {
-            availableSkills.AddRange(component.GetAllSkills());
-        }
-        if (currentSeat.assignedCharacter != null)
-        {
-            var personalSkills = currentSeat.assignedCharacter.GetPersonalSkills();
-            if (personalSkills != null)
-            {
-                availableSkills.AddRange(personalSkills);
-            }
-        }
+        // Get available skills for this seat
+        List<Skill> availableSkills = uiCoordinator.GetAvailableSkills(currentSeat);
         
         if (skillIndex < 0 || skillIndex >= availableSkills.Count) return;
 
@@ -421,7 +201,7 @@ public class PlayerController : MonoBehaviour
         // Check if skill needs source component selection first
         if (SkillNeedsSourceComponentSelection(selectedSkill))
         {
-            ShowSourceComponentSelection();
+            uiCoordinator.TargetSelection.ShowSourceComponentSelection(playerVehicle, OnSourceComponentSelected);
             return;
         }
 
@@ -430,7 +210,8 @@ public class PlayerController : MonoBehaviour
         
         if (needsTarget)
         {
-            ShowTargetSelection();
+            List<Vehicle> validTargets = turnController.GetValidTargets(playerVehicle);
+            uiCoordinator.TargetSelection.ShowTargetSelection(validTargets, OnTargetSelected, OnTargetCancelClicked);
         }
         else
         {
@@ -445,8 +226,9 @@ public class PlayerController : MonoBehaviour
     #region Skill Execution
 
     /// <summary>
-    /// Executes the selected skill immediately and marks the component as acted.
-    /// Orchestrates: validation ? execution ? resource consumption ? logging ? UI refresh.
+    /// Executes the selected skill via Vehicle.ExecuteSkill().
+    /// Handles only player-specific aftermath: marking seat as acted and UI refresh.
+    /// All validation, resource management, and execution handled by Vehicle.
     /// </summary>
     private void ExecuteSkillImmediately()
     {
@@ -454,181 +236,45 @@ public class PlayerController : MonoBehaviour
 
         Vehicle target = selectedTarget ?? playerVehicle;
 
-        // Validate energy cost
-        if (!ValidateSkillEnergyCost())
-            return;
+        // Delegate to Vehicle (handles validation, power consumption, and execution)
+        bool skillSucceeded = playerVehicle.ExecuteSkill(
+            selectedSkill,
+            target,
+            selectedSkillSourceComponent,
+            selectedTargetComponent
+        );
 
-        // Execute skill with appropriate targeting
-        bool skillSucceeded = ExecuteSkillWithTargeting(target);
+        // Handle player-specific aftermath
+        if (skillSucceeded || true) // Always mark seat as acted (even on miss/fail)
+        {
+            currentSeat?.MarkAsActed();
+        }
 
-        // Consume resources (always happens, even on miss!)
-        ConsumeSkillResources();
-        
-        // Log skill usage result
-        LogSkillUsageResult(skillSucceeded);
-
-        // Refresh UI
-        RefreshPlayerUIAfterSkill();
-        
-        ClearPlayerSelections();
-    }
-    
-    /// <summary>
-    /// Validates that the player has enough energy to use the selected skill.
-    /// Logs failure if validation fails.
-    /// </summary>
-    private bool ValidateSkillEnergyCost()
-    {
-        if (playerVehicle.energy >= selectedSkill.energyCost)
-            return true;
-        
-        RaceHistory.Log(
-            EventType.SkillUse,
-            EventImportance.Medium,
-            $"{playerVehicle.vehicleName} cannot afford {selectedSkill.name}",
-            playerVehicle.currentStage,
-            playerVehicle
-        ).WithMetadata("skillName", selectedSkill.name)
-         .WithMetadata("energyCost", selectedSkill.energyCost)
-         .WithMetadata("currentEnergy", playerVehicle.energy)
-         .WithMetadata("failed", true);
-        
-        ClearPlayerSelections();
-        return false;
-    }
-    
-    /// <summary>
-    /// Executes the skill with appropriate targeting (component or standard).
-    /// Returns true if skill succeeded (hit/applied), false if missed.
-    /// </summary>
-    private bool ExecuteSkillWithTargeting(Vehicle target)
-    {
-        if (selectedTargetComponent != null)
-        {
-            // Component-targeted skill - use 4-parameter overload
-            return selectedSkill.Use(playerVehicle, target, selectedSkillSourceComponent, selectedTargetComponent);
-        }
-        else
-        {
-            // Standard skill - use 3-parameter overload
-            return selectedSkill.Use(playerVehicle, target, selectedSkillSourceComponent);
-        }
-    }
-    
-    /// <summary>
-    /// Consumes energy and marks the seat as acted.
-    /// Called after skill execution (even on miss - intended design).
-    /// </summary>
-    private void ConsumeSkillResources()
-    {
-        playerVehicle.energy -= selectedSkill.energyCost;
-        currentSeat?.MarkAsActed();
-    }
-    
-    /// <summary>
-    /// Logs skill usage result to race history with seat and component context.
-    /// </summary>
-    private void LogSkillUsageResult(bool skillSucceeded)
-    {
-        if (currentSeat == null) return;
-        
-        string seatName = currentSeat.seatName;
-        string characterName = currentSeat.assignedCharacter?.characterName ?? "Unassigned";
-        string fullSeatName = $"{seatName} ({characterName})";
-        
-        if (skillSucceeded)
-        {
-            // Skill succeeded (hit or applied effect)
-            RaceHistory.Log(
-                EventType.SkillUse,
-                EventImportance.Medium,
-                $"{fullSeatName} used {selectedSkill.name}",
-                playerVehicle.currentStage,
-                playerVehicle
-            ).WithMetadata("seatName", seatName)
-             .WithMetadata("skillName", selectedSkill.name)
-             .WithMetadata("componentName", selectedSkillSourceComponent.name);
-        }
-        else
-        {
-            // Skill failed (missed), but still consumed energy
-            RaceHistory.Log(
-                EventType.SkillUse,
-                EventImportance.Medium,
-                $"{fullSeatName} used {selectedSkill.name} but missed!",
-                playerVehicle.currentStage,
-                playerVehicle
-            ).WithMetadata("seatName", seatName)
-             .WithMetadata("skillName", selectedSkill.name)
-             .WithMetadata("componentName", selectedSkillSourceComponent.name)
-             .WithMetadata("missed", true);
-        }
-    }
-    
-    /// <summary>
-    /// Refreshes all player UI elements after skill execution.
-    /// Updates turn status, seat tabs, skill buttons, and DM panels.
-    /// </summary>
-    private void RefreshPlayerUIAfterSkill()
-    {
-        UpdateTurnStatusDisplay();
-        ShowSeatTabs();
-        ShowSkillSelection();
+        // Refresh UI via coordinator
+        uiCoordinator.RefreshAfterSkill(availableSeats, currentSeat, playerVehicle, OnSeatSelected, OnSkillSelected);
+        uiCoordinator.UpdateTurnStatusDisplay(playerVehicle);
         gameManager.RefreshAllPanels();
+        
+        ClearPlayerSelections();
     }
 
     #endregion
 
-    #region Target Selection UI
+    #region UI Callbacks
 
     /// <summary>
-    /// Displays target selection UI with buttons for each valid target.
-    /// Only shows targets in the same stage and currently active.
+    /// Called when player selects a vehicle target.
     /// </summary>
-    private void ShowTargetSelection()
+    private void OnTargetSelected(Vehicle targetVehicle)
     {
-        if (targetSelectionPanel == null || targetButtonContainer == null || targetButtonPrefab == null)
-            return;
-
-        targetSelectionPanel.SetActive(true);
-
-        foreach (Transform child in targetButtonContainer)
-            Destroy(child.gameObject);
-
-        List<Vehicle> validTargets = turnController.GetValidTargets(playerVehicle);
-
-        if (validTargets.Count == 0)
-        {
-            targetSelectionPanel.SetActive(false);
-            ClearPlayerSelections();
-            return;
-        }
-
-        foreach (var v in validTargets)
-        {
-            Button btn = Instantiate(targetButtonPrefab, targetButtonContainer);
-            btn.GetComponentInChildren<TextMeshProUGUI>().text = $"{v.vehicleName} (HP: {v.health})";
-            btn.onClick.AddListener(() => OnTargetButtonClicked(v));
-        }
-    }
-
-    /// <summary>
-    /// Handles target button click. 
-    /// If skill has Precise targeting, shows component selection.
-    /// Otherwise executes skill immediately.
-    /// </summary>
-    private void OnTargetButtonClicked(Vehicle v)
-    {
-        selectedTarget = v;
-        
-        if (targetSelectionPanel != null)
-            targetSelectionPanel.SetActive(false);
+        selectedTarget = targetVehicle;
+        uiCoordinator.TargetSelection.Hide();
 
         // Check if selected skill requires precise component targeting
         if (selectedSkill != null && selectedSkill.targetPrecision == TargetPrecision.Precise)
         {
             // Show component selection UI for precise targeting
-            ShowComponentSelection(v);
+            uiCoordinator.TargetSelection.ShowComponentSelection(targetVehicle, OnComponentSelected);
         }
         else
         {
@@ -638,179 +284,24 @@ public class PlayerController : MonoBehaviour
     }
 
     /// <summary>
-    /// Handles target cancel button. Clears selections and closes panel.
+    /// Called when player selects a component target.
     /// </summary>
-    private void OnTargetCancelClicked()
-    {
-        selectedTarget = null;
-        selectedSkill = null;
-        selectedSkillSourceComponent = null;
-        selectedTargetComponent = null;
-        
-        if (targetSelectionPanel != null)
-            targetSelectionPanel.SetActive(false);
-    }
-
-    #endregion
-
-    #region Component Selection UI
-
-    /// <summary>
-    /// Displays component selection UI for the selected target vehicle.
-    /// Shows chassis option and all components with HP, AC, and accessibility status.
-    /// </summary>
-    private void ShowComponentSelection(Vehicle targetVehicle)
-    {
-        if (targetSelectionPanel == null || targetButtonContainer == null || targetButtonPrefab == null)
-            return;
-
-        // Reuse target selection panel for component selection
-        targetSelectionPanel.SetActive(true);
-
-        // Clear existing buttons
-        foreach (Transform child in targetButtonContainer)
-            Destroy(child.gameObject);
-
-        // Option 1: Target Chassis (vehicle HP)
-        Button chassisBtn = Instantiate(targetButtonPrefab, targetButtonContainer);
-        chassisBtn.GetComponentInChildren<TextMeshProUGUI>().text = 
-            $"[#] Chassis (HP: {targetVehicle.health}/{targetVehicle.maxHealth}, AC: {targetVehicle.armorClass})";
-        chassisBtn.onClick.AddListener(() => OnComponentButtonClicked(null)); // null = chassis
-
-        // Option 2: All Components (EXCEPT chassis - it's already shown above)
-        foreach (var component in targetVehicle.AllComponents)
-        {
-            if (component == null) continue;
-            
-            // Skip chassis - it's already shown as the first option
-            if (component is ChassisComponent) continue;
-
-            Button btn = Instantiate(targetButtonPrefab, targetButtonContainer);
-            
-            // Build component button text
-            string componentText = BuildComponentButtonText(targetVehicle, component);
-            btn.GetComponentInChildren<TextMeshProUGUI>().text = componentText;
-            
-            // Check accessibility
-            bool isAccessible = targetVehicle.IsComponentAccessible(component);
-            btn.interactable = isAccessible && !component.isDestroyed;
-            
-            // Add click handler
-            VehicleComponent comp = component; // Capture for lambda
-            btn.onClick.AddListener(() => OnComponentButtonClicked(comp));
-        }
-    }
-
-    /// <summary>
-    /// Builds display text for a component button showing HP, AC, and status.
-    /// Uses modified values from StatCalculator for accurate display.
-    /// </summary>
-    private string BuildComponentButtonText(Vehicle targetVehicle, VehicleComponent component)
-    {
-        // Get modified AC from StatCalculator
-        var (modifiedAC, _, _) = StatCalculator.GatherDefenseValueWithBreakdown(component);
-        
-        // HP info using Entity fields (current health) and modified max HP
-        int modifiedMaxHP = Mathf.RoundToInt(StatCalculator.GatherAttributeValue(
-            component, Attribute.MaxHealth, component.maxHealth));
-        
-        string text = $"{component.name} (HP: {component.health}/{modifiedMaxHP}, AC: {modifiedAC})";
-        
-        // Status icons/text
-        if (component.isDestroyed)
-        {
-            text = $"[X] {text} - DESTROYED";
-        }
-        else if (!targetVehicle.IsComponentAccessible(component))
-        {
-            string reason = targetVehicle.GetInaccessibilityReason(component);
-            text = $"[?] {text} - {reason}";
-        }
-        else
-        {
-            text = $"[>] {text}";
-        }
-        
-        return text;
-    }
-
-    /// <summary>
-    /// Handles component button click.
-    /// If component is null, targets chassis. Otherwise targets specific component.
-    /// </summary>
-    private void OnComponentButtonClicked(VehicleComponent component)
+    private void OnComponentSelected(VehicleComponent component)
     {
         selectedTargetComponent = component;
-        
-        if (targetSelectionPanel != null)
-            targetSelectionPanel.SetActive(false);
-
-        // Execute skill with explicit component targeting
+        uiCoordinator.TargetSelection.Hide();
         ExecuteSkillImmediately();
     }
 
-    #endregion
-
-    #region Source Component Selection UI
-
     /// <summary>
-    /// Displays source component selection UI for the player's own vehicle.
-    /// Allows player to pick which component on their vehicle to target with a self-targeting skill.
+    /// Called when player selects a source component (self-targeting).
     /// </summary>
-    private void ShowSourceComponentSelection()
-    {
-        if (targetSelectionPanel == null || targetButtonContainer == null || targetButtonPrefab == null)
-            return;
-
-        // Reuse target selection panel for source component selection
-        targetSelectionPanel.SetActive(true);
-
-        // Clear existing buttons
-        foreach (Transform child in targetButtonContainer)
-            Destroy(child.gameObject);
-
-        // Option 1: Target Chassis (vehicle HP)
-        Button chassisBtn = Instantiate(targetButtonPrefab, targetButtonContainer);
-        chassisBtn.GetComponentInChildren<TextMeshProUGUI>().text = 
-            $"[#] Chassis (HP: {playerVehicle.health}/{playerVehicle.maxHealth}, AC: {playerVehicle.armorClass})";
-        chassisBtn.onClick.AddListener(() => OnSourceComponentButtonClicked(null)); // null = chassis
-
-        // Option 2: All Components (EXCEPT chassis - it's already shown above)
-        foreach (var component in playerVehicle.AllComponents)
-        {
-            if (component == null) continue;
-            
-            // Skip chassis - it's already shown as the first option
-            if (component is ChassisComponent) continue;
-
-            Button btn = Instantiate(targetButtonPrefab, targetButtonContainer);
-            
-            // Build component button text
-            string componentText = BuildComponentButtonText(playerVehicle, component);
-            btn.GetComponentInChildren<TextMeshProUGUI>().text = componentText;
-            
-            // All components are accessible on own vehicle
-            btn.interactable = !component.isDestroyed;
-            
-            // Add click handler
-            VehicleComponent comp = component; // Capture for lambda
-            btn.onClick.AddListener(() => OnSourceComponentButtonClicked(comp));
-        }
-    }
-
-    /// <summary>
-    /// Handles source component button click.
-    /// Sets target to self (playerVehicle) and stores selected component in targetComponent.
-    /// After selection, proceeds to target selection if needed, or executes immediately.
-    /// </summary>
-    private void OnSourceComponentButtonClicked(VehicleComponent component)
+    private void OnSourceComponentSelected(VehicleComponent component)
     {
         // For source component selection, we're self-targeting
         selectedTarget = playerVehicle;
         selectedTargetComponent = component;
-        
-        if (targetSelectionPanel != null)
-            targetSelectionPanel.SetActive(false);
+        uiCoordinator.TargetSelection.Hide();
 
         // After selecting source component, check if skill also needs enemy target selection
         bool needsEnemyTarget = SkillNeedsTarget(selectedSkill);
@@ -818,7 +309,8 @@ public class PlayerController : MonoBehaviour
         if (needsEnemyTarget)
         {
             // Skill needs to target an enemy vehicle - show normal target selection
-            ShowTargetSelection();
+            List<Vehicle> validTargets = turnController.GetValidTargets(playerVehicle);
+            uiCoordinator.TargetSelection.ShowTargetSelection(validTargets, OnTargetSelected, OnTargetCancelClicked);
         }
         else
         {
@@ -827,56 +319,22 @@ public class PlayerController : MonoBehaviour
         }
     }
 
-    #endregion
-
-    #region Stage Selection UI
-
     /// <summary>
-    /// Displays stage selection UI when player reaches a crossroads.
+    /// Called when player cancels target selection.
     /// </summary>
-    private void ShowStageSelection(List<Stage> options)
+    private void OnTargetCancelClicked()
     {
-        if (stageSelectionPanel == null || stageButtonContainer == null || stageButtonPrefab == null)
-            return;
-
-        stageSelectionPanel.SetActive(true);
-        
-        if (endTurnButton != null)
-            endTurnButton.interactable = false;
-
-        while (stageButtons.Count < options.Count)
-        {
-            Button btn = Instantiate(stageButtonPrefab, stageButtonContainer);
-            stageButtons.Add(btn);
-        }
-
-        for (int i = 0; i < stageButtons.Count; i++)
-        {
-            if (i < options.Count)
-            {
-                stageButtons[i].gameObject.SetActive(true);
-                stageButtons[i].GetComponentInChildren<TextMeshProUGUI>().text = options[i].stageName;
-                Stage stage = options[i];
-                stageButtons[i].onClick.RemoveAllListeners();
-                stageButtons[i].onClick.AddListener(() => OnStageButtonClicked(stage));
-            }
-            else
-            {
-                stageButtons[i].gameObject.SetActive(false);
-            }
-        }
+        ClearPlayerSelections();
+        uiCoordinator.TargetSelection.Hide();
     }
 
     /// <summary>
-    /// Handles stage button click. Moves player to selected stage and continues movement processing.
+    /// Called when player selects a stage at a crossroads.
     /// </summary>
-    private void OnStageButtonClicked(Stage selectedStage)
+    private void OnStageSelected(Stage selectedStage)
     {
-        stageSelectionPanel.SetActive(false);
+        uiCoordinator.StageSelection.Hide();
         isSelectingStage = false;
-
-        if (endTurnButton != null)
-            endTurnButton.interactable = true;
 
         turnController.MoveToStage(playerVehicle, selectedStage);
         ProcessPlayerMovement();
@@ -885,25 +343,6 @@ public class PlayerController : MonoBehaviour
     #endregion
 
     #region Helpers & Utilities
-
-    /// <summary>
-    /// Updates the turn status display with current vehicle state.
-    /// </summary>
-    private void UpdateTurnStatusDisplay()
-    {
-        if (turnStatusText != null)
-        {
-            turnStatusText.text = $"<b>{playerVehicle.vehicleName}'s Turn</b>\n" +
-                                  $"Stage: {playerVehicle.currentStage?.stageName ?? "Unknown"}\n" +
-                                  $"Progress: {playerVehicle.progress:F1}m";
-        }
-
-        if (actionsRemainingText != null)
-        {
-            actionsRemainingText.text = $"HP: {playerVehicle.health}/{playerVehicle.maxHealth}  " +
-                                        $"Energy: {playerVehicle.energy}/{playerVehicle.maxEnergy}";
-        }
-    }
 
     /// <summary>
     /// Checks if a skill requires target selection based on its effect invocations.

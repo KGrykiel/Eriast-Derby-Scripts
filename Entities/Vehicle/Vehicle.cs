@@ -257,9 +257,14 @@ public class Vehicle : MonoBehaviour
             Attribute.MaxHealth => chassis,
             Attribute.ArmorClass => chassis,
             Attribute.MagicResistance => chassis,
+            Attribute.Mobility => chassis,
+            Attribute.DragCoefficient => chassis,
             Attribute.MaxEnergy => powerCore,
             Attribute.EnergyRegen => powerCore,
             Attribute.Speed => optionalComponents.OfType<DriveComponent>().FirstOrDefault(),
+            Attribute.Acceleration => optionalComponents.OfType<DriveComponent>().FirstOrDefault(),
+            Attribute.Stability => optionalComponents.OfType<DriveComponent>().FirstOrDefault(),
+            Attribute.BaseFriction => optionalComponents.OfType<DriveComponent>().FirstOrDefault(),
             _ => chassis
         };
     }
@@ -520,4 +525,241 @@ public class Vehicle : MonoBehaviour
         
         return null;
     }
+    
+    // ==================== TURN & MOVEMENT MANAGEMENT ====================
+    
+    [HideInInspector]
+    public bool hasMovedThisTurn = false;
+    
+    /// <summary>
+    /// Called at the start of this vehicle's turn.
+    /// Order: Apply friction (if unpowered) → Regen → Reset power tracking → Pay continuous power → Reset movement flag → Reset seats
+    /// </summary>
+    public void StartTurn()
+    {
+        // 0. Apply friction if drive is unpowered/destroyed
+        var driveComponent = optionalComponents.OfType<DriveComponent>().FirstOrDefault();
+        if (driveComponent != null && (!driveComponent.isPowered || driveComponent.isDestroyed))
+        {
+            driveComponent.ApplyFriction();
+        }
+        
+        // 1. Regenerate power FIRST (see full resources)
+        if (powerCore != null && !powerCore.isDestroyed)
+        {
+            powerCore.RegenerateEnergy();
+        }
+        
+        // 2. Reset per-turn power tracking
+        if (powerCore != null)
+        {
+            powerCore.ResetTurnPowerTracking();
+        }
+        
+        // 3. PAY for continuous components (drive, shields, sensors)
+        //    Drive power cost is based on CURRENT speed (set last turn)
+        //    This is paying to RUN THE ENGINE, not to move
+        foreach (var component in AllComponents)
+        {
+            if (component != null && !component.isDestroyed)
+            {
+                component.DrawTurnPower();  // Automatically skips components with powerDrawPerTurn = 0
+            }
+        }
+        
+        // 4. Reset movement flag (player controls when movement happens)
+        hasMovedThisTurn = false;
+        hasLoggedMovementWarningThisTurn = false;
+        
+        // 5. Status effects at turn start
+        // Note: Status effects are on components, not vehicle directly
+        // Components handle their own status effect timing
+        
+        // 6. Reset seat turn states
+        foreach (var seat in seats)
+        {
+            seat?.ResetTurnState();
+        }
+    }
+    
+    /// <summary>
+    /// Called at the end of this vehicle's turn.
+    /// Order: Force movement if not moved yet → Status effects at turn end
+    /// </summary>
+    public void EndTurn()
+    {
+        // 1. FORCE movement if player hasn't triggered it yet
+        //    Movement is mandatory (engine is running, vehicle WILL move)
+        if (!hasMovedThisTurn)
+        {
+            RaceHistory.Log(
+                EventType.Movement,
+                EventImportance.Low,
+                $"{vehicleName} automatically moved (player did not trigger movement manually)",
+                currentStage,
+                this
+            ).WithMetadata("automatic", true);
+            
+            ExecuteMovement();
+        }
+        
+        // 2. Update status effects on all components (tick durations, apply periodic effects)
+        UpdateStatusEffects();
+    }
+    
+    /// <summary>
+    /// Execute movement for this turn. Can be called manually by player or auto-triggered at end of turn.
+    /// Movement is FREE - power was already paid at turn start by drive continuous draw.
+    /// Player controls WHEN movement happens (can be between actions).
+    /// </summary>
+    public bool ExecuteMovement()
+    {
+        // Already moved this turn
+        if (hasMovedThisTurn)
+        {
+            Debug.LogWarning($"[Vehicle] {vehicleName} has already moved this turn");
+            return false;
+        }
+        
+        // Get drive component
+        var driveComponent = optionalComponents.OfType<DriveComponent>().FirstOrDefault();
+        
+        // NO POWER COST HERE - already paid at turn start by drive continuous draw
+        float distance = 0f;
+        
+        if (driveComponent != null)
+        {
+            // Use current speed (may be 0 if no drive, or decelerating if destroyed)
+            distance = driveComponent.currentSpeed;
+        }
+        
+        if (currentStage != null && distance > 0)
+        {
+            float oldProgress = progress;
+            progress += distance;
+            
+            RaceHistory.Log(
+                EventType.Movement,
+                EventImportance.Low,
+                $"{vehicleName} moved {distance:F1} units (speed {driveComponent?.currentSpeed ?? 0f:F1})",
+                currentStage,
+                this
+            ).WithMetadata("distance", distance)
+             .WithMetadata("speed", driveComponent?.currentSpeed ?? 0f)
+             .WithMetadata("oldProgress", oldProgress)
+             .WithMetadata("newProgress", progress);
+            
+            // Check if vehicle reached end of stage
+            if (progress >= currentStage.length)
+            {
+                // Advance to next stage (existing logic in TurnController or GameManager)
+                // Note: This will be handled by the race management system
+            }
+        }
+        else if (currentStage != null && distance == 0 && driveComponent != null)
+        {
+            // Log that vehicle couldn't move (either no drive or stopped)
+            if (driveComponent.isDestroyed)
+            {
+                RaceHistory.Log(
+                    EventType.Movement,
+                    EventImportance.Medium,
+                    $"{vehicleName} has stopped (drive destroyed, speed: {driveComponent.currentSpeed:F1})",
+                    currentStage,
+                    this
+                ).WithMetadata("driveDestroyed", true)
+                 .WithMetadata("speed", driveComponent.currentSpeed);
+            }
+        }
+        
+        hasMovedThisTurn = true;
+        return true;
+    }
+    
+    
+    // ==================== SPEED HELPERS ====================
+    
+    /// <summary>
+    /// Get the current effective speed of this vehicle.
+    /// If no drive component, returns 0.
+    /// </summary>
+    public float GetCurrentSpeed()
+    {
+        var drive = optionalComponents.OfType<DriveComponent>().FirstOrDefault();
+        return drive?.currentSpeed ?? 0f;
+    }
+    
+    /// <summary>
+    /// Get the maximum speed capability of this vehicle (with modifiers).
+    /// </summary>
+    public float GetMaxSpeed()
+    {
+        var drive = optionalComponents.OfType<DriveComponent>().FirstOrDefault();
+        if (drive == null || drive.isDestroyed)
+            return 0f;
+        
+        return StatCalculator.GatherAttributeValue(
+            drive, 
+            Attribute.Speed, 
+            drive.maxSpeed
+        );
+    }
+    
+    // ==================== SKILL EXECUTION ====================
+    
+    /// <summary>
+    /// Execute a skill with full resource management and routing.
+    /// This is the single entry point for using skills from this vehicle.
+    /// Handles validation, power consumption, and delegates to SkillExecutor for resolution.
+    /// </summary>
+    public bool ExecuteSkill(
+        Skill skill,
+        Vehicle target,
+        VehicleComponent sourceComponent = null,
+        VehicleComponent targetComponent = null)
+    {
+        // Internal resource validation
+        if (!CanAffordSkill(skill))
+        {
+            Debug.LogWarning($"[Vehicle] {vehicleName} cannot afford {skill.name} (need {skill.energyCost}, have {energy})");
+            return false;
+        }
+        
+        // Internal resource consumption
+        if (!ConsumeSkillCost(skill, sourceComponent))
+        {
+            Debug.LogError($"[Vehicle] {vehicleName} failed to consume resources for {skill.name}");
+            return false;
+        }
+        
+        // Delegate to SkillExecutor for routing (pure resolver logic)
+        return Assets.Scripts.Skills.Helpers.SkillExecutor.Execute(
+            skill,
+            this,
+            target,
+            sourceComponent,
+            targetComponent
+        );
+    }
+    
+    /// <summary>
+    /// Check if vehicle can afford to use a skill (internal).
+    /// Validates power availability without consuming it.
+    /// </summary>
+    private bool CanAffordSkill(Skill skill)
+    {
+        if (powerCore == null || skill == null) return false;
+        return powerCore.CanDrawPower(skill.energyCost, null);
+    }
+    
+    /// <summary>
+    /// Consume the energy cost of a skill (internal).
+    /// Should only be called after CanAffordSkill() returns true.
+    /// </summary>
+    private bool ConsumeSkillCost(Skill skill, VehicleComponent sourceComponent)
+    {
+        if (powerCore == null || skill == null) return false;
+        return powerCore.DrawPower(skill.energyCost, sourceComponent, $"Skill: {skill.name}");
+    }
 }
+

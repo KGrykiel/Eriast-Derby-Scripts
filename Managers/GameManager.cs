@@ -288,13 +288,6 @@ public class GameManager : MonoBehaviour
     }
 
     /// <summary>
-    /// Public API: Returns read-only access to simulation log.
-    /// Deprecated: Use RaceHistory instead.
-    /// </summary>
-    [System.Obsolete("Use RaceHistory instead of SimulationLogger")]
-    public IReadOnlyList<string> GetSimulationLog() => new List<string>();
-
-    /// <summary>
     /// Public API: Returns a copy of all vehicles in the game.
     /// Returns empty list if TurnController not initialized yet.
     /// </summary>

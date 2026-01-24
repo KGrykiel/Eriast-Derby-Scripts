@@ -9,15 +9,15 @@ namespace Assets.Scripts.Skills.Helpers
     /// - SkillAttackResolver: Attack rolls (user vs target AC)
     /// - SkillSaveResolver: Saving throws (target vs skill DC)
     /// - SkillCheckResolver: Skill checks (user vs DC)
-    /// - (Future) SkillOpposedResolver: Opposed checks (user vs target)
+    /// - SkillOpposedCheckResolver: Opposed checks (user vs target)
+    /// - SkillNoRollResolver: Auto-apply effects (no roll)
     /// 
     /// LOGGING: Events are emitted by individual resolvers via CombatEventBus.
     /// </summary>
     public static class SkillExecutor
     {
         /// <summary>
-        /// Executes a skill with full targeting and component support.
-        /// Routes to appropriate resolver based on roll type.
+        /// Routes skill execution to the appropriate resolver.
         /// </summary>
         public static bool Execute(
             Skill skill,
