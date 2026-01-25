@@ -250,19 +250,21 @@ public class DriveComponent : VehicleComponent
     }
     
     /// <summary>
-    /// Set speed to maximum (full throttle)
+    /// Accelerate at full rate for one turn.
+    /// Speed increases by acceleration value each turn until maxSpeed is reached.
     /// </summary>
     public void FullThrottle()
     {
-        Accelerate(maxSpeed);  // Accelerate as much as possible (clamped by acceleration rate)
+        Accelerate(1f);  // 1 = accelerate at full rate (adds 'acceleration' to speed)
     }
     
     /// <summary>
-    /// Emergency brake (rapid deceleration)
+    /// Brake at full rate for one turn.
+    /// Speed decreases by acceleration value each turn until stopped.
     /// </summary>
     public void Brake()
     {
-        Decelerate(maxSpeed);  // Decelerate as much as possible (clamped by deceleration rate)
+        Decelerate(1f);  // 1 = decelerate at full rate (subtracts 'acceleration' from speed)
     }
     
     

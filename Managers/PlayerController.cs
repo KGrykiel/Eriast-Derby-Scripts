@@ -1,8 +1,7 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
-using EventType = Assets.Scripts.Logging.EventType;
-using Assets.Scripts.Logging;
 using Assets.Scripts.Entities.Vehicle;
 using Assets.Scripts.Managers.PlayerUI;
 using Assets.Scripts.Skills.Helpers;
@@ -10,6 +9,7 @@ using Assets.Scripts.Skills.Helpers;
 /// <summary>
 /// Orchestrates player input and coordinates between UI controllers and game systems.
 /// UI display logic has been extracted to specialized controllers.
+/// Fires events for logging (TurnEventLogger subscribes).
 /// </summary>
 public class PlayerController : MonoBehaviour
 {
@@ -22,7 +22,7 @@ public class PlayerController : MonoBehaviour
     private TurnController turnController;
     private GameManager gameManager;
     private Vehicle playerVehicle;
-    private System.Action onPlayerTurnComplete;
+    private Action onPlayerTurnComplete;
     
     // UI Coordinator (owns all UI sub-controllers)
     private PlayerUICoordinator uiCoordinator;
@@ -38,11 +38,31 @@ public class PlayerController : MonoBehaviour
     private VehicleComponent selectedTargetComponent = null;
     private bool isSelectingStage = false;
     private bool isPlayerTurnActive = false;
+    
+    #endregion
+    
+    #region Events
+    
+    /// <summary>Fired when player vehicle cannot act. Args: (vehicle, reason)</summary>
+    public event Action<Vehicle, string> OnPlayerCannotAct;
+    
+    /// <summary>Fired when player action phase starts. Args: vehicle</summary>
+    public event Action<Vehicle> OnPlayerActionPhaseStarted;
+    
+    /// <summary>Fired when player ends their turn. Args: vehicle</summary>
+    public event Action<Vehicle> OnPlayerEndedTurn;
+    
+    /// <summary>Fired when player triggers movement manually. Args: vehicle</summary>
+    public event Action<Vehicle> OnPlayerTriggeredMovement;
+    
+    #endregion
+
+    #region Initialization
 
     /// <summary>
     /// Initializes the player controller with required references.
     /// </summary>
-    public void Initialize(Vehicle player, TurnController controller, GameManager manager, System.Action turnCompleteCallback)
+    public void Initialize(Vehicle player, TurnController controller, GameManager manager, Action turnCompleteCallback)
     {
         playerVehicle = player;
         turnController = controller;
@@ -82,14 +102,7 @@ public class PlayerController : MonoBehaviour
         if (!playerVehicle.IsOperational())
         {
             string reason = playerVehicle.GetNonOperationalReason();
-            RaceHistory.Log(
-                EventType.System,
-                EventImportance.High,
-                $"{playerVehicle.vehicleName} cannot act: {reason}",
-                playerVehicle.currentStage,
-                playerVehicle
-            ).WithMetadata("nonOperational", true)
-             .WithMetadata("reason", reason);
+            OnPlayerCannotAct?.Invoke(playerVehicle, reason);
             
             // Auto-end turn if vehicle is non-operational
             onPlayerTurnComplete?.Invoke();
@@ -140,13 +153,7 @@ public class PlayerController : MonoBehaviour
         uiCoordinator.ShowTurnUI(availableSeats, playerVehicle, OnSeatSelected, OnSkillSelected);
         uiCoordinator.UpdateTurnStatusDisplay(playerVehicle);
         
-        RaceHistory.Log(
-            EventType.System,
-            EventImportance.Medium,
-            $"{playerVehicle.vehicleName} can now take actions",
-            playerVehicle.currentStage,
-            playerVehicle
-        );
+        OnPlayerActionPhaseStarted?.Invoke(playerVehicle);
     }
 
     /// <summary>
@@ -161,14 +168,7 @@ public class PlayerController : MonoBehaviour
         ClearPlayerSelections();
         uiCoordinator.HideTurnUI();
 
-        RaceHistory.Log(
-            EventType.System,
-            EventImportance.Low,
-            $"{playerVehicle.vehicleName} ended turn",
-            playerVehicle.currentStage,
-            playerVehicle
-        );
-
+        OnPlayerEndedTurn?.Invoke(playerVehicle);
         onPlayerTurnComplete?.Invoke();
     }
     
@@ -191,13 +191,7 @@ public class PlayerController : MonoBehaviour
             if (ui.moveForwardButton != null)
                 ui.moveForwardButton.interactable = false;
             
-            RaceHistory.Log(
-                EventType.Movement,
-                EventImportance.Low,
-                $"{playerVehicle.vehicleName} moved forward (player triggered)",
-                playerVehicle.currentStage,
-                playerVehicle
-            ).WithMetadata("manual", true);
+            OnPlayerTriggeredMovement?.Invoke(playerVehicle);
         }
     }
 

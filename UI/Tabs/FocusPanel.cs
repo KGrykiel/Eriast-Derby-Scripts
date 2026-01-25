@@ -147,7 +147,7 @@ public class FocusPanel : MonoBehaviour
         }
         
         string display = $"<b><size=16><color=#FF8844>VEHICLES IN {playerVehicle.currentStage.stageName.ToUpper()}</color></size></b>\n\n";
-        display += $"<color=#FFAA44>⚔ {sameStageVehicles.Count} vehicle(s) in combat range!</color>\n\n";
+        display += $"<color=#FFAA44> {sameStageVehicles.Count} vehicle(s) in combat range!</color>\n\n";
         
         foreach (var vehicle in sameStageVehicles)
         {

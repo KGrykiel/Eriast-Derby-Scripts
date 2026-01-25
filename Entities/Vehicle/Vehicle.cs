@@ -8,6 +8,7 @@ using Assets.Scripts.Entities.Vehicle.VehicleComponents.ComponentTypes;
 using Assets.Scripts.Entities.Vehicle;
 using Assets.Scripts.Core;
 using Assets.Scripts.Combat.Saves;
+using Assets.Scripts.Managers;
 using SkillContext = Assets.Scripts.Skills.Helpers.SkillContext;
 
 /// <summary>
@@ -373,6 +374,7 @@ public class Vehicle : MonoBehaviour
          .WithMetadata("finalHealth", chassis?.health ?? 0)
          .WithMetadata("finalStage", currentStage?.stageName ?? "None");
         
+        
         bool wasLeading = DetermineIfLeading();
         if (wasLeading)
         {
@@ -385,9 +387,13 @@ public class Vehicle : MonoBehaviour
             );
         }
         
-        var turnController = FindFirstObjectByType<TurnController>();
-        if (turnController != null)
-            turnController.RemoveDestroyedVehicle(this);
+        // Remove from turn order via GameManager's state machine
+        var gameManager = FindFirstObjectByType<GameManager>();
+        if (gameManager != null)
+        {
+            var stateMachine = gameManager.GetStateMachine();
+            stateMachine?.RemoveVehicle(this);
+        }
     }
     
     private bool DetermineIfLeading()

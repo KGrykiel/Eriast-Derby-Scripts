@@ -662,7 +662,7 @@ public class VehicleInspectorPanel : MonoBehaviour
                 if (showWarning)
                 {
                     string reason = selectedVehicle.GetInaccessibilityReason(component);
-                    warningText.text = $"⚠ {reason}";
+                    warningText.text = $"{reason}";
                 }
             }
         }
@@ -791,17 +791,17 @@ public class VehicleInspectorPanel : MonoBehaviour
                 string statusColor;
                 if (!seat.CanAct())
                 {
-                    statusIcon = "❌";
+                    statusIcon = "X";
                     statusColor = "#FF6666";
                 }
                 else if (seat.HasActedThisTurn())
                 {
-                    statusIcon = "☑️";
+                    statusIcon = "/";
                     statusColor = "#888888";
                 }
                 else
                 {
-                    statusIcon = "✅";
+                    statusIcon = "Y";
                     statusColor = "#66FF66";
                 }
                 
@@ -819,7 +819,7 @@ public class VehicleInspectorPanel : MonoBehaviour
                 if (!seat.CanAct())
                 {
                     string reason = seat.GetCannotActReason();
-                    info += $"    <color=#FF6666>⚠ {reason}</color>\n";
+                    info += $"    <color=#FF6666>{reason}</color>\n";
                 }
                 
                 // Gather all skills for this seat

@@ -31,7 +31,15 @@ public static class RollUtility
     {
         return Random.Range(1, 21);
     }
-    
+
+    /// <summary>
+    /// Roll for intiative. a d100 roll.
+    /// </summary>
+    public static int RollInitiative()
+    {
+        return Random.Range(1, 101);
+    }
+
     /// <summary>
     /// Roll multiple dice and return the sum.
     /// Example: RollDice(2, 6) rolls 2d6 and returns the total.

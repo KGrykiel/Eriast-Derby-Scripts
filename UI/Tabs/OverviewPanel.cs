@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using EventType = Assets.Scripts.Logging.EventType;
 using Assets.Scripts.Logging;
+using Assets.Scripts.Managers;
 
 /// <summary>
 /// Overview panel showing race leaderboard and event summary.
@@ -32,11 +33,16 @@ public class OverviewPanel : MonoBehaviour
     [Tooltip("Show active modifier count")]
     public bool showModifiers = false;
 
-    private TurnController turnController;
+    private GameManager gameManager;
+    private TurnStateMachine stateMachine;
 
     void Start()
     {
-        turnController = FindFirstObjectByType<TurnController>();
+        gameManager = FindFirstObjectByType<GameManager>();
+        if (gameManager != null)
+        {
+            stateMachine = gameManager.GetStateMachine();
+        }
         RefreshPanel();
     }
 
@@ -56,13 +62,13 @@ public class OverviewPanel : MonoBehaviour
 
     private void UpdateLeaderboard()
     {
-        if (leaderboardText == null || turnController == null) return;
+        if (leaderboardText == null || stateMachine == null) return;
 
         // Build custom leaderboard
         string display = "<b><size=18>=== RACE STANDINGS ===</size></b>\n";
-        display += "<color=#888888>------------------------</color>\n\n";
+        display += $"<color=#888888>Round {stateMachine.CurrentRound} | Phase: {stateMachine.CurrentPhase}</color>\n\n";
 
-        var activeVehicles = turnController.AllVehicles
+        var activeVehicles = stateMachine.AllVehicles
             .Where(v => v.Status == VehicleStatus.Active)
             .OrderByDescending(v => CalculateTotalProgress(v))
             .ToList();
@@ -70,7 +76,7 @@ public class OverviewPanel : MonoBehaviour
         for (int i = 0; i < activeVehicles.Count; i++)
         {
             var vehicle = activeVehicles[i];
-            bool isCurrentTurn = turnController.CurrentVehicle == vehicle;
+            bool isCurrentTurn = stateMachine.CurrentVehicle == vehicle;
 
             string posIcon = GetPositionIcon(i + 1);
             string name = vehicle.vehicleName;
@@ -127,11 +133,12 @@ public class OverviewPanel : MonoBehaviour
                     display += $" Effects:x{statusCount}";
             }
 
+
             display += "\n";
 
             // Health bar (compact)
-            int health = vehicle.chassis?.GetCurrentHealth() ?? 0;
-            int maxHealth = vehicle.chassis?.GetMaxHealth() ?? 1;
+            int health = vehicle.chassis != null ? vehicle.chassis.GetCurrentHealth() : 0;
+            int maxHealth = vehicle.chassis != null ? vehicle.chassis.GetMaxHealth() : 1;
             float healthPercent = (float)health / maxHealth;
             string healthBar = GenerateCompactBar(healthPercent, 8);
             string healthColor = GetHealthColor(healthPercent);
@@ -139,7 +146,7 @@ public class OverviewPanel : MonoBehaviour
         }
 
         // Destroyed vehicles
-        var destroyedVehicles = turnController.AllVehicles
+        var destroyedVehicles = stateMachine.AllVehicles
             .Where(v => v.Status == VehicleStatus.Destroyed)
             .ToList();
 
