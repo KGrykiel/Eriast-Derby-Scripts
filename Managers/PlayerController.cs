@@ -5,6 +5,7 @@ using EventType = Assets.Scripts.Logging.EventType;
 using Assets.Scripts.Logging;
 using Assets.Scripts.Entities.Vehicle;
 using Assets.Scripts.Managers.PlayerUI;
+using Assets.Scripts.Skills.Helpers;
 
 /// <summary>
 /// Orchestrates player input and coordinates between UI controllers and game systems.
@@ -188,37 +189,32 @@ public class PlayerController : MonoBehaviour
     {
         if (currentSeat == null) return;
 
-        // Get available skills for this seat
         List<Skill> availableSkills = uiCoordinator.GetAvailableSkills(currentSeat);
-        
         if (skillIndex < 0 || skillIndex >= availableSkills.Count) return;
 
         selectedSkill = availableSkills[skillIndex];
         
-        // Use first operational component as source (for skill execution)
-        selectedSkillSourceComponent = currentSeat.GetOperationalComponents().FirstOrDefault();
+        // Determine source: component that provides this skill, or null if it's a character personal skill
+        selectedSkillSourceComponent = currentSeat.GetComponentForSkill(selectedSkill);
 
-        // Check if skill needs source component selection first
+        // Source component selection first (self-targeting skills)
         if (SkillNeedsSourceComponentSelection(selectedSkill))
         {
             uiCoordinator.TargetSelection.ShowSourceComponentSelection(playerVehicle, OnSourceComponentSelected);
             return;
         }
 
-        // Check if skill needs target selection
-        bool needsTarget = SkillNeedsTarget(selectedSkill);
-        
-        if (needsTarget)
+        // Self-targeted or AoE - execute immediately
+        if (!SkillNeedsTarget(selectedSkill))
         {
-            List<Vehicle> validTargets = turnController.GetValidTargets(playerVehicle);
-            uiCoordinator.TargetSelection.ShowTargetSelection(validTargets, OnTargetSelected, OnTargetCancelClicked);
-        }
-        else
-        {
-            // Self-targeted or AoE skill - execute immediately
             selectedTarget = playerVehicle;
             ExecuteSkillImmediately();
+            return;
         }
+
+        // Needs target selection
+        List<Vehicle> validTargets = turnController.GetValidTargets(playerVehicle);
+        uiCoordinator.TargetSelection.ShowTargetSelection(validTargets, OnTargetSelected, OnTargetCancelClicked);
     }
 
     #endregion
@@ -236,15 +232,10 @@ public class PlayerController : MonoBehaviour
         if (selectedSkill == null) return;
 
         Vehicle target = selectedTarget != null ? selectedTarget : playerVehicle;
-        
-        // Normalize: Always have a target entity (never null)
         Entity targetEntity = selectedTargetComponent != null ? selectedTargetComponent : target.chassis;
-        
-        // Get character from current seat (if any)
         PlayerCharacter character = currentSeat?.assignedCharacter;
 
-        // Build context here - PlayerController knows everything needed
-        var ctx = new Assets.Scripts.Skills.Helpers.SkillContext
+        var ctx = new SkillContext
         {
             Skill = selectedSkill,
             SourceVehicle = playerVehicle,
@@ -254,13 +245,9 @@ public class PlayerController : MonoBehaviour
             IsCriticalHit = false
         };
 
-        // Delegate to Vehicle for resource management, then execute
-        bool skillSucceeded = playerVehicle.ExecuteSkill(ctx);
+        playerVehicle.ExecuteSkill(ctx);
 
-        // Handle player-specific aftermath
         currentSeat?.MarkAsActed();
-
-        // Refresh UI via coordinator
         uiCoordinator.RefreshAfterSkill(availableSeats, currentSeat, playerVehicle, OnSeatSelected, OnSkillSelected);
         uiCoordinator.UpdateTurnStatusDisplay(playerVehicle);
         gameManager.RefreshAllPanels();

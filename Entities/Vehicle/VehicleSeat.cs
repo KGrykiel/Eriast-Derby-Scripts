@@ -215,39 +215,26 @@ namespace Assets.Scripts.Entities.Vehicle
         {
             hasActedThisTurn = false;
         }
-
-        // ==================== DISPLAY ====================
-
+        
         /// <summary>
-        /// Get display name for this seat (e.g., "Alice (Driver's Seat)").
+        /// Get the component that provides a specific skill, or null if it's a character personal skill.
+        /// Used to determine SourceEntity for SkillContext construction.
         /// </summary>
-        public string GetDisplayName()
+        public VehicleComponent GetComponentForSkill(Skill skill)
         {
-            if (assignedCharacter != null)
-                return $"{assignedCharacter.characterName} ({seatName})";
-
-            return $"[Empty] ({seatName})";
-        }
-
-        /// <summary>
-        /// Get a summary of what this seat controls.
-        /// </summary>
-        public string GetSummary()
-        {
-            var components = controlledComponents.Where(c => c != null).Select(c => c.name);
-            string componentList = components.Any() ? string.Join(", ", components) : "None";
-
-            string characterInfo = assignedCharacter != null 
-                ? assignedCharacter.characterName 
-                : "[Unassigned]";
-
-            RoleType roles = GetEnabledRoles();
-            string roleInfo = roles != RoleType.None ? roles.ToString() : "No roles";
-
-            return $"{seatName}\n" +
-                   $"  Operator: {characterInfo}\n" +
-                   $"  Controls: {componentList}\n" +
-                   $"  Roles: {roleInfo}";
+            if (skill == null) return null;
+            
+            // Check each operational component
+            foreach (var component in GetOperationalComponents())
+            {
+                if (component.GetAllSkills().Contains(skill))
+                {
+                    return component;
+                }
+            }
+            
+            // Not from a component - must be character personal skill (or not found)
+            return null;
         }
 
         // ==================== HELPERS ====================

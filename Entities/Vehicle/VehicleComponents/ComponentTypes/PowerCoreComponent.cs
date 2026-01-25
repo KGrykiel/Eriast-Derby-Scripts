@@ -87,7 +87,7 @@ namespace Assets.Scripts.Entities.Vehicle.VehicleComponents.ComponentTypes
             if (regenAmount > 0 && parentVehicle != null)
             {
                 RaceHistory.Log(
-                    Assets.Scripts.Logging.EventType.Resource,
+                    Logging.EventType.Resource,
                     EventImportance.Debug,
                     $"{parentVehicle.vehicleName} regenerated {regenAmount} energy ({currentEnergy}/{maxCap})",
                     parentVehicle.currentStage,
@@ -151,7 +151,7 @@ namespace Assets.Scripts.Entities.Vehicle.VehicleComponents.ComponentTypes
             Debug.LogError($"[PowerCore] CRITICAL: {parentVehicle.vehicleName}'s {name} destroyed! Vehicle has no power!");
             
             RaceHistory.Log(
-                Assets.Scripts.Logging.EventType.Combat,
+                Logging.EventType.Combat,
                 EventImportance.Critical,
                 $"[CRITICAL] {parentVehicle.vehicleName}'s Power Core destroyed! Vehicle is powerless!",
                 parentVehicle.currentStage,
@@ -204,7 +204,7 @@ namespace Assets.Scripts.Entities.Vehicle.VehicleComponents.ComponentTypes
             if (parentVehicle != null)
             {
                 RaceHistory.Log(
-                    Assets.Scripts.Logging.EventType.Resource,
+                    Logging.EventType.Resource,
                     EventImportance.Debug,
                     $"{parentVehicle.vehicleName}: {requester?.name ?? "Unknown"} drew {amount} power ({reason})",
                     parentVehicle.currentStage,
