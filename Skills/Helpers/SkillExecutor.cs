@@ -12,37 +12,39 @@ namespace Assets.Scripts.Skills.Helpers
     /// - SkillOpposedCheckResolver: Opposed checks (user vs target)
     /// - SkillNoRollResolver: Auto-apply effects (no roll)
     /// 
+    /// ARCHITECTURE: SkillContext bundles all execution data.
+    /// - SourceEntity = the attacker (component or null for character skills)
+    /// - TargetEntity = the target (any Entity)
+    /// - SourceVehicle = who pays power (explicit, required)
+    /// - SourceCharacter = optional character for bonuses
+    /// 
+    /// RESOURCE MANAGEMENT: Handled by Vehicle.ExecuteSkill() before calling this.
     /// LOGGING: Events are emitted by individual resolvers via CombatEventBus.
     /// </summary>
     public static class SkillExecutor
     {
         /// <summary>
         /// Routes skill execution to the appropriate resolver.
+        /// Primary entry point using SkillContext.
         /// </summary>
-        public static bool Execute(
-            Skill skill,
-            Vehicle user,
-            Vehicle mainTarget,
-            VehicleComponent sourceComponent = null,
-            VehicleComponent targetComponent = null)
+        public static bool Execute(SkillContext ctx)
         {
-            // Validate target
-            if (!SkillValidator.ValidateTarget(skill, user, mainTarget))
+            // Validate skill configuration
+            if (!SkillValidator.ValidateSkillConfiguration(ctx))
                 return false;
             
-            // Validate component target if specified
-            if (targetComponent != null && 
-                !SkillValidator.ValidateComponentTarget(skill, user, mainTarget, targetComponent, targetComponent.name))
+            // Validate target (accessibility, destroyed state)
+            if (!SkillValidator.ValidateTarget(ctx))
                 return false;
             
             // Route to appropriate resolver based on roll type
-            return skill.skillRollType switch
+            return ctx.Skill.skillRollType switch
             {
-                SkillRollType.AttackRoll => SkillAttackResolver.Execute(skill, user, mainTarget, sourceComponent, targetComponent),
-                SkillRollType.SavingThrow => SkillSaveResolver.Execute(skill, user, mainTarget, sourceComponent, targetComponent),
-                SkillRollType.SkillCheck => SkillCheckResolver.Execute(skill, user, mainTarget, sourceComponent, targetComponent),
-                SkillRollType.OpposedCheck => SkillOpposedCheckResolver.Execute(skill, user, mainTarget, sourceComponent, targetComponent),
-                SkillRollType.None => SkillNoRollResolver.Execute(skill, user, mainTarget, sourceComponent, targetComponent),
+                SkillRollType.AttackRoll => SkillAttackResolver.Execute(ctx),
+                SkillRollType.SavingThrow => SkillSaveResolver.Execute(ctx),
+                SkillRollType.SkillCheck => SkillCheckResolver.Execute(ctx),
+                SkillRollType.OpposedCheck => SkillOpposedCheckResolver.Execute(ctx),
+                SkillRollType.None => SkillNoRollResolver.Execute(ctx),
                 _ => false
             };
         }

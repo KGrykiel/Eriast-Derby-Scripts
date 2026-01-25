@@ -33,3 +33,31 @@ public enum SkillRollType
     /// </summary>
     OpposedCheck
 }
+
+/// <summary>
+/// Defines how precisely a skill can target components vs vehicles.
+/// Controls UI component selection and effect routing.
+/// </summary>
+public enum TargetPrecision
+{
+    /// <summary>
+    /// Vehicle-only targeting. Always hits chassis regardless of player selection.
+    /// Used for: Area attacks, cannons, non-precise weapons.
+    /// UI: No component selector shown.
+    /// </summary>
+    VehicleOnly,
+
+    /// <summary>
+    /// Automatic routing based on effect attributes. Player targets vehicle, system routes to appropriate component.
+    /// Used for: Debuffs (Slow → Drive), buffs (Shield → Chassis), most abilities.
+    /// UI: No component selector shown.
+    /// </summary>
+    Auto,
+
+    /// <summary>
+    /// Precise targeting. Player must select specific component.
+    /// Used for: Sniper rifles, targeted abilities, surgical strikes.
+    /// UI: Component selector shown.
+    /// </summary>
+    Precise
+}

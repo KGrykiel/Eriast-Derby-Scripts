@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using UnityEngine;
-using Assets.Scripts.Effects;
 using Assets.Scripts.Combat.SkillChecks;
 using Assets.Scripts.Combat.Saves;
 using Assets.Scripts.Combat;

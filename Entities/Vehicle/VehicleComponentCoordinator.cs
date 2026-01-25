@@ -1,7 +1,6 @@
 ﻿using System.Collections.Generic;
 using UnityEngine;
 using Assets.Scripts.Entities.Vehicle.VehicleComponents.ComponentTypes;
-using Assets.Scripts.Entities.Vehicle.VehicleComponents;
 
 namespace Assets.Scripts.Entities.Vehicle
 {

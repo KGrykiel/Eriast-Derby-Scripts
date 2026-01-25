@@ -8,7 +8,7 @@ using Assets.Scripts.Effects;
 [System.Serializable]
 public abstract class EffectBase : IEffect
 {
-    public abstract void Apply(Entity user, Entity target, EffectContext? context = null, Object source = null);
+    public abstract void Apply(Entity user, Entity target, EffectContext context, Object source = null);
     
     // ==================== HELPER METHODS (Delegates to EntityHelpers) ====================
     

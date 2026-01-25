@@ -38,7 +38,7 @@ public class ResourceRestorationEffect : EffectBase
     /// Emits RestorationEvent for logging via CombatEventBus.
     /// Works ONLY on the entity passed - no routing!
     /// </summary>
-    public override void Apply(Entity user, Entity target, EffectContext? context = null, UnityEngine.Object source = null)
+    public override void Apply(Entity user, Entity target, EffectContext context, UnityEngine.Object source = null)
     {
         if (target == null) return;
         

@@ -8,6 +8,9 @@ namespace Assets.Scripts.Skills.Helpers
     /// Applies effects to targets with action scoping for aggregated logging.
     /// Handles target resolution and effect routing with component-aware targeting.
     /// 
+    /// ARCHITECTURE: Uses SkillContext for all execution data.
+    /// Vehicles are derived from context when needed for routing/filtering.
+    /// 
     /// LOGGING: Effects emit events to CombatEventBus. This class manages the action scope
     /// so all events from a skill are aggregated and logged together.
     /// </summary>
@@ -17,22 +20,16 @@ namespace Assets.Scripts.Skills.Helpers
         /// Applies all effects to their targets within a combat action scope.
         /// Events are collected and logged together when the scope ends.
         /// </summary>
-        public static void ApplyAllEffects(
-            Skill skill,
-            Vehicle user,
-            Vehicle mainTarget,
-            VehicleComponent sourceComponent,
-            VehicleComponent targetComponentOverride = null,
-            bool isCriticalHit = false)
+        public static void ApplyAllEffects(SkillContext ctx)
         {
-            // Begin action scope - all events will be aggregated
-            CombatEventBus.BeginAction(sourceComponent ?? user.chassis, skill, mainTarget);
+            Vehicle targetVehicle = ctx.TargetVehicle;
+            Skill skill = ctx.Skill;
             
-            // Build effect context for situational/combat state
-            var context = new EffectContext
-            {
-                isCriticalHit = isCriticalHit
-            };
+            // Begin action scope - all events will be aggregated
+            CombatEventBus.BeginAction(ctx.SourceEntity, skill, targetVehicle);
+            
+            // Build effect context from SkillContext (translation point)
+            var effectContext = EffectContext.FromSkillContext(ctx);
             
             try
             {
@@ -41,23 +38,15 @@ namespace Assets.Scripts.Skills.Helpers
                     if (invocation.effect == null) continue;
                     
                     // Resolve ALL targets for this effect (can be multiple for AOE/Both)
-                    List<Entity> targetEntities = ResolveTargets(
-                        invocation.target,
-                        user,
-                        mainTarget,
-                        sourceComponent,
-                        targetComponentOverride,
-                        invocation.effect,
-                        skill);
+                    List<Entity> targetEntities = ResolveTargets(ctx, invocation.target, invocation.effect);
                     
                     foreach (var targetEntity in targetEntities)
                     {
-                        // Apply effect - pass EffectContext for situational data (crits, etc.)
-                        // Note: Weapon is NOT in context - effects extract it from user parameter
+                        // Apply effect with combat state
                         invocation.effect.Apply(
-                            sourceComponent ?? user.chassis,
+                            ctx.SourceEntity,
                             targetEntity,
-                            context,
+                            effectContext,
                             skill);
                     }
                 }
@@ -68,22 +57,24 @@ namespace Assets.Scripts.Skills.Helpers
                 CombatEventBus.EndAction();
             }
         }
-        
+
         /// <summary>
         /// Resolves effect target(s) based on EffectTarget enum.
         /// Returns list because some targets (Both, AllEnemies) resolve to multiple entities.
         /// Uses Vehicle.RouteEffectTarget() with skill's precision mode to route effects.
         /// </summary>
         private static List<Entity> ResolveTargets(
+            SkillContext ctx,
             EffectTarget target,
-            Vehicle user,
-            Vehicle mainTarget,
-            VehicleComponent sourceComponent,
-            VehicleComponent targetComponentOverride,
-            IEffect effect,
-            Skill skill)
+            IEffect effect)
         {
             var targets = new List<Entity>();
+            
+            Vehicle sourceVehicle = ctx.SourceVehicle;
+            Vehicle targetVehicle = ctx.TargetVehicle;
+            VehicleComponent sourceComponent = ctx.SourceComponent;
+            VehicleComponent targetComponent = ctx.TargetComponent;
+            Skill skill = ctx.Skill;
             TargetPrecision precision = skill?.targetPrecision ?? TargetPrecision.Auto;
             
             switch (target)
@@ -91,59 +82,73 @@ namespace Assets.Scripts.Skills.Helpers
                 case EffectTarget.SourceComponent:
                     if (sourceComponent != null)
                         targets.Add(sourceComponent);
+                    else if (sourceVehicle != null)
+                        targets.Add(sourceVehicle.chassis); // Fallback for character skills
                     break;
                     
                 case EffectTarget.SourceVehicle:
                     // Route based on precision and effect type
-                    if (user.chassis != null)
-                        targets.Add(user.RouteEffectTarget(effect, precision, null));
+                    if (sourceVehicle != null)
+                        targets.Add(sourceVehicle.RouteEffectTarget(effect, precision, null));
                     break;
                     
                 case EffectTarget.SourceComponentSelection:
                     // Player-selected component on source vehicle (for self-targeting skills)
-                    // When user == mainTarget, targetComponentOverride is the selected source component
-                    if (user.chassis != null)
+                    if (sourceVehicle == targetVehicle && targetComponent != null)
                     {
-                        if (user == mainTarget && targetComponentOverride != null)
-                        {
-                            // Self-targeting: targetComponentOverride is the selected source component
-                            targets.Add(targetComponentOverride);
-                        }
-                        else
-                        {
-                            // Fallback to routing if not self-targeting
-                            targets.Add(user.RouteEffectTarget(effect, precision, null));
-                        }
+                        // Self-targeting: targetComponent is the selected source component
+                        targets.Add(targetComponent);
+                    }
+                    else if (sourceVehicle != null)
+                    {
+                        // Fallback to routing if not self-targeting
+                        targets.Add(sourceVehicle.RouteEffectTarget(effect, precision, null));
                     }
                     break;
                     
                 case EffectTarget.SelectedTarget:
-                    // Respects player-selected component for Precise targeting
-                    if (mainTarget.chassis != null)
-                        targets.Add(mainTarget.RouteEffectTarget(effect, precision, targetComponentOverride));
+                    // For non-vehicle targets, use directly
+                    if (targetVehicle == null)
+                    {
+                        targets.Add(ctx.TargetEntity);
+                    }
+                    else
+                    {
+                        // Respects player-selected component for Precise targeting
+                        targets.Add(targetVehicle.RouteEffectTarget(effect, precision, targetComponent));
+                    }
                     break;
                     
                 case EffectTarget.TargetVehicle:
-                    // Always routes based on precision mode (ignores player component selection for VehicleOnly)
-                    if (mainTarget.chassis != null)
-                        targets.Add(mainTarget.RouteEffectTarget(effect, precision, null));
+                    // For non-vehicle targets, use directly
+                    if (targetVehicle == null)
+                    {
+                        targets.Add(ctx.TargetEntity);
+                    }
+                    else
+                    {
+                        // Always routes based on precision mode (ignores player component selection)
+                        targets.Add(targetVehicle.RouteEffectTarget(effect, precision, null));
+                    }
                     break;
                     
                 case EffectTarget.Both:
                     // Both source and target, each routed based on precision and effect type
-                    if (user.chassis != null)
-                        targets.Add(user.RouteEffectTarget(effect, precision, null));
-                    if (mainTarget.chassis != null)
-                        targets.Add(mainTarget.RouteEffectTarget(effect, precision, targetComponentOverride));
+                    if (sourceVehicle != null)
+                        targets.Add(sourceVehicle.RouteEffectTarget(effect, precision, null));
+                    if (targetVehicle != null)
+                        targets.Add(targetVehicle.RouteEffectTarget(effect, precision, targetComponent));
+                    else
+                        targets.Add(ctx.TargetEntity);
                     break;
                     
                 case EffectTarget.AllEnemiesInStage:
                     // All enemy vehicles in stage, each routed based on precision and effect type
-                    if (user.currentStage != null && user.currentStage.vehiclesInStage != null)
+                    if (sourceVehicle?.currentStage?.vehiclesInStage != null)
                     {
-                        foreach (var vehicle in user.currentStage.vehiclesInStage)
+                        foreach (var vehicle in sourceVehicle.currentStage.vehiclesInStage)
                         {
-                            if (vehicle != user && vehicle.Status == VehicleStatus.Active && vehicle.chassis != null)
+                            if (vehicle != sourceVehicle && vehicle.Status == VehicleStatus.Active)
                             {
                                 targets.Add(vehicle.RouteEffectTarget(effect, precision, null));
                             }
@@ -152,12 +157,12 @@ namespace Assets.Scripts.Skills.Helpers
                     break;
                     
                 case EffectTarget.AllAlliesInStage:
-                    // All allied vehicles in stage (including self), each routed based on precision and effect type
-                    if (user.currentStage != null && user.currentStage.vehiclesInStage != null)
+                    // All allied vehicles in stage (including self)
+                    if (sourceVehicle?.currentStage?.vehiclesInStage != null)
                     {
-                        foreach (var vehicle in user.currentStage.vehiclesInStage)
+                        foreach (var vehicle in sourceVehicle.currentStage.vehiclesInStage)
                         {
-                            if (vehicle.Status == VehicleStatus.Active && vehicle.chassis != null)
+                            if (vehicle.Status == VehicleStatus.Active)
                             {
                                 // TODO: Add faction/team check when implemented
                                 targets.Add(vehicle.RouteEffectTarget(effect, precision, null));

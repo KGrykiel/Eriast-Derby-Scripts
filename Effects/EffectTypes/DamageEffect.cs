@@ -27,19 +27,16 @@ public class DamageEffect : EffectBase
     /// Parameter convention:
     /// - user: The Entity dealing damage (attacker) - may be a WeaponComponent
     /// - target: The Entity receiving damage
-    /// - context: EffectContext with situational data (crits, stage modifiers, etc.)
+    /// - context: EffectContext with situational data (crits, etc.)
     /// - source: Skill/EventCard that triggered this (for logging "Destroyed by X")
     /// </summary>
-    public override void Apply(Entity user, Entity target, EffectContext? context = null, Object source = null)
+    public override void Apply(Entity user, Entity target, EffectContext context, Object source = null)
     {
         // Extract weapon from user (if it's a weapon component)
         WeaponComponent weapon = user as WeaponComponent;
         
-        // Extract effect context for situational modifiers (crits, etc.)
-        bool isCriticalHit = context?.isCriticalHit ?? false;
-        
         // Calculate damage - formula handles all modes automatically
-        DamageResult result = formula.Compute(weapon, isCriticalHit);
+        DamageResult result = formula.Compute(weapon, context.IsCriticalHit);
         
         if (result.RawTotal <= 0)
         {
@@ -54,7 +51,7 @@ public class DamageEffect : EffectBase
             result: result,
             target: target,
             attacker: user,
-            causalSource: source ?? weapon,
+            causalSource: source != null ? source : weapon,
             sourceType: sourceType
         );
     }

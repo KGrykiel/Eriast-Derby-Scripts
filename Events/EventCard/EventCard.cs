@@ -1,6 +1,6 @@
-﻿using System.Collections.Generic;
+﻿using Assets.Scripts.Effects;
+using System.Collections.Generic;
 using UnityEngine;
-using Assets.Scripts.Effects;
 
 namespace Assets.Scripts.Events.EventCard
 {
@@ -113,7 +113,7 @@ namespace Assets.Scripts.Events.EventCard
                 invocation.effect.Apply(
                     user: null,          // No user (environmental effect)
                     target: targetEntity, // Target = routed by vehicle
-                    context: null,        // No special context needed
+                    context: EffectContext.Default,        // No special context needed
                     source: this);        // Source = this card
             }
         }

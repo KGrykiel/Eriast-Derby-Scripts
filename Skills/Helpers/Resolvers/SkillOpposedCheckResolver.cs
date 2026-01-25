@@ -10,10 +10,8 @@ namespace Assets.Scripts.Skills.Helpers.Resolvers
     /// - Target wins = effects don't apply
     /// 
     /// TODO: Design opposed check system.
-    /// Considerations:
-    /// - Which skills oppose which? (e.g., user Mobility vs target Mobility)
-    /// - Ties? (tie goes to defender, or re-roll?)
-    /// - Critical success/failure on opposed checks?
+    /// 
+    /// ARCHITECTURE: Uses SkillContext for all execution data.
     /// </summary>
     public static class SkillOpposedCheckResolver
     {
@@ -21,14 +19,9 @@ namespace Assets.Scripts.Skills.Helpers.Resolvers
         /// Execute an opposed check skill.
         /// Currently not implemented - returns false and logs warning.
         /// </summary>
-        public static bool Execute(
-            Skill skill,
-            Vehicle user,
-            Vehicle mainTarget,
-            VehicleComponent sourceComponent,
-            VehicleComponent targetComponent)
+        public static bool Execute(SkillContext ctx)
         {
-            Debug.LogWarning($"[SkillOpposedCheckResolver] {skill.name}: Opposed checks not yet implemented!");
+            Debug.LogWarning($"[SkillOpposedCheckResolver] {ctx.Skill.name}: Opposed checks not yet implemented!");
             return false;
         }
     }

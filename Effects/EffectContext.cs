@@ -1,11 +1,13 @@
-﻿namespace Assets.Scripts.Effects
+﻿using Assets.Scripts.Skills.Helpers;
+
+namespace Assets.Scripts.Effects
 {
     /// <summary>
-    /// Universal context for effect execution.
-    /// Contains situational/environmental data that effects may need.
-    /// All fields are optional - callers populate only what's relevant.
+    /// Combat/situational state passed to effects during execution.
+    /// Kept separate from SkillContext because effects can come from non-skill sources
+    /// (environmental damage, status effect ticks, event cards, etc.)
     /// 
-    /// Used by all effect sources: Skills, EventCards, StatusEffects, Environmental hazards, etc.
+    /// Design: Narrow interface for IEffect - only contains state effects actually need.
     /// </summary>
     public struct EffectContext
     {
@@ -14,11 +16,29 @@
         /// <summary>
         /// Natural 20 on attack roll - doubles damage dice (not flat bonuses).
         /// </summary>
-        public bool isCriticalHit;
+        public bool IsCriticalHit;
+        
+        // Future fields:
+        // public int LanePosition;      // For movement effects
+        // public float WeatherModifier; // Environmental bonuses
+        // public int ComboCount;        // Combo system multipliers
+        
+        // ===== FACTORY METHODS =====
         
         /// <summary>
-        /// Natural 1 on attack roll - automatic miss (already handled before effects apply).
+        /// Default context with no special state. Use for non-combat effects.
         /// </summary>
-        public bool isCriticalMiss;
+        public static EffectContext Default => new EffectContext();
+        
+        /// <summary>
+        /// Create EffectContext from SkillContext (translation point).
+        /// </summary>
+        public static EffectContext FromSkillContext(SkillContext ctx)
+        {
+            return new EffectContext
+            {
+                IsCriticalHit = ctx.IsCriticalHit
+            };
+        }
     }
 }

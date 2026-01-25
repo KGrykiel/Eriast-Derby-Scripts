@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using Assets.Scripts.Entities.Vehicle;
-using TMPro;
 
 namespace Assets.Scripts.Managers.PlayerUI
 {

@@ -30,10 +30,10 @@ public class ApplyStatusEffect : EffectBase
     /// Parameter convention:
     /// - user: The Entity applying the status (for tracking)
     /// - target: The Entity receiving the status effect
-    /// - context: Additional context (usually null for status effects)
+    /// - context: Combat state (unused for status effects)
     /// - source: Skill/EventCard/Stage that triggered this (for logging)
     /// </summary>
-    public override void Apply(Entity user, Entity target, EffectContext? context = null, UnityEngine.Object source = null)
+    public override void Apply(Entity user, Entity target, EffectContext context, UnityEngine.Object source = null)
     {
         if (statusEffect == null)
         {
@@ -54,7 +54,7 @@ public class ApplyStatusEffect : EffectBase
         // - Creating AppliedStatusEffect instance
         // - Adding modifiers to target
         // - LOGGING (automatic)
-        target.ApplyStatusEffect(statusEffect, source ?? user);
+        target.ApplyStatusEffect(statusEffect, source != null ? source : user);
     }
     
     /// <summary>

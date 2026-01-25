@@ -35,7 +35,7 @@ namespace Assets.Scripts.Combat
         /// <param name="source">What triggered this (Skill, EventCard, etc.)</param>
         /// <param name="primaryTarget">Primary target vehicle (optional)</param>
         /// <returns>The created action (for reference, usually not needed)</returns>
-        public static CombatAction BeginAction(Entity actor, UnityEngine.Object source, Vehicle primaryTarget = null)
+        public static CombatAction BeginAction(Entity actor, Object source, Vehicle primaryTarget = null)
         {
             var action = new CombatAction(actor, source, primaryTarget);
             actionStack.Push(action);
@@ -107,7 +107,7 @@ namespace Assets.Scripts.Combat
             DamageResult result,
             Entity source,
             Entity target,
-            UnityEngine.Object causalSource,
+            Object causalSource,
             DamageSource sourceType = DamageSource.Ability)
         {
             Emit(new DamageEvent(result, source, target, causalSource, sourceType));
@@ -120,7 +120,7 @@ namespace Assets.Scripts.Combat
             AppliedStatusEffect applied,
             Entity source,
             Entity target,
-            UnityEngine.Object causalSource,
+            Object causalSource,
             bool wasReplacement = false)
         {
             Emit(new StatusEffectEvent(applied, source, target, causalSource, wasReplacement));
@@ -141,7 +141,7 @@ namespace Assets.Scripts.Combat
             RestorationBreakdown breakdown,
             Entity source,
             Entity target,
-            UnityEngine.Object causalSource)
+            Object causalSource)
         {
             Emit(new RestorationEvent(breakdown, source, target, causalSource));
         }
@@ -153,7 +153,7 @@ namespace Assets.Scripts.Combat
             AttackResult result,
             Entity source,
             Entity target,
-            UnityEngine.Object causalSource,
+            Object causalSource,
             bool isHit,
             string targetComponentName = null,
             bool isChassisFallback = false)
@@ -168,7 +168,7 @@ namespace Assets.Scripts.Combat
             SaveResult result,
             Entity source,
             Entity target,
-            UnityEngine.Object causalSource,
+            Object causalSource,
             bool succeeded,
             string targetComponentName = null)
         {
@@ -181,7 +181,7 @@ namespace Assets.Scripts.Combat
         public static void EmitSkillCheck(
             SkillCheckResult result,
             Entity source,
-            UnityEngine.Object causalSource,
+            Object causalSource,
             bool succeeded)
         {
             Emit(new SkillCheckEvent(result, source, causalSource, succeeded));

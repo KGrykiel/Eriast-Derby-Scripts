@@ -1,5 +1,4 @@
-﻿using UnityEngine;
-using Assets.Scripts.Combat.SkillChecks;
+﻿using Assets.Scripts.Combat.SkillChecks;
 using Assets.Scripts.Combat;
 
 namespace Assets.Scripts.Skills.Helpers.Resolvers
@@ -11,7 +10,7 @@ namespace Assets.Scripts.Skills.Helpers.Resolvers
     /// - Success = effects apply
     /// - Failure = effects don't apply
     /// 
-    /// Handles skill checks for vehicle maneuvering, perception, etc.
+    /// ARCHITECTURE: Uses SkillContext for all execution data.
     /// </summary>
     public static class SkillCheckResolver
     {
@@ -19,27 +18,19 @@ namespace Assets.Scripts.Skills.Helpers.Resolvers
         /// Execute a skill check skill.
         /// Returns true if effects were applied (check succeeded).
         /// </summary>
-        public static bool Execute(
-            Skill skill,
-            Vehicle user,
-            Vehicle mainTarget,
-            VehicleComponent sourceComponent,
-            VehicleComponent targetComponent)
+        public static bool Execute(SkillContext ctx)
         {
-            // Determine who makes the check (usually the user)
-            Entity checkEntity = ResolveCheckEntity(user, sourceComponent);
-            if (checkEntity == null)
-            {
-                Debug.LogWarning($"[SkillCheckResolver] {skill.name}: Could not resolve check entity!");
-                return false;
-            }
+            Skill skill = ctx.Skill;
+            
+            // Use source component or source vehicle's chassis for the check
+            Entity checkingEntity = ctx.SourceEntity != null ? ctx.SourceEntity : ctx.SourceVehicle?.chassis;
             
             // Perform the skill check
             int dc = skill.checkDC;
-            SkillCheckResult checkResult = SkillCheckCalculator.PerformSkillCheck(checkEntity, skill.checkType, dc);
+            SkillCheckResult checkResult = SkillCheckCalculator.PerformSkillCheck(checkingEntity, skill.checkType, dc);
 
             // Emit event
-            EmitCheckEvent(checkResult, user, sourceComponent, skill);
+            EmitCheckEvent(checkResult, ctx.SourceComponent, skill);
             
             // If check failed, don't apply effects
             if (!checkResult.Succeeded)
@@ -48,39 +39,23 @@ namespace Assets.Scripts.Skills.Helpers.Resolvers
             }
             
             // Check succeeded - apply effects
-            SkillEffectApplicator.ApplyAllEffects(skill, user, mainTarget, sourceComponent, targetComponent);
+            SkillEffectApplicator.ApplyAllEffects(ctx);
             return true;
         }
         
         // ==================== INTERNAL METHODS ====================
         
         /// <summary>
-        /// Resolve which entity makes the skill check.
-        /// Typically the source component or user chassis.
-        /// </summary>
-        private static Entity ResolveCheckEntity(Vehicle user, VehicleComponent sourceComponent)
-        {
-            if (sourceComponent != null)
-            {
-                return sourceComponent;
-            }
-            return user?.chassis;
-        }
-        
-        /// <summary>
         /// Emit the appropriate combat event.
         /// </summary>
         private static void EmitCheckEvent(
             SkillCheckResult checkResult,
-            Vehicle user,
             VehicleComponent sourceComponent,
             Skill skill)
         {
-            Entity sourceEntity = sourceComponent != null ? sourceComponent : user.chassis;
-            
             CombatEventBus.EmitSkillCheck(
                 checkResult,
-                sourceEntity,
+                sourceComponent,
                 skill,
                 succeeded: checkResult.Succeeded);
         }

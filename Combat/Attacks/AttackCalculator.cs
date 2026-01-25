@@ -26,18 +26,25 @@ namespace Assets.Scripts.Combat.Attacks
         /// This is the primary method for making attacks.
         /// Handles critical hits (natural 20) and critical misses (natural 1).
         /// </summary>
+        /// <param name="attacker">Entity making the attack (for status effect modifiers)</param>
+        /// <param name="target">Entity being attacked (for AC calculation)</param>
+        /// <param name="sourceComponent">Component used for attack (weapon bonus)</param>
+        /// <param name="skill">Skill being used (for skill-specific modifiers)</param>
+        /// <param name="character">Character providing attack bonus (explicit, or derived from seat if null)</param>
+        /// <param name="additionalPenalty">Extra penalty (e.g., component targeting)</param>
         public static AttackResult PerformAttack(
             Entity attacker,
             Entity target,
             VehicleComponent sourceComponent = null,
             Skill skill = null,
+            PlayerCharacter character = null,
             int additionalPenalty = 0)
         {
             // Roll the d20
             var result = RollAttack();
             
             // Gather and add attack modifiers
-            var modifiers = GatherAttackModifiers(attacker, sourceComponent, skill);
+            var modifiers = GatherAttackModifiers(attacker, sourceComponent, skill, character);
             D20RollHelpers.AddModifiers(result, modifiers);
             
             // Add any additional penalty (e.g., component targeting)
@@ -89,18 +96,23 @@ namespace Assets.Scripts.Combat.Attacks
         /// - Applied (buffs, debuffs): Pre-existing modifiers on entity
         /// - Skill-specific: Skill grants bonus/penalty (future)
         /// </summary>
+        /// <param name="attacker">Entity making attack (for status effect modifiers)</param>
+        /// <param name="sourceComponent">Component used (weapon bonus)</param>
+        /// <param name="skill">Skill being used</param>
+        /// <param name="character">Character providing bonus (explicit, or derived from seat if null)</param>
         public static List<AttributeModifier> GatherAttackModifiers(
             Entity attacker,
             VehicleComponent sourceComponent = null,
-            Skill skill = null)
+            Skill skill = null,
+            PlayerCharacter character = null)
         {
             var modifiers = new List<AttributeModifier>();
             
             // 1. Intrinsic: Weapon enhancement bonus
             GatherWeaponBonus(sourceComponent, modifiers);
             
-            // 2. Intrinsic: Character skill bonus
-            GatherCharacterBonus(sourceComponent, modifiers);
+            // 2. Intrinsic: Character attack bonus (from explicit param or seat lookup)
+            GatherCharacterBonus(sourceComponent, character, modifiers);
             
             // 3. Applied: Status effects and equipment (shared helper)
             if (attacker != null)
@@ -135,16 +147,24 @@ namespace Assets.Scripts.Combat.Attacks
         }
         
         /// <summary>
-        /// Intrinsic: Character's base attack bonus (skill).
-        /// Now queries through VehicleSeat system.
+        /// Intrinsic: Character's base attack bonus.
+        /// Uses explicit character if provided, otherwise queries through VehicleSeat system.
+        /// For character personal skills, only character bonus applies (no component lookup).
         /// </summary>
-        private static void GatherCharacterBonus(VehicleComponent sourceComponent, List<AttributeModifier> modifiers)
+        /// <param name="sourceComponent">Component for seat lookup (can be null for personal skills)</param>
+        /// <param name="explicitCharacter">Character passed explicitly (takes priority)</param>
+        /// <param name="modifiers">Modifier list to add to</param>
+        private static void GatherCharacterBonus(VehicleComponent sourceComponent, PlayerCharacter explicitCharacter, List<AttributeModifier> modifiers)
         {
-            if (sourceComponent?.ParentVehicle == null) return;
+            // Use explicit character if provided, otherwise look up from seat
+            PlayerCharacter character = explicitCharacter;
             
-            // Get character from seat that controls this component
-            var seat = sourceComponent.ParentVehicle.GetSeatForComponent(sourceComponent);
-            var character = seat?.assignedCharacter;
+            if (character == null && sourceComponent?.ParentVehicle != null)
+            {
+                // Fallback: Get character from seat that controls this component
+                var seat = sourceComponent.ParentVehicle.GetSeatForComponent(sourceComponent);
+                character = seat?.assignedCharacter;
+            }
             
             if (character != null)
             {

@@ -5,10 +5,7 @@
     /// 
     /// Flow: No roll needed, effects always apply
     /// 
-    /// Handles:
-    /// - Passive abilities
-    /// - Auto-success buffs/heals
-    /// - Guaranteed effects
+    /// ARCHITECTURE: Uses SkillContext for all execution data.
     /// </summary>
     public static class SkillNoRollResolver
     {
@@ -16,15 +13,10 @@
         /// Execute a no-roll skill.
         /// Always succeeds - applies all effects immediately.
         /// </summary>
-        public static bool Execute(
-            Skill skill,
-            Vehicle user,
-            Vehicle mainTarget,
-            VehicleComponent sourceComponent,
-            VehicleComponent targetComponent)
+        public static bool Execute(SkillContext ctx)
         {
-            // No roll needed - apply effects directly (no critical hits possible)
-            SkillEffectApplicator.ApplyAllEffects(skill, user, mainTarget, sourceComponent, targetComponent);
+            // No roll needed - apply effects directly
+            SkillEffectApplicator.ApplyAllEffects(ctx);
             return true;
         }
     }

@@ -6,8 +6,9 @@ using EventType = Assets.Scripts.Logging.EventType;
 using Assets.Scripts.Logging;
 using Assets.Scripts.Entities.Vehicle.VehicleComponents.ComponentTypes;
 using Assets.Scripts.Entities.Vehicle;
-using Assets.Scripts.Entities.Vehicle.VehicleComponents;
 using Assets.Scripts.Core;
+using Assets.Scripts.Combat.Saves;
+using SkillContext = Assets.Scripts.Skills.Helpers.SkillContext;
 
 /// <summary>
 /// Vehicle is a CONTAINER/COORDINATOR for Entity components.
@@ -270,6 +271,24 @@ public class Vehicle : MonoBehaviour
     }
     
     /// <summary>
+    /// Resolve which entity makes a saving throw based on SaveType.
+    /// Centralizes save entity resolution - vehicle knows its own component structure.
+    /// </summary>
+    /// <param name="saveType">Type of save being made</param>
+    /// <returns>The entity that makes the save</returns>
+    public Entity ResolveSavingEntity(SaveType saveType)
+    {
+        return saveType switch
+        {
+            SaveType.Mobility => chassis,  // Chassis has baseMobility
+            // Future save types:
+            // SaveType.Systems => powerCore,      // PowerCore has system resilience
+            // SaveType.Stability => chassis,      // Chassis handles stability
+            _ => chassis  // Default to chassis for unknown types
+        };
+    }
+    
+    /// <summary>
     /// Route an effect to the appropriate component based on targeting precision and effect type.
     /// </summary>
     /// <param name="effect">The effect being applied</param>
@@ -280,7 +299,7 @@ public class Vehicle : MonoBehaviour
     {
         // Precise targeting: Use exactly what player selected (or fallback to chassis)
         if (precision == TargetPrecision.Precise)
-            return playerSelectedComponent ?? chassis;
+            return playerSelectedComponent != null ? playerSelectedComponent : chassis;
         
         // Vehicle-only targeting: Always chassis (non-precise attacks)
         if (precision == TargetPrecision.VehicleOnly)
@@ -312,7 +331,7 @@ public class Vehicle : MonoBehaviour
         if (effect is AttributeModifierEffect modifierEffect)
         {
             VehicleComponent component = ResolveModifierTarget(modifierEffect.attribute);
-            return component ?? chassis;
+            return component != null ? component : chassis;
         }
         
         // Status effects route by their first modifier's attribute
@@ -322,7 +341,7 @@ public class Vehicle : MonoBehaviour
             {
                 var firstModifier = statusEffect.statusEffect.modifiers[0];
                 VehicleComponent component = ResolveModifierTarget(firstModifier.attribute);
-                return component ?? chassis;
+                return component != null ? component : chassis;
             }
             // No modifiers - default to chassis for behavioral effects (stun, etc.)
             return chassis;
@@ -708,43 +727,41 @@ public class Vehicle : MonoBehaviour
     // ==================== SKILL EXECUTION ====================
     
     /// <summary>
-    /// Execute a skill with full resource management and routing.
-    /// This is the single entry point for using skills from this vehicle.
-    /// Handles validation, power consumption, and delegates to SkillExecutor for resolution.
+    /// Execute a skill with resource management.
+    /// Context is built by the caller (PlayerController, AI, etc.) who has full knowledge.
+    /// Vehicle handles resource validation, consumption, then delegates to SkillExecutor.
     /// </summary>
-    public bool ExecuteSkill(
-        Skill skill,
-        Vehicle target,
-        VehicleComponent sourceComponent = null,
-        VehicleComponent targetComponent = null)
+    /// <param name="ctx">Pre-built skill context with all execution data</param>
+    public bool ExecuteSkill(SkillContext ctx)
     {
-        // Internal resource validation
+        Skill skill = ctx.Skill;
+        
+        if (ctx.TargetEntity == null)
+        {
+            Debug.LogError($"[Vehicle] ExecuteSkill called with null target!");
+            return false;
+        }
+        
+        // Resource validation
         if (!CanAffordSkill(skill))
         {
             Debug.LogWarning($"[Vehicle] {vehicleName} cannot afford {skill.name} (need {skill.energyCost}, have {energy})");
             return false;
         }
         
-        // Internal resource consumption
-        if (!ConsumeSkillCost(skill, sourceComponent))
+        // Resource consumption
+        if (!ConsumeSkillCost(skill, ctx.SourceComponent))
         {
             Debug.LogError($"[Vehicle] {vehicleName} failed to consume resources for {skill.name}");
             return false;
         }
         
-        // Delegate to SkillExecutor for routing (pure resolver logic)
-        return Assets.Scripts.Skills.Helpers.SkillExecutor.Execute(
-            skill,
-            this,
-            target,
-            sourceComponent,
-            targetComponent
-        );
+        // Delegate to SkillExecutor for resolution
+        return Assets.Scripts.Skills.Helpers.SkillExecutor.Execute(ctx);
     }
-    
+
     /// <summary>
-    /// Check if vehicle can afford to use a skill (internal).
-    /// Validates power availability without consuming it.
+    /// Check if vehicle can afford to use a skill.
     /// </summary>
     private bool CanAffordSkill(Skill skill)
     {
@@ -753,8 +770,7 @@ public class Vehicle : MonoBehaviour
     }
     
     /// <summary>
-    /// Consume the energy cost of a skill (internal).
-    /// Should only be called after CanAffordSkill() returns true.
+    /// Consume the energy cost of a skill.
     /// </summary>
     private bool ConsumeSkillCost(Skill skill, VehicleComponent sourceComponent)
     {

@@ -6,7 +6,6 @@ using System.Linq;
 using Assets.Scripts.Logging;
 using Assets.Scripts.UI.Components;
 using Assets.Scripts.Core;
-using Assets.Scripts.Entities.Vehicle;
 
 /// <summary>
 /// Inspector panel for detailed vehicle examination.

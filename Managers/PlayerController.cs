@@ -27,7 +27,7 @@ public class PlayerController : MonoBehaviour
     private PlayerUICoordinator uiCoordinator;
 
     // Seat-based state
-    private List<VehicleSeat> availableSeats = new List<VehicleSeat>();
+    private List<VehicleSeat> availableSeats = new();
     private VehicleSeat currentSeat = null;
 
     // Player selection state
@@ -226,29 +226,39 @@ public class PlayerController : MonoBehaviour
     #region Skill Execution
 
     /// <summary>
-    /// Executes the selected skill via Vehicle.ExecuteSkill().
-    /// Handles only player-specific aftermath: marking seat as acted and UI refresh.
-    /// All validation, resource management, and execution handled by Vehicle.
+    /// Executes the selected skill.
+    /// Builds SkillContext here (PlayerController has full knowledge of seat, character, selections).
+    /// Vehicle handles resource validation and consumption.
+    /// SkillExecutor handles resolution.
     /// </summary>
     private void ExecuteSkillImmediately()
     {
-        if (selectedSkill == null || selectedSkillSourceComponent == null) return;
+        if (selectedSkill == null) return;
 
-        Vehicle target = selectedTarget ?? playerVehicle;
+        Vehicle target = selectedTarget != null ? selectedTarget : playerVehicle;
+        
+        // Normalize: Always have a target entity (never null)
+        Entity targetEntity = selectedTargetComponent != null ? selectedTargetComponent : target.chassis;
+        
+        // Get character from current seat (if any)
+        PlayerCharacter character = currentSeat?.assignedCharacter;
 
-        // Delegate to Vehicle (handles validation, power consumption, and execution)
-        bool skillSucceeded = playerVehicle.ExecuteSkill(
-            selectedSkill,
-            target,
-            selectedSkillSourceComponent,
-            selectedTargetComponent
-        );
+        // Build context here - PlayerController knows everything needed
+        var ctx = new Assets.Scripts.Skills.Helpers.SkillContext
+        {
+            Skill = selectedSkill,
+            SourceVehicle = playerVehicle,
+            SourceEntity = selectedSkillSourceComponent,
+            SourceCharacter = character,
+            TargetEntity = targetEntity,
+            IsCriticalHit = false
+        };
+
+        // Delegate to Vehicle for resource management, then execute
+        bool skillSucceeded = playerVehicle.ExecuteSkill(ctx);
 
         // Handle player-specific aftermath
-        if (skillSucceeded || true) // Always mark seat as acted (even on miss/fail)
-        {
-            currentSeat?.MarkAsActed();
-        }
+        currentSeat?.MarkAsActed();
 
         // Refresh UI via coordinator
         uiCoordinator.RefreshAfterSkill(availableSeats, currentSeat, playerVehicle, OnSeatSelected, OnSkillSelected);

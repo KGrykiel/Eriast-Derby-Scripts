@@ -4,38 +4,21 @@ using Assets.Scripts.Logging;
 namespace Assets.Scripts.Skills.Helpers
 {
     /// <summary>
-    /// Validates skill targets and component accessibility.
+    /// Validates skill configuration and target accessibility.
     /// Returns false and logs validation failures.
+    /// 
+    /// Works with SkillContext - all data bundled together.
     /// </summary>
     public static class SkillValidator
     {
         /// <summary>
-        /// Validates that the skill has a valid target and effects configured.
-        /// Returns false and logs if validation fails.
+        /// Validates that the skill has effects configured.
         /// </summary>
-        public static bool ValidateTarget(Skill skill, Vehicle user, Vehicle mainTarget)
+        public static bool ValidateSkillConfiguration(SkillContext ctx)
         {
-            // Check for null target
-            if (mainTarget == null)
-            {
-                EventImportance importance = user.controlType == ControlType.Player
-                    ? EventImportance.Medium
-                    : EventImportance.Low;
-
-                RaceHistory.Log(
-                    EventType.SkillUse,
-                    importance,
-                    $"{user.vehicleName} attempted to use {skill.name} but there was no valid target",
-                    user.currentStage,
-                    user
-                ).WithMetadata("skillName", skill.name)
-                    .WithMetadata("failed", true)
-                    .WithMetadata("reason", "NoTarget");
-
-                return false;
-            }
-
-            // Check for no effects configured
+            Vehicle user = ctx.SourceVehicle;
+            Skill skill = ctx.Skill;
+            
             if (skill.effectInvocations == null || skill.effectInvocations.Count == 0)
             {
                 EventImportance importance = user.controlType == ControlType.Player
@@ -59,25 +42,57 @@ namespace Assets.Scripts.Skills.Helpers
         }
         
         /// <summary>
-        /// Validates component target accessibility.
+        /// Validates target is valid and accessible.
         /// Skips accessibility checks when self-targeting (user can always access own components).
+        /// Handles both VehicleComponent targets and other Entity types.
         /// </summary>
-        public static bool ValidateComponentTarget(Skill skill, Vehicle user, Vehicle mainTarget, VehicleComponent targetComponent, string targetComponentName)
+        public static bool ValidateTarget(SkillContext ctx)
         {
+            Vehicle user = ctx.SourceVehicle;
+            Skill skill = ctx.Skill;
+            Entity targetEntity = ctx.TargetEntity;
+            
+            // If target is not a VehicleComponent, skip vehicle-specific checks
+            VehicleComponent targetComponent = ctx.TargetComponent;
+            if (targetComponent == null)
+            {
+                // Non-component entity (Prop, NPC, etc.) - just check destroyed
+                if (targetEntity.isDestroyed)
+                {
+                    RaceHistory.Log(
+                        EventType.SkillUse,
+                        EventImportance.Medium,
+                        $"{user.vehicleName} tried to target {targetEntity.name}, but it's destroyed",
+                        user.currentStage,
+                        user
+                    ).WithMetadata("skillName", skill.name)
+                     .WithMetadata("targetEntity", targetEntity.name)
+                     .WithMetadata("failed", true)
+                     .WithMetadata("reason", "EntityDestroyed");
+                    
+                    return false;
+                }
+                return true;
+            }
+            
+            // VehicleComponent target - full validation
+            Vehicle mainTarget = ctx.TargetVehicle;
             string attackerName = user.vehicleName;
+            string targetComponentName = targetComponent.name;
 
-            if (targetComponent == null || targetComponent.isDestroyed)
+            // Check if component is destroyed
+            if (targetComponent.isDestroyed)
             {
                 RaceHistory.Log(
                     EventType.SkillUse,
                     EventImportance.Medium,
-                    $"{attackerName} tried to target {mainTarget.vehicleName}'s {targetComponentName}, but it's unavailable",
+                    $"{attackerName} tried to target {mainTarget.vehicleName}'s {targetComponentName}, but it's destroyed",
                     user.currentStage,
                     user, mainTarget
                 ).WithMetadata("skillName", skill.name)
                  .WithMetadata("targetComponent", targetComponentName)
                  .WithMetadata("failed", true)
-                 .WithMetadata("reason", "ComponentUnavailable");
+                 .WithMetadata("reason", "ComponentDestroyed");
                 
                 return false;
             }
@@ -98,7 +113,7 @@ namespace Assets.Scripts.Skills.Helpers
                  .WithMetadata("failed", true)
                  .WithMetadata("reason", "ComponentInaccessible")
                  .WithMetadata("accessibilityReason", reason);
-                
+                 
                 return false;
             }
             

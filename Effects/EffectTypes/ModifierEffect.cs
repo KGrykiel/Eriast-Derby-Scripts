@@ -51,10 +51,10 @@ public class AttributeModifierEffect : EffectBase
     /// 
     /// Parameter convention:
     /// - target: Already-routed component (correct target after Vehicle.RouteEffectTarget)
-    /// - context: Additional context (usually null)
+    /// - context: Combat state (unused for modifiers)
     /// - source: Skill/EventCard that triggered this (for modifier source tracking)
     /// </summary>
-    public override void Apply(Entity user, Entity target, EffectContext? context = null, UnityEngine.Object source = null)
+    public override void Apply(Entity user, Entity target, EffectContext context, UnityEngine.Object source = null)
     {
         if (target == null)
         {
@@ -62,7 +62,7 @@ public class AttributeModifierEffect : EffectBase
             return;
         }
         
-        // Source should be the skill/eventcard that applied this effect (context is no longer Unity.Object)
+        // Source should be the skill/eventcard that applied this effect
         UnityEngine.Object actualSource = source;
         
         // Target should already be routed to the correct component by Skill.Use()
