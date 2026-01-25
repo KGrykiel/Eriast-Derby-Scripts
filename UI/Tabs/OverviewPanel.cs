@@ -107,14 +107,15 @@ public class OverviewPanel : MonoBehaviour
             // Energy (inline)
             if (showEnergy)
             {
-                int maxEnergy = (int)vehicle.maxEnergy;
-                display += $" Energy:{vehicle.energy}/{maxEnergy}";
+                int energy = vehicle.powerCore?.GetCurrentEnergy() ?? 0;
+                int maxEnergy = vehicle.powerCore?.GetMaxEnergy() ?? 0;
+                display += $" Energy:{energy}/{maxEnergy}";
             }
 
             // Speed (inline)
             if (showSpeed)
             {
-                float speed = vehicle.speed;
+                float speed = vehicle.GetDriveComponent()?.GetMaxSpeed() ?? 0f;
                 display += $" Speed:{speed:F1}";
             }
 
@@ -129,11 +130,12 @@ public class OverviewPanel : MonoBehaviour
             display += "\n";
 
             // Health bar (compact)
-            float healthPercent = vehicle.health / vehicle.maxHealth;
+            int health = vehicle.chassis?.GetCurrentHealth() ?? 0;
+            int maxHealth = vehicle.chassis?.GetMaxHealth() ?? 1;
+            float healthPercent = (float)health / maxHealth;
             string healthBar = GenerateCompactBar(healthPercent, 8);
             string healthColor = GetHealthColor(healthPercent);
-            float maxHealth = vehicle.maxHealth;
-            display += $"   <color={healthColor}>{healthBar}</color> <color=#AAAAAA>{vehicle.health}/{maxHealth:F0}HP</color>\n\n";
+            display += $"   <color={healthColor}>{healthBar}</color> <color=#AAAAAA>{health}/{maxHealth}HP</color>\n\n";
         }
 
         // Destroyed vehicles

@@ -237,29 +237,29 @@ public class VehicleInspectorPanel : MonoBehaviour
         if (vehicleHPValueText != null)
         {
             var hpDisplay = vehicleHPValueText.GetComponent<StatValueDisplay>();
+            int currentHealth = selectedVehicle.chassis?.GetCurrentHealth() ?? 0;
+            int maxHealth = selectedVehicle.chassis?.GetMaxHealth() ?? 0;
+            float baseMaxHP = selectedVehicle.chassis != null ? selectedVehicle.chassis.maxHealth : 100;
+            
             if (hpDisplay != null)
             {
-                // Use StatCalculator to get modified max HP
-                float baseMaxHP = selectedVehicle.chassis != null ? selectedVehicle.chassis.maxHealth : 100;
-                float modifiedMaxHP = selectedVehicle.maxHealth;
-                
                 hpDisplay.UpdateDisplay(
                     selectedVehicle.chassis,
                     Attribute.MaxHealth,
                     baseMaxHP,
-                    modifiedMaxHP,
-                    $"{selectedVehicle.health}/{modifiedMaxHP}"
+                    maxHealth,
+                    $"{currentHealth}/{maxHealth}"
                 );
             }
             else
             {
-                vehicleHPValueText.text = $"{selectedVehicle.health}/{selectedVehicle.maxHealth}";
+                vehicleHPValueText.text = $"{currentHealth}/{maxHealth}";
             }
             
             if (vehicleHPBar != null)
             {
-                float percent = selectedVehicle.maxHealth > 0 
-                    ? (float)selectedVehicle.health / selectedVehicle.maxHealth 
+                float percent = maxHealth > 0 
+                    ? (float)currentHealth / maxHealth 
                     : 0f;
                 vehicleHPBar.value = percent;
             }
@@ -269,28 +269,29 @@ public class VehicleInspectorPanel : MonoBehaviour
         if (vehicleEnergyValueText != null)
         {
             var energyDisplay = vehicleEnergyValueText.GetComponent<StatValueDisplay>();
+            int currentEnergy = selectedVehicle.powerCore?.GetCurrentEnergy() ?? 0;
+            int maxEnergy = selectedVehicle.powerCore?.GetMaxEnergy() ?? 0;
+            float baseMaxEnergy = selectedVehicle.powerCore != null ? selectedVehicle.powerCore.maxEnergy : 100;
+            
             if (energyDisplay != null)
             {
-                float baseMaxEnergy = selectedVehicle.powerCore != null ? selectedVehicle.powerCore.maxEnergy : 100;
-                float modifiedMaxEnergy = selectedVehicle.maxEnergy;
-                
                 energyDisplay.UpdateDisplay(
                     selectedVehicle.powerCore,
                     Attribute.MaxEnergy,
                     baseMaxEnergy,
-                    modifiedMaxEnergy,
-                    $"{selectedVehicle.energy}/{modifiedMaxEnergy}"
+                    maxEnergy,
+                    $"{currentEnergy}/{maxEnergy}"
                 );
             }
             else
             {
-                vehicleEnergyValueText.text = $"{selectedVehicle.energy}/{selectedVehicle.maxEnergy}";
+                vehicleEnergyValueText.text = $"{currentEnergy}/{maxEnergy}";
             }
             
             if (vehicleEnergyBar != null)
             {
-                float percent = selectedVehicle.maxEnergy > 0 
-                    ? (float)selectedVehicle.energy / selectedVehicle.maxEnergy 
+                float percent = maxEnergy > 0 
+                    ? (float)currentEnergy / maxEnergy 
                     : 0f;
                 vehicleEnergyBar.value = percent;
             }
@@ -300,13 +301,14 @@ public class VehicleInspectorPanel : MonoBehaviour
         if (vehicleSpeedValueText != null)
         {
             var speedDisplay = vehicleSpeedValueText.GetComponent<StatValueDisplay>();
-            if (speedDisplay != null && selectedVehicle.optionalComponents != null)
+            var drive = selectedVehicle.GetDriveComponent();
+            
+            if (speedDisplay != null)
             {
-                var drive = selectedVehicle.optionalComponents.OfType<DriveComponent>().FirstOrDefault();
                 if (drive != null)
                 {
                     float baseSpeed = drive.maxSpeed;
-                    float modifiedSpeed = selectedVehicle.speed;
+                    float modifiedSpeed = drive.GetMaxSpeed();
                     
                     speedDisplay.UpdateDisplay(
                         drive,
@@ -324,7 +326,8 @@ public class VehicleInspectorPanel : MonoBehaviour
             }
             else
             {
-                vehicleSpeedValueText.text = $"{selectedVehicle.speed:F1}";
+                float speed = drive?.GetMaxSpeed() ?? 0f;
+                vehicleSpeedValueText.text = $"{speed:F1}";
             }
         }
         
@@ -332,10 +335,11 @@ public class VehicleInspectorPanel : MonoBehaviour
         if (vehicleACValueText != null)
         {
             var acDisplay = vehicleACValueText.GetComponent<StatValueDisplay>();
+            int modifiedAC = selectedVehicle.chassis?.GetArmorClass() ?? 10;
+            
             if (acDisplay != null && selectedVehicle.chassis != null)
             {
                 int baseAC = selectedVehicle.chassis.armorClass;
-                int modifiedAC = selectedVehicle.armorClass;
                 
                 acDisplay.UpdateDisplay(
                     selectedVehicle.chassis,
@@ -348,11 +352,11 @@ public class VehicleInspectorPanel : MonoBehaviour
             else if (acDisplay != null)
             {
                 // No chassis - show default AC with no modifiers (resets color to white)
-                acDisplay.UpdateDisplaySimple(10, 10, selectedVehicle.armorClass.ToString());
+                acDisplay.UpdateDisplaySimple(10, 10, modifiedAC.ToString());
             }
             else
             {
-                vehicleACValueText.text = selectedVehicle.armorClass.ToString();
+                vehicleACValueText.text = modifiedAC.ToString();
             }
         }
         
@@ -360,10 +364,11 @@ public class VehicleInspectorPanel : MonoBehaviour
         if (vehicleEnergyRegenValueText != null)
         {
             var regenDisplay = vehicleEnergyRegenValueText.GetComponent<StatValueDisplay>();
+            float modifiedRegen = selectedVehicle.powerCore?.GetEnergyRegen() ?? 0f;
+            
             if (regenDisplay != null && selectedVehicle.powerCore != null)
             {
                 float baseRegen = selectedVehicle.powerCore.energyRegen;
-                float modifiedRegen = selectedVehicle.energyRegen;
                 
                 regenDisplay.UpdateDisplay(
                     selectedVehicle.powerCore,
@@ -376,11 +381,11 @@ public class VehicleInspectorPanel : MonoBehaviour
             else if (regenDisplay != null)
             {
                 // No power core - show 0 with no modifiers (resets color to white)
-                regenDisplay.UpdateDisplaySimple(0, 0, $"{selectedVehicle.energyRegen:F1}");
+                regenDisplay.UpdateDisplaySimple(0, 0, $"{modifiedRegen:F1}");
             }
             else
             {
-                vehicleEnergyRegenValueText.text = $"{selectedVehicle.energyRegen:F1}";
+                vehicleEnergyRegenValueText.text = $"{modifiedRegen:F1}";
             }
         }
     }
@@ -830,11 +835,12 @@ public class VehicleInspectorPanel : MonoBehaviour
                 
                 if (seatSkills.Count > 0)
                 {
+                    int currentEnergy = selectedVehicle.powerCore?.GetCurrentEnergy() ?? 0;
                     foreach (var skill in seatSkills)
                     {
                         if (skill != null)
                         {
-                            bool canAfford = selectedVehicle.energy >= skill.energyCost;
+                            bool canAfford = currentEnergy >= skill.energyCost;
                             string affordText = canAfford ? "" : " <color=#FF4444>(Can't afford)</color>";
                             info += $"    • <b>{skill.name}</b> ({skill.energyCost} EN){affordText}\n";
                         }

@@ -151,7 +151,8 @@ namespace Assets.Scripts.Managers.PlayerUI
                     }
                     
                     // Disable if not enough energy OR seat has already acted
-                    bool canAfford = playerVehicle.energy >= skill.energyCost;
+                    int currentEnergy = playerVehicle.powerCore?.currentEnergy ?? 0;
+                    bool canAfford = currentEnergy >= skill.energyCost;
                     bool canUse = canAfford && !seatHasActed;
                     skillButtons[i].interactable = canUse;
                     

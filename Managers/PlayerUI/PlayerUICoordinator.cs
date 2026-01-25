@@ -104,14 +104,18 @@ namespace Assets.Scripts.Managers.PlayerUI
             if (ui.turnStatusText != null)
             {
                 ui.turnStatusText.text = $"<b>{vehicle.vehicleName}'s Turn</b>\n" +
-                                      $"Stage: {vehicle.currentStage?.stageName ?? "Unknown"}\n" +
+                                      $"Stage: {(vehicle.currentStage != null ? vehicle.currentStage.stageName : "Unknown")}\n" +
                                       $"Progress: {vehicle.progress:F1}m";
             }
 
             if (ui.actionsRemainingText != null)
             {
-                ui.actionsRemainingText.text = $"HP: {vehicle.health}/{vehicle.maxHealth}  " +
-                                            $"Energy: {vehicle.energy}/{vehicle.maxEnergy}";
+                int hp = vehicle.chassis != null ? vehicle.chassis.GetCurrentHealth() : 0;
+                int maxHp = vehicle.chassis != null ? vehicle.chassis.GetMaxHealth() : 0;
+                int energy = vehicle.powerCore != null ? vehicle.powerCore.GetCurrentEnergy() : 0;
+                int maxEnergy = vehicle.powerCore != null ? vehicle.powerCore.GetMaxEnergy() : 0;
+                
+                ui.actionsRemainingText.text = $"HP: {hp}/{maxHp}  Energy: {energy}/{maxEnergy}";
             }
         }
         

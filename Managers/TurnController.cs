@@ -5,7 +5,10 @@ using Assets.Scripts.Logging;
 
 /// <summary>
 /// Handles turn order, turn progression, and vehicle movement.
-/// Separated from GameManager for better organization and testability.
+/// Implements 3-stage turn system:
+/// 1. StartTurn - Regen power, pay continuous costs, reset flags
+/// 2. Action Phase - Player/AI actions, movement can be triggered anytime
+/// 3. EndTurn - Auto-move if not moved, status effects tick
 /// </summary>
 public class TurnController : MonoBehaviour
 {
@@ -85,14 +88,199 @@ public class TurnController : MonoBehaviour
              .WithMetadata("vehicleCount", vehicles.Count);
         }
         
-        // Regenerate energy for current vehicle at start of their turn
-        if (CurrentVehicle != null && CurrentVehicle.Status == VehicleStatus.Active)
-        {
-            CurrentVehicle.RegenerateEnergy();
-        }
-        
         return newRoundStarted;
     }
+
+    // ==================== 3-STAGE TURN SYSTEM ====================
+    
+    /// <summary>
+    /// Stage 1: Start of turn for a vehicle.
+    /// 1. Regenerate power
+    /// 2. Reset per-turn power tracking
+    /// 3. Draw continuous power for all components (drive at current speed)
+    /// 4. Reset movement flag
+    /// 5. Apply turn-start status effects
+    /// 6. Reset seat states
+    /// </summary>
+    public void StartTurn(Vehicle vehicle)
+    {
+        if (vehicle == null) return;
+        
+        // 1. Regenerate power FIRST (see full resources)
+        vehicle.RegenerateEnergy();
+        
+        // 2. Reset per-turn power tracking
+        if (vehicle.powerCore != null)
+        {
+            vehicle.powerCore.ResetTurnPowerTracking();
+        }
+        
+        // 3. Draw continuous power for all components (drive pays based on CURRENT speed)
+        DrawContinuousPowerForAllComponents(vehicle);
+        
+        // 4. Reset movement flag - player controls when movement happens
+        vehicle.hasMovedThisTurn = false;
+        vehicle.hasLoggedMovementWarningThisTurn = false;
+        
+        // 5. Status effects at turn start
+        // TODO: Add OnTurnStart() to status effects when implemented
+        
+        // 6. Reset seat turn states
+        vehicle.ResetComponentsForNewTurn();
+        
+        RaceHistory.Log(
+            EventType.System,
+            EventImportance.Low,
+            $"{vehicle.vehicleName}'s turn begins (Round {currentRound})",
+            vehicle.currentStage,
+            vehicle
+        ).WithMetadata("round", currentRound)
+         .WithMetadata("hasMovedYet", false);
+    }
+    
+    /// <summary>
+    /// Stage 3: End of turn for a vehicle.
+    /// 1. Auto-trigger movement if player hasn't moved yet (mandatory)
+    /// 2. Apply turn-end status effects
+    /// </summary>
+    public void EndTurn(Vehicle vehicle)
+    {
+        if (vehicle == null) return;
+        
+        // 1. FORCE movement if player hasn't triggered it yet
+        // Movement is mandatory - engine is running, vehicle WILL move
+        if (!vehicle.hasMovedThisTurn)
+        {
+            RaceHistory.Log(
+                EventType.Movement,
+                EventImportance.Low,
+                $"{vehicle.vehicleName} automatically moved (movement not triggered manually)",
+                vehicle.currentStage,
+                vehicle
+            ).WithMetadata("automatic", true);
+            
+            ExecuteMovement(vehicle);
+        }
+        
+        // 2. Status effects at turn end
+        vehicle.UpdateStatusEffects();
+        
+        RaceHistory.Log(
+            EventType.System,
+            EventImportance.Low,
+            $"{vehicle.vehicleName}'s turn ends",
+            vehicle.currentStage,
+            vehicle
+        );
+    }
+    
+    /// <summary>
+    /// Draw continuous power for all components.
+    /// Called at turn start - components pay based on CURRENT state (drive pays for current speed).
+    /// </summary>
+    private void DrawContinuousPowerForAllComponents(Vehicle vehicle)
+    {
+        if (vehicle.powerCore == null) return;
+        
+        foreach (var component in vehicle.AllComponents)
+        {
+            if (component == null || component.isDestroyed || !component.isPowered) continue;
+            
+            // Get component's power draw (drive will calculate based on current speed)
+            int powerCost = component.GetActualPowerDraw();
+            
+            if (powerCost <= 0) continue;
+            
+            // Attempt to draw power
+            bool success = vehicle.powerCore.DrawPower(
+                powerCost, 
+                component, 
+                "Continuous operation"
+            );
+            
+            if (!success)
+            {
+                // Insufficient power - component shuts down
+                RaceHistory.Log(
+                    EventType.Resource,
+                    EventImportance.Medium,
+                    $"{vehicle.vehicleName}: {component.name} shut down due to insufficient power (needs {powerCost}, have {vehicle.powerCore.currentEnergy})",
+                    vehicle.currentStage,
+                    vehicle
+                ).WithMetadata("component", component.name)
+                 .WithMetadata("requiredPower", powerCost)
+                 .WithMetadata("reason", "InsufficientPower");
+                
+                // Component becomes temporarily disabled until power is restored
+                component.isPowered = false;
+            }
+        }
+    }
+    
+    /// <summary>
+    /// Execute movement for a vehicle. Can be called manually during action phase or auto-triggered at turn end.
+    /// Movement is FREE - power was already paid at turn start by drive continuous draw.
+    /// </summary>
+    public bool ExecuteMovement(Vehicle vehicle)
+    {
+        if (vehicle == null) return false;
+        
+        // Already moved this turn
+        if (vehicle.hasMovedThisTurn)
+        {
+            Debug.LogWarning($"[TurnController] {vehicle.vehicleName} has already moved this turn");
+            return false;
+        }
+        
+        // Check if vehicle can move (drive operational + not immobilized)
+        if (!vehicle.CanMove())
+        {
+            if (!vehicle.hasLoggedMovementWarningThisTurn)
+            {
+                string reason = vehicle.GetCannotMoveReason();
+                RaceHistory.Log(
+                    EventType.Movement,
+                    EventImportance.Medium,
+                    $"{vehicle.vehicleName} cannot move: {reason}",
+                    vehicle.currentStage,
+                    vehicle
+                ).WithMetadata("cannotMove", true)
+                 .WithMetadata("reason", reason);
+                
+                vehicle.hasLoggedMovementWarningThisTurn = true;
+            }
+            
+            vehicle.hasMovedThisTurn = true; // Mark as "moved" to prevent spam
+            return false;
+        }
+        
+        // NO POWER COST HERE - already paid at turn start by drive continuous draw
+        var drive = vehicle.GetDriveComponent();
+        float distance = drive?.currentSpeed ?? 0f;
+        
+        if (vehicle.currentStage != null && distance > 0)
+        {
+            float oldProgress = vehicle.progress;
+            vehicle.progress += distance;
+            
+            RaceHistory.Log(
+                EventType.Movement,
+                EventImportance.Low,
+                $"{vehicle.vehicleName} moved {distance:F1} units (speed {drive.currentSpeed:F1})",
+                vehicle.currentStage,
+                vehicle
+            ).WithMetadata("distance", distance)
+             .WithMetadata("speed", drive.currentSpeed)
+             .WithMetadata("oldProgress", oldProgress)
+             .WithMetadata("newProgress", vehicle.progress);
+        }
+        
+        vehicle.hasMovedThisTurn = true;
+        return true;
+    }
+
+    
+    // ==================== LEGACY & UTILITY METHODS ====================
 
     /// <summary>
     /// Check if a vehicle's turn should be skipped (destroyed or no stage).
@@ -130,10 +318,16 @@ public class TurnController : MonoBehaviour
     }
 
     /// <summary>
-    /// Process a turn for an AI vehicle: add movement, update modifiers, and auto-move through stages.
+    /// Process a complete turn for an AI vehicle.
+    /// Uses 3-stage turn system: StartTurn -> Actions -> EndTurn
     /// </summary>
     public void ProcessAITurn(Vehicle vehicle)
     {
+        if (vehicle == null) return;
+        
+        // Stage 1: Start Turn
+        StartTurn(vehicle);
+        
         // Check if vehicle can operate
         if (!vehicle.IsOperational())
         {
@@ -146,96 +340,28 @@ public class TurnController : MonoBehaviour
                 vehicle
             ).WithMetadata("nonOperational", true)
              .WithMetadata("reason", reason);
-            return;
-        }
-        
-        // Check if vehicle can move (drive operational + not immobilized by status effects)
-        if (!vehicle.CanMove())
-        {
-            string reason = vehicle.GetCannotMoveReason();
-            RaceHistory.Log(
-                EventType.Movement,
-                EventImportance.Medium,
-                $"{vehicle.vehicleName} cannot move: {reason}",
-                vehicle.currentStage,
-                vehicle
-            ).WithMetadata("cannotMove", true)
-             .WithMetadata("reason", reason);
             
-            // Update status effects even if can't move (duration ticks, periodic effects)
-            vehicle.UpdateStatusEffects();
+            // Stage 3: End Turn (even if can't act)
+            EndTurn(vehicle);
             return;
         }
         
-        // Add movement
-        float speed = vehicle.speed;
-        vehicle.progress += speed;
-        vehicle.UpdateStatusEffects();
-
-        // Movement logging removed - only log significant events (stage transitions)
-        // This prevents granular low-importance clutter
-
-        // Auto-move through stages
+        // Stage 2: Action Phase
+        // For AI, we trigger movement immediately (could be changed for tactical AI later)
+        ExecuteMovement(vehicle);
+        
+        // Auto-move through stages if reached end
         while (vehicle.progress >= vehicle.currentStage.length && vehicle.currentStage.nextStages.Count > 0)
         {
             vehicle.progress -= vehicle.currentStage.length;
             var options = vehicle.currentStage.nextStages;
             Stage nextStage = options[Random.Range(0, options.Count)];
 
-            Stage previousStage = vehicle.currentStage;
-            vehicle.SetCurrentStage(nextStage);
-
-            // Single comprehensive stage transition log
-            EventImportance importance = vehicle.controlType == ControlType.Player
-                ? EventImportance.Medium
-                : EventImportance.Low;
-
-            RaceHistory.Log(
-                EventType.Movement,
-                importance,
-                $"{vehicle.vehicleName} moved from {previousStage.stageName} to {nextStage.stageName} ({vehicle.progress:F1}m carried over)",
-                nextStage,
-                vehicle
-            ).WithMetadata("previousStage", previousStage.stageName)
-             .WithMetadata("newStage", nextStage.stageName)
-             .WithMetadata("carriedProgress", vehicle.progress)
-             .WithMetadata("stageLength", nextStage.length)
-             .WithMetadata("isFinishLine", nextStage.isFinishLine);
+            MoveToStage(vehicle, nextStage);
         }
-    }
-
-    /// <summary>
-    /// Process movement for a vehicle at a specific stage.
-    /// Used by player controller to move through linear paths.
-    /// </summary>
-    public void ProcessMovement(Vehicle vehicle)
-    {
-        if (vehicle == null || vehicle.currentStage == null) return;
         
-        // Check if vehicle can move (has operational drive)
-        Debug.Log($"Processing movement for {vehicle.vehicleName}. CanMove: {vehicle.CanMove()}");
-        if (!vehicle.CanMove())
-        {
-            // Only log the first time per turn
-            if (!vehicle.hasLoggedMovementWarningThisTurn)
-            {
-                string reason = vehicle.GetCannotMoveReason();
-                RaceHistory.Log(
-                    EventType.Movement,
-                    EventImportance.Medium,
-                    $"{vehicle.vehicleName} cannot move: {reason}",
-                    vehicle.currentStage,
-                    vehicle
-                ).WithMetadata("reason", reason);
-                
-                vehicle.hasLoggedMovementWarningThisTurn = true;
-            }
-            return; // Don't move, but vehicle can still act
-        }
-
-        float speed = vehicle.speed;
-        vehicle.progress += speed;
-        vehicle.UpdateStatusEffects();
+        // Stage 3: End Turn
+        EndTurn(vehicle);
     }
 
     /// <summary>
@@ -257,12 +383,12 @@ public class TurnController : MonoBehaviour
         RaceHistory.Log(
             EventType.Movement,
             importance,
-            $"{vehicle.vehicleName} chose {stage.stageName} ({vehicle.progress:F1}m carried over)",
+            $"{vehicle.vehicleName} moved to {stage.stageName} ({vehicle.progress:F1}m carried over)",
             stage,
             vehicle
         ).WithMetadata("previousStage", previousStage?.stageName ?? "None")
          .WithMetadata("selectedStage", stage.stageName)
-         .WithMetadata("playerChoice", true)
+         .WithMetadata("playerChoice", vehicle.controlType == ControlType.Player)
          .WithMetadata("carriedProgress", vehicle.progress);
     }
 

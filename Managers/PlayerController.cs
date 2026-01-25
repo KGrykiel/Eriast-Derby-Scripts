@@ -58,6 +58,9 @@ public class PlayerController : MonoBehaviour
 
         if (ui.endTurnButton != null)
             ui.endTurnButton.onClick.AddListener(OnEndTurnClicked);
+        
+        if (ui.moveForwardButton != null)
+            ui.moveForwardButton.onClick.AddListener(OnMoveForwardClicked);
 
         uiCoordinator.HideTurnUI();
     }
@@ -129,6 +132,10 @@ public class PlayerController : MonoBehaviour
         // Get available seats (seats that can act)
         availableSeats = playerVehicle.GetActiveSeats();
         
+        // Enable move button (player can trigger movement anytime during action phase)
+        if (ui.moveForwardButton != null)
+            ui.moveForwardButton.interactable = true;
+        
         // Show UI via coordinator
         uiCoordinator.ShowTurnUI(availableSeats, playerVehicle, OnSeatSelected, OnSkillSelected);
         uiCoordinator.UpdateTurnStatusDisplay(playerVehicle);
@@ -163,6 +170,35 @@ public class PlayerController : MonoBehaviour
         );
 
         onPlayerTurnComplete?.Invoke();
+    }
+    
+    /// <summary>
+    /// Handles Move Forward button click. Triggers movement during action phase.
+    /// Movement is FREE (power already paid at turn start).
+    /// Can only be clicked once per turn.
+    /// </summary>
+    public void OnMoveForwardClicked()
+    {
+        if (!isPlayerTurnActive) return;
+        if (playerVehicle == null || gameManager == null) return;
+        
+        // Trigger movement via GameManager
+        bool success = gameManager.TriggerPlayerMovement();
+        
+        if (success)
+        {
+            // Disable move button after successful movement
+            if (ui.moveForwardButton != null)
+                ui.moveForwardButton.interactable = false;
+            
+            RaceHistory.Log(
+                EventType.Movement,
+                EventImportance.Low,
+                $"{playerVehicle.vehicleName} moved forward (player triggered)",
+                playerVehicle.currentStage,
+                playerVehicle
+            ).WithMetadata("manual", true);
+        }
     }
 
     #endregion

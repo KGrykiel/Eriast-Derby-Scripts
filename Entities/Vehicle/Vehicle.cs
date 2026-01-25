@@ -86,65 +86,7 @@ public class Vehicle : MonoBehaviour
         }
     }
     
-    // ==================== CONVENIENCE PROPERTIES (use StatCalculator directly) ====================
     
-    public int health
-    {
-        get => chassis?.health ?? 0;
-        set
-        {
-            if (chassis == null) return;
-            int maxHP = Mathf.RoundToInt(StatCalculator.GatherAttributeValue(chassis, Attribute.MaxHealth, chassis.maxHealth));
-            chassis.health = Mathf.Clamp(value, 0, maxHP);
-            if (chassis.health <= 0 && !chassis.isDestroyed)
-            {
-                chassis.isDestroyed = true;
-                DestroyVehicle();
-            }
-        }
-    }
-    
-    public int maxHealth => chassis != null 
-        ? Mathf.RoundToInt(StatCalculator.GatherAttributeValue(chassis, Attribute.MaxHealth, chassis.maxHealth)) 
-        : 0;
-    
-    public int energy
-    {
-        get => powerCore?.currentEnergy ?? 0;
-        set
-        {
-            if (powerCore == null) return;
-            int maxE = Mathf.RoundToInt(StatCalculator.GatherAttributeValue(powerCore, Attribute.MaxEnergy, powerCore.maxEnergy));
-            powerCore.currentEnergy = Mathf.Clamp(value, 0, maxE);
-        }
-    }
-    
-    public int maxEnergy => powerCore != null 
-        ? Mathf.RoundToInt(StatCalculator.GatherAttributeValue(powerCore, Attribute.MaxEnergy, powerCore.maxEnergy)) 
-        : 0;
-    
-    public float energyRegen => powerCore != null 
-        ? StatCalculator.GatherAttributeValue(powerCore, Attribute.EnergyRegen, powerCore.energyRegen) 
-        : 0f;
-    
-    public float speed
-    {
-        get
-        {
-            var drive = optionalComponents.OfType<DriveComponent>().FirstOrDefault();
-            if (drive != null && !drive.isDestroyed && !drive.isDisabled)
-                return StatCalculator.GatherAttributeValue(drive, Attribute.Speed, drive.maxSpeed);
-            return 0f;
-        }
-    }
-    
-    public int armorClass => chassis != null 
-        ? StatCalculator.GatherDefenseValue(chassis) 
-        : 10;
-    
-    public int GetComponentAC(VehicleComponent targetComponent) 
-        => targetComponent != null ? StatCalculator.GatherDefenseValue(targetComponent) : armorClass;
-
     // ==================== COMPONENT ACCESS (delegate to coordinator) ====================
     
     public List<VehicleComponent> AllComponents => componentCoordinator?.GetAllComponents() ?? new List<VehicleComponent>();
@@ -153,6 +95,12 @@ public class Vehicle : MonoBehaviour
     
     public string GetInaccessibilityReason(VehicleComponent target) => componentCoordinator?.GetInaccessibilityReason(target);
     
+    /// <summary>
+    /// Get the drive component of this vehicle (if it exists).
+    /// </summary>
+    public DriveComponent GetDriveComponent() 
+        => optionalComponents.OfType<DriveComponent>().FirstOrDefault();
+
     public void ResetComponentsForNewTurn()
     {
         hasLoggedMovementWarningThisTurn = false;
@@ -422,7 +370,7 @@ public class Vehicle : MonoBehaviour
             currentStage,
             this
         ).WithMetadata("previousStatus", oldStatus.ToString())
-         .WithMetadata("finalHealth", health)
+         .WithMetadata("finalHealth", chassis?.health ?? 0)
          .WithMetadata("finalStage", currentStage?.stageName ?? "None");
         
         bool wasLeading = DetermineIfLeading();
@@ -745,7 +693,8 @@ public class Vehicle : MonoBehaviour
         // Resource validation
         if (!CanAffordSkill(skill))
         {
-            Debug.LogWarning($"[Vehicle] {vehicleName} cannot afford {skill.name} (need {skill.energyCost}, have {energy})");
+            int currentEnergy = powerCore?.currentEnergy ?? 0;
+            Debug.LogWarning($"[Vehicle] {vehicleName} cannot afford {skill.name} (need {skill.energyCost}, have {currentEnergy})");
             return false;
         }
         

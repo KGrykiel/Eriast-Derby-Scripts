@@ -70,6 +70,35 @@ public class DriveComponent : VehicleComponent
         currentSpeed = 0f;
     }
     
+    // ==================== STAT ACCESSORS ====================
+    // These methods provide the single source of truth for stat values with modifiers.
+    // UI and game logic should use these instead of accessing fields directly.
+    
+    /// <summary>
+    /// Get current speed (raw value, not max speed).
+    /// </summary>
+    public float GetCurrentSpeed() => currentSpeed;
+    
+    /// <summary>
+    /// Get max speed with all modifiers applied.
+    /// </summary>
+    public float GetMaxSpeed() => StatCalculator.GatherAttributeValue(this, Attribute.Speed, maxSpeed);
+    
+    /// <summary>
+    /// Get acceleration with all modifiers applied.
+    /// </summary>
+    public float GetAcceleration() => StatCalculator.GatherAttributeValue(this, Attribute.Acceleration, acceleration);
+    
+    /// <summary>
+    /// Get stability with all modifiers applied.
+    /// </summary>
+    public float GetStability() => StatCalculator.GatherAttributeValue(this, Attribute.Stability, stability);
+    
+    /// <summary>
+    /// Get base friction with all modifiers applied.
+    /// </summary>
+    public float GetBaseFriction() => StatCalculator.GatherAttributeValue(this, Attribute.BaseFriction, baseFriction);
+    
     // ==================== POWER MANAGEMENT ====================
     
     /// <summary>

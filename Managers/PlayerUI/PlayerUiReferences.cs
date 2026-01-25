@@ -39,5 +39,6 @@ namespace Assets.Scripts.Managers.PlayerUI
         public TextMeshProUGUI turnStatusText;
         public TextMeshProUGUI actionsRemainingText;
         public Button endTurnButton;
+        public Button moveForwardButton;
     }
 }

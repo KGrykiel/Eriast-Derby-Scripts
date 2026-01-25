@@ -55,6 +55,30 @@ public class ChassisComponent : VehicleComponent
         roleType = RoleType.None;
     }
     
+    // ==================== STAT ACCESSORS ====================
+    // These methods provide the single source of truth for stat values with modifiers.
+    // UI and game logic should use these instead of accessing fields directly.
+    
+    /// <summary>
+    /// Get current health (raw value, no modifiers apply to current HP).
+    /// </summary>
+    public int GetCurrentHealth() => health;
+    
+    /// <summary>
+    /// Get max health with all modifiers applied.
+    /// </summary>
+    public int GetMaxHealth() => Mathf.RoundToInt(StatCalculator.GatherAttributeValue(this, Attribute.MaxHealth, maxHealth));
+    
+    /// <summary>
+    /// Get armor class with all modifiers applied.
+    /// </summary>
+    public override int GetArmorClass() => StatCalculator.GatherDefenseValue(this);
+    
+    /// <summary>
+    /// Get drag coefficient with all modifiers applied.
+    /// </summary>
+    public float GetDragCoefficient() => StatCalculator.GatherAttributeValue(this, Attribute.DragCoefficient, dragCoefficient);
+    
     // ==================== STATS ====================
     
     /// <summary>
@@ -105,5 +129,8 @@ public class ChassisComponent : VehicleComponent
         ).WithMetadata("componentName", name)
          .WithMetadata("componentType", "Chassis")
          .WithMetadata("catastrophicFailure", true);
+        
+        // Trigger vehicle destruction (chassis HP = vehicle HP)
+        parentVehicle.DestroyVehicle();
     }
 }

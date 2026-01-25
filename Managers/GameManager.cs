@@ -38,7 +38,7 @@ public class GameManager : MonoBehaviour
         RaceHistory.ClearHistory();
 
         stages = new List<Stage>(FindObjectsByType<Stage>(FindObjectsSortMode.None));
-        List<Vehicle> vehicles = new List<Vehicle>(FindObjectsByType<Vehicle>(FindObjectsSortMode.None));
+        List<Vehicle> vehicles = new(FindObjectsByType<Vehicle>(FindObjectsSortMode.None));
 
         playerVehicle = vehicles.Find(v => v.controlType == ControlType.Player);
 
@@ -188,7 +188,10 @@ public class GameManager : MonoBehaviour
     }
 
     /// <summary>
-    /// Starts the player's turn. Applies movement and shows action UI.
+    /// Starts the player's turn using 3-stage turn system.
+    /// Stage 1: Regen power, pay continuous costs, reset flags.
+    /// Stage 2: Player actions (handled by PlayerController) - movement can be triggered anytime.
+    /// Stage 3: Auto-move if not moved, status effects (triggered when player ends turn).
     /// </summary>
     private void StartPlayerTurn()
     {
@@ -201,16 +204,18 @@ public class GameManager : MonoBehaviour
             playerVehicle
         );
 
-        // Apply movement at start of turn
-        turnController.ProcessMovement(playerVehicle);
+        // Stage 1: Start turn - regen power, pay continuous costs, reset flags
+        turnController.StartTurn(playerVehicle);
         
-        // Handle stage transitions
+        // Handle stage transitions (crossroads selection if needed)
         playerController.ProcessPlayerMovement();
         
         UpdateStatusText();
         RefreshAllPanels();
 
-        // Show player UI (handled by PlayerController)
+        // Stage 2: Player action phase starts
+        // PlayerController shows UI and waits for player actions
+        // Movement can be triggered anytime during action phase via UI button
     }
 
     /// <summary>
@@ -227,10 +232,14 @@ public class GameManager : MonoBehaviour
 
     /// <summary>
     /// Called by PlayerController when the player completes their turn.
-    /// Resumes turn processing from where it left off.
+    /// Stage 3: End turn - auto-move if not moved, update status effects.
+    /// Then advances to next turn.
     /// </summary>
     private void OnPlayerTurnComplete()
     {
+        // Stage 3: End turn - auto-move if not moved, tick status effects
+        turnController.EndTurn(playerVehicle);
+        
         // Log turn end
         RaceHistory.Log(
             EventType.System,
@@ -285,6 +294,53 @@ public class GameManager : MonoBehaviour
             statusText += $"{vehicle.vehicleName}: {vehicle.currentStage.stageName} ({vehicle.progress:0.0}/{vehicle.currentStage.length})\n";
         }
         statusNotesText.text = statusText;
+    }
+
+    /// <summary>
+    /// Public API: Trigger movement for the player vehicle during action phase.
+    /// Called by PlayerController when player clicks "Move Forward" button.
+    /// Returns true if movement was successful.
+    /// </summary>
+    public bool TriggerPlayerMovement()
+    {
+        if (playerVehicle == null || turnController == null) return false;
+        
+        bool success = turnController.ExecuteMovement(playerVehicle);
+        
+        if (success)
+        {
+            // Handle stage transitions after movement
+            HandleStageTransitions(playerVehicle);
+            
+            UpdateStatusText();
+            RefreshAllPanels();
+        }
+        
+        return success;
+    }
+    
+    /// <summary>
+    /// Handle stage transitions for a vehicle (auto-advance through linear stages, pause at crossroads).
+    /// </summary>
+    private void HandleStageTransitions(Vehicle vehicle)
+    {
+        if (vehicle == null || vehicle.currentStage == null) return;
+        
+        // Auto-advance through stages until reaching a crossroads or staying in current stage
+        while (vehicle.progress >= vehicle.currentStage.length && vehicle.currentStage.nextStages.Count > 0)
+        {
+            if (vehicle.currentStage.nextStages.Count == 1)
+            {
+                // Linear path - auto-advance
+                turnController.MoveToStage(vehicle, vehicle.currentStage.nextStages[0]);
+            }
+            else
+            {
+                // Crossroads - let PlayerController handle stage selection
+                // ProcessPlayerMovement() will show the selection UI
+                return;
+            }
+        }
     }
 
     /// <summary>

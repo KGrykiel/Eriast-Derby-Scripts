@@ -62,6 +62,25 @@ namespace Assets.Scripts.Entities.Vehicle.VehicleComponents.ComponentTypes
             roleType = RoleType.None;
         }
         
+        // ==================== STAT ACCESSORS ====================
+        // These methods provide the single source of truth for stat values with modifiers.
+        // UI and game logic should use these instead of accessing fields directly.
+        
+        /// <summary>
+        /// Get current energy (raw value).
+        /// </summary>
+        public int GetCurrentEnergy() => currentEnergy;
+        
+        /// <summary>
+        /// Get max energy with all modifiers applied.
+        /// </summary>
+        public int GetMaxEnergy() => Mathf.RoundToInt(StatCalculator.GatherAttributeValue(this, Attribute.MaxEnergy, maxEnergy));
+        
+        /// <summary>
+        /// Get energy regen rate with all modifiers applied.
+        /// </summary>
+        public float GetEnergyRegen() => StatCalculator.GatherAttributeValue(this, Attribute.EnergyRegen, energyRegen);
+        
         /// <summary>
         /// Regenerates energy at the start of turn.
         /// Cannot regenerate if power core is destroyed.

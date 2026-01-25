@@ -43,7 +43,8 @@ namespace Assets.Scripts.Managers.PlayerUI
             foreach (var v in validTargets)
             {
                 Button btn = UnityEngine.Object.Instantiate(ui.targetButtonPrefab, ui.targetButtonContainer);
-                btn.GetComponentInChildren<TextMeshProUGUI>().text = $"{v.vehicleName} (HP: {v.health})";
+                int hp = v.chassis != null ? v.chassis.GetCurrentHealth() : 0;
+                btn.GetComponentInChildren<TextMeshProUGUI>().text = $"{v.vehicleName} (HP: {hp})";
                 btn.onClick.AddListener(() => onTargetSelected?.Invoke(v));
             }
             
@@ -72,8 +73,11 @@ namespace Assets.Scripts.Managers.PlayerUI
 
             // Option 1: Target Chassis (vehicle HP)
             Button chassisBtn = UnityEngine.Object.Instantiate(ui.targetButtonPrefab, ui.targetButtonContainer);
+            int hp = targetVehicle.chassis != null ? targetVehicle.chassis.GetCurrentHealth() : 0;
+            int maxHp = targetVehicle.chassis != null ? targetVehicle.chassis.GetMaxHealth() : 0;
+            int ac = targetVehicle.chassis != null ? targetVehicle.chassis.GetArmorClass() : 10;
             chassisBtn.GetComponentInChildren<TextMeshProUGUI>().text = 
-                $"[#] Chassis (HP: {targetVehicle.health}/{targetVehicle.maxHealth}, AC: {targetVehicle.armorClass})";
+                $"[#] Chassis (HP: {hp}/{maxHp}, AC: {ac})";
             chassisBtn.onClick.AddListener(() => onComponentSelected?.Invoke(null)); // null = chassis
 
             // Option 2: All Components (EXCEPT chassis - it's already shown above)
@@ -117,8 +121,11 @@ namespace Assets.Scripts.Managers.PlayerUI
 
             // Option 1: Target Chassis (vehicle HP)
             Button chassisBtn = UnityEngine.Object.Instantiate(ui.targetButtonPrefab, ui.targetButtonContainer);
+            int hp = playerVehicle.chassis != null ? playerVehicle.chassis.GetCurrentHealth() : 0;
+            int maxHp = playerVehicle.chassis != null ? playerVehicle.chassis.GetMaxHealth() : 0;
+            int ac = playerVehicle.chassis != null ? playerVehicle.chassis.GetArmorClass() : 10;
             chassisBtn.GetComponentInChildren<TextMeshProUGUI>().text = 
-                $"[#] Chassis (HP: {playerVehicle.health}/{playerVehicle.maxHealth}, AC: {playerVehicle.armorClass})";
+                $"[#] Chassis (HP: {hp}/{maxHp}, AC: {ac})";
             chassisBtn.onClick.AddListener(() => onComponentSelected?.Invoke(null)); // null = chassis
 
             // Option 2: All Components (EXCEPT chassis - it's already shown above)
