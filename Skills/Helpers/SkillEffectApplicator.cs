@@ -61,7 +61,7 @@ namespace Assets.Scripts.Skills.Helpers
         /// <summary>
         /// Resolves effect target(s) based on EffectTarget enum.
         /// Returns list because some targets (Both, AllEnemies) resolve to multiple entities.
-        /// Uses Vehicle.RouteEffectTarget() with skill's precision mode to route effects.
+        /// EffectTarget determines whether to respect player selection or auto-route.
         /// </summary>
         private static List<Entity> ResolveTargets(
             SkillContext ctx,
@@ -74,8 +74,6 @@ namespace Assets.Scripts.Skills.Helpers
             Vehicle targetVehicle = ctx.TargetVehicle;
             VehicleComponent sourceComponent = ctx.SourceComponent;
             VehicleComponent targetComponent = ctx.TargetComponent;
-            Skill skill = ctx.Skill;
-            TargetPrecision precision = skill?.targetPrecision ?? TargetPrecision.Auto;
             
             switch (target)
             {
@@ -87,9 +85,9 @@ namespace Assets.Scripts.Skills.Helpers
                     break;
                     
                 case EffectTarget.SourceVehicle:
-                    // Route based on precision and effect type
+                    // Always auto-route (no player selection for source)
                     if (sourceVehicle != null)
-                        targets.Add(sourceVehicle.RouteEffectTarget(effect, precision, null));
+                        targets.Add(sourceVehicle.RouteEffectTarget(effect));
                     break;
                     
                 case EffectTarget.SourceComponentSelection:
@@ -101,63 +99,61 @@ namespace Assets.Scripts.Skills.Helpers
                     }
                     else if (sourceVehicle != null)
                     {
-                        // Fallback to routing if not self-targeting
-                        targets.Add(sourceVehicle.RouteEffectTarget(effect, precision, null));
+                        // Fallback to auto-routing
+                        targets.Add(sourceVehicle.RouteEffectTarget(effect));
                     }
                     break;
                     
                 case EffectTarget.SelectedTarget:
-                    // For non-vehicle targets, use directly
+                    // Respects player-selected component (if any)
                     if (targetVehicle == null)
                     {
                         targets.Add(ctx.TargetEntity);
                     }
                     else
                     {
-                        // Respects player-selected component for Precise targeting
-                        targets.Add(targetVehicle.RouteEffectTarget(effect, precision, targetComponent));
+                        targets.Add(targetVehicle.RouteEffectTarget(effect, targetComponent));
                     }
                     break;
                     
                 case EffectTarget.TargetVehicle:
-                    // For non-vehicle targets, use directly
+                    // Always auto-routes (ignores player component selection)
                     if (targetVehicle == null)
                     {
                         targets.Add(ctx.TargetEntity);
                     }
                     else
                     {
-                        // Always routes based on precision mode (ignores player component selection)
-                        targets.Add(targetVehicle.RouteEffectTarget(effect, precision, null));
+                        targets.Add(targetVehicle.RouteEffectTarget(effect));
                     }
                     break;
                     
                 case EffectTarget.Both:
-                    // Both source and target, each routed based on precision and effect type
+                    // Both source and target
                     if (sourceVehicle != null)
-                        targets.Add(sourceVehicle.RouteEffectTarget(effect, precision, null));
+                        targets.Add(sourceVehicle.RouteEffectTarget(effect));
                     if (targetVehicle != null)
-                        targets.Add(targetVehicle.RouteEffectTarget(effect, precision, targetComponent));
+                        targets.Add(targetVehicle.RouteEffectTarget(effect, targetComponent));
                     else
                         targets.Add(ctx.TargetEntity);
                     break;
                     
                 case EffectTarget.AllEnemiesInStage:
-                    // All enemy vehicles in stage, each routed based on precision and effect type
+                    // All enemy vehicles in stage (always auto-route)
                     if (sourceVehicle?.currentStage?.vehiclesInStage != null)
                     {
                         foreach (var vehicle in sourceVehicle.currentStage.vehiclesInStage)
                         {
                             if (vehicle != sourceVehicle && vehicle.Status == VehicleStatus.Active)
                             {
-                                targets.Add(vehicle.RouteEffectTarget(effect, precision, null));
+                                targets.Add(vehicle.RouteEffectTarget(effect));
                             }
                         }
                     }
                     break;
                     
                 case EffectTarget.AllAlliesInStage:
-                    // All allied vehicles in stage (including self)
+                    // All allied vehicles in stage (always auto-route)
                     if (sourceVehicle?.currentStage?.vehiclesInStage != null)
                     {
                         foreach (var vehicle in sourceVehicle.currentStage.vehiclesInStage)
@@ -165,7 +161,7 @@ namespace Assets.Scripts.Skills.Helpers
                             if (vehicle.Status == VehicleStatus.Active)
                             {
                                 // TODO: Add faction/team check when implemented
-                                targets.Add(vehicle.RouteEffectTarget(effect, precision, null));
+                                targets.Add(vehicle.RouteEffectTarget(effect));
                             }
                         }
                     }

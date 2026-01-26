@@ -92,12 +92,8 @@ namespace Assets.Scripts.Events.EventCard
                     continue;
                 }
                 
-                // Route effect to appropriate target
-                // Use Auto precision - vehicle determines best component based on effect type
-                Entity targetEntity = vehicle.RouteEffectTarget(
-                    invocation.effect, 
-                    TargetPrecision.Auto, 
-                    null);
+                // Route effect to appropriate target (auto-routing)
+                Entity targetEntity = vehicle.RouteEffectTarget(invocation.effect);
                 
                 if (targetEntity == null)
                 {

@@ -35,29 +35,34 @@ public enum SkillRollType
 }
 
 /// <summary>
-/// Defines how precisely a skill can target components vs vehicles.
-/// Controls UI component selection and effect routing.
+/// Defines what targeting UI flow is required for a skill.
+/// Determines which selection screens to show and how to route the target.
 /// </summary>
-public enum TargetPrecision
+public enum TargetingMode
 {
     /// <summary>
-    /// Vehicle-only targeting. Always hits chassis regardless of player selection.
-    /// Used for: Area attacks, cannons, non-precise weapons.
-    /// UI: No component selector shown.
+    /// No targeting required - self-cast skill (buffs, repairs to own chassis).
+    /// UI: No selection screen shown.
     /// </summary>
-    VehicleOnly,
-
+    Self,
+    
     /// <summary>
-    /// Automatic routing based on effect attributes. Player targets vehicle, system routes to appropriate component.
-    /// Used for: Debuffs (Slow → Drive), buffs (Shield → Chassis), most abilities.
-    /// UI: No component selector shown.
+    /// Player selects a component on their own vehicle (targeted repairs/buffs).
+    /// UI: Shows source vehicle's component selector.
     /// </summary>
-    Auto,
-
+    SourceComponent,
+    
     /// <summary>
-    /// Precise targeting. Player must select specific component.
-    /// Used for: Sniper rifles, targeted abilities, surgical strikes.
-    /// UI: Component selector shown.
+    /// Player selects enemy vehicle - system auto-routes to appropriate component based on effect type.
+    /// Used for: Most attacks, debuffs, status effects.
+    /// UI: Shows enemy vehicle selector only.
     /// </summary>
-    Precise
+    Enemy,
+    
+    /// <summary>
+    /// Player selects enemy vehicle, then chooses specific component (precise targeting).
+    /// Used for: Sniper rifles, surgical strikes, targeted disables.
+    /// UI: Shows enemy vehicle selector, then component selector. Triggers two-stage attack if damage.
+    /// </summary>
+    EnemyComponent,
 }

@@ -205,29 +205,25 @@ public class Vehicle : MonoBehaviour
     }
     
     /// <summary>
-    /// Route an effect to the appropriate component based on targeting precision and effect type.
+    /// Route an effect to the appropriate component.
+    /// If playerSelectedComponent provided, uses it. Otherwise auto-routes based on effect type.
     /// </summary>
     /// <param name="effect">The effect being applied</param>
-    /// <param name="precision">How precise the skill's targeting is</param>
-    /// <param name="playerSelectedComponent">Component selected by player (for Precise targeting)</param>
+    /// <param name="playerSelectedComponent">Component selected by player (null for auto-routing)</param>
     /// <returns>The entity that should receive the effect</returns>
-    public Entity RouteEffectTarget(IEffect effect, TargetPrecision precision, VehicleComponent playerSelectedComponent = null)
+    public Entity RouteEffectTarget(IEffect effect, VehicleComponent playerSelectedComponent = null)
     {
-        // Precise targeting: Use exactly what player selected (or fallback to chassis)
-        if (precision == TargetPrecision.Precise)
-            return playerSelectedComponent != null ? playerSelectedComponent : chassis;
+        // Use player selection if provided
+        if (playerSelectedComponent != null)
+            return playerSelectedComponent;
         
-        // Vehicle-only targeting: Always chassis (non-precise attacks)
-        if (precision == TargetPrecision.VehicleOnly)
-            return chassis;
-        
-        // Auto targeting: Route based on effect type and attributes
+        // Otherwise auto-route based on effect type and attributes
         return RouteEffectByAttribute(effect);
     }
     
     /// <summary>
     /// Route effect to appropriate component by analyzing its attributes.
-    /// Used for Auto targeting mode.
+    /// Used for auto-routing (non-precise targeting).
     /// </summary>
     private Entity RouteEffectByAttribute(IEffect effect)
     {

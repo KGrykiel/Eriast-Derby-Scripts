@@ -34,10 +34,10 @@ public abstract class Skill : ScriptableObject
     public List<EffectInvocation> effectInvocations = new List<EffectInvocation>();
     
     [Header("Targeting")]
-    [Tooltip("How precisely can this skill target components?")]
-    public TargetPrecision targetPrecision = TargetPrecision.Auto;
+    [Tooltip("What targeting UI flow does this skill require?")]
+    public TargetingMode targetingMode = TargetingMode.Enemy;
     
-    [Tooltip("Penalty when targeting protected/internal components (applied to chassis fallback)")]
+    [Tooltip("Penalty when targeting protected/internal components (only for component-targeting modes)")]
     [Range(0, 10)]
     public int componentTargetingPenalty = 2;
 }

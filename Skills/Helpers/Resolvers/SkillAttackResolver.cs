@@ -42,7 +42,7 @@ namespace Assets.Scripts.Skills.Helpers.Resolvers
             // (only if NOT targeting chassis - chassis is just standard attack)
             bool isChassisTarget = targetComponent == targetChassis;
             
-            if (skill.targetPrecision == TargetPrecision.Precise && 
+            if (skill.targetingMode == TargetingMode.EnemyComponent && 
                 !isChassisTarget && 
                 HasDamageEffects(skill))
             {

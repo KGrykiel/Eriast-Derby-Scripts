@@ -307,15 +307,14 @@ public class VehicleInspectorPanel : MonoBehaviour
             {
                 if (drive != null)
                 {
-                    float baseSpeed = drive.GetBaseMaxSpeed();
-                    float modifiedSpeed = drive.GetMaxSpeed();
+                    float baseSpeed = drive.GetCurrentSpeed();
                     
                     speedDisplay.UpdateDisplay(
                         drive,
                         Attribute.Speed,
                         baseSpeed,
-                        modifiedSpeed,
-                        $"{modifiedSpeed:F1}"
+                        baseSpeed,
+                        $"{baseSpeed:F1}"
                     );
                 }
                 else
@@ -326,7 +325,7 @@ public class VehicleInspectorPanel : MonoBehaviour
             }
             else
             {
-                float speed = drive?.GetMaxSpeed() ?? 0f;
+                float speed = drive?.GetCurrentSpeed() ?? 0f;
                 vehicleSpeedValueText.text = $"{speed:F1}";
             }
         }

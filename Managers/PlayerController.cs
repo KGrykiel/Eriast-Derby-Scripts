@@ -238,7 +238,7 @@ public class PlayerController : MonoBehaviour
         if (!SkillNeedsTarget(selectedSkill))
         {
             selectedTarget = playerVehicle;
-            ExecuteSkillImmediately();
+            ExecuteSkill();
             return;
         }
 
@@ -257,7 +257,7 @@ public class PlayerController : MonoBehaviour
     /// Vehicle handles resource validation and consumption.
     /// SkillExecutor handles resolution.
     /// </summary>
-    private void ExecuteSkillImmediately()
+    private void ExecuteSkill()
     {
         if (selectedSkill == null) return;
 
@@ -298,15 +298,15 @@ public class PlayerController : MonoBehaviour
         uiCoordinator.TargetSelection.Hide();
 
         // Check if selected skill requires precise component targeting
-        if (selectedSkill != null && selectedSkill.targetPrecision == TargetPrecision.Precise)
+        if (selectedSkill != null && selectedSkill.targetingMode == TargetingMode.EnemyComponent)
         {
             // Show component selection UI for precise targeting
             uiCoordinator.TargetSelection.ShowComponentSelection(targetVehicle, OnComponentSelected);
         }
         else
         {
-            // VehicleOnly or Auto targeting - execute immediately
-            ExecuteSkillImmediately();
+            // Enemy (auto-route) targeting - execute immediately
+            ExecuteSkill();
         }
     }
 
@@ -317,7 +317,7 @@ public class PlayerController : MonoBehaviour
     {
         selectedTargetComponent = component;
         uiCoordinator.TargetSelection.Hide();
-        ExecuteSkillImmediately();
+        ExecuteSkill();
     }
 
     /// <summary>
@@ -342,7 +342,7 @@ public class PlayerController : MonoBehaviour
         else
         {
             // Pure self-targeted skill - execute immediately
-            ExecuteSkillImmediately();
+            ExecuteSkill();
         }
     }
 
