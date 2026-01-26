@@ -68,7 +68,7 @@ public class ResourceRestorationEffect : EffectBase
     private RestorationBreakdown ApplyHealthRestoration(Entity target)
     {
         int oldValue = target.health;
-        int maxValue = target.maxHealth;
+        int maxValue = target.GetMaxHealth();
         int requestedChange = amount;
         
         // Clamp to valid range
@@ -96,7 +96,7 @@ public class ResourceRestorationEffect : EffectBase
         if (target is PowerCoreComponent powerCore)
         {
             int oldValue = powerCore.currentEnergy;
-            int maxValue = powerCore.maxEnergy;
+            int maxValue = powerCore.GetMaxEnergy();
             int requestedChange = amount;
             
             // Clamp to valid range

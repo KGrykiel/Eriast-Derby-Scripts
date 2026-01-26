@@ -168,9 +168,8 @@ namespace Assets.Scripts.Managers.PlayerUI
             // Get modified AC from StatCalculator
             var (modifiedAC, _, _) = StatCalculator.GatherDefenseValueWithBreakdown(component);
             
-            // HP info using Entity fields (current health) and modified max HP
-            int modifiedMaxHP = Mathf.RoundToInt(StatCalculator.GatherAttributeValue(
-                component, Attribute.MaxHealth, component.maxHealth));
+            // HP info using accessor method for modified max HP
+            int modifiedMaxHP = component.GetMaxHealth();
             
             string text = $"{component.name} (HP: {component.health}/{modifiedMaxHP}, AC: {modifiedAC})";
             

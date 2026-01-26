@@ -45,11 +45,11 @@ public class CustomComponent : VehicleComponent
         componentType = ComponentType.Custom;
         
         // Set reasonable defaults using Entity fields
-        maxHealth = 50;
+        baseMaxHealth = 50;
         health = 50;
-        armorClass = 15;
-        componentSpace = 100;  // Most components consume space
-        powerDrawPerTurn = 0;
+        baseArmorClass = 15;
+        baseComponentSpace = 100;  // Most components consume space
+        basePowerDrawPerTurn = 0;
         
         // Custom components don't enable roles by default
         roleType = RoleType.None;

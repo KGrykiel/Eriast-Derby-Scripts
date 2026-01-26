@@ -16,11 +16,23 @@ namespace Assets.Scripts.Entities.Vehicle.VehicleComponents.ComponentTypes
         [Tooltip("Current energy available")]
         public int currentEnergy = 50;
         
-        [Tooltip("Maximum energy capacity")]
-        public int maxEnergy = 50;
+        [SerializeField]
+        [Tooltip("Maximum energy capacity (base value before modifiers)")]
+        private int baseMaxEnergy = 50;
         
-        [Tooltip("Energy regenerated per turn")]
-        public float energyRegen = 5f;
+        [SerializeField]
+        [Tooltip("Energy regenerated per turn (base value before modifiers)")]
+        private float baseEnergyRegen = 5f;
+        
+        [Header("Power Distribution Limits (Optional)")]
+        [SerializeField]
+        [Tooltip("Maximum total power that can be drawn per turn by all components combined (0 = no limit) (base value before modifiers)")]
+        private int baseMaxPowerDrawPerTurn = 0;  // Default 0 = unlimited, for marathon resource model
+        
+        [Header("Runtime State")]
+        [ReadOnly]
+        [Tooltip("Total power drawn this turn (resets at start of turn)")]
+        public int currentTurnPowerDraw = 0;
         
         /// <summary>
         /// Called when component is first added or reset in Editor.
@@ -35,16 +47,16 @@ namespace Assets.Scripts.Entities.Vehicle.VehicleComponents.ComponentTypes
             componentType = ComponentType.PowerCore;
             
             // Set component base stats using Entity fields
-            maxHealth = 75;      // Moderately durable
+            baseMaxHealth = 75;      // Moderately durable
             health = 75;         // Start at full HP
-            armorClass = 20;     // Well-protected critical component
-            componentSpace = 0;  // Power cores don't consume space
-            powerDrawPerTurn = 0;  // Generates power, doesn't consume it
+            baseArmorClass = 20;     // Well-protected critical component
+            baseComponentSpace = 0;  // Power cores don't consume space
+            basePowerDrawPerTurn = 0;  // Generates power, doesn't consume it
             
             // Set energy system defaults
             currentEnergy = 50;
-            maxEnergy = 50;
-            energyRegen = 5f;
+            baseMaxEnergy = 50;
+            baseEnergyRegen = 5f;
             
             // Power core does NOT enable a role
             roleType = RoleType.None;
@@ -56,7 +68,7 @@ namespace Assets.Scripts.Entities.Vehicle.VehicleComponents.ComponentTypes
             componentType = ComponentType.PowerCore;
             
             // Initialize energy to max
-            currentEnergy = maxEnergy;
+            currentEnergy = GetMaxEnergy();
             
             // Ensure role settings
             roleType = RoleType.None;
@@ -66,20 +78,21 @@ namespace Assets.Scripts.Entities.Vehicle.VehicleComponents.ComponentTypes
         // These methods provide the single source of truth for stat values with modifiers.
         // UI and game logic should use these instead of accessing fields directly.
         
-        /// <summary>
-        /// Get current energy (raw value).
-        /// </summary>
+        // Runtime state accessors (not stats, just current values)
         public int GetCurrentEnergy() => currentEnergy;
+        public int GetCurrentTurnPowerDraw() => currentTurnPowerDraw;
         
-        /// <summary>
-        /// Get max energy with all modifiers applied.
-        /// </summary>
-        public int GetMaxEnergy() => Mathf.RoundToInt(StatCalculator.GatherAttributeValue(this, Attribute.MaxEnergy, maxEnergy));
+        // Base value accessors (return raw field values without modifiers)
+        public int GetBaseMaxEnergy() => baseMaxEnergy;
+        public float GetBaseEnergyRegen() => baseEnergyRegen;
+        public int GetBaseMaxPowerDrawPerTurn() => baseMaxPowerDrawPerTurn;
         
-        /// <summary>
-        /// Get energy regen rate with all modifiers applied.
-        /// </summary>
-        public float GetEnergyRegen() => StatCalculator.GatherAttributeValue(this, Attribute.EnergyRegen, energyRegen);
+        // Modified value accessors (return values with all modifiers applied via StatCalculator)
+        public int GetMaxEnergy() => Mathf.RoundToInt(StatCalculator.GatherAttributeValue(this, Attribute.MaxEnergy, baseMaxEnergy));
+        public float GetEnergyRegen() => StatCalculator.GatherAttributeValue(this, Attribute.EnergyRegen, baseEnergyRegen);
+        
+        // MaxPowerDrawPerTurn is a configuration setting, not a modified stat
+        public int GetMaxPowerDrawPerTurn() => baseMaxPowerDrawPerTurn;
         
         /// <summary>
         /// Regenerates energy at the start of turn.
@@ -94,9 +107,9 @@ namespace Assets.Scripts.Entities.Vehicle.VehicleComponents.ComponentTypes
                 return;
             }
             
-            // Use StatCalculator for modified regen rate and max capacity
-            float regenRate = StatCalculator.GatherAttributeValue(this, Attribute.EnergyRegen, energyRegen);
-            int maxCap = Mathf.RoundToInt(StatCalculator.GatherAttributeValue(this, Attribute.MaxEnergy, maxEnergy));
+            // Use accessor methods for modified values
+            float regenRate = GetEnergyRegen();
+            int maxCap = GetMaxEnergy();
             
             int oldEnergy = currentEnergy;
             currentEnergy = Mathf.Min(currentEnergy + Mathf.RoundToInt(regenRate), maxCap);
@@ -118,18 +131,6 @@ namespace Assets.Scripts.Entities.Vehicle.VehicleComponents.ComponentTypes
         }
         
         /// <summary>
-        /// Consumes energy. Returns true if successful, false if insufficient energy.
-        /// </summary>
-        public bool ConsumeEnergy(int amount)
-        {
-            if (isDestroyed) return false;
-            if (currentEnergy < amount) return false;
-            
-            currentEnergy -= amount;
-            return true;
-        }
-        
-        /// <summary>
         /// Get the stats to display in the UI for this power core.
         /// Uses StatCalculator for modified values.
         /// </summary>
@@ -137,15 +138,15 @@ namespace Assets.Scripts.Entities.Vehicle.VehicleComponents.ComponentTypes
         {
             var stats = new List<VehicleComponentUI.DisplayStat>();
             
-            // Get modified values from StatCalculator
-            float modifiedMaxEnergy = StatCalculator.GatherAttributeValue(this, Attribute.MaxEnergy, maxEnergy);
-            float modifiedRegen = StatCalculator.GatherAttributeValue(this, Attribute.EnergyRegen, energyRegen);
+            // Get modified values using accessor methods
+            float modifiedMaxEnergy = GetMaxEnergy();
+            float modifiedRegen = GetEnergyRegen();
             
             // Energy bar with tooltip for max energy modifiers
-            stats.Add(VehicleComponentUI.DisplayStat.BarWithTooltip("Energy", "EN", Attribute.MaxEnergy, currentEnergy, maxEnergy, modifiedMaxEnergy));
+            stats.Add(VehicleComponentUI.DisplayStat.BarWithTooltip("Energy", "EN", Attribute.MaxEnergy, currentEnergy, baseMaxEnergy, modifiedMaxEnergy));
             
             // Regen with tooltip for regen modifiers
-            stats.Add(VehicleComponentUI.DisplayStat.WithTooltip("Regen", "REGEN", Attribute.EnergyRegen, energyRegen, modifiedRegen, "/turn"));
+            stats.Add(VehicleComponentUI.DisplayStat.WithTooltip("Regen", "REGEN", Attribute.EnergyRegen, baseEnergyRegen, modifiedRegen, "/turn"));
             
             // Don't add base class stats - power core generates power, doesn't consume it
             
@@ -181,16 +182,7 @@ namespace Assets.Scripts.Entities.Vehicle.VehicleComponents.ComponentTypes
              .WithMetadata("catastrophicFailure", true);
         }
         
-        // ==================== POWER MANAGEMENT SYSTEM (Phase 1) ====================
-        
-        [Header("Power Distribution Limits (Optional)")]
-        [Tooltip("Maximum total power that can be drawn per turn by all components combined (0 = no limit)")]
-        public int maxPowerDrawPerTurn = 0;  // Default 0 = unlimited, for marathon resource model
-        
-        [Header("Runtime State")]
-        [ReadOnly]
-        [Tooltip("Total power drawn this turn (resets at start of turn)")]
-        public int currentTurnPowerDraw = 0;
+        // ==================== POWER MANAGEMENT METHODS ====================
         
         /// <summary>
         /// Check if there's enough energy available for a draw request.
@@ -202,7 +194,8 @@ namespace Assets.Scripts.Entities.Vehicle.VehicleComponents.ComponentTypes
             if (currentEnergy < amount) return false;
             
             // Optional constraint: Per-turn limit (usually 0 for unlimited)
-            if (maxPowerDrawPerTurn > 0 && currentTurnPowerDraw + amount > maxPowerDrawPerTurn)
+            int maxPerTurn = GetMaxPowerDrawPerTurn();
+            if (maxPerTurn > 0 && currentTurnPowerDraw + amount > maxPerTurn)
                 return false;
             
             return true;

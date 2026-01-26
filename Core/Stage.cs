@@ -146,27 +146,6 @@ public class Stage : MonoBehaviour
     }
 
     /// <summary>
-    /// Determines the importance of a vehicle entering this stage.
-    /// </summary>
-    private EventImportance DetermineStageEntryImportance(Vehicle vehicle)
-    {
-        // Finish line is always critical (but this is redundant, already logged in Vehicle.cs)
-        if (isFinishLine)
-            return EventImportance.Critical;
-        
-        // Player entering new stage is medium importance
-        if (vehicle.controlType == ControlType.Player)
-            return EventImportance.Medium;
-        
-        // Stage with hazards/modifiers
-        if (onEnterModifiers != null && onEnterModifiers.Count > 0)
-            return EventImportance.Low;
-        
-        // Regular NPC stage entry
-        return EventImportance.Debug;
-    }
-
-    /// <summary>
     /// Checks if multiple vehicles are in the same stage (potential combat).
     /// Logs rivalry/combat potential events.
     /// </summary>
@@ -193,42 +172,5 @@ public class Stage : MonoBehaviour
              .WithMetadata("hasPlayer", activeVehicles.Exists(v => v.controlType == ControlType.Player))
              .WithShortDescription($"{activeVehicles.Count} vehicles in {stageName}");
         }
-    }
-
-    /// <summary>
-    /// Gets a summary of the current state of this stage (for debugging/UI).
-    /// </summary>
-    public string GetStageSummary()
-    {
-        string summary = $"<b>{stageName}</b> ({length}m)";
-        
-        if (isFinishLine)
-            summary += " 🏁";
-        
-        if (vehiclesInStage.Count > 0)
-        {
-            summary += $"\n  {vehiclesInStage.Count} vehicle(s):";
-            foreach (var vehicle in vehiclesInStage)
-            {
-                if (vehicle != null)
-                    summary += $"\n    • {vehicle.vehicleName}";
-            }
-        }
-        else
-        {
-            summary += "\n  (Empty)";
-        }
-        
-        if (onEnterModifiers != null && onEnterModifiers.Count > 0)
-        {
-            summary += $"\n  {onEnterModifiers.Count} hazard(s)";
-        }
-        
-        if (eventCards != null && eventCards.Count > 0)
-        {
-            summary += $"\n  {eventCards.Count} event card(s)";
-        }
-        
-        return summary;
     }
 }

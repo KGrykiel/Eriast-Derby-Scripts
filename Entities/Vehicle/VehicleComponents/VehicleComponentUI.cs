@@ -145,7 +145,7 @@ public static class VehicleComponentUI
         
         
         string status = $"<b>{component.name}</b> ({component.componentType})\n";
-        status += $"HP: {component.health}/{component.maxHealth} | AC: {component.armorClass}\n";
+        status += $"HP: {component.health}/{component.GetMaxHealth()} | AC: {component.GetArmorClass()}\n";
         
         if (component.isDestroyed)
             status += "<color=red>[DESTROYED]</color>\n";

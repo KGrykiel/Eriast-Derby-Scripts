@@ -52,9 +52,9 @@ namespace Assets.Scripts.Combat.Attacks
             {
                 AddPenalty(result, additionalPenalty, "Targeting Penalty");
             }
-            
+
             // Get target's defense value
-            int defenseValue = StatCalculator.GatherDefenseValue(target);
+            int defenseValue = target.GetArmorClass();
             result.targetValue = defenseValue;
             
             // Evaluate: Critical hit (natural 20) auto-hits, critical miss (natural 1) auto-misses
@@ -136,13 +136,17 @@ namespace Assets.Scripts.Combat.Attacks
         /// </summary>
         private static void GatherWeaponBonus(VehicleComponent sourceComponent, List<AttributeModifier> modifiers)
         {
-            if (sourceComponent is WeaponComponent weapon && weapon.attackBonus != 0)
+            if (sourceComponent is WeaponComponent weapon)
             {
-                modifiers.Add(new AttributeModifier(
-                    Attribute.AttackBonus,
-                    ModifierType.Flat,
-                    weapon.attackBonus,
-                    weapon));
+                int attackBonus = weapon.GetAttackBonus();
+                if (attackBonus != 0)
+                {
+                    modifiers.Add(new AttributeModifier(
+                        Attribute.AttackBonus,
+                        ModifierType.Flat,
+                        attackBonus,
+                        weapon));
+                }
             }
         }
         

@@ -13,12 +13,14 @@ using Assets.Scripts.Core;
 public class ChassisComponent : VehicleComponent
 {
     [Header("Chassis Stats")]
-    [Tooltip("Base mobility for saving throws (dodging, evasion). Higher = easier to dodge AOE/traps.")]
-    public int baseMobility = 8;
+    [SerializeField]
+    [Tooltip("Base mobility for saving throws (dodging, evasion). Higher = easier to dodge AOE/traps (base value before modifiers).")]
+    private int baseMobility = 8;
     
     [Header("Aerodynamic Properties")]
-    [Tooltip("Aerodynamic drag coefficient of vehicle body (0.05 = streamlined, 0.15 = bulky). Components can modify this.")]
-    public float dragCoefficient = 0.1f;
+    [SerializeField]
+    [Tooltip("Aerodynamic drag coefficient of vehicle body (0.05 = streamlined, 0.15 = bulky) (base value before modifiers). Components can modify this.")]
+    private float baseDragCoefficient = 0.1f;
     
     /// <summary>
     /// Called when component is first added or reset in Editor.
@@ -33,14 +35,14 @@ public class ChassisComponent : VehicleComponent
         componentType = ComponentType.Chassis;
         
         // Chassis uses Entity fields directly
-        maxHealth = 100;      // This IS the vehicle's max HP
+        baseMaxHealth = 100;      // This IS the vehicle's max HP
         health = 100;         // Start at full HP
-        armorClass = 18;      // This IS the vehicle's AC
+        baseArmorClass = 18;      // This IS the vehicle's AC
         baseMobility = 8;     // Default mobility for saves
-        componentSpace = -2000; // Provides space (negative value)
+        baseComponentSpace = -2000; // Provides space (negative value)
         
         // Chassis provides space, doesn't consume it
-        powerDrawPerTurn = 0;  // Passive structure
+        basePowerDrawPerTurn = 0;  // Passive structure
         
         // Chassis does NOT enable a role
         roleType = RoleType.None;
@@ -56,28 +58,20 @@ public class ChassisComponent : VehicleComponent
     }
     
     // ==================== STAT ACCESSORS ====================
-    // These methods provide the single source of truth for stat values with modifiers.
-    // UI and game logic should use these instead of accessing fields directly.
+    // Naming convention:
+    // - GetBaseStat() returns raw field value (no modifiers)
+    // - GetStat() returns effective value (with modifiers via StatCalculator)
+    // Game code should almost always use GetStat() for gameplay calculations.
     
-    /// <summary>
-    /// Get current health (raw value, no modifiers apply to current HP).
-    /// </summary>
-    public int GetCurrentHealth() => health;
+    // Inherited from Entity: GetCurrentHealth(), GetBaseMaxHealth(), GetMaxHealth(), GetBaseArmorClass(), GetArmorClass()
     
-    /// <summary>
-    /// Get max health with all modifiers applied.
-    /// </summary>
-    public int GetMaxHealth() => Mathf.RoundToInt(StatCalculator.GatherAttributeValue(this, Attribute.MaxHealth, maxHealth));
+    // Base value accessors (return raw field values without modifiers)
+    public int GetBaseMobility() => baseMobility;
+    public float GetBaseDragCoefficient() => baseDragCoefficient;
     
-    /// <summary>
-    /// Get armor class with all modifiers applied.
-    /// </summary>
-    public override int GetArmorClass() => StatCalculator.GatherDefenseValue(this);
-    
-    /// <summary>
-    /// Get drag coefficient with all modifiers applied.
-    /// </summary>
-    public float GetDragCoefficient() => StatCalculator.GatherAttributeValue(this, Attribute.DragCoefficient, dragCoefficient);
+    // Modified value accessors (return values with all modifiers applied via StatCalculator)
+    public int GetMobility() => Mathf.RoundToInt(StatCalculator.GatherAttributeValue(this, Attribute.Mobility, baseMobility));
+    public float GetDragCoefficient() => StatCalculator.GatherAttributeValue(this, Attribute.DragCoefficient, baseDragCoefficient);
     
     // ==================== STATS ====================
     
@@ -90,18 +84,20 @@ public class ChassisComponent : VehicleComponent
         var stats = new List<VehicleComponentUI.DisplayStat>();
         
         // componentSpace is negative for chassis (provides space)
-        int baseSpace = -componentSpace;
-        float modifiedSpace = -StatCalculator.GatherAttributeValue(this, Attribute.ComponentSpace, componentSpace);
+        int baseSpace = -GetBaseComponentSpace();
+        float modifiedSpace = -GetComponentSpace();
         if (baseSpace > 0 || modifiedSpace > 0)
         {
             stats.Add(VehicleComponentUI.DisplayStat.WithTooltip("Capacity", "CAP", Attribute.ComponentSpace, baseSpace, modifiedSpace));
         }
 
-        stats.Add(VehicleComponentUI.DisplayStat.WithTooltip("Mobility", "MBL", Attribute.Mobility, baseMobility, StatCalculator.GatherAttributeValue(this, Attribute.Mobility, baseMobility)));
+        // Use accessor methods for modified values
+        float modifiedMobility = GetMobility();
+        stats.Add(VehicleComponentUI.DisplayStat.WithTooltip("Mobility", "MBL", Attribute.Mobility, baseMobility, modifiedMobility));
         
         // Aerodynamic properties
-        float modifiedDrag = StatCalculator.GatherAttributeValue(this, Attribute.DragCoefficient, dragCoefficient);
-        stats.Add(VehicleComponentUI.DisplayStat.WithTooltip("Drag", "DRAG", Attribute.DragCoefficient, dragCoefficient, modifiedDrag));
+        float modifiedDrag = GetDragCoefficient();
+        stats.Add(VehicleComponentUI.DisplayStat.WithTooltip("Drag", "DRAG", Attribute.DragCoefficient, baseDragCoefficient, modifiedDrag));
         
         // Don't add base class stats - chassis doesn't draw power
 
@@ -130,7 +126,7 @@ public class ChassisComponent : VehicleComponent
          .WithMetadata("componentType", "Chassis")
          .WithMetadata("catastrophicFailure", true);
         
-        // Trigger vehicle destruction (chassis HP = vehicle HP)
-        parentVehicle.DestroyVehicle();
+        // Immediately mark vehicle as destroyed (fires event for immediate handling)
+        parentVehicle.MarkAsDestroyed();
     }
 }

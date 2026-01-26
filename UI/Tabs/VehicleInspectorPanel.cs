@@ -239,7 +239,7 @@ public class VehicleInspectorPanel : MonoBehaviour
             var hpDisplay = vehicleHPValueText.GetComponent<StatValueDisplay>();
             int currentHealth = selectedVehicle.chassis?.GetCurrentHealth() ?? 0;
             int maxHealth = selectedVehicle.chassis?.GetMaxHealth() ?? 0;
-            float baseMaxHP = selectedVehicle.chassis != null ? selectedVehicle.chassis.maxHealth : 100;
+            float baseMaxHP = selectedVehicle.chassis?.GetBaseMaxHealth() ?? 100;
             
             if (hpDisplay != null)
             {
@@ -271,7 +271,7 @@ public class VehicleInspectorPanel : MonoBehaviour
             var energyDisplay = vehicleEnergyValueText.GetComponent<StatValueDisplay>();
             int currentEnergy = selectedVehicle.powerCore?.GetCurrentEnergy() ?? 0;
             int maxEnergy = selectedVehicle.powerCore?.GetMaxEnergy() ?? 0;
-            float baseMaxEnergy = selectedVehicle.powerCore != null ? selectedVehicle.powerCore.maxEnergy : 100;
+            float baseMaxEnergy = selectedVehicle.powerCore?.GetBaseMaxEnergy() ?? 100;
             
             if (energyDisplay != null)
             {
@@ -307,7 +307,7 @@ public class VehicleInspectorPanel : MonoBehaviour
             {
                 if (drive != null)
                 {
-                    float baseSpeed = drive.maxSpeed;
+                    float baseSpeed = drive.GetBaseMaxSpeed();
                     float modifiedSpeed = drive.GetMaxSpeed();
                     
                     speedDisplay.UpdateDisplay(
@@ -339,7 +339,7 @@ public class VehicleInspectorPanel : MonoBehaviour
             
             if (acDisplay != null && selectedVehicle.chassis != null)
             {
-                int baseAC = selectedVehicle.chassis.armorClass;
+                int baseAC = selectedVehicle.chassis.GetBaseArmorClass();
                 
                 acDisplay.UpdateDisplay(
                     selectedVehicle.chassis,
@@ -368,7 +368,7 @@ public class VehicleInspectorPanel : MonoBehaviour
             
             if (regenDisplay != null && selectedVehicle.powerCore != null)
             {
-                float baseRegen = selectedVehicle.powerCore.energyRegen;
+                float baseRegen = selectedVehicle.powerCore.GetBaseEnergyRegen();
                 
                 regenDisplay.UpdateDisplay(
                     selectedVehicle.powerCore,
@@ -545,22 +545,23 @@ public class VehicleInspectorPanel : MonoBehaviour
                 hpDisplay.UpdateDisplay(
                     component,
                     Attribute.MaxHealth,
-                    component.maxHealth,
-                    component.maxHealth,
-                    $"{component.health}/{component.maxHealth}"
+                    component.GetBaseMaxHealth(),
+                    component.GetMaxHealth(),
+                    $"{component.health}/{component.GetMaxHealth()}"
                 );
             }
             else
             {
-                hpValueText.text = $"{component.health}/{component.maxHealth}";
+                hpValueText.text = $"{component.health}/{component.GetMaxHealth()}";
             }
         }
         
         // HP Bar
         if (hpBar != null)
         {
-            float percent = component.maxHealth > 0 
-                ? (float)component.health / (float)component.maxHealth 
+            int maxHP = component.GetMaxHealth();
+            float percent = maxHP > 0 
+                ? (float)component.health / (float)maxHP 
                 : 0f;
             hpBar.minValue = 0f;
             hpBar.maxValue = 1f;
@@ -570,8 +571,8 @@ public class VehicleInspectorPanel : MonoBehaviour
         // AC - with StatValueDisplay tooltip support
         if (acValueText != null)
         {
-            int baseAC = component.armorClass;
-            int modifiedAC = StatCalculator.GatherDefenseValue(component);
+            int baseAC = component.GetBaseArmorClass();
+            int modifiedAC = component.GetArmorClass();
             
             var acDisplay = acValueText.GetComponent<StatValueDisplay>();
             if (acDisplay != null)

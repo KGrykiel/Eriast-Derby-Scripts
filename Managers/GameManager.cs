@@ -39,6 +39,20 @@ public class GameManager : MonoBehaviour
     private List<Stage> stages;
     public Vehicle playerVehicle;
 
+    // ==================== PUBLIC API ====================
+    
+    /// <summary>
+    /// Handle vehicle destruction immediately. Called by Vehicle.MarkAsDestroyed().
+    /// Removes vehicle from turn order right away (mid-turn safe).
+    /// </summary>
+    public void HandleVehicleDestroyed(Vehicle vehicle)
+    {
+        if (vehicle == null || stateMachine == null) return;
+        
+        Debug.Log($"[GameManager] {vehicle.vehicleName} destroyed - removing from turn order immediately");
+        stateMachine.RemoveVehicle(vehicle);
+    }
+
     // ==================== INITIALIZATION ====================
 
     void Start()
@@ -67,7 +81,14 @@ public class GameManager : MonoBehaviour
         {
             Stage startStage = entryStage != null ? entryStage : (stages.Count > 0 ? stages[0] : null);
             vehicle.progress = 0f;
-            vehicle.SetCurrentStage(startStage);
+            
+            // Set initial stage and position directly (no events during initialization)
+            vehicle.currentStage = startStage;
+            if (startStage != null)
+            {
+                Vector3 stagePos = startStage.transform.position;
+                vehicle.transform.position = new Vector3(stagePos.x, stagePos.y, vehicle.transform.position.z);
+            }
         }
     }
 

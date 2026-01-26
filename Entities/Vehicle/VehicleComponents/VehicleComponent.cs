@@ -29,11 +29,13 @@ public abstract class VehicleComponent : Entity
     public ComponentType componentType = ComponentType.Custom;
     
     [Header("Component-Specific Stats")]
-    [Tooltip("Component Space (positive = uses space, negative = provides space)")]
-    public int componentSpace = 0;
+    [SerializeField]
+    [Tooltip("Component Space (positive = uses space, negative = provides space) (base value before modifiers)")]
+    protected int baseComponentSpace = 0;
     
-    [Tooltip("Power drawn per turn (0 = passive component, no continuous draw)")]
-    public int powerDrawPerTurn = 0;
+    [SerializeField]
+    [Tooltip("Power drawn per turn (0 = passive component, no continuous draw) (base value before modifiers)")]
+    protected int basePowerDrawPerTurn = 0;
     
     [Header("Power Draw State")]
     [ReadOnly]
@@ -91,6 +93,22 @@ public abstract class VehicleComponent : Entity
             Debug.Log($"[Component] {name} initialized on {vehicle.vehicleName}, enables role: {roleType}");
         }
     }
+    
+    // ==================== STAT ACCESSORS ====================
+    // Naming convention:
+    // - GetBaseStat() returns raw field value (no modifiers)
+    // - GetStat() returns effective value (with modifiers via StatCalculator)
+    // Game code should almost always use GetStat() for gameplay calculations.
+    
+    // Inherited from Entity: GetCurrentHealth(), GetBaseMaxHealth(), GetMaxHealth(), GetBaseArmorClass(), GetArmorClass()
+    
+    // Base value accessors (return raw field values without modifiers)
+    public int GetBaseComponentSpace() => baseComponentSpace;
+    public int GetBasePowerDrawPerTurn() => basePowerDrawPerTurn;
+    
+    // Modified value accessors (return values with all modifiers applied via StatCalculator)
+    public virtual int GetComponentSpace() => Mathf.RoundToInt(StatCalculator.GatherAttributeValue(this, Attribute.ComponentSpace, baseComponentSpace));
+    public virtual int GetPowerDrawPerTurn() => Mathf.RoundToInt(StatCalculator.GatherAttributeValue(this, Attribute.PowerDraw, basePowerDrawPerTurn));
     
     // ==================== CROSS-COMPONENT MODIFIER SYSTEM ====================
     
@@ -441,10 +459,10 @@ public abstract class VehicleComponent : Entity
         var stats = new List<VehicleComponentUI.DisplayStat>();
         
         // Add power draw if non-zero (common to many components)
-        if (powerDrawPerTurn > 0)
+        if (basePowerDrawPerTurn > 0)
         {
-            float modifiedPower = StatCalculator.GatherAttributeValue(this, Attribute.PowerDraw, powerDrawPerTurn);
-            stats.Add(VehicleComponentUI.DisplayStat.WithTooltip("Power", "PWR", Attribute.PowerDraw, powerDrawPerTurn, modifiedPower, "/turn"));
+            float modifiedPower = GetPowerDrawPerTurn();
+            stats.Add(VehicleComponentUI.DisplayStat.WithTooltip("Power", "PWR", Attribute.PowerDraw, basePowerDrawPerTurn, modifiedPower, "/turn"));
         }
         
         return stats;
@@ -490,13 +508,8 @@ public abstract class VehicleComponent : Entity
     {
         if (!isPowered || isDestroyed) return 0;
         
-        float modified = StatCalculator.GatherAttributeValue(
-            this, 
-            Attribute.PowerDraw, 
-            powerDrawPerTurn
-        );
-        
-        return Mathf.Max(0, Mathf.RoundToInt(modified));
+        // Use accessor which applies modifiers via StatCalculator
+        return GetPowerDrawPerTurn();
     }
     
     /// <summary>

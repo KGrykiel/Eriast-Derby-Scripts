@@ -12,14 +12,17 @@ using UnityEngine;
 public class DriveComponent : VehicleComponent
 {
     [Header("Drive Stats")]
-    [Tooltip("Maximum speed this drive can achieve")]
-    public float maxSpeed = 10f;
+    [SerializeField]
+    [Tooltip("Maximum speed this drive can achieve (base value before modifiers)")]
+    private float baseMaxSpeed = 10f;
     
-    [Tooltip("Acceleration rate (how fast speed changes per turn)")]
-    public float acceleration = 1f;
+    [SerializeField]
+    [Tooltip("Acceleration rate (how fast speed changes per turn) (base value before modifiers)")]
+    private float baseAcceleration = 1f;
     
-    [Tooltip("Stability - resistance to terrain effects and bumps")]
-    public float stability = 5f;
+    [SerializeField]
+    [Tooltip("Stability - resistance to terrain effects and bumps (base value before modifiers)")]
+    private float baseStability = 5f;
     
     [Header("Speed Management")]
     [Tooltip("Current actual speed (can be below maxSpeed)")]
@@ -27,8 +30,9 @@ public class DriveComponent : VehicleComponent
     public float currentSpeed = 0f;
     
     [Header("Mechanical Properties")]
-    [Tooltip("Mechanical friction from drive system (rolling resistance, bearings, gears)")]
-    public float baseFriction = 1.0f;
+    [SerializeField]
+    [Tooltip("Mechanical friction from drive system (rolling resistance, bearings, gears) (base value before modifiers)")]
+    private float friction = 1.0f;
     
     /// <summary>
     /// Called when component is first added or reset in Editor.
@@ -43,16 +47,16 @@ public class DriveComponent : VehicleComponent
         componentType = ComponentType.Drive;
         
         // Set component base stats using Entity fields
-        maxHealth = 60;      // Moderately durable
+        baseMaxHealth = 60;      // Moderately durable
         health = 60;         // Start at full HP
-        armorClass = 16;     // Somewhat exposed
-        componentSpace = 200;  // Consumes component space
-        powerDrawPerTurn = 10;  // Requires power to operate
+        baseArmorClass = 16;     // Somewhat exposed
+        baseComponentSpace = 200;  // Consumes component space
+        basePowerDrawPerTurn = 10;  // Requires power to operate
         
         // Set drive-specific stats (already have defaults in field declarations)
-        // maxSpeed = 10f;
-        // acceleration = 1f;
-        // stability = 5f;
+        // baseMaxSpeed = 10f;
+        // baseAcceleration = 1f;
+        // baseStability = 5f;
         
         // Drive ENABLES the "Driver" role
         roleType = RoleType.Driver;
@@ -74,30 +78,20 @@ public class DriveComponent : VehicleComponent
     // These methods provide the single source of truth for stat values with modifiers.
     // UI and game logic should use these instead of accessing fields directly.
     
-    /// <summary>
-    /// Get current speed (raw value, not max speed).
-    /// </summary>
+    // Base value accessors (return raw field values without modifiers)
+    public float GetBaseMaxSpeed() => baseMaxSpeed;
+    public float GetBaseAcceleration() => baseAcceleration;
+    public float GetBaseStability() => baseStability;
+    public float GetBaseFriction() => friction;
+    
+    // Modified value accessors (return values with all modifiers applied via StatCalculator)
+    public float GetMaxSpeed() => StatCalculator.GatherAttributeValue(this, Attribute.Speed, baseMaxSpeed);
+    public float GetAcceleration() => StatCalculator.GatherAttributeValue(this, Attribute.Acceleration, baseAcceleration);
+    public float GetStability() => StatCalculator.GatherAttributeValue(this, Attribute.Stability, baseStability);
+    public float GetFriction() => StatCalculator.GatherAttributeValue(this, Attribute.BaseFriction, friction);
+    
+    // Runtime state accessor (not a stat, just current value)
     public float GetCurrentSpeed() => currentSpeed;
-    
-    /// <summary>
-    /// Get max speed with all modifiers applied.
-    /// </summary>
-    public float GetMaxSpeed() => StatCalculator.GatherAttributeValue(this, Attribute.Speed, maxSpeed);
-    
-    /// <summary>
-    /// Get acceleration with all modifiers applied.
-    /// </summary>
-    public float GetAcceleration() => StatCalculator.GatherAttributeValue(this, Attribute.Acceleration, acceleration);
-    
-    /// <summary>
-    /// Get stability with all modifiers applied.
-    /// </summary>
-    public float GetStability() => StatCalculator.GatherAttributeValue(this, Attribute.Stability, stability);
-    
-    /// <summary>
-    /// Get base friction with all modifiers applied.
-    /// </summary>
-    public float GetBaseFriction() => StatCalculator.GatherAttributeValue(this, Attribute.BaseFriction, baseFriction);
     
     // ==================== POWER MANAGEMENT ====================
     
@@ -112,35 +106,23 @@ public class DriveComponent : VehicleComponent
     {
         if (!isPowered || isDestroyed) return 0;
         
-        // Get base friction with modifiers (mechanical from drive)
-        float modifiedBaseFriction = StatCalculator.GatherAttributeValue(
-            this,
-            Attribute.BaseFriction,
-            baseFriction
-        );
+        // Get friction with modifiers (mechanical from drive)
+        float modifiedFriction = GetFriction();
         
         // Get chassis drag coefficient with modifiers (aerodynamics of vehicle body)
         float vehicleDrag = 0.1f; // Default fallback
         if (parentVehicle?.chassis != null)
         {
-            vehicleDrag = StatCalculator.GatherAttributeValue(
-                parentVehicle.chassis,
-                Attribute.DragCoefficient,
-                parentVehicle.chassis.dragCoefficient
-            );
+            vehicleDrag = parentVehicle.chassis.GetDragCoefficient();
         }
         
         // Physics: Power needed to overcome friction
-        // modifiedBaseFriction = mechanical (drive-specific, affected by terrain/maintenance)
+        // modifiedFriction = mechanical (drive-specific, affected by terrain/maintenance)
         // vehicleDrag * speed = aerodynamic (chassis-specific, modified by components)
-        float frictionForce = modifiedBaseFriction + (vehicleDrag * currentSpeed);
+        float frictionForce = modifiedFriction + (vehicleDrag * currentSpeed);
         
-        // Get base power with modifiers
-        float basePower = StatCalculator.GatherAttributeValue(
-            this, 
-            Attribute.PowerDraw, 
-            powerDrawPerTurn  // Base engine idle power
-        );
+        // Get base power with modifiers using accessor method
+        float basePower = GetPowerDrawPerTurn();
         
         int totalCost = Mathf.RoundToInt(basePower + frictionForce);
         return Mathf.Max(0, totalCost);
@@ -156,26 +138,18 @@ public class DriveComponent : VehicleComponent
     {
         if (currentSpeed <= 0) return;
         
-        // Get base friction with modifiers (mechanical from drive)
-        float modifiedBaseFriction = StatCalculator.GatherAttributeValue(
-            this,
-            Attribute.BaseFriction,
-            baseFriction
-        );
+        // Get friction with modifiers (mechanical from drive)
+        float modifiedFriction = GetFriction();
         
         // Get chassis drag coefficient with modifiers (aerodynamics of vehicle body)
         float vehicleDrag = 0.1f; // Default fallback
         if (parentVehicle?.chassis != null)
         {
-            vehicleDrag = StatCalculator.GatherAttributeValue(
-                parentVehicle.chassis,
-                Attribute.DragCoefficient,
-                parentVehicle.chassis.dragCoefficient
-            );
+            vehicleDrag = parentVehicle.chassis.GetDragCoefficient();
         }
         
         // Physics: friction = constant mechanical + aerodynamic drag
-        float frictionLoss = modifiedBaseFriction + (vehicleDrag * currentSpeed);
+        float frictionLoss = modifiedFriction + (vehicleDrag * currentSpeed);
         
         float oldSpeed = currentSpeed;
         currentSpeed = Mathf.Max(0, currentSpeed - frictionLoss);
@@ -208,17 +182,8 @@ public class DriveComponent : VehicleComponent
         // Can't accelerate if unpowered (but can coast/decelerate)
         if (!isPowered && amount > 0) return;
         
-        float modifiedAccel = StatCalculator.GatherAttributeValue(
-            this, 
-            Attribute.Acceleration, 
-            acceleration
-        );
-        
-        float modifiedMaxSpeed = StatCalculator.GatherAttributeValue(
-            this, 
-            Attribute.Speed, 
-            maxSpeed
-        );
+        float modifiedAccel = GetAcceleration();
+        float modifiedMaxSpeed = GetMaxSpeed();
         
         float oldSpeed = currentSpeed;
         currentSpeed = Mathf.Clamp(
@@ -276,22 +241,22 @@ public class DriveComponent : VehicleComponent
     {
         var stats = new List<VehicleComponentUI.DisplayStat>();
         
-        // Get modified values from StatCalculator
-        float modifiedSpeed = StatCalculator.GatherAttributeValue(this, Attribute.Speed, maxSpeed);
-        float modifiedAccel = StatCalculator.GatherAttributeValue(this, Attribute.Acceleration, acceleration);
-        float modifiedStab = StatCalculator.GatherAttributeValue(this, Attribute.Stability, stability);
-        float modifiedFriction = StatCalculator.GatherAttributeValue(this, Attribute.BaseFriction, baseFriction);
+        // Get modified values using accessor methods
+        float modifiedSpeed = GetMaxSpeed();
+        float modifiedAccel = GetAcceleration();
+        float modifiedStab = GetStability();
+        float modifiedFriction = GetFriction();
         
         // Core drive stats
-        stats.Add(VehicleComponentUI.DisplayStat.WithTooltip("Max Speed", "MSPD", Attribute.Speed, maxSpeed, modifiedSpeed));
-        stats.Add(VehicleComponentUI.DisplayStat.WithTooltip("Acceleration", "ACCEL", Attribute.Acceleration, acceleration, modifiedAccel));
-        stats.Add(VehicleComponentUI.DisplayStat.WithTooltip("Stability", "STAB", Attribute.Stability, stability, modifiedStab));
+        stats.Add(VehicleComponentUI.DisplayStat.WithTooltip("Max Speed", "MSPD", Attribute.Speed, baseMaxSpeed, modifiedSpeed));
+        stats.Add(VehicleComponentUI.DisplayStat.WithTooltip("Acceleration", "ACCEL", Attribute.Acceleration, baseAcceleration, modifiedAccel));
+        stats.Add(VehicleComponentUI.DisplayStat.WithTooltip("Stability", "STAB", Attribute.Stability, baseStability, modifiedStab));
         
         // Current runtime speed (always show - players should always know their current speed)
         stats.Add(VehicleComponentUI.DisplayStat.Simple("Current Speed", "CUR", currentSpeed));
         
         // Physics properties
-        stats.Add(VehicleComponentUI.DisplayStat.WithTooltip("Base Friction", "FRIC", Attribute.BaseFriction, baseFriction, modifiedFriction));
+        stats.Add(VehicleComponentUI.DisplayStat.WithTooltip("Friction", "FRIC", Attribute.BaseFriction, friction, modifiedFriction));
         
         // Add base class stats (power draw)
         stats.AddRange(base.GetDisplayStats());

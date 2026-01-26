@@ -4,6 +4,7 @@ using System.Linq;
 using Assets.Scripts.StatusEffects;
 using Assets.Scripts.Entities;
 using Assets.Scripts.Combat;
+using Assets.Scripts.Core;
 
 /// <summary>
 /// Abstract base class for all entities that can be damaged, targeted, or interact with skills.
@@ -30,11 +31,13 @@ public abstract class Entity : MonoBehaviour
     [Tooltip("Current health points")]
     public int health = 100;
     
-    [Tooltip("Maximum health points")]
-    public int maxHealth = 100;
+    [SerializeField]
+    [Tooltip("Maximum health points (base value before modifiers)")]
+    protected int baseMaxHealth = 100;
     
-    [Tooltip("Armor class (difficulty to hit)")]
-    public int armorClass = 10;
+    [SerializeField]
+    [Tooltip("Armor class (difficulty to hit) (base value before modifiers)")]
+    protected int baseArmorClass = 10;
     
     [Header("Entity State")]
     [Tooltip("Is this entity destroyed?")]
@@ -46,16 +49,33 @@ public abstract class Entity : MonoBehaviour
     
     [Header("Damage Resistances")]
     [Tooltip("Resistances and vulnerabilities to different damage types")]
-    public List<DamageResistance> resistances = new List<DamageResistance>();
+    public List<DamageResistance> resistances = new();
 
     // ==================== MODIFIER & STATUS EFFECT STORAGE ====================
     
     [SerializeField, HideInInspector]
-    protected List<AttributeModifier> entityModifiers = new List<AttributeModifier>();
+    protected List<AttributeModifier> entityModifiers = new();
     
     [SerializeField, HideInInspector]
-    protected List<AppliedStatusEffect> activeStatusEffects = new List<AppliedStatusEffect>();
+    protected List<AppliedStatusEffect> activeStatusEffects = new();
 
+    // ==================== STAT ACCESSORS ====================
+    // Naming convention:
+    // - GetBaseStat() returns raw field value (no modifiers)
+    // - GetStat() returns effective value (with modifiers via StatCalculator)
+    // Game code should almost always use GetStat() for gameplay calculations.
+    
+    // Runtime state accessor
+    public int GetCurrentHealth() => health;
+    
+    // Base value accessors (return raw field values without modifiers)
+    public int GetBaseMaxHealth() => baseMaxHealth;
+    public int GetBaseArmorClass() => baseArmorClass;
+    
+    // Modified value accessors (return values with all modifiers applied via StatCalculator)
+    public virtual int GetMaxHealth() => Mathf.RoundToInt(StatCalculator.GatherAttributeValue(this, Attribute.MaxHealth, baseMaxHealth));
+    public virtual int GetArmorClass() => Mathf.RoundToInt(StatCalculator.GatherAttributeValue(this, Attribute.ArmorClass, baseArmorClass));
+    
     // ==================== ENTITY FEATURES ====================
     
     /// <summary>
@@ -74,17 +94,6 @@ public abstract class Entity : MonoBehaviour
         return (features & flags) != 0;
     }
 
-    // ==================== ARMOR CLASS ====================
-    
-    /// <summary>
-    /// Get armor class for targeting calculations.
-    /// Override for dynamic AC (modifiers, cover, etc.)
-    /// </summary>
-    public virtual int GetArmorClass()
-    {
-        return armorClass;
-    }
-    
     // ==================== DAMAGE RESISTANCES ====================
     
     /// <summary>
@@ -150,16 +159,7 @@ public abstract class Entity : MonoBehaviour
     {
         if (isDestroyed) return;
         
-        health = Mathf.Min(health + amount, maxHealth);
-    }
-
-    /// <summary>
-    /// Get health as a percentage (0-1).
-    /// </summary>
-    public float GetHealthPercent()
-    {
-        if (maxHealth <= 0) return 0f;
-        return (float)health / maxHealth;
+        health = Mathf.Min(health + amount, GetMaxHealth());
     }
 
     // ==================== MODIFIER SYSTEM ====================
@@ -198,7 +198,7 @@ public abstract class Entity : MonoBehaviour
     /// Emits StatusEffectEvent for logging via CombatEventBus.
     /// Returns the applied (or existing better) status effect instance, or null if failed.
     /// </summary>
-    public virtual AppliedStatusEffect ApplyStatusEffect(StatusEffect effect, UnityEngine.Object applier)
+    public virtual AppliedStatusEffect ApplyStatusEffect(StatusEffect effect, Object applier)
     {
         // Validate targeting (feature requirements)
         if (!CanApplyStatusEffect(effect))
@@ -248,19 +248,6 @@ public abstract class Entity : MonoBehaviour
         if (activeStatusEffects.Remove(statusEffect))
         {
             statusEffect.OnRemove();
-        }
-    }
-    
-    /// <summary>
-    /// Remove all status effects from a specific source.
-    /// </summary>
-    public virtual void RemoveStatusEffectsFromSource(UnityEngine.Object source)
-    {
-        var toRemove = activeStatusEffects.Where(s => s.applier == source).ToList();
-        
-        foreach (var statusEffect in toRemove)
-        {
-            RemoveStatusEffect(statusEffect);
         }
     }
     

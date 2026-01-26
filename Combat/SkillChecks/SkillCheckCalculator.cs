@@ -127,7 +127,7 @@ namespace Assets.Scripts.Combat.SkillChecks
             {
                 return checkType switch
                 {
-                    SkillCheckType.Mobility => chassis.baseMobility,
+                    SkillCheckType.Mobility => chassis.GetBaseMobility(),
                     _ => 0f
                 };
             }

@@ -95,13 +95,17 @@ namespace Assets.Scripts.Combat.Saves
         private static void GatherBaseSaveBonus(Entity target, SaveType saveType, List<AttributeModifier> modifiers)
         {
             // Source mobility directly from chassis
-            if (target is ChassisComponent chassis && chassis.baseMobility != 0)
+            if (target is ChassisComponent chassis)
             {
-                modifiers.Add(new AttributeModifier(
-                    Attribute.Mobility,
-                    ModifierType.Flat,
-                    chassis.baseMobility,
-                    target));
+                int mobility = chassis.GetBaseMobility();
+                if (mobility != 0)
+                {
+                    modifiers.Add(new AttributeModifier(
+                        Attribute.Mobility,
+                        ModifierType.Flat,
+                        mobility,
+                        target));
+                }
             }
         }
 

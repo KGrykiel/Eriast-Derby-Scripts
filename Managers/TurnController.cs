@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+using Assets.Scripts.Logging;
+using Assets.Scripts.Managers;
 
 /// <summary>
 /// Handles vehicle-specific turn operations.
@@ -42,7 +44,6 @@ public class TurnController : MonoBehaviour
 
     /// <summary>
     /// Initialize with vehicle list (same list as TurnStateMachine uses).
-    /// Note: Initiative rolling is now handled by TurnStateMachine.
     /// </summary>
     public void Initialize(List<Vehicle> vehicleList)
     {
@@ -68,7 +69,10 @@ public class TurnController : MonoBehaviour
         if (vehicle == null) return;
         
         // 1. Regenerate power FIRST (see full resources before paying costs)
-        vehicle.RegenerateEnergy();
+        if (vehicle.powerCore != null && !vehicle.powerCore.isDestroyed)
+        {
+            vehicle.powerCore.RegenerateEnergy();
+        }
         
         // 2. Reset per-turn power tracking
         if (vehicle.powerCore != null)
@@ -199,15 +203,50 @@ public class TurnController : MonoBehaviour
     
     /// <summary>
     /// Move a vehicle to a specific stage (handles overflow progress).
+    /// Handles stage enter/leave events, position updates, and finish line detection.
     /// </summary>
     public void MoveToStage(Vehicle vehicle, Stage stage)
     {
         if (vehicle == null || stage == null) return;
 
         Stage previousStage = vehicle.currentStage;
-        vehicle.progress -= vehicle.currentStage.length;
-        vehicle.SetCurrentStage(stage);
         
+        // Trigger leave event on old stage
+        if (previousStage != null)
+        {
+            previousStage.TriggerLeave(vehicle);
+        }
+        
+        // Update vehicle state
+        vehicle.progress -= previousStage?.length ?? 0;
+        vehicle.currentStage = stage;
+        
+        // Update Unity transform position
+        if (stage != null)
+        {
+            Vector3 stagePos = stage.transform.position;
+            vehicle.transform.position = new Vector3(stagePos.x, stagePos.y, vehicle.transform.position.z);
+        }
+        
+        // Trigger enter event on new stage
+        if (stage != null)
+        {
+            stage.TriggerEnter(vehicle);
+            
+            // Check for finish line
+            if (stage.isFinishLine)
+            {
+                RaceHistory.Log(
+                    Assets.Scripts.Logging.EventType.FinishLine,
+                    Assets.Scripts.Logging.EventImportance.Critical,
+                    $"[FINISH] {vehicle.vehicleName} crossed the finish line!",
+                    stage,
+                    vehicle
+                );
+            }
+        }
+        
+        // Fire event for UI/logging
         bool isPlayerChoice = vehicle.controlType == ControlType.Player;
         OnStageEntered?.Invoke(vehicle, stage, previousStage, vehicle.progress, isPlayerChoice);
     }

@@ -16,64 +16,70 @@ using UnityEngine;
 public class WeaponComponent : VehicleComponent
 {
     [Header("Weapon Damage (D&D Style)")]
-    [Tooltip("Number of damage dice")]
-    public int damageDice = 1;
+    [SerializeField]
+    [Tooltip("Number of damage dice (base value before modifiers)")]
+    private int baseDamageDice = 1;
     
-    [Tooltip("Size of damage dice (4, 6, 8, 10, 12)")]
-    public int damageDieSize = 8;
+    [SerializeField]
+    [Tooltip("Size of damage dice (4, 6, 8, 10, 12) (base value before modifiers)")]
+    private int baseDamageDieSize = 8;
     
-    [Tooltip("Flat damage bonus added to roll")]
-    public int damageBonus = 0;
+    [SerializeField]
+    [Tooltip("Flat damage bonus added to roll (base value before modifiers)")]
+    private int baseDamageBonus = 0;
     
     [Tooltip("Type of damage this weapon deals")]
     public DamageType damageType = DamageType.Physical;
     
     [Header("Weapon Stats")]
-    [Tooltip("Attack bonus (for to-hit rolls)")]
-    public int attackBonus = 0;
+    [SerializeField]
+    [Tooltip("Attack bonus (for to-hit rolls) (base value before modifiers)")]
+    private int baseAttackBonus = 0;
     
-    [Tooltip("Ammunition count (-1 = unlimited)")]
-    public int ammo = -1;
+    [SerializeField]
+    [Tooltip("Maximum ammunition count (-1 = unlimited) (base value before modifiers)")]
+    private int baseMaxAmmo = -1;
     
+    [Header("Runtime State")]
     [Tooltip("Current ammunition remaining")]
     public int currentAmmo;
     
-    /// <summary>
-    /// Get attack bonus (with modifiers applied).
-    /// NOTE: For display purposes. Use StatCalculator for authoritative values.
-    /// </summary>
-    public int GetAttackBonus()
-    {
-        return attackBonus; // Base value - StatCalculator handles modifiers
-    }
+    // ==================== STAT ACCESSORS ====================
+    // Naming convention:
+    // - GetBaseStat() returns raw field value (no modifiers)
+    // - GetStat() returns effective value (with modifiers via StatCalculator)
+    // Game code should almost always use GetStat() for gameplay calculations.
     
-    /// <summary>
-    /// Get damage bonus (with modifiers applied).
-    /// NOTE: For display purposes. Use StatCalculator for authoritative values.
-    /// </summary>
-    public int GetDamageBonus()
-    {
-        return damageBonus; // Base value - StatCalculator handles modifiers
-    }
+    // Runtime state accessor
+    public int GetCurrentAmmo() => currentAmmo;
     
-    /// <summary>
-    /// Get max ammo.
-    /// NOTE: Ammo modifiers would be handled by StatCalculator if needed.
-    /// </summary>
-    public int GetMaxAmmo()
-    {
-        return ammo;
-    }
+    // Base value accessors (return raw field values without modifiers)
+    public int GetBaseDamageDice() => baseDamageDice;
+    public int GetBaseDamageDieSize() => baseDamageDieSize;
+    public int GetBaseDamageBonus() => baseDamageBonus;
+    public int GetBaseAttackBonus() => baseAttackBonus;
+    public int GetBaseMaxAmmo() => baseMaxAmmo;
+    
+    // Modified value accessors (return values with all modifiers applied via StatCalculator)
+    public int GetDamageDice() => Mathf.RoundToInt(StatCalculator.GatherAttributeValue(this, Attribute.DamageDice, baseDamageDice));
+    public int GetDamageDieSize() => Mathf.RoundToInt(StatCalculator.GatherAttributeValue(this, Attribute.DamageDieSize, baseDamageDieSize));
+    public int GetDamageBonus() => Mathf.RoundToInt(StatCalculator.GatherAttributeValue(this, Attribute.DamageBonus, baseDamageBonus));
+    public int GetAttackBonus() => Mathf.RoundToInt(StatCalculator.GatherAttributeValue(this, Attribute.AttackBonus, baseAttackBonus));
+    public int GetMaxAmmo() => Mathf.RoundToInt(StatCalculator.GatherAttributeValue(this, Attribute.Ammo, baseMaxAmmo));
     
     /// <summary>
     /// Get damage string for display (e.g., "1d8+2 Physical")
+    /// Uses modified values (with bonuses applied).
     /// </summary>
     public string DamageString
     {
         get
         {
-            string bonus = damageBonus != 0 ? $"{damageBonus:+0;-0}" : "";
-            return $"{damageDice}d{damageDieSize}{bonus} {damageType}";
+            int dice = GetDamageDice();
+            int dieSize = GetDamageDieSize();
+            int bonus = GetDamageBonus();
+            string bonusStr = bonus != 0 ? $"{bonus:+0;-0}" : "";
+            return $"{dice}d{dieSize}{bonusStr} {damageType}";
         }
     }
     
@@ -90,18 +96,18 @@ public class WeaponComponent : VehicleComponent
         componentType = ComponentType.Weapon;
         
         // Set component base stats using Entity fields
-        maxHealth = 40;      // Somewhat fragile
+        baseMaxHealth = 40;      // Somewhat fragile
         health = 40;         // Start at full HP
-        armorClass = 14;     // Exposed, easier to hit
-        componentSpace = 150;  // Consumes component space
-        powerDrawPerTurn = 5;  // Requires power to stay armed
+        baseArmorClass = 14;     // Exposed, easier to hit
+        baseComponentSpace = 150;  // Consumes component space
+        basePowerDrawPerTurn = 5;  // Requires power to stay armed
         
         // Set weapon damage defaults
-        damageDice = 1;
-        damageDieSize = 8;
-        damageBonus = 0;
+        baseDamageDice = 1;
+        baseDamageDieSize = 8;
+        baseDamageBonus = 0;
         damageType = DamageType.Physical;
-        attackBonus = 0;
+        baseAttackBonus = 0;
         
         // Each weapon ENABLES ONE "Gunner" role slot
         roleType = RoleType.Gunner;
@@ -115,8 +121,8 @@ public class WeaponComponent : VehicleComponent
         // Each weapon ENABLES ONE "Gunner" role slot
         roleType = RoleType.Gunner;
         
-        // Initialize ammo
-        currentAmmo = ammo;
+        // Initialize ammo to max (using accessor for modified value)
+        currentAmmo = GetMaxAmmo();
     }
     
     /// <summary>
@@ -127,25 +133,27 @@ public class WeaponComponent : VehicleComponent
     {
         var stats = new List<VehicleComponentUI.DisplayStat>();
         
-        // Get modified values from StatCalculator
-        float modifiedDamageBonus = StatCalculator.GatherAttributeValue(this, Attribute.DamageBonus, damageBonus);
-        float modifiedAttackBonus = StatCalculator.GatherAttributeValue(this, Attribute.AttackBonus, attackBonus);
+        // Get modified values using accessor methods
+        int modifiedDamageDice = GetDamageDice();
+        int modifiedDamageDieSize = GetDamageDieSize();
+        float modifiedDamageBonus = GetDamageBonus();
+        float modifiedAttackBonus = GetAttackBonus();
         
         // Damage dice with bonus
         string dmgStr = modifiedDamageBonus != 0 
-            ? $"{damageDice}d{damageDieSize}{modifiedDamageBonus:+0;-0}"
-            : $"{damageDice}d{damageDieSize}";
-        stats.Add(VehicleComponentUI.DisplayStat.WithTooltip("Damage", "DMG", Attribute.DamageBonus, damageBonus, modifiedDamageBonus, $" ({dmgStr})"));
+            ? $"{modifiedDamageDice}d{modifiedDamageDieSize}{modifiedDamageBonus:+0;-0}"
+            : $"{modifiedDamageDice}d{modifiedDamageDieSize}";
+        stats.Add(VehicleComponentUI.DisplayStat.WithTooltip("Damage", "DMG", Attribute.DamageBonus, baseDamageBonus, modifiedDamageBonus, $" ({dmgStr})"));
         
         // Attack bonus
         string attackStr = modifiedAttackBonus >= 0 ? $"+{modifiedAttackBonus:F0}" : $"{modifiedAttackBonus:F0}";
-        stats.Add(VehicleComponentUI.DisplayStat.WithTooltip("Attack", "HIT", Attribute.AttackBonus, attackBonus, modifiedAttackBonus, attackStr));
+        stats.Add(VehicleComponentUI.DisplayStat.WithTooltip("Attack", "HIT", Attribute.AttackBonus, baseAttackBonus, modifiedAttackBonus, attackStr));
         
         // Ammo if not unlimited
-        if (ammo != -1)
+        if (baseMaxAmmo != -1)
         {
-            float modifiedMaxAmmo = StatCalculator.GatherAttributeValue(this, Attribute.Ammo, ammo);
-            stats.Add(VehicleComponentUI.DisplayStat.BarWithTooltip("Ammo", "AMMO", Attribute.Ammo, currentAmmo, ammo, modifiedMaxAmmo));
+            float modifiedMaxAmmo = GetMaxAmmo();
+            stats.Add(VehicleComponentUI.DisplayStat.BarWithTooltip("Ammo", "AMMO", Attribute.Ammo, currentAmmo, baseMaxAmmo, modifiedMaxAmmo));
         }
         
         // Add base class stats (power draw)
@@ -160,7 +168,7 @@ public class WeaponComponent : VehicleComponent
     /// </summary>
     public bool HasAmmo()
     {
-        return ammo == -1 || currentAmmo > 0;
+        return GetMaxAmmo() == -1 || currentAmmo > 0;
     }
     
     /// <summary>
@@ -169,7 +177,8 @@ public class WeaponComponent : VehicleComponent
     /// </summary>
     public void ConsumeAmmo()
     {
-        if (ammo != -1 && currentAmmo > 0)
+        int maxAmmo = GetMaxAmmo();
+        if (maxAmmo != -1 && currentAmmo > 0)
         {
             currentAmmo--;
             
@@ -186,10 +195,11 @@ public class WeaponComponent : VehicleComponent
     /// </summary>
     public void Reload(int amount)
     {
-        if (ammo == -1) return; // Unlimited ammo, can't reload
+        int maxAmmo = GetMaxAmmo();
+        if (maxAmmo == -1) return; // Unlimited ammo, can't reload
         
-        currentAmmo = Math.Min(currentAmmo + amount, ammo);
-        Debug.Log($"[Weapon] {name} reloaded to {currentAmmo}/{ammo} ammo");
+        currentAmmo = Math.Min(currentAmmo + amount, maxAmmo);
+        Debug.Log($"[Weapon] {name} reloaded to {currentAmmo}/{maxAmmo} ammo");
     }
     
     /// <summary>
@@ -217,9 +227,10 @@ public class WeaponComponent : VehicleComponent
         status += $"Damage: {DamageString}\n";
         
         // Add ammo info if weapon has limited ammo
-        if (ammo != -1)
+        int maxAmmo = GetMaxAmmo();
+        if (maxAmmo != -1)
         {
-            status += $"Ammo: {currentAmmo}/{ammo}\n";
+            status += $"Ammo: {currentAmmo}/{maxAmmo}\n";
         }
         else
         {

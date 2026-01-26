@@ -102,7 +102,7 @@ namespace Assets.Scripts.Entities.Vehicle
                 if (vehicle.chassis == null) return true; // Fallback if no chassis
 
                 // Calculate chassis damage percentage (1.0 = fully damaged, 0.0 = undamaged)
-                float chassisDamagePercent = 1f - ((float)vehicle.chassis.health / (float)vehicle.chassis.maxHealth);
+                float chassisDamagePercent = 1f - ((float)vehicle.chassis.health / (float)vehicle.chassis.GetMaxHealth());
 
                 // Accessible if chassis damage >= threshold
                 return chassisDamagePercent >= target.internalAccessThreshold;
@@ -137,7 +137,7 @@ namespace Assets.Scripts.Entities.Vehicle
             {
                 if (vehicle.chassis != null)
                 {
-                    float chassisDamagePercent = 1f - ((float)vehicle.chassis.health / (float)vehicle.chassis.maxHealth);
+                    float chassisDamagePercent = 1f - ((float)vehicle.chassis.health / (float)vehicle.chassis.GetMaxHealth());
                     if (chassisDamagePercent < target.internalAccessThreshold)
                     {
                         int requiredDamagePercent = Mathf.RoundToInt(target.internalAccessThreshold * 100f);
@@ -176,7 +176,7 @@ namespace Assets.Scripts.Entities.Vehicle
             {
                 if (component != null)
                 {
-                    total += component.componentSpace;
+                    total += component.GetComponentSpace();
                 }
             }
             return total;

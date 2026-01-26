@@ -84,10 +84,14 @@
         /// </summary>
         public static DamageResult FromWeapon(WeaponComponent weapon)
         {
-            int rolled = RollUtility.RollDice(weapon.damageDice, weapon.damageDieSize);
+            int dice = weapon.GetDamageDice();
+            int dieSize = weapon.GetDamageDieSize();
+            int bonus = weapon.GetDamageBonus();
+            
+            int rolled = RollUtility.RollDice(dice, dieSize);
             
             var result = DamageResult.Create(weapon.damageType);
-            AddSource(result, "Weapon", weapon.damageDice, weapon.damageDieSize, weapon.damageBonus, rolled, weapon.name);
+            AddSource(result, "Weapon", dice, dieSize, bonus, rolled, weapon.name);
             
             return result;
         }

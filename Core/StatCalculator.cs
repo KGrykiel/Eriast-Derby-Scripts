@@ -84,20 +84,10 @@ namespace Assets.Scripts.Core
             var (total, baseVal, modifiers) = GatherAttributeValueWithBreakdown(
                 target, 
                 Attribute.ArmorClass, 
-                target.armorClass);
+                target.GetBaseArmorClass());
             
             return ((int)total, baseVal, modifiers);
         }
-        
-        /// <summary>
-        /// Convenience method for just getting the defense value (AC).
-        /// </summary>
-        public static int GatherDefenseValue(Entity target)
-        {
-            var (total, _, _) = GatherDefenseValueWithBreakdown(target);
-            return total;
-        }
-        
         // ==================== PRIVATE MODIFIER GATHERING ====================
         
         /// <summary>

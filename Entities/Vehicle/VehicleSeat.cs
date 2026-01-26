@@ -106,60 +106,6 @@ namespace Assets.Scripts.Entities.Vehicle
             return controlledComponents.Where(c => c != null && !c.isDestroyed && !c.isDisabled);
         }
 
-        /// <summary>
-        /// Get the component this seat would use for a specific skill check type.
-        /// Returns the most appropriate component based on role mapping.
-        /// Returns null if no component can handle this check type.
-        /// </summary>
-        public VehicleComponent GetComponentForCheck(SkillCheckType checkType)
-        {
-            // Map check type to required role
-            RoleType requiredRole = GetRoleForCheckType(checkType);
-
-            // Find component with matching role
-            foreach (var component in GetOperationalComponents())
-            {
-                if ((component.roleType & requiredRole) != 0)
-                {
-                    return component;
-                }
-            }
-
-            // Fallback: Return first operational component (better than nothing)
-            return GetOperationalComponents().FirstOrDefault();
-        }
-
-        /// <summary>
-        /// Get a weapon component for attacking.
-        /// Returns first operational weapon, or null if no weapons.
-        /// </summary>
-        public WeaponComponent GetWeaponForAttack()
-        {
-            return controlledComponents
-                .OfType<WeaponComponent>()
-                .FirstOrDefault(w => !w.isDestroyed && !w.isDisabled);
-        }
-
-        /// <summary>
-        /// Get all weapon components this seat controls (for multi-weapon seats).
-        /// </summary>
-        public IEnumerable<WeaponComponent> GetAllWeapons()
-        {
-            return controlledComponents
-                .OfType<WeaponComponent>()
-                .Where(w => !w.isDestroyed && !w.isDisabled);
-        }
-
-        /// <summary>
-        /// Get the drive component if this seat controls one.
-        /// </summary>
-        public DriveComponent GetDriveComponent()
-        {
-            return controlledComponents
-                .OfType<DriveComponent>()
-                .FirstOrDefault(d => !d.isDestroyed && !d.isDisabled);
-        }
-
         // ==================== ACTION AVAILABILITY ====================
 
         /// <summary>
@@ -235,25 +181,6 @@ namespace Assets.Scripts.Entities.Vehicle
             
             // Not from a component - must be character personal skill (or not found)
             return null;
-        }
-
-        // ==================== HELPERS ====================
-
-        /// <summary>
-        /// Map skill check type to the role that handles it.
-        /// Extend this as more SkillCheckTypes are added.
-        /// </summary>
-        private static RoleType GetRoleForCheckType(SkillCheckType checkType)
-        {
-            return checkType switch
-            {
-                SkillCheckType.Mobility => RoleType.Driver,
-                // Future mappings (add when SkillCheckType expands):
-                // SkillCheckType.Perception => RoleType.Navigator,
-                // SkillCheckType.Mechanics => RoleType.Technician,
-                // SkillCheckType.Gunnery => RoleType.Gunner,
-                _ => RoleType.None
-            };
         }
     }
 }

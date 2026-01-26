@@ -38,8 +38,6 @@ public class Vehicle : MonoBehaviour
     [HideInInspector] public float progress = 0f;
     [HideInInspector] public bool hasLoggedMovementWarningThisTurn = false;
 
-    private TextMeshProUGUI nameLabel;
-    
     [Header("Crew & Seats")]
     [Tooltip("Physical positions where characters sit and control components. " +
              "Each seat references components it can operate and has an assigned character.")]
@@ -60,17 +58,14 @@ public class Vehicle : MonoBehaviour
     
     public VehicleStatus Status { get; private set; } = VehicleStatus.Active;
 
+    [HideInInspector]
+    public bool hasMovedThisTurn = false;
+
     void Awake()
     {
         // Initialize component coordinator
         componentCoordinator = new VehicleComponentCoordinator(this);
         componentCoordinator.InitializeComponents();
-
-        var labelTransform = transform.Find("NameLabel");
-        if (labelTransform != null)
-        {
-            nameLabel = labelTransform.GetComponent<TextMeshProUGUI>();
-        }
     }
     
     void OnValidate()
@@ -109,7 +104,10 @@ public class Vehicle : MonoBehaviour
         // Reset seat turn state (seats track action usage now)
         foreach (var seat in seats)
         {
-            seat?.ResetTurnState();
+            if (seat != null)
+            {
+                seat.ResetTurnState();
+            }
         }
     }
 
@@ -123,37 +121,6 @@ public class Vehicle : MonoBehaviour
     {
         if (component == null) return null;
         return seats.FirstOrDefault(s => s.controlledComponents.Contains(component));
-    }
-    
-    /// <summary>
-    /// Get the seat where a specific character is assigned.
-    /// Returns null if character is not assigned to any seat on this vehicle.
-    /// </summary>
-    public VehicleSeat GetSeatForCharacter(PlayerCharacter character)
-    {
-        if (character == null) return null;
-        return seats.FirstOrDefault(s => s.assignedCharacter == character);
-    }
-    
-    /// <summary>
-    /// Get all characters currently crewing this vehicle.
-    /// </summary>
-    public List<PlayerCharacter> GetCrew()
-    {
-        return seats
-            .Where(s => s?.assignedCharacter != null)
-            .Select(s => s.assignedCharacter)
-            .ToList();
-    }
-    
-    /// <summary>
-    /// Get the character operating a specific component (via their seat).
-    /// Returns null if component has no operator.
-    /// </summary>
-    public PlayerCharacter GetOperatorForComponent(VehicleComponent component)
-    {
-        var seat = GetSeatForComponent(component);
-        return seat?.assignedCharacter;
     }
     
     /// <summary>
@@ -286,7 +253,7 @@ public class Vehicle : MonoBehaviour
         // Status effects route by their first modifier's attribute
         if (effect is ApplyStatusEffect statusEffect)
         {
-            if (statusEffect.statusEffect?.modifiers != null && statusEffect.statusEffect.modifiers.Count > 0)
+            if (statusEffect.statusEffect != null && statusEffect.statusEffect.modifiers != null && statusEffect.statusEffect.modifiers.Count > 0)
             {
                 var firstModifier = statusEffect.statusEffect.modifiers[0];
                 VehicleComponent component = ResolveModifierTarget(firstModifier.attribute);
@@ -300,82 +267,30 @@ public class Vehicle : MonoBehaviour
         return chassis;
     }
 
-    // ==================== STAGE MANAGEMENT ====================
-
-    void Start()
+    // ==================== VEHICLE STATUS ====================
+    
+    /// <summary>
+    /// Mark vehicle as destroyed. Called immediately when chassis is destroyed.
+    /// Sets status, logs event, and notifies GameManager for immediate handling.
+    /// </summary>
+    public void MarkAsDestroyed()
     {
-        if (nameLabel != null)
-        {
-            nameLabel.text = vehicleName;
-        }
-        MoveToCurrentStage();
-    }
-
-    public void UpdateNameLabel()
-    {
-        if (nameLabel != null)
-        {
-            nameLabel.text = vehicleName;
-        }
-    }
-
-    public void SetCurrentStage(Stage stage)
-    {
-        if (currentStage != null)
-        {
-            currentStage.TriggerLeave(this);
-        }
+        if (Status == VehicleStatus.Destroyed) return; // Already handled
         
-        currentStage = stage;
-        MoveToCurrentStage();
-        
-        if (currentStage != null)
-        {
-            currentStage.TriggerEnter(this);
-            
-            if (stage.isFinishLine)
-            {
-                RaceHistory.Log(
-                    EventType.FinishLine,
-                    EventImportance.Critical,
-                    $"[FINISH] {vehicleName} crossed the finish line!",
-                    stage,
-                    this
-                );
-            }
-        }
-    }
-
-    private void MoveToCurrentStage()
-    {
-        if (currentStage != null)
-        {
-            Vector3 stagePos = currentStage.transform.position;
-            transform.position = new Vector3(stagePos.x, stagePos.y, transform.position.z);
-        }
-    }
-
-    // ==================== VEHICLE DESTRUCTION ====================
-
-    public void DestroyVehicle()
-    {
-        if (Status == VehicleStatus.Destroyed) return;
-        
-        VehicleStatus oldStatus = Status;
         Status = VehicleStatus.Destroyed;
         
+        // Log destruction event
         RaceHistory.Log(
             EventType.Destruction,
             EventImportance.Critical,
             $"[DEAD] {vehicleName} has been destroyed!",
             currentStage,
             this
-        ).WithMetadata("previousStatus", oldStatus.ToString())
-         .WithMetadata("finalHealth", chassis?.health ?? 0)
-         .WithMetadata("finalStage", currentStage?.stageName ?? "None");
+        ).WithMetadata("finalHealth", chassis != null ? chassis.health : 0)
+         .WithMetadata("finalStage", currentStage != null ? currentStage.stageName : "None");
         
-        
-        bool wasLeading = DetermineIfLeading();
+        // Log tragic moment if vehicle was leading
+        bool wasLeading = progress > 50f;
         if (wasLeading)
         {
             RaceHistory.Log(
@@ -387,296 +302,56 @@ public class Vehicle : MonoBehaviour
             );
         }
         
-        // Remove from turn order via GameManager's state machine
+        // TODO: Consider a better pattern for this (event bus, dependency injection, etc.)
+        // Direct call to GameManager for immediate turn order removal
         var gameManager = FindFirstObjectByType<GameManager>();
-        if (gameManager != null)
-        {
-            var stateMachine = gameManager.GetStateMachine();
-            stateMachine?.RemoveVehicle(this);
-        }
+        gameManager?.HandleVehicleDestroyed(this);
     }
     
-    private bool DetermineIfLeading()
-    {
-        return progress > 50f;
-    }
-    
-    // ==================== ENERGY MANAGEMENT ====================
-    
-    public void RegenerateEnergy()
-    {
-        if (powerCore == null || powerCore.isDestroyed)
-        {
-            if (powerCore != null && powerCore.isDestroyed)
-            {
-                RaceHistory.Log(
-                    EventType.Resource,
-                    EventImportance.Medium,
-                    $"{vehicleName} cannot regenerate energy - Power Core destroyed!",
-                    currentStage,
-                    this
-                ).WithMetadata("powerCoreDestroyed", true)
-                 .WithMetadata("currentEnergy", 0);
-            }
-            return;
-        }
-        
-        powerCore.RegenerateEnergy();
-    }
-
     // ==================== OPERATIONAL STATUS ====================
 
-    public bool IsOperational()
-    {
-        if (chassis == null || chassis.isDestroyed)
-            return false;
-        
-        if (powerCore == null || powerCore.isDestroyed)
-            return false;
-        
-        if (Status == VehicleStatus.Destroyed)
-            return false;
-        
-        return true;
-    }
-    
+    /// <summary>
+    /// Get reason why vehicle cannot operate, or null if operational.
+    /// Checks chassis and power core - the minimum requirements for any vehicle operation.
+    /// </summary>
     public string GetNonOperationalReason()
     {
-        if (chassis == null)
-            return "No chassis installed";
-        if (chassis.isDestroyed)
-            return "Chassis destroyed";
+        if (chassis == null) return "No chassis installed";
+        if (chassis.isDestroyed) return "Chassis destroyed";
+        if (powerCore == null) return "No power core installed";
+        if (powerCore.isDestroyed) return "Power core destroyed - no power";
+        return null;
+    }
+
+    /// <summary>
+    /// Check if vehicle is operational (has chassis and power core).
+    /// </summary>
+    public bool IsOperational() => GetNonOperationalReason() == null;
+
+    /// <summary>
+    /// Get reason why vehicle cannot move, or null if it can move.
+    /// Checks operational status first, then drive system availability and state.
+    /// </summary>
+    public string GetCannotMoveReason()
+    {
+        // Check operational status first
+        string reason = GetNonOperationalReason();
+        if (reason != null) return reason;
         
-        if (powerCore == null)
-            return "No power core installed";
-        if (powerCore.isDestroyed)
-            return "Power core destroyed - no power";
-        
-        if (Status == VehicleStatus.Destroyed)
-            return "Vehicle destroyed";
+        // Check drive system
+        var driveComponent = GetDriveComponent();
+        if (driveComponent == null) return "No drive system installed";
+        if (driveComponent.isDestroyed) return "Drive system destroyed";
+        if (driveComponent.isDisabled) return "Drive system disabled";
+        if (!driveComponent.CanContributeToMovement()) return "Drive system immobilized by status effect";
         
         return null;
     }
 
-    public bool CanMove()
-    {
-        if (!IsOperational()) 
-            return false;
-        
-        var driveComponent = optionalComponents.FirstOrDefault(c => c is DriveComponent);
-        if (driveComponent == null || driveComponent.isDestroyed || driveComponent.isDisabled)
-        {
-            return false;
-        }
-        
-        // Check if drive is prevented from moving by status effects (e.g., frozen, immobilized)
-        if (!driveComponent.CanContributeToMovement())
-        {
-            return false;
-        }
-        
-        return true;
-    }
-    
-    public string GetCannotMoveReason()
-    {
-        string operationalReason = GetNonOperationalReason();
-        if (operationalReason != null)
-            return operationalReason;
-        
-        var driveComponent = optionalComponents.FirstOrDefault(c => c is DriveComponent);
-        if (driveComponent == null)
-            return "No drive system installed";
-        if (driveComponent.isDestroyed)
-            return "Drive system destroyed";
-        if (driveComponent.isDisabled)
-            return "Drive system disabled";
-        
-        // Check for status effects preventing movement
-        if (!driveComponent.CanContributeToMovement())
-            return "Drive system immobilized by status effect";
-        
-        return null;
-    }
-    
-    // ==================== TURN & MOVEMENT MANAGEMENT ====================
-    
-    [HideInInspector]
-    public bool hasMovedThisTurn = false;
-    
     /// <summary>
-    /// Called at the start of this vehicle's turn.
-    /// Order: Apply friction (if unpowered) → Regen → Reset power tracking → Pay continuous power → Reset movement flag → Reset seats
+    /// Check if vehicle can move (operational + has functional drive system).
     /// </summary>
-    public void StartTurn()
-    {
-        // 0. Apply friction if drive is unpowered/destroyed
-        var driveComponent = optionalComponents.OfType<DriveComponent>().FirstOrDefault();
-        if (driveComponent != null && (!driveComponent.isPowered || driveComponent.isDestroyed))
-        {
-            driveComponent.ApplyFriction();
-        }
-        
-        // 1. Regenerate power FIRST (see full resources)
-        if (powerCore != null && !powerCore.isDestroyed)
-        {
-            powerCore.RegenerateEnergy();
-        }
-        
-        // 2. Reset per-turn power tracking
-        if (powerCore != null)
-        {
-            powerCore.ResetTurnPowerTracking();
-        }
-        
-        // 3. PAY for continuous components (drive, shields, sensors)
-        //    Drive power cost is based on CURRENT speed (set last turn)
-        //    This is paying to RUN THE ENGINE, not to move
-        foreach (var component in AllComponents)
-        {
-            if (component != null && !component.isDestroyed)
-            {
-                component.DrawTurnPower();  // Automatically skips components with powerDrawPerTurn = 0
-            }
-        }
-        
-        // 4. Reset movement flag (player controls when movement happens)
-        hasMovedThisTurn = false;
-        hasLoggedMovementWarningThisTurn = false;
-        
-        // 5. Status effects at turn start
-        // Note: Status effects are on components, not vehicle directly
-        // Components handle their own status effect timing
-        
-        // 6. Reset seat turn states
-        foreach (var seat in seats)
-        {
-            seat?.ResetTurnState();
-        }
-    }
-    
-    /// <summary>
-    /// Called at the end of this vehicle's turn.
-    /// Order: Force movement if not moved yet → Status effects at turn end
-    /// </summary>
-    public void EndTurn()
-    {
-        // 1. FORCE movement if player hasn't triggered it yet
-        //    Movement is mandatory (engine is running, vehicle WILL move)
-        if (!hasMovedThisTurn)
-        {
-            RaceHistory.Log(
-                EventType.Movement,
-                EventImportance.Low,
-                $"{vehicleName} automatically moved (player did not trigger movement manually)",
-                currentStage,
-                this
-            ).WithMetadata("automatic", true);
-            
-            ExecuteMovement();
-        }
-        
-        // 2. Update status effects on all components (tick durations, apply periodic effects)
-        UpdateStatusEffects();
-    }
-    
-    /// <summary>
-    /// Execute movement for this turn. Can be called manually by player or auto-triggered at end of turn.
-    /// Movement is FREE - power was already paid at turn start by drive continuous draw.
-    /// Player controls WHEN movement happens (can be between actions).
-    /// </summary>
-    public bool ExecuteMovement()
-    {
-        // Already moved this turn
-        if (hasMovedThisTurn)
-        {
-            Debug.LogWarning($"[Vehicle] {vehicleName} has already moved this turn");
-            return false;
-        }
-        
-        // Get drive component
-        var driveComponent = optionalComponents.OfType<DriveComponent>().FirstOrDefault();
-        
-        // NO POWER COST HERE - already paid at turn start by drive continuous draw
-        float distance = 0f;
-        
-        if (driveComponent != null)
-        {
-            // Use current speed (may be 0 if no drive, or decelerating if destroyed)
-            distance = driveComponent.currentSpeed;
-        }
-        
-        if (currentStage != null && distance > 0)
-        {
-            float oldProgress = progress;
-            progress += distance;
-            
-            RaceHistory.Log(
-                EventType.Movement,
-                EventImportance.Low,
-                $"{vehicleName} moved {distance:F1} units (speed {driveComponent?.currentSpeed ?? 0f:F1})",
-                currentStage,
-                this
-            ).WithMetadata("distance", distance)
-             .WithMetadata("speed", driveComponent?.currentSpeed ?? 0f)
-             .WithMetadata("oldProgress", oldProgress)
-             .WithMetadata("newProgress", progress);
-            
-            // Check if vehicle reached end of stage
-            if (progress >= currentStage.length)
-            {
-                // Advance to next stage (existing logic in TurnController or GameManager)
-                // Note: This will be handled by the race management system
-            }
-        }
-        else if (currentStage != null && distance == 0 && driveComponent != null)
-        {
-            // Log that vehicle couldn't move (either no drive or stopped)
-            if (driveComponent.isDestroyed)
-            {
-                RaceHistory.Log(
-                    EventType.Movement,
-                    EventImportance.Medium,
-                    $"{vehicleName} has stopped (drive destroyed, speed: {driveComponent.currentSpeed:F1})",
-                    currentStage,
-                    this
-                ).WithMetadata("driveDestroyed", true)
-                 .WithMetadata("speed", driveComponent.currentSpeed);
-            }
-        }
-        
-        hasMovedThisTurn = true;
-        return true;
-    }
-    
-    
-    // ==================== SPEED HELPERS ====================
-    
-    /// <summary>
-    /// Get the current effective speed of this vehicle.
-    /// If no drive component, returns 0.
-    /// </summary>
-    public float GetCurrentSpeed()
-    {
-        var drive = optionalComponents.OfType<DriveComponent>().FirstOrDefault();
-        return drive?.currentSpeed ?? 0f;
-    }
-    
-    /// <summary>
-    /// Get the maximum speed capability of this vehicle (with modifiers).
-    /// </summary>
-    public float GetMaxSpeed()
-    {
-        var drive = optionalComponents.OfType<DriveComponent>().FirstOrDefault();
-        if (drive == null || drive.isDestroyed)
-            return 0f;
-        
-        return StatCalculator.GatherAttributeValue(
-            drive, 
-            Attribute.Speed, 
-            drive.maxSpeed
-        );
-    }
+    public bool CanMove() => GetCannotMoveReason() == null;
     
     // ==================== SKILL EXECUTION ====================
     
@@ -699,7 +374,7 @@ public class Vehicle : MonoBehaviour
         // Resource validation
         if (!CanAffordSkill(skill))
         {
-            int currentEnergy = powerCore?.currentEnergy ?? 0;
+            int currentEnergy = powerCore != null ? powerCore.currentEnergy : 0;
             Debug.LogWarning($"[Vehicle] {vehicleName} cannot afford {skill.name} (need {skill.energyCost}, have {currentEnergy})");
             return false;
         }

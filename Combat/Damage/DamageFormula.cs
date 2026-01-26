@@ -67,10 +67,15 @@ public class DamageFormula
                     return result; // Empty result
                 }
                 
+                // Get weapon stats using accessor methods
+                int weaponDamageDice = weapon.GetDamageDice();
+                int weaponDieSize = weapon.GetDamageDieSize();
+                int weaponDamageBonus = weapon.GetDamageBonus();
+                
                 // Weapon dice (double on crit, flat bonus never doubled)
-                var (weaponDice, weaponLabel) = ApplyCritMultiplier(weapon.damageDice, "Weapon", isCriticalHit);
-                int weaponRolled = RollUtility.RollDice(weaponDice, weapon.damageDieSize);
-                DamageCalculator.AddSource(result, weaponLabel, weaponDice, weapon.damageDieSize, weapon.damageBonus, weaponRolled, weapon.name);
+                var (weaponDice, weaponLabel) = ApplyCritMultiplier(weaponDamageDice, "Weapon", isCriticalHit);
+                int weaponRolled = RollUtility.RollDice(weaponDice, weaponDieSize);
+                DamageCalculator.AddSource(result, weaponLabel, weaponDice, weaponDieSize, weaponDamageBonus, weaponRolled, weapon.name);
                 result.damageType = weapon.damageType;
                 break;
 
@@ -81,10 +86,15 @@ public class DamageFormula
                     return result; // Empty result
                 }
                 
+                // Get weapon stats using accessor methods
+                int weaponDamageDice2 = weapon.GetDamageDice();
+                int weaponDieSize2 = weapon.GetDamageDieSize();
+                int weaponDamageBonus2 = weapon.GetDamageBonus();
+                
                 // Weapon dice (double on crit, flat bonus never doubled)
-                var (weaponDice2, weaponLabel2) = ApplyCritMultiplier(weapon.damageDice, "Weapon", isCriticalHit);
-                int weaponRolled2 = RollUtility.RollDice(weaponDice2, weapon.damageDieSize);
-                DamageCalculator.AddSource(result, weaponLabel2, weaponDice2, weapon.damageDieSize, weapon.damageBonus, weaponRolled2, weapon.name);
+                var (weaponDice2, weaponLabel2) = ApplyCritMultiplier(weaponDamageDice2, "Weapon", isCriticalHit);
+                int weaponRolled2 = RollUtility.RollDice(weaponDice2, weaponDieSize2);
+                DamageCalculator.AddSource(result, weaponLabel2, weaponDice2, weaponDieSize2, weaponDamageBonus2, weaponRolled2, weapon.name);
                 
                 // Base dice (also doubled on crit!)
                 if (baseDice > 0 && dieSize > 0)
