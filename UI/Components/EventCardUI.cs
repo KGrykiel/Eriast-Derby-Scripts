@@ -43,7 +43,7 @@ namespace Assets.Scripts.UI.Components
         
         // Runtime state
         private Action<CardChoice> currentCallback;
-        private List<GameObject> spawnedButtons = new List<GameObject>();
+        private List<GameObject> spawnedButtons = new();
         
         private void Awake()
         {

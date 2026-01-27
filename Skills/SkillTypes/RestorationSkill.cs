@@ -13,8 +13,7 @@ public class RestorationSkill : Skill
         {
             effectInvocations = new System.Collections.Generic.List<EffectInvocation>
             {
-                new EffectInvocation
-                {
+                new() {
                     effect = new ResourceRestorationEffect(),
                     target = EffectTarget.SourceVehicle  // Routes to chassis for healing
                 }

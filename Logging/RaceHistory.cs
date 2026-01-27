@@ -18,7 +18,7 @@ namespace Assets.Scripts.Logging
             {
                 if (instance == null)
                 {
-                    GameObject go = new GameObject("RaceHistory");
+                    GameObject go = new("RaceHistory");
                     instance = go.AddComponent<RaceHistory>();
                     DontDestroyOnLoad(go);
                 }
@@ -29,12 +29,12 @@ namespace Assets.Scripts.Logging
         /// <summary>
         /// All events that have occurred in the race.
         /// </summary>
-        private List<RaceEvent> allEvents = new List<RaceEvent>();
+        private List<RaceEvent> allEvents = new();
         
         /// <summary>
         /// Events indexed by vehicle for quick per-vehicle lookups.
         /// </summary>
-        private Dictionary<Vehicle, List<RaceEvent>> vehicleEvents = new Dictionary<Vehicle, List<RaceEvent>>();
+        private Dictionary<Vehicle, List<RaceEvent>> vehicleEvents = new();
         
         /// <summary>
         /// Current turn number.
@@ -70,7 +70,7 @@ namespace Assets.Scripts.Logging
             Stage location = null,
             params Vehicle[] vehicles)
         {
-            RaceEvent evt = new RaceEvent(
+            RaceEvent evt = new(
                 Instance.currentTurn,
                 type,
                 importance,

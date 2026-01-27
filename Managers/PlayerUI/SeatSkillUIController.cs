@@ -13,8 +13,8 @@ namespace Assets.Scripts.Managers.PlayerUI
     public class SeatSkillUIController
     {
         private readonly PlayerUIReferences ui;
-        private readonly List<Button> seatTabButtons = new List<Button>();
-        private readonly List<Button> skillButtons = new List<Button>();
+        private readonly List<Button> seatTabButtons = new();
+        private readonly List<Button> skillButtons = new();
         
         public SeatSkillUIController(PlayerUIReferences uiReferences)
         {
@@ -95,7 +95,7 @@ namespace Assets.Scripts.Managers.PlayerUI
             if (ui.skillButtonContainer == null || ui.skillButtonPrefab == null || currentSeat == null) return;
 
             // Gather all skills from seat's controlled components + character personal skills
-            List<Skill> availableSkills = new List<Skill>();
+            List<Skill> availableSkills = new();
             
             foreach (var component in currentSeat.GetOperationalComponents())
             {
@@ -172,7 +172,7 @@ namespace Assets.Scripts.Managers.PlayerUI
         /// </summary>
         public List<Skill> GetAvailableSkills(VehicleSeat currentSeat)
         {
-            List<Skill> availableSkills = new List<Skill>();
+            List<Skill> availableSkills = new();
             
             if (currentSeat == null) return availableSkills;
             

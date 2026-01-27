@@ -44,7 +44,7 @@ public abstract class VehicleComponent : Entity
     
     [Header("Provided Modifiers")]
     [Tooltip("Modifiers this component provides to OTHER components. Used for cross-component bonuses like armor upgrades, boosters, etc.")]
-    public List<ComponentModifierData> providedModifiers = new List<ComponentModifierData>();
+    public List<ComponentModifierData> providedModifiers = new();
     
     [Header("Component Targeting")]
     [Tooltip("How exposed this component is for targeting")]
@@ -67,7 +67,7 @@ public abstract class VehicleComponent : Entity
     
     [Header("Skills")]
     [Tooltip("Skills provided by this component (assigned in Inspector)")]
-    public List<Skill> componentSkills = new List<Skill>();
+    public List<Skill> componentSkills = new();
     
     // Reference to parent vehicle (set during initialization)
     protected Vehicle parentVehicle;
@@ -425,7 +425,7 @@ public abstract class VehicleComponent : Entity
     /// </summary>
     public virtual List<Skill> GetAllSkills()
     {
-        List<Skill> allSkills = new List<Skill>();
+        List<Skill> allSkills = new();
         
         // Add component's own skills
         if (componentSkills != null)

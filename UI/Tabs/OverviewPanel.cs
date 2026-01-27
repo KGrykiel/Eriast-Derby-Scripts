@@ -243,8 +243,8 @@ public class OverviewPanel : MonoBehaviour
         }
 
         // BFS to find shortest path to finish
-        Queue<(Stage stage, float distance)> queue = new Queue<(Stage, float)>();
-        HashSet<Stage> visited = new HashSet<Stage>();
+        Queue<(Stage stage, float distance)> queue = new();
+        HashSet<Stage> visited = new();
 
         // Start BFS from NEXT stages (not current stage)
         // This prevents immediately detecting the start/finish line we're already on
@@ -310,8 +310,8 @@ public class OverviewPanel : MonoBehaviour
     /// </summary>
     private float CalculateFullLapDistance(Stage startFinishStage)
     {
-        Queue<(Stage stage, float distance)> queue = new Queue<(Stage, float)>();
-        HashSet<Stage> visited = new HashSet<Stage>();
+        Queue<(Stage stage, float distance)> queue = new();
+        HashSet<Stage> visited = new();
 
         // Start from the finish line stage itself
         visited.Add(startFinishStage);

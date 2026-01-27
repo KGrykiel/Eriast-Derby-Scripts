@@ -38,7 +38,7 @@ namespace Assets.Scripts.StatusEffects
         /// List of AttributeModifiers created by this status effect.
         /// These are automatically removed when the status effect expires or is removed.
         /// </summary>
-        public List<AttributeModifier> createdModifiers = new List<AttributeModifier>();
+        public List<AttributeModifier> createdModifiers = new();
         
         // ==================== PROPERTIES ====================
         

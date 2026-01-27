@@ -28,7 +28,7 @@ namespace Assets.Scripts.Effects
         /// <summary>
         /// Default context with no special state. Use for non-combat effects.
         /// </summary>
-        public static EffectContext Default => new EffectContext();
+        public static EffectContext Default => new();
         
         /// <summary>
         /// Create EffectContext from SkillContext (translation point).

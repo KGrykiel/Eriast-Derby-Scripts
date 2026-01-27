@@ -13,8 +13,7 @@ public class SpecialSkill : Skill
         {
             effectInvocations = new System.Collections.Generic.List<EffectInvocation>
             {
-                new EffectInvocation
-                {
+                new() {
                     effect = new CustomEffect(),
                     target = EffectTarget.SelectedTarget
                 }

@@ -9,17 +9,17 @@ public class Stage : MonoBehaviour
 {
     public string stageName;
     public float length = 10f;
-    public List<Stage> nextStages = new List<Stage>();
+    public List<Stage> nextStages = new();
 
     [Header("Race Configuration")]
     [Tooltip("Is this stage a finish line?")]
     public bool isFinishLine = false;
 
     [Header("Modifiers applied on enter")]
-    public List<AttributeModifierEffect> onEnterModifiers = new List<AttributeModifierEffect>();
+    public List<AttributeModifierEffect> onEnterModifiers = new();
 
     [Header("Event Cards")]
-    public List<EventCard> eventCards = new List<EventCard>();
+    public List<EventCard> eventCards = new();
 
     [Header("Events")]
     public UnityEvent onEnter;
@@ -27,7 +27,7 @@ public class Stage : MonoBehaviour
 
     // Track vehicles currently in this stage
     [HideInInspector]
-    public List<Vehicle> vehiclesInStage = new List<Vehicle>();
+    public List<Vehicle> vehiclesInStage = new();
 
     private void OnDrawGizmos()
     {

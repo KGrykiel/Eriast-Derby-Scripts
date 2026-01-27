@@ -26,7 +26,7 @@ public class RollTooltip : MonoBehaviour
 
     [Header("Settings")]
     [Tooltip("Offset from target element")]
-    public Vector2 elementOffset = new Vector2(10f, -10f);
+    public Vector2 elementOffset = new(10f, -10f);
 
     [Tooltip("Padding from screen edges")]
     public float edgePadding = 10f;
@@ -175,7 +175,7 @@ public class RollTooltip : MonoBehaviour
         LayoutRebuilder.ForceRebuildLayoutImmediate(tooltipPanel);
         
         Vector2 tooltipSize = tooltipPanel.rect.size;
-        Vector2 screenSize = new Vector2(Screen.width, Screen.height);
+        Vector2 screenSize = new(Screen.width, Screen.height);
         float scaleFactor = parentCanvas != null ? parentCanvas.scaleFactor : 1f;
         Vector2 scaledTooltipSize = tooltipSize * scaleFactor;
         
@@ -270,7 +270,7 @@ public class RollTooltip : MonoBehaviour
             
             // Set position - assumes pivot is (0, 1) = top-left
             // If pivot is different, adjust accordingly
-            Vector2 pivotOffset = new Vector2(
+            Vector2 pivotOffset = new(
                 tooltipPanel.pivot.x * tooltipSize.x,
                 (tooltipPanel.pivot.y - 1f) * tooltipSize.y
             );

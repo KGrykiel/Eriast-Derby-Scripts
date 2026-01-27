@@ -156,7 +156,7 @@ namespace Assets.Scripts.Entities.Vehicle
         /// </summary>
         public List<VehicleComponent> GetAllComponents()
         {
-            List<VehicleComponent> all = new List<VehicleComponent>();
+            List<VehicleComponent> all = new();
             if (vehicle.chassis != null) all.Add(vehicle.chassis);
             if (vehicle.powerCore != null) all.Add(vehicle.powerCore);
             if (vehicle.optionalComponents != null) all.AddRange(vehicle.optionalComponents);

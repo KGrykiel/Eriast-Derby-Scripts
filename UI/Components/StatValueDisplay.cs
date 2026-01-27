@@ -17,10 +17,10 @@ namespace Assets.Scripts.UI.Components
     {
         [Header("Colors")]
         [Tooltip("Color when stat is buffed (positive modifiers)")]
-        public Color buffedColor = new Color(0.27f, 1f, 0.27f); // #44FF44
+        public Color buffedColor = new(0.27f, 1f, 0.27f); // #44FF44
         
         [Tooltip("Color when stat is debuffed (negative modifiers)")]
-        public Color debuffedColor = new Color(1f, 0.27f, 0.27f); // #FF4444
+        public Color debuffedColor = new(1f, 0.27f, 0.27f); // #FF4444
         
         [Tooltip("Color when stat is at base value (no modifiers)")]
         public Color normalColor = Color.white;

@@ -41,7 +41,7 @@ public class Vehicle : MonoBehaviour
     [Header("Crew & Seats")]
     [Tooltip("Physical positions where characters sit and control components. " +
              "Each seat references components it can operate and has an assigned character.")]
-    public List<VehicleSeat> seats = new List<VehicleSeat>();
+    public List<VehicleSeat> seats = new();
     
     [Header("Vehicle Components")]
     [Tooltip("Chassis - MANDATORY structural component (stores HP and AC)")]
@@ -51,7 +51,7 @@ public class Vehicle : MonoBehaviour
     public PowerCoreComponent powerCore;
     
     [Tooltip("Optional components (Drive, Weapons, Utilities, etc.)")]
-    public List<VehicleComponent> optionalComponents = new List<VehicleComponent>();
+    public List<VehicleComponent> optionalComponents = new();
 
     // Component coordinator (handles component management)
     private VehicleComponentCoordinator componentCoordinator;

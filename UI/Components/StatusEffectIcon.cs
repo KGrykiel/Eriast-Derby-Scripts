@@ -32,13 +32,13 @@ namespace Assets.Scripts.UI.Components
         public bool tintIconByEffectType = false;
         
         [Tooltip("Background color for buff effects (only used if tintIconByEffectType is true)")]
-        public Color buffColor = new Color(0.2f, 0.8f, 0.2f, 0.8f);
+        public Color buffColor = new(0.2f, 0.8f, 0.2f, 0.8f);
         
         [Tooltip("Background color for debuff effects (only used if tintIconByEffectType is true)")]
-        public Color debuffColor = new Color(0.8f, 0.2f, 0.2f, 0.8f);
+        public Color debuffColor = new(0.8f, 0.2f, 0.2f, 0.8f);
         
         [Tooltip("Background color for neutral effects (only used if tintIconByEffectType is true)")]
-        public Color neutralColor = new Color(0.5f, 0.5f, 0.5f, 0.8f);
+        public Color neutralColor = new(0.5f, 0.5f, 0.5f, 0.8f);
         
         // Private state
         private AppliedStatusEffect appliedEffect;

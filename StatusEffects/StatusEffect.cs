@@ -37,11 +37,11 @@ namespace Assets.Scripts.StatusEffects
         
         [Header("Stat Modifiers")]
         [Tooltip("Stat changes applied while this effect is active")]
-        public List<ModifierData> modifiers = new List<ModifierData>();
+        public List<ModifierData> modifiers = new();
         
         [Header("Periodic Effects")]
         [Tooltip("Effects that trigger at the start/end of each turn")]
-        public List<PeriodicEffectData> periodicEffects = new List<PeriodicEffectData>();
+        public List<PeriodicEffectData> periodicEffects = new();
         
         [Header("Behavioral Effects")]
         [Tooltip("Action/movement restrictions and other behavioral changes")]
@@ -49,7 +49,7 @@ namespace Assets.Scripts.StatusEffects
         
         [Header("Custom Behaviors (Optional)")]
         [Tooltip("Advanced: ScriptableObject behaviors for complex/unusual effects")]
-        public List<StatusEffectBehavior> customBehaviors = new List<StatusEffectBehavior>();
+        public List<StatusEffectBehavior> customBehaviors = new();
         
         [Header("Duration")]
         [Tooltip("Base duration in turns. -1 = indefinite (permanent until dispelled), 0 = instant, >0 = number of turns")]

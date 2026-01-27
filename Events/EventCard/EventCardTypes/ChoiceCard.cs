@@ -28,7 +28,7 @@ namespace Assets.Scripts.Events.EventCard.EventCardTypes
     {
         [Header("Choices")]
         [Tooltip("Available choices (2-4 options)")]
-        public List<CardChoice> choices = new List<CardChoice>();
+        public List<CardChoice> choices = new();
         
         public override CardResolutionResult Resolve(Vehicle vehicle, Stage stage)
         {
@@ -231,10 +231,10 @@ namespace Assets.Scripts.Events.EventCard.EventCardTypes
         
         [Header("Effects")]
         [Tooltip("Effects applied if choice succeeds (or no check required)")]
-        public List<EffectInvocation> effects = new List<EffectInvocation>();
+        public List<EffectInvocation> effects = new();
         
         [Tooltip("Effects applied if check/save fails")]
-        public List<EffectInvocation> failureEffects = new List<EffectInvocation>();
+        public List<EffectInvocation> failureEffects = new();
         
         [Header("Narrative")]
         [Tooltip("Narrative for successful outcome")]

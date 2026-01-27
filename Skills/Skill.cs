@@ -31,7 +31,7 @@ public abstract class Skill : ScriptableObject
     public int checkDC = 15;
 
     [Header("Effects")]
-    public List<EffectInvocation> effectInvocations = new List<EffectInvocation>();
+    public List<EffectInvocation> effectInvocations = new();
     
     [Header("Targeting")]
     [Tooltip("What targeting UI flow does this skill require?")]

@@ -29,7 +29,7 @@ public class PlayerCharacter : ScriptableObject
     
     [Header("Character Skills")]
     [Tooltip("Personal skills this character brings (independent of component)")]
-    public List<Skill> personalSkills = new List<Skill>();
+    public List<Skill> personalSkills = new();
     
     // TODO: Add character stats when system is designed
     // These might be D&D stats, custom racing stats, or something else entirely

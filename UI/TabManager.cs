@@ -20,8 +20,8 @@ public class TabManager : MonoBehaviour
     public GameObject logPanel;
 
     [Header("Active Tab Color")]
-    public Color activeColor = new Color(0.3f, 0.5f, 0.8f);
-    public Color inactiveColor = new Color(0.2f, 0.2f, 0.2f);
+    public Color activeColor = new(0.3f, 0.5f, 0.8f);
+    public Color inactiveColor = new(0.2f, 0.2f, 0.2f);
 
     private Button currentActiveButton;
 

@@ -11,7 +11,7 @@ namespace Assets.Scripts.Managers.PlayerUI
     public class StageSelectionUIController
     {
         private readonly PlayerUIReferences ui;
-        private readonly List<Button> stageButtons = new List<Button>();
+        private readonly List<Button> stageButtons = new();
         
         public StageSelectionUIController(PlayerUIReferences uiReferences)
         {

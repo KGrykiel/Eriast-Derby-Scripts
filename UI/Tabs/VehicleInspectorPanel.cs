@@ -50,12 +50,12 @@ public class VehicleInspectorPanel : MonoBehaviour
     public TMP_Text eventHistorySectionText;
     
     // Private state
-    private List<Vehicle> allVehicles = new List<Vehicle>();
+    private List<Vehicle> allVehicles = new();
     private Vehicle selectedVehicle;
     private bool initialized = false;
     
     // Component entry pool
-    private List<GameObject> componentEntryInstances = new List<GameObject>();
+    private List<GameObject> componentEntryInstances = new();
     
     // Dirty tracking for refresh
     private int lastEventCount = 0;
@@ -147,7 +147,7 @@ public class VehicleInspectorPanel : MonoBehaviour
         vehicleDropdown.onValueChanged.RemoveAllListeners();
         vehicleDropdown.onValueChanged.AddListener(OnVehicleSelected);
   
-        List<string> options = new List<string>();
+        List<string> options = new();
         foreach (var vehicle in allVehicles)
         {
             if (vehicle == null) continue;

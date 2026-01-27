@@ -23,7 +23,7 @@ namespace Assets.Scripts.Combat
     public static class CombatEventBus
     {
         // Stack supports nested actions (rare but possible)
-        private static readonly Stack<CombatAction> actionStack = new Stack<CombatAction>();
+        private static readonly Stack<CombatAction> actionStack = new();
         
         // ==================== ACTION SCOPING ====================
         

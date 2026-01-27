@@ -18,7 +18,7 @@ public class DamageEffect : EffectBase
 {
     [Header("Damage Formula")]
     [Tooltip("Defines how damage is calculated (skill dice, weapon scaling, etc.)")]
-    public DamageFormula formula = new DamageFormula();
+    public DamageFormula formula = new();
 
     /// <summary>
     /// Applies this damage effect to the target entity.

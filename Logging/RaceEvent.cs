@@ -33,7 +33,7 @@ namespace Assets.Scripts.Logging
         /// <summary>
         /// Vehicles involved in this event (attacker, target, witnesses, etc.).
         /// </summary>
-        public List<Vehicle> involvedVehicles = new List<Vehicle>();
+        public List<Vehicle> involvedVehicles = new();
 
         /// <summary>
         /// Human-readable description of the event for DM narration.
@@ -49,7 +49,7 @@ namespace Assets.Scripts.Logging
         /// Additional metadata for specific event types.
         /// Examples: damage dealt, roll results, modifier values.
         /// </summary>
-        public Dictionary<string, object> metadata = new Dictionary<string, object>();
+        public Dictionary<string, object> metadata = new();
 
         /// <summary>
         /// Timestamp when event occurred (for debugging/replay).

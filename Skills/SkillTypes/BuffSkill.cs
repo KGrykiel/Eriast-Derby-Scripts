@@ -13,8 +13,7 @@ public class BuffSkill : Skill
         {
             effectInvocations = new System.Collections.Generic.List<EffectInvocation>
             {
-                new EffectInvocation
-                {
+                new() {
                     effect = new AttributeModifierEffect(),
                     target = EffectTarget.SourceVehicle  // Routes based on attribute type
                 }

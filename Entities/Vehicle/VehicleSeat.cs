@@ -30,7 +30,7 @@ namespace Assets.Scripts.Entities.Vehicle
         [Header("Controlled Components")]
         [Tooltip("Components this seat can operate. Drag references from same vehicle. " +
                  "Character in this seat can only use skills/actions from these components.")]
-        public List<VehicleComponent> controlledComponents = new List<VehicleComponent>();
+        public List<VehicleComponent> controlledComponents = new();
 
         [Header("Character Assignment")]
         [Tooltip("Character currently occupying this seat. Drag PlayerCharacter ScriptableObject here. " +

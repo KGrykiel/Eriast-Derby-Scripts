@@ -15,8 +15,7 @@ public class AttackSkill : Skill
         {
             effectInvocations = new System.Collections.Generic.List<EffectInvocation>
             {
-                new EffectInvocation
-                {
+                new() {
                     effect = new DamageEffect
                     {
                         formula = new DamageFormula

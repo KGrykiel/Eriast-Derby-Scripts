@@ -30,7 +30,7 @@ namespace Assets.Scripts.UI.Components
         
         // Private state
         private Entity targetEntity;
-        private List<StatusEffectIcon> activeIcons = new List<StatusEffectIcon>();
+        private List<StatusEffectIcon> activeIcons = new();
         private RectTransform rectTransform;
         private HorizontalLayoutGroup layoutGroup;
         
