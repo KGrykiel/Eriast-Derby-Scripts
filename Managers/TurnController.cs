@@ -100,11 +100,19 @@ public class TurnController : MonoBehaviour
     /// Adjust vehicle speed toward target at start of turn.
     /// Player/AI sets targetSpeed during action phase, this applies the change.
     /// Speed changes gradually based on acceleration/deceleration limits.
+    /// If drive is unpowered/destroyed, applies friction to slow vehicle down.
     /// </summary>
     private void AccelerateVehicle(Vehicle vehicle)
     {
         var drive = vehicle.GetDriveComponent();
-        if (drive == null || drive.isDestroyed || !drive.isPowered) return;
+        if (drive == null) return;
+        
+        if (drive.isDestroyed || !drive.isPowered)
+        {
+            // Unpowered drive: vehicle coasts to a stop via friction
+            drive.ApplyFriction();
+            return;
+        }
         
         // Move currentSpeed toward targetSpeed (respects acceleration limits)
         drive.AdjustSpeedTowardTarget();
@@ -187,13 +195,13 @@ public class TurnController : MonoBehaviour
         }
         
         var drive = vehicle.GetDriveComponent();
-        float distance = drive != null ? drive.currentSpeed : 0f;
+        float distance = drive != null ? drive.GetCurrentSpeed() : 0f;
         
         if (vehicle.currentStage != null && distance > 0)
         {
             float oldProgress = vehicle.progress;
             vehicle.progress += distance;
-            OnMovementExecuted?.Invoke(vehicle, distance, drive.currentSpeed, oldProgress, vehicle.progress);
+            OnMovementExecuted?.Invoke(vehicle, distance, drive.GetCurrentSpeed(), oldProgress, vehicle.progress);
         }
         
         vehicle.hasMovedThisTurn = true;

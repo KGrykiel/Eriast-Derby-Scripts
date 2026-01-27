@@ -31,12 +31,12 @@ public class DriveComponent : VehicleComponent
     [Header("Speed Management")]
     [Tooltip("Current actual speed in units/turn")]
     [ReadOnly]
-    public float currentSpeed = 0f;
+    private float currentSpeed = 0f;
     
     [Tooltip("Target speed as proportion of maxSpeed (0.0 = stopped, 1.0 = full speed). Set by Driver during action phase.")]
     [Range(0f, 1.0f)]
     [ReadOnly]
-    public float targetSpeed = 0f;
+    private float targetSpeed = 0f;
     
     // Cached maxSpeed to detect changes from buffs/debuffs
     private float lastKnownMaxSpeed;
