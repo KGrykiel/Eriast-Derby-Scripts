@@ -14,7 +14,7 @@ namespace Assets.Scripts.Effects.EffectTypes.CustomEffectCommands
         [Range(0f, 1.0f)]
         public float defaultTargetSpeed = 1.0f;
 
-        public override void Execute(Entity user, Entity target, EffectContext context, Object source)
+        public override void Execute(Entity user, Entity target, EffectContext context, object source)
         {
             // Target entity should be the DriveComponent (self-targeting skill)
             DriveComponent drive = target as DriveComponent;
@@ -24,13 +24,13 @@ namespace Assets.Scripts.Effects.EffectTypes.CustomEffectCommands
                 return;
             }
 
-            // Try to read speed from ParameterizedSkill
+            // Try to read speed from CustomEffect.floatParameter
             float speedToSet = defaultTargetSpeed;
             
-            if (source is ParameterizedSkill paramSkill)
+            if (source is CustomEffect customEffect && customEffect.floatParameter >= 0f)
             {
-                // Skill provides parameter value
-                speedToSet = paramSkill.floatParameter;
+                // Effect provides parameter value
+                speedToSet = customEffect.floatParameter;
             }
 
             // Set the target speed (proportional)

@@ -12,13 +12,19 @@ public class CustomEffect : EffectBase
     
     [Tooltip("Command to execute (ScriptableObject reference - works in prefabs!)")]
     public EffectCommand command;
+    
+    [Header("Command Parameters (Optional)")]
+    [Tooltip("Float parameter passed to command (e.g., target speed 0-1, -1 = unused)")]
+    [Range(-1f, 1f)]
+    public float floatParameter = -1f;
 
     public override void Apply(Entity user, Entity target, EffectContext context, UnityEngine.Object source = null)
     {
         // Prefer command pattern (works with prefabs)
         if (command != null)
         {
-            command.Execute(user, target, context, source);
+            // Pass CustomEffect as source so command can read floatParameter
+            command.Execute(user, target, context, this);
 
             // Log command execution
             Vehicle vehicle = GetParentVehicle(target);

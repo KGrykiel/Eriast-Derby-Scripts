@@ -17,8 +17,8 @@ namespace Assets.Scripts.Effects.EffectTypes.CustomEffectCommands
         /// <param name="user">Entity using the skill/effect</param>
         /// <param name="target">Primary target entity</param>
         /// <param name="context">Full effect context with vehicles, components, etc.</param>
-        /// <param name="source">Source object (skill, card, etc.)</param>
-        public abstract void Execute(Entity user, Entity target, EffectContext context, Object source);
+        /// <param name="source">Source effect (can be CustomEffect for parameter reading)</param>
+        public abstract void Execute(Entity user, Entity target, EffectContext context, object source);
     }
 }
 

@@ -302,11 +302,22 @@ public class GameManager : MonoBehaviour
         {
             if (vehicle.currentStage.nextStages.Count == 1)
             {
+                // Single path - always take it
                 turnController.MoveToStage(vehicle, vehicle.currentStage.nextStages[0]);
             }
             else
             {
-                return; // Crossroads - PlayerController handles
+                // Crossroads - handle based on control type
+                if (vehicle.controlType == ControlType.Player)
+                {
+                    return; // Player chooses via UI (PlayerController handles)
+                }
+                else
+                {
+                    // AI chooses randomly (TODO: Add strategic AI decision-making later)
+                    Stage chosenStage = vehicle.currentStage.nextStages[Random.Range(0, vehicle.currentStage.nextStages.Count)];
+                    turnController.MoveToStage(vehicle, chosenStage);
+                }
             }
         }
     }
