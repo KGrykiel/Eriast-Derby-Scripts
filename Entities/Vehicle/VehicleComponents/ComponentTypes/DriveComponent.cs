@@ -32,7 +32,8 @@ public class DriveComponent : VehicleComponent
     [Tooltip("Current actual speed in units/turn")]
     [ReadOnly]
     private float currentSpeed = 0f;
-    
+
+    [SerializeField]
     [Tooltip("Target speed as proportion of maxSpeed (0.0 = stopped, 1.0 = full speed). Set by Driver during action phase.")]
     [Range(0f, 1.0f)]
     [ReadOnly]
@@ -85,7 +86,6 @@ public class DriveComponent : VehicleComponent
         
         // Initialize speed to 0 (vehicle starts stationary)
         currentSpeed = 0f;
-        targetSpeed = 0f;
         lastKnownMaxSpeed = baseMaxSpeed;
     }
     
@@ -128,7 +128,7 @@ public class DriveComponent : VehicleComponent
         
         // Get chassis drag coefficient with modifiers (aerodynamics of vehicle body)
         float vehicleDrag = 0.1f; // Default fallback
-        if (parentVehicle?.chassis != null)
+        if (parentVehicle != null ? parentVehicle.chassis : null != null)
         {
             vehicleDrag = parentVehicle.chassis.GetDragCoefficient();
         }
@@ -355,9 +355,6 @@ public class DriveComponent : VehicleComponent
         stats.Add(VehicleComponentUI.DisplayStat.WithTooltip("Acceleration", "ACCEL", Attribute.Acceleration, baseAcceleration, modifiedAccel));
         stats.Add(VehicleComponentUI.DisplayStat.WithTooltip("Deceleration", "DECEL", Attribute.Deceleration, baseDeceleration, modifiedDecel));
         stats.Add(VehicleComponentUI.DisplayStat.WithTooltip("Stability", "STAB", Attribute.Stability, baseStability, modifiedStab));
-        
-        // Current runtime speed (always show - players should always know their current speed)
-        stats.Add(VehicleComponentUI.DisplayStat.Simple("Current Speed", "CUR", currentSpeed));
         
         // Target speed (show as percentage and absolute)
         float targetAbsolute = targetSpeed * modifiedSpeed;
