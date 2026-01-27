@@ -1,7 +1,7 @@
 public enum Attribute
 {
     // Core stats
-    Speed,
+    MaxSpeed,
     ArmorClass,
     AttackBonus,
     Mobility,      // Saving throw stat AND skill check stat - dodging, evasion, piloting, reaction speed

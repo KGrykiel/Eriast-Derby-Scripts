@@ -264,13 +264,5 @@ namespace Assets.Scripts.Managers
             if (vehicle.Status == VehicleStatus.Destroyed) return true;
             return false;
         }
-        
-        /// <summary>
-        /// Get initiative value for a vehicle.
-        /// </summary>
-        public int GetInitiative(Vehicle vehicle)
-        {
-            return initiativeOrder.TryGetValue(vehicle, out int init) ? init : 0;
-        }
     }
 }

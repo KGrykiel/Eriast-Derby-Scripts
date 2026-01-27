@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 using Assets.Scripts.Logging;
-using Assets.Scripts.Managers;
 
 /// <summary>
 /// Handles vehicle-specific turn operations.
@@ -92,6 +91,9 @@ public class TurnController : MonoBehaviour
         
         // 6. Reset seat turn states
         vehicle.ResetComponentsForNewTurn();
+
+        // 7. Status effects at turn end
+        vehicle.UpdateStatusEffects();
     }
     
     /// <summary>
@@ -126,9 +128,6 @@ public class TurnController : MonoBehaviour
             OnAutoMovement?.Invoke(vehicle);
             ExecuteMovement(vehicle);
         }
-        
-        // 2. Status effects at turn end
-        vehicle.UpdateStatusEffects();
     }
     
     // ==================== POWER MANAGEMENT ====================
@@ -188,7 +187,7 @@ public class TurnController : MonoBehaviour
         }
         
         var drive = vehicle.GetDriveComponent();
-        float distance = drive?.currentSpeed ?? 0f;
+        float distance = drive != null ? drive.currentSpeed : 0f;
         
         if (vehicle.currentStage != null && distance > 0)
         {
@@ -218,7 +217,7 @@ public class TurnController : MonoBehaviour
         }
         
         // Update vehicle state
-        vehicle.progress -= previousStage?.length ?? 0;
+        vehicle.progress -= previousStage != null ? previousStage.length : 0;
         vehicle.currentStage = stage;
         
         // Update Unity transform position
@@ -238,7 +237,7 @@ public class TurnController : MonoBehaviour
             {
                 RaceHistory.Log(
                     Assets.Scripts.Logging.EventType.FinishLine,
-                    Assets.Scripts.Logging.EventImportance.Critical,
+                    EventImportance.Critical,
                     $"[FINISH] {vehicle.vehicleName} crossed the finish line!",
                     stage,
                     vehicle

@@ -278,6 +278,14 @@ public class GameManager : MonoBehaviour
         if (success)
         {
             HandleStageTransitions(playerVehicle);
+            
+            // After movement, re-trigger stage processing for crossroads
+            // (ProcessPlayerMovement handles the choice UI)
+            if (playerController != null)
+            {
+                playerController.ProcessPlayerMovement();
+            }
+            
             RefreshAllPanels();
         }
         

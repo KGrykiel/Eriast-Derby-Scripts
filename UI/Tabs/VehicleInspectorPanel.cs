@@ -300,34 +300,10 @@ public class VehicleInspectorPanel : MonoBehaviour
         // Speed
         if (vehicleSpeedValueText != null)
         {
-            var speedDisplay = vehicleSpeedValueText.GetComponent<StatValueDisplay>();
             var drive = selectedVehicle.GetDriveComponent();
-            
-            if (speedDisplay != null)
-            {
-                if (drive != null)
-                {
-                    float baseSpeed = drive.GetCurrentSpeed();
-                    
-                    speedDisplay.UpdateDisplay(
-                        drive,
-                        Attribute.Speed,
-                        baseSpeed,
-                        baseSpeed,
-                        $"{baseSpeed:F1}"
-                    );
-                }
-                else
-                {
-                    // No drive component - show 0 with no modifiers (resets color to white)
-                    speedDisplay.UpdateDisplaySimple(0, 0, "0");
-                }
-            }
-            else
-            {
-                float speed = drive?.GetCurrentSpeed() ?? 0f;
-                vehicleSpeedValueText.text = $"{speed:F1}";
-            }
+
+            float speed = drive?.GetCurrentSpeed() ?? 0f;
+            vehicleSpeedValueText.text = $"{speed:F1}";
         }
         
         // AC

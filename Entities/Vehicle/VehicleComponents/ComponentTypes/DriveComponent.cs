@@ -85,7 +85,7 @@ public class DriveComponent : VehicleComponent
     public float GetBaseFriction() => friction;
     
     // Modified value accessors (return values with all modifiers applied via StatCalculator)
-    public float GetMaxSpeed() => StatCalculator.GatherAttributeValue(this, Attribute.Speed, baseMaxSpeed);
+    public float GetMaxSpeed() => StatCalculator.GatherAttributeValue(this, Attribute.MaxSpeed, baseMaxSpeed);
     public float GetAcceleration() => StatCalculator.GatherAttributeValue(this, Attribute.Acceleration, baseAcceleration);
     public float GetStability() => StatCalculator.GatherAttributeValue(this, Attribute.Stability, baseStability);
     public float GetFriction() => StatCalculator.GatherAttributeValue(this, Attribute.BaseFriction, friction);
@@ -248,7 +248,7 @@ public class DriveComponent : VehicleComponent
         float modifiedFriction = GetFriction();
         
         // Core drive stats
-        stats.Add(VehicleComponentUI.DisplayStat.WithTooltip("Max Speed", "MSPD", Attribute.Speed, baseMaxSpeed, modifiedSpeed));
+        stats.Add(VehicleComponentUI.DisplayStat.WithTooltip("Max Speed", "MSPD", Attribute.MaxSpeed, baseMaxSpeed, modifiedSpeed));
         stats.Add(VehicleComponentUI.DisplayStat.WithTooltip("Acceleration", "ACCEL", Attribute.Acceleration, baseAcceleration, modifiedAccel));
         stats.Add(VehicleComponentUI.DisplayStat.WithTooltip("Stability", "STAB", Attribute.Stability, baseStability, modifiedStab));
         

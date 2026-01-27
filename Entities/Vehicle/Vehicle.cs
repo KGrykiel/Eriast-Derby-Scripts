@@ -178,7 +178,7 @@ public class Vehicle : MonoBehaviour
             Attribute.DragCoefficient => chassis,
             Attribute.MaxEnergy => powerCore,
             Attribute.EnergyRegen => powerCore,
-            Attribute.Speed => optionalComponents.OfType<DriveComponent>().FirstOrDefault(),
+            Attribute.MaxSpeed => optionalComponents.OfType<DriveComponent>().FirstOrDefault(),
             Attribute.Acceleration => optionalComponents.OfType<DriveComponent>().FirstOrDefault(),
             Attribute.Stability => optionalComponents.OfType<DriveComponent>().FirstOrDefault(),
             Attribute.BaseFriction => optionalComponents.OfType<DriveComponent>().FirstOrDefault(),
