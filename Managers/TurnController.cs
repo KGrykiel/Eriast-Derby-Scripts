@@ -92,22 +92,22 @@ public class TurnController : MonoBehaviour
         // 6. Reset seat turn states
         vehicle.ResetComponentsForNewTurn();
 
-        // 7. Status effects at turn end
+        // 7. Status effects at turn start
         vehicle.UpdateStatusEffects();
     }
     
     /// <summary>
-    /// Accelerate vehicle at start of turn.
-    /// TODO: This will be replaced with player UI control and AI decision making.
-    /// For now, everyone just goes full throttle to test the system.
+    /// Adjust vehicle speed toward target at start of turn.
+    /// Player/AI sets targetSpeed during action phase, this applies the change.
+    /// Speed changes gradually based on acceleration/deceleration limits.
     /// </summary>
     private void AccelerateVehicle(Vehicle vehicle)
     {
         var drive = vehicle.GetDriveComponent();
         if (drive == null || drive.isDestroyed || !drive.isPowered) return;
         
-        // For testing: everyone accelerates as fast as possible
-        drive.FullThrottle();
+        // Move currentSpeed toward targetSpeed (respects acceleration limits)
+        drive.AdjustSpeedTowardTarget();
     }
     
     /// <summary>

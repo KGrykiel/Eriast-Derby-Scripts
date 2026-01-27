@@ -11,6 +11,7 @@ public enum Attribute
     
     // Drive stats
     Acceleration,
+    Deceleration,
     Stability,
     
     // Physics stats

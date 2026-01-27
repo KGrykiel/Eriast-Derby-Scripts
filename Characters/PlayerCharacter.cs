@@ -6,7 +6,7 @@ using UnityEngine;
 /// TODO: Expand this when character classes and progression are designed.
 /// This is intentionally minimal to allow maximum flexibility for future design.
 /// </summary>
-[CreateAssetMenu(fileName = "New Character", menuName = "Racing Game/Player Character")]
+[CreateAssetMenu(fileName = "New Character", menuName = "Racing/Player Character")]
 public class PlayerCharacter : ScriptableObject
 {
     [Header("Character Identity")]

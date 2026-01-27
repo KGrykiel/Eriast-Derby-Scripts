@@ -17,17 +17,29 @@ public class DriveComponent : VehicleComponent
     private float baseMaxSpeed = 10f;
     
     [SerializeField]
-    [Tooltip("Acceleration rate (how fast speed changes per turn) (base value before modifiers)")]
+    [Tooltip("Maximum speed increase per turn (base value before modifiers)")]
     private float baseAcceleration = 1f;
+    
+    [SerializeField]
+    [Tooltip("Maximum speed decrease per turn when braking (base value before modifiers)")]
+    private float baseDeceleration = 2f;
     
     [SerializeField]
     [Tooltip("Stability - resistance to terrain effects and bumps (base value before modifiers)")]
     private float baseStability = 5f;
     
     [Header("Speed Management")]
-    [Tooltip("Current actual speed (can be below maxSpeed)")]
+    [Tooltip("Current actual speed in units/turn")]
     [ReadOnly]
     public float currentSpeed = 0f;
+    
+    [Tooltip("Target speed as proportion of maxSpeed (0.0 = stopped, 1.0 = full speed). Set by Driver during action phase.")]
+    [Range(0f, 1.0f)]
+    [ReadOnly]
+    public float targetSpeed = 0f;
+    
+    // Cached maxSpeed to detect changes from buffs/debuffs
+    private float lastKnownMaxSpeed;
     
     [Header("Mechanical Properties")]
     [SerializeField]
@@ -56,6 +68,7 @@ public class DriveComponent : VehicleComponent
         // Set drive-specific stats (already have defaults in field declarations)
         // baseMaxSpeed = 10f;
         // baseAcceleration = 1f;
+        // baseDeceleration = 2f;
         // baseStability = 5f;
         
         // Drive ENABLES the "Driver" role
@@ -72,6 +85,8 @@ public class DriveComponent : VehicleComponent
         
         // Initialize speed to 0 (vehicle starts stationary)
         currentSpeed = 0f;
+        targetSpeed = 0f;
+        lastKnownMaxSpeed = baseMaxSpeed;
     }
     
     // ==================== STAT ACCESSORS ====================
@@ -81,12 +96,14 @@ public class DriveComponent : VehicleComponent
     // Base value accessors (return raw field values without modifiers)
     public float GetBaseMaxSpeed() => baseMaxSpeed;
     public float GetBaseAcceleration() => baseAcceleration;
+    public float GetBaseDeceleration() => baseDeceleration;
     public float GetBaseStability() => baseStability;
     public float GetBaseFriction() => friction;
     
     // Modified value accessors (return values with all modifiers applied via StatCalculator)
     public float GetMaxSpeed() => StatCalculator.GatherAttributeValue(this, Attribute.MaxSpeed, baseMaxSpeed);
     public float GetAcceleration() => StatCalculator.GatherAttributeValue(this, Attribute.Acceleration, baseAcceleration);
+    public float GetDeceleration() => StatCalculator.GatherAttributeValue(this, Attribute.Deceleration, baseDeceleration);
     public float GetStability() => StatCalculator.GatherAttributeValue(this, Attribute.Stability, baseStability);
     public float GetFriction() => StatCalculator.GatherAttributeValue(this, Attribute.BaseFriction, friction);
     
@@ -172,32 +189,27 @@ public class DriveComponent : VehicleComponent
     // ==================== ACCELERATION SYSTEM ====================
     
     /// <summary>
-    /// Accelerate the vehicle. Called by Driver during turn.
-    /// Speed changes affect NEXT turn's power cost.
+    /// Increase speed by specified amount (clamped to acceleration limit and maxSpeed).
     /// </summary>
-    public void Accelerate(float amount)
+    public void IncreaseSpeed(float speedIncrease)
     {
-        if (isDestroyed) return;
-        
-        // Can't accelerate if unpowered (but can coast/decelerate)
-        if (!isPowered && amount > 0) return;
+        if (isDestroyed || !isPowered) return;
         
         float modifiedAccel = GetAcceleration();
         float modifiedMaxSpeed = GetMaxSpeed();
         
+        // Clamp speed increase to acceleration limit
+        float actualIncrease = Mathf.Min(speedIncrease, modifiedAccel);
+        
         float oldSpeed = currentSpeed;
-        currentSpeed = Mathf.Clamp(
-            currentSpeed + (amount * modifiedAccel), 
-            0f, 
-            modifiedMaxSpeed
-        );
+        currentSpeed = Mathf.Min(currentSpeed + actualIncrease, modifiedMaxSpeed);
         
         if (Mathf.Abs(currentSpeed - oldSpeed) > 0.01f && parentVehicle != null)
         {
             RaceHistory.Log(
                 Assets.Scripts.Logging.EventType.Movement,
                 EventImportance.Low,
-                $"{parentVehicle.vehicleName} speed changed: {oldSpeed:F1} → {currentSpeed:F1}",
+                $"{parentVehicle.vehicleName} accelerated: {oldSpeed:F1} → {currentSpeed:F1}",
                 parentVehicle.currentStage,
                 parentVehicle
             ).WithMetadata("oldSpeed", oldSpeed)
@@ -207,29 +219,119 @@ public class DriveComponent : VehicleComponent
     }
     
     /// <summary>
-    /// Decelerate the vehicle (braking, friction, etc.)
+    /// Decrease speed by specified amount (clamped to deceleration limit and zero).
     /// </summary>
-    public void Decelerate(float amount)
+    public void DecreaseSpeed(float speedDecrease)
     {
-        Accelerate(-amount);  // Negative acceleration
+        if (isDestroyed) return;
+        
+        float modifiedDecel = GetDeceleration();
+        
+        // Clamp speed decrease to deceleration limit
+        float actualDecrease = Mathf.Min(speedDecrease, modifiedDecel);
+        
+        float oldSpeed = currentSpeed;
+        currentSpeed = Mathf.Max(currentSpeed - actualDecrease, 0f);
+        
+        if (Mathf.Abs(currentSpeed - oldSpeed) > 0.01f && parentVehicle != null)
+        {
+            RaceHistory.Log(
+                Assets.Scripts.Logging.EventType.Movement,
+                EventImportance.Low,
+                $"{parentVehicle.vehicleName} decelerated: {oldSpeed:F1} → {currentSpeed:F1}",
+                parentVehicle.currentStage,
+                parentVehicle
+            ).WithMetadata("oldSpeed", oldSpeed)
+             .WithMetadata("newSpeed", currentSpeed);
+        }
     }
     
     /// <summary>
-    /// Accelerate at full rate for one turn.
-    /// Speed increases by acceleration value each turn until maxSpeed is reached.
+    /// Adjusts current speed toward target speed, respecting acceleration/deceleration limits.
+    /// Called at start of turn to apply player/AI speed intentions.
+    /// Target speed is proportional (0-1), converted to absolute based on current maxSpeed.
+    /// Also auto-scales currentSpeed when maxSpeed changes due to buffs/debuffs.
     /// </summary>
-    public void FullThrottle()
+    public void AdjustSpeedTowardTarget()
     {
-        Accelerate(1f);  // 1 = accelerate at full rate (adds 'acceleration' to speed)
+        if (isDestroyed || !isPowered) return;
+        
+        float currentMaxSpeed = GetMaxSpeed();
+
+        // Auto-scale currentSpeed if maxSpeed changed (buffs/debuffs applied between turns)
+        // This ensures speed modifiers affect all vehicles equally regardless of acceleration
+        // == I am not a big fan of this solution, but I couldn't find a better way to implement it. ==
+        if (lastKnownMaxSpeed > 0.01f && Mathf.Abs(currentMaxSpeed - lastKnownMaxSpeed) > 0.1f)
+        {
+            float oldSpeed = currentSpeed;
+            currentSpeed = currentSpeed * (currentMaxSpeed / lastKnownMaxSpeed);
+            currentSpeed = Mathf.Clamp(currentSpeed, 0f, currentMaxSpeed);
+            
+            if (parentVehicle != null && Mathf.Abs(currentSpeed - oldSpeed) > 0.01f)
+            {
+                RaceHistory.Log(
+                    Assets.Scripts.Logging.EventType.Modifier,
+                    EventImportance.Low,
+                    $"{parentVehicle.vehicleName}'s speed scaled: {oldSpeed:F1} → {currentSpeed:F1} (maxSpeed: {lastKnownMaxSpeed:F1} → {currentMaxSpeed:F1})",
+                    parentVehicle.currentStage,
+                    parentVehicle
+                ).WithMetadata("oldSpeed", oldSpeed)
+                 .WithMetadata("newSpeed", currentSpeed)
+                 .WithMetadata("oldMaxSpeed", lastKnownMaxSpeed)
+                 .WithMetadata("newMaxSpeed", currentMaxSpeed);
+            }
+        }
+        lastKnownMaxSpeed = currentMaxSpeed;
+        
+        // Now do normal acceleration/deceleration toward target
+        float targetSpeedAbsolute = targetSpeed * currentMaxSpeed;
+        float speedDiff = targetSpeedAbsolute - currentSpeed;
+        
+        if (Mathf.Abs(speedDiff) < 0.01f)
+            return; // Already at target
+        
+        if (speedDiff > 0)
+        {
+            // Accelerating toward target
+            IncreaseSpeed(speedDiff); // Will be clamped to acceleration limit
+        }
+        else
+        {
+            // Decelerating toward target
+            DecreaseSpeed(-speedDiff); // Will be clamped to deceleration limit
+        }
     }
     
     /// <summary>
-    /// Brake at full rate for one turn.
-    /// Speed decreases by acceleration value each turn until stopped.
+    /// Set target speed as a proportion of maxSpeed (0.0-1.0).
+    /// Called via CustomEffect skills during action phase.
+    /// 0.0 = stop, 0.5 = cruise at half speed, 1.0 = full speed.
+    /// Automatically adapts to maxSpeed changes (buffs/debuffs).
     /// </summary>
-    public void Brake()
+    public void SetTargetSpeed(float proportionalSpeed)
     {
-        Decelerate(1f);  // 1 = decelerate at full rate (subtracts 'acceleration' from speed)
+        if (isDestroyed) return;
+        
+        float oldTarget = targetSpeed;
+        targetSpeed = Mathf.Clamp01(proportionalSpeed); // Clamp to 0-1 range
+        
+        if (Mathf.Abs(targetSpeed - oldTarget) > 0.01f && parentVehicle != null)
+        {
+            float maxSpeed = GetMaxSpeed();
+            float targetAbsolute = targetSpeed * maxSpeed;
+            
+            RaceHistory.Log(
+                Assets.Scripts.Logging.EventType.Movement,
+                EventImportance.Low,
+                $"{parentVehicle.vehicleName} set target speed: {oldTarget * 100:F0}% → {targetSpeed * 100:F0}% ({targetAbsolute:F1} units/turn)",
+                parentVehicle.currentStage,
+                parentVehicle
+            ).WithMetadata("oldTargetPercent", oldTarget)
+             .WithMetadata("newTargetPercent", targetSpeed)
+             .WithMetadata("targetAbsolute", targetAbsolute)
+             .WithMetadata("currentSpeed", currentSpeed)
+             .WithMetadata("maxSpeed", maxSpeed);
+        }
     }
     
     
@@ -244,16 +346,22 @@ public class DriveComponent : VehicleComponent
         // Get modified values using accessor methods
         float modifiedSpeed = GetMaxSpeed();
         float modifiedAccel = GetAcceleration();
+        float modifiedDecel = GetDeceleration();
         float modifiedStab = GetStability();
         float modifiedFriction = GetFriction();
         
         // Core drive stats
         stats.Add(VehicleComponentUI.DisplayStat.WithTooltip("Max Speed", "MSPD", Attribute.MaxSpeed, baseMaxSpeed, modifiedSpeed));
         stats.Add(VehicleComponentUI.DisplayStat.WithTooltip("Acceleration", "ACCEL", Attribute.Acceleration, baseAcceleration, modifiedAccel));
+        stats.Add(VehicleComponentUI.DisplayStat.WithTooltip("Deceleration", "DECEL", Attribute.Deceleration, baseDeceleration, modifiedDecel));
         stats.Add(VehicleComponentUI.DisplayStat.WithTooltip("Stability", "STAB", Attribute.Stability, baseStability, modifiedStab));
         
         // Current runtime speed (always show - players should always know their current speed)
         stats.Add(VehicleComponentUI.DisplayStat.Simple("Current Speed", "CUR", currentSpeed));
+        
+        // Target speed (show as percentage and absolute)
+        float targetAbsolute = targetSpeed * modifiedSpeed;
+        stats.Add(VehicleComponentUI.DisplayStat.Simple("Target Speed", "TGT", $"{targetSpeed * 100:F0}% ({targetAbsolute:F1})"));
         
         // Physics properties
         stats.Add(VehicleComponentUI.DisplayStat.WithTooltip("Friction", "FRIC", Attribute.BaseFriction, friction, modifiedFriction));

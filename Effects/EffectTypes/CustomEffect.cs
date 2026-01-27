@@ -1,8 +1,8 @@
 using System;
 using UnityEngine;
-using UnityEngine.Events;
 using Assets.Scripts.Logging;
 using Assets.Scripts.Effects;
+using Assets.Scripts.Effects.EffectTypes.CustomEffectCommands;
 
 [Serializable]
 public class CustomEffect : EffectBase
@@ -10,16 +10,17 @@ public class CustomEffect : EffectBase
     [Tooltip("Name/description of this custom effect for logging purposes")]
     public string effectName = "Custom Effect";
     
-    // This UnityEvent can be set up in the Inspector to call any method with these parameters.
-    public UnityEvent<Entity, Entity> specialEvent;
+    [Tooltip("Command to execute (ScriptableObject reference - works in prefabs!)")]
+    public EffectCommand command;
 
     public override void Apply(Entity user, Entity target, EffectContext context, UnityEngine.Object source = null)
     {
-        if (specialEvent != null)
+        // Prefer command pattern (works with prefabs)
+        if (command != null)
         {
-            specialEvent.Invoke(user, target);
+            command.Execute(user, target, context, source);
 
-            // Log custom effect invocation
+            // Log command execution
             Vehicle vehicle = GetParentVehicle(target);
             string targetName = GetEntityDisplayName(target);
             string userName = GetEntityDisplayName(user);
@@ -28,14 +29,15 @@ public class CustomEffect : EffectBase
             RaceHistory.Log(
                 Assets.Scripts.Logging.EventType.SkillUse,
                 EventImportance.Debug,
-                $"[CUSTOM] {effectName} triggered by {userName} on {targetName} from {sourceText}",
+                $"[CUSTOM] {effectName} executed {command.name} by {userName} from {sourceText}",
                 vehicle?.currentStage,
                 vehicle
             ).WithMetadata("effectName", effectName)
+             .WithMetadata("commandName", command.name)
              .WithMetadata("userName", userName)
              .WithMetadata("targetName", targetName)
-             .WithMetadata("source", sourceText)
-             .WithMetadata("listenerCount", specialEvent.GetPersistentEventCount());
+             .WithMetadata("source", sourceText);
         }
     }
 }
+
