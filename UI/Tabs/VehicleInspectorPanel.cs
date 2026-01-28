@@ -487,10 +487,10 @@ public class VehicleInspectorPanel : MonoBehaviour
         if (disabledIcon != null)
         {
             // Show disabled icon if:
-            // - Manually disabled (isDisabled = true), OR
+            // - Manually disabled (isManuallyDisabled = true), OR
             // - Cannot act due to status effects (stunned, etc.)
             // But not if destroyed (destroyed icon takes priority)
-            bool showDisabled = !component.isDestroyed && !component.CanAct();
+            bool showDisabled = !component.IsOperational;
             disabledIcon.gameObject.SetActive(showDisabled);
         }
         

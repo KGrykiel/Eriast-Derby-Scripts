@@ -37,11 +37,6 @@ public abstract class VehicleComponent : Entity
     [Tooltip("Power drawn per turn (0 = passive component, no continuous draw) (base value before modifiers)")]
     protected int basePowerDrawPerTurn = 0;
     
-    [Header("Power Draw State")]
-    [ReadOnly]
-    [Tooltip("Is this component currently enabled? (Can be toggled by Technician)")]
-    public bool isPowered = true;  // Default to ON
-    
     [Header("Provided Modifiers")]
     [Tooltip("Modifiers this component provides to OTHER components. Used for cross-component bonuses like armor upgrades, boosters, etc.")]
     public List<ComponentModifierData> providedModifiers = new();
@@ -58,8 +53,8 @@ public abstract class VehicleComponent : Entity
     public float internalAccessThreshold = 0.5f;
     
     [Header("Component State")]
-    [Tooltip("Is this component disabled? (Engineer can disable/enable)")]
-    public bool isDisabled = false;
+    [Tooltip("Has the engineer manually disabled this component? (Does not draw power, cannot use skills, does not provide bonuses)")]
+    public bool isManuallyDisabled = false;
     
     [Header("Role Support")]
     [Tooltip("Type of role this component enables. Set to None if component doesn't enable a role.")]
@@ -118,7 +113,7 @@ public abstract class VehicleComponent : Entity
     /// </summary>
     public virtual void ApplyProvidedModifiers(global::Vehicle vehicle)
     {
-        if (isDestroyed || isDisabled) return;
+        if (!IsOperational) return;
         if (vehicle == null) return;
         
         foreach (var modData in providedModifiers)
@@ -282,31 +277,35 @@ public abstract class VehicleComponent : Entity
     // ==================== BEHAVIORAL QUERIES ====================
     
     /// <summary>
-    /// Can this component perform actions? (checks for stun/disable effects + component state)
-    /// Checks both this component's status effects AND the vehicle's chassis (where vehicle-wide stuns are applied).
+    /// Is this component operational? (Can function, provide skills, draw power, provide bonuses)
+    /// Checks: not destroyed, not manually disabled, not incapacitated by status effects.
+    /// Status effects are checked both on this component and on the chassis (vehicle-wide effects).
     /// </summary>
-    public virtual bool CanAct()
+    public virtual bool IsOperational
     {
-        if (isDestroyed || isDisabled) return false;
-        
-        // Check this component's own status effects
-        foreach (var statusEffect in activeStatusEffects)
+        get
         {
-            if (statusEffect.PreventsActions)
-                return false;
-        }
-        
-        // Also check chassis status effects (vehicle-wide stuns are applied to chassis)
-        if (parentVehicle?.chassis != null && parentVehicle.chassis != this)
-        {
-            foreach (var statusEffect in parentVehicle.chassis.GetActiveStatusEffects())
+            if (isDestroyed || isManuallyDisabled) return false;
+            
+            // Check this component's own status effects
+            foreach (var statusEffect in activeStatusEffects)
             {
                 if (statusEffect.PreventsActions)
                     return false;
             }
+            
+            // Also check chassis status effects (vehicle-wide stuns are applied to chassis)
+            if (parentVehicle?.chassis != null && parentVehicle.chassis != this)
+            {
+                foreach (var statusEffect in parentVehicle.chassis.GetActiveStatusEffects())
+                {
+                    if (statusEffect.PreventsActions)
+                        return false;
+                }
+            }
+            
+            return true;
         }
-        
-        return true;
     }
     
     /// <summary>
@@ -316,7 +315,7 @@ public abstract class VehicleComponent : Entity
     /// </summary>
     public virtual bool CanContributeToMovement()
     {
-        if (isDestroyed || isDisabled) return false;
+        if (!IsOperational) return false;
         
         // Check this component's own status effects
         foreach (var statusEffect in activeStatusEffects)
@@ -348,7 +347,7 @@ public abstract class VehicleComponent : Entity
     protected override void OnEntityDestroyed()
     {
         // Log destruction
-        string vehicleName = parentVehicle?.vehicleName ?? "Unknown";
+        string vehicleName = parentVehicle != null ? parentVehicle.vehicleName : null ?? "Unknown";
         RaceHistory.Log(
             EventType.Combat,
             EventImportance.High,
@@ -397,26 +396,6 @@ public abstract class VehicleComponent : Entity
         ApplyProvidedModifiers(parentVehicle);
     }
     
-    /// <summary>
-    /// Set the disabled state of this component.
-    /// Handles modifier application/removal automatically.
-    /// </summary>
-    public void SetDisabled(bool disabled)
-    {
-        if (isDisabled == disabled) return;
-        
-        isDisabled = disabled;
-        
-        if (disabled)
-        {
-            OnComponentDisabled();
-        }
-        else
-        {
-            OnComponentEnabled();
-        }
-    }
-    
     // ==================== SKILL MANAGEMENT ====================
     
     /// <summary>
@@ -438,12 +417,12 @@ public abstract class VehicleComponent : Entity
     
     /// <summary>
     /// Can this component currently provide skills?
-    /// (Not destroyed, not disabled)
+    /// Checks if component is operational (not destroyed, not manually disabled, not incapacitated).
     /// Note: Character assignment is now checked via VehicleSeat.
     /// </summary>
     public virtual bool CanProvideSkills()
     {
-        return !isDestroyed && !isDisabled;
+        return IsOperational;
     }
     
     // ==================== UI HELPERS ====================
@@ -477,8 +456,8 @@ public abstract class VehicleComponent : Entity
     /// </summary>
     public virtual bool DrawTurnPower()
     {
-        // Skip if disabled or destroyed
-        if (!isPowered || isDestroyed) return true;
+        // Skip if not operational (destroyed, manually disabled, or incapacitated)
+        if (!IsOperational) return true;
         
         // Skip if no power core
         var powerCore = parentVehicle?.powerCore;
@@ -506,7 +485,7 @@ public abstract class VehicleComponent : Entity
     /// </summary>
     public virtual int GetActualPowerDraw()
     {
-        if (!isPowered || isDestroyed) return 0;
+        if (!IsOperational) return 0;
         
         // Use accessor which applies modifiers via StatCalculator
         return GetPowerDrawPerTurn();
@@ -534,32 +513,45 @@ public abstract class VehicleComponent : Entity
     }
     
     /// <summary>
-    /// Toggle component power state. Only allowed for certain component types.
-    /// Returns false if toggling not allowed.
+    /// Set the engineer's manual disable state for this component.
+    /// When disabled: no power draw, no skills, no bonuses.
+    /// Returns false if operation not allowed (destroyed, or trying to disable mandatory components).
     /// </summary>
-    public virtual bool TogglePower(bool enabled)
+    public virtual bool SetManuallyDisabled(bool disabled)
     {
-        // Cannot power destroyed components
+        // Cannot modify destroyed components
         if (isDestroyed) return false;
         
         // Cannot disable mandatory components (Chassis, PowerCore)
-        if (componentType == ComponentType.Chassis || componentType == ComponentType.PowerCore)
+        if (disabled && (componentType == ComponentType.Chassis || componentType == ComponentType.PowerCore))
             return false;
         
-        bool oldState = isPowered;
-        isPowered = enabled;
+        bool oldState = isManuallyDisabled;
+        isManuallyDisabled = disabled;
         
-        if (oldState != isPowered && parentVehicle != null)
+        if (oldState != isManuallyDisabled)
         {
-            string state = isPowered ? "enabled" : "disabled";
-            RaceHistory.Log(
-                EventType.Resource,
-                EventImportance.Low,
-                $"{parentVehicle.vehicleName}: {name} {state}",
-                parentVehicle.currentStage,
-                parentVehicle
-            ).WithMetadata("component", name)
-             .WithMetadata("powered", isPowered);
+            if (disabled)
+            {
+                OnComponentDisabled();
+            }
+            else
+            {
+                OnComponentEnabled();
+            }
+            
+            if (parentVehicle != null)
+            {
+                string state = disabled ? "disabled" : "enabled";
+                RaceHistory.Log(
+                    EventType.Resource,
+                    EventImportance.Low,
+                    $"{parentVehicle.vehicleName}: {name} {state} by engineer",
+                    parentVehicle.currentStage,
+                    parentVehicle
+                ).WithMetadata("component", name)
+                 .WithMetadata("manuallyDisabled", isManuallyDisabled);
+            }
         }
         
         return true;

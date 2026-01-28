@@ -121,7 +121,7 @@ public class DriveComponent : VehicleComponent
     /// </summary>
     public override int GetActualPowerDraw()
     {
-        if (!isPowered || isDestroyed) return 0;
+        if (!IsOperational) return 0;
         
         // Get friction with modifiers (mechanical from drive)
         float modifiedFriction = GetFriction();
@@ -193,7 +193,7 @@ public class DriveComponent : VehicleComponent
     /// </summary>
     public void IncreaseSpeed(float speedIncrease)
     {
-        if (isDestroyed || !isPowered) return;
+        if (!IsOperational) return;
         
         float modifiedAccel = GetAcceleration();
         float modifiedMaxSpeed = GetMaxSpeed();
@@ -254,7 +254,7 @@ public class DriveComponent : VehicleComponent
     /// </summary>
     public void AdjustSpeedTowardTarget()
     {
-        if (isDestroyed || !isPowered) return;
+        if (!IsOperational) return;
         
         float currentMaxSpeed = GetMaxSpeed();
 

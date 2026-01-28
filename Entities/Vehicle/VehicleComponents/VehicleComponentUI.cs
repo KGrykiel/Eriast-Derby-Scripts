@@ -149,8 +149,10 @@ public static class VehicleComponentUI
         
         if (component.isDestroyed)
             status += "<color=red>[DESTROYED]</color>\n";
-        else if (component.isDisabled)
-            status += "<color=yellow>[DISABLED]</color>\n";
+        else if (component.isManuallyDisabled)
+            status += "<color=yellow>[MANUALLY DISABLED]</color>\n";
+        else if (!component.IsOperational)
+            status += "<color=orange>[INCAPACITATED]</color>\n";
         
         if (component.roleType != RoleType.None)
             status += $"Enables: {component.roleType}\n";

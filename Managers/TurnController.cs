@@ -107,7 +107,7 @@ public class TurnController : MonoBehaviour
         var drive = vehicle.GetDriveComponent();
         if (drive == null) return;
         
-        if (drive.isDestroyed || !drive.isPowered)
+        if (!drive.IsOperational)
         {
             // Unpowered drive: vehicle coasts to a stop via friction
             drive.ApplyFriction();
@@ -150,7 +150,7 @@ public class TurnController : MonoBehaviour
         
         foreach (var component in vehicle.AllComponents)
         {
-            if (component == null || component.isDestroyed || !component.isPowered) continue;
+            if (component == null || !component.IsOperational) continue;
             
             int powerCost = component.GetActualPowerDraw();
             if (powerCost <= 0) continue;
@@ -160,7 +160,7 @@ public class TurnController : MonoBehaviour
             if (!success)
             {
                 OnComponentPowerShutdown?.Invoke(vehicle, component, powerCost, vehicle.powerCore.currentEnergy);
-                component.isPowered = false;
+                component.SetManuallyDisabled(true);
             }
         }
     }

@@ -144,7 +144,7 @@ public class Vehicle : MonoBehaviour
         // Apply modifiers from all active (non-destroyed, non-disabled) providers
         foreach (var provider in AllComponents)
         {
-            if (!provider.isDestroyed && !provider.isDisabled)
+            if (provider.IsOperational)
             {
                 provider.ApplyProvidedModifiers(this);
             }
@@ -338,7 +338,7 @@ public class Vehicle : MonoBehaviour
         var driveComponent = GetDriveComponent();
         if (driveComponent == null) return "No drive system installed";
         if (driveComponent.isDestroyed) return "Drive system destroyed";
-        if (driveComponent.isDisabled) return "Drive system disabled";
+        if (driveComponent.isManuallyDisabled) return "Drive system manually disabled by engineer";
         if (!driveComponent.CanContributeToMovement()) return "Drive system immobilized by status effect";
         
         return null;

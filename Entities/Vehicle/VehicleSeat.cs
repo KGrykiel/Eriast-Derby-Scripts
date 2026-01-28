@@ -58,7 +58,7 @@ namespace Assets.Scripts.Entities.Vehicle
 
             foreach (var component in controlledComponents)
             {
-                if (component != null && !component.isDestroyed && !component.isDisabled)
+                if (component != null && component.IsOperational)
                 {
                     roles |= component.roleType;
                 }
@@ -103,7 +103,7 @@ namespace Assets.Scripts.Entities.Vehicle
         /// </summary>
         public IEnumerable<VehicleComponent> GetOperationalComponents()
         {
-            return controlledComponents.Where(c => c != null && !c.isDestroyed && !c.isDisabled);
+            return controlledComponents.Where(c => c != null && c.IsOperational);
         }
 
         // ==================== ACTION AVAILABILITY ====================
