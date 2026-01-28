@@ -20,37 +20,37 @@ namespace Assets.Scripts.Combat.SkillChecks
         public SkillCheckType checkType;
         
         /// <summary>The actual d20 result (1-20)</summary>
-        public int baseRoll { get; set; }
+        public int BaseRoll { get; set; }
         
         /// <summary>Size of die rolled (always 20)</summary>
-        public int dieSize { get; set; } = 20;
+        public int DieSize { get; set; } = 20;
         
         /// <summary>Number of dice (always 1)</summary>
-        public int diceCount { get; set; } = 1;
+        public int DiceCount { get; set; } = 1;
         
         /// <summary>All bonuses and penalties applied to the check</summary>
-        public List<AttributeModifier> modifiers { get; set; }
+        public List<AttributeModifier> Modifiers { get; set; }
         
         /// <summary>DC to beat</summary>
-        public int targetValue { get; set; }
+        public int TargetValue { get; set; }
         
         /// <summary>Whether the check succeeded (null if not yet evaluated)</summary>
-        public bool? success { get; set; }
+        public bool? Success { get; set; }
         
         /// <summary>Total roll after all modifiers (baseRoll + sum of modifiers)</summary>
-        public int Total => baseRoll + TotalModifier;
+        public int Total => BaseRoll + TotalModifier;
         
         /// <summary>Sum of all modifiers (excluding base roll)</summary>
-        public int TotalModifier => modifiers?.Sum(m => (int)m.Value) ?? 0;
+        public int TotalModifier => Modifiers?.Sum(m => (int)m.Value) ?? 0;
         
         /// <summary>Convenience property - true if the check succeeded</summary>
-        public bool Succeeded => success == true;
+        public bool Succeeded => Success == true;
         
         public SkillCheckResult()
         {
-            modifiers = new List<AttributeModifier>();
-            dieSize = 20;
-            diceCount = 1;
+            Modifiers = new List<AttributeModifier>();
+            DieSize = 20;
+            DiceCount = 1;
         }
         
         /// <summary>
@@ -60,11 +60,11 @@ namespace Assets.Scripts.Combat.SkillChecks
         {
             return new SkillCheckResult
             {
-                baseRoll = baseRoll,
-                dieSize = 20,
-                diceCount = 1,
+                BaseRoll = baseRoll,
+                DieSize = 20,
+                DiceCount = 1,
                 checkType = checkType,
-                modifiers = new List<AttributeModifier>()
+                Modifiers = new List<AttributeModifier>()
             };
         }
     }

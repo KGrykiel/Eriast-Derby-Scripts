@@ -117,7 +117,7 @@ namespace Assets.Scripts.Combat
         public bool HasRestoration => Events.Any(e => e is RestorationEvent);
         
         /// <summary>Get the source name for logging</summary>
-        public string SourceName => Source?.name ?? "Unknown";
+        public string SourceName => Source != null ? Source.name : null ?? "Unknown";
         
         /// <summary>Get the actor's vehicle (if applicable)</summary>
         public Vehicle ActorVehicle => EntityHelpers.GetParentVehicle(Actor);

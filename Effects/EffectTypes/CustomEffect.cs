@@ -36,7 +36,7 @@ public class CustomEffect : EffectBase
                 Assets.Scripts.Logging.EventType.SkillUse,
                 EventImportance.Debug,
                 $"[CUSTOM] {effectName} executed {command.name} by {userName} from {sourceText}",
-                vehicle?.currentStage,
+                vehicle != null ? vehicle.currentStage : null,
                 vehicle
             ).WithMetadata("effectName", effectName)
              .WithMetadata("commandName", command.name)

@@ -55,12 +55,12 @@ namespace Assets.Scripts.Combat
             string modStr = result.TotalModifier >= 0 
                 ? $"+{result.TotalModifier}" 
                 : $"{result.TotalModifier}";
-            string output = $"{result.Total} (d{result.dieSize}: {result.baseRoll}{modStr})";
+            string output = $"{result.Total} (d{result.DieSize}: {result.BaseRoll}{modStr})";
             
-            if (result.targetValue > 0 && result.success.HasValue)
+            if (result.TargetValue > 0 && result.Success.HasValue)
             {
-                output += $" vs AC {result.targetValue}";
-                output += result.success.Value ? " - HIT" : " - MISS";
+                output += $" vs AC {result.TargetValue}";
+                output += result.Success.Value ? " - HIT" : " - MISS";
             }
             
             return output;
@@ -75,13 +75,14 @@ namespace Assets.Scripts.Combat
             
             var sb = new StringBuilder();
             sb.AppendLine("Attack Roll Breakdown:");
-            sb.AppendLine($"  Base d{result.dieSize}: {result.baseRoll}");
+            sb.AppendLine($"  Base d{result.DieSize}: {result.BaseRoll}");
             
-            foreach (var mod in result.modifiers)
+            foreach (var mod in result.Modifiers)
             {
                 string sign = mod.Value >= 0 ? "+" : "";
-                string sourceInfo = mod.Source?.name != mod.SourceDisplayName 
-                    ? $" ({mod.Source?.name})" 
+                string sourceName = mod.Source != null ? mod.Source.name : mod.SourceDisplayName;
+                string sourceInfo = !string.IsNullOrEmpty(sourceName) 
+                    ? $" ({sourceName})" 
                     : "";
                 sb.AppendLine($"  {mod.SourceDisplayName}: {sign}{(int)mod.Value}{sourceInfo}");
             }
@@ -89,12 +90,12 @@ namespace Assets.Scripts.Combat
             sb.AppendLine("  ─────────────");
             sb.AppendLine($"  Total: {result.Total}");
             
-            if (result.targetValue > 0)
+            if (result.TargetValue > 0)
             {
-                sb.AppendLine($"  vs AC: {result.targetValue}");
-                if (result.success.HasValue)
+                sb.AppendLine($"  vs AC: {result.TargetValue}");
+                if (result.Success.HasValue)
                 {
-                    sb.AppendLine($"  Result: {(result.success.Value ? "HIT" : "MISS")}");
+                    sb.AppendLine($"  Result: {(result.Success.Value ? "HIT" : "MISS")}");
                 }
             }
             
@@ -112,11 +113,11 @@ namespace Assets.Scripts.Combat
             string modStr = result.TotalModifier >= 0 
                 ? $"+{result.TotalModifier}" 
                 : $"{result.TotalModifier}";
-            string output = $"{result.Total} (d{result.dieSize}: {result.baseRoll}{modStr})";
+            string output = $"{result.Total} (d{result.DieSize}: {result.BaseRoll}{modStr})";
             
-            if (result.targetValue > 0 && result.success.HasValue)
+            if (result.TargetValue > 0 && result.Success.HasValue)
             {
-                output += $" vs DC {result.targetValue}";
+                output += $" vs DC {result.TargetValue}";
                 output += result.Succeeded ? " - SAVED" : " - FAILED";
             }
             
@@ -132,13 +133,14 @@ namespace Assets.Scripts.Combat
             
             var sb = new StringBuilder();
             sb.AppendLine($"{result.saveType} Save:");
-            sb.AppendLine($"  Base d{result.dieSize}: {result.baseRoll}");
+            sb.AppendLine($"  Base d{result.DieSize}: {result.BaseRoll}");
             
-            foreach (var mod in result.modifiers)
+            foreach (var mod in result.Modifiers)
             {
                 string sign = mod.Value >= 0 ? "+" : "";
-                string sourceInfo = mod.Source?.name != mod.SourceDisplayName 
-                    ? $" ({mod.Source?.name})" 
+                string sourceName = mod.Source != null ? mod.Source.name : mod.SourceDisplayName;
+                string sourceInfo = !string.IsNullOrEmpty(sourceName) 
+                    ? $" ({sourceName})" 
                     : "";
                 sb.AppendLine($"  {mod.SourceDisplayName}: {sign}{(int)mod.Value}{sourceInfo}");
             }
@@ -146,10 +148,10 @@ namespace Assets.Scripts.Combat
             sb.AppendLine("  ─────────────");
             sb.AppendLine($"  Total: {result.Total}");
             
-            if (result.targetValue > 0)
+            if (result.TargetValue > 0)
             {
-                sb.AppendLine($"  vs DC: {result.targetValue}");
-                if (result.success.HasValue)
+                sb.AppendLine($"  vs DC: {result.TargetValue}");
+                if (result.Success.HasValue)
                 {
                     string resultText = result.Succeeded ? "SAVED (resisted)" : "FAILED (affected)";
                     sb.AppendLine($"  Result: {resultText}");
@@ -170,11 +172,11 @@ namespace Assets.Scripts.Combat
             string modStr = result.TotalModifier >= 0 
                 ? $"+{result.TotalModifier}" 
                 : $"{result.TotalModifier}";
-            string output = $"{result.Total} (d{result.dieSize}: {result.baseRoll}{modStr})";
+            string output = $"{result.Total} (d{result.DieSize}: {result.BaseRoll}{modStr})";
             
-            if (result.targetValue > 0 && result.success.HasValue)
+            if (result.TargetValue > 0 && result.Success.HasValue)
             {
-                output += $" vs DC {result.targetValue}";
+                output += $" vs DC {result.TargetValue}";
                 output += result.Succeeded ? " - SUCCESS" : " - FAILURE";
             }
             
@@ -190,13 +192,14 @@ namespace Assets.Scripts.Combat
             
             var sb = new StringBuilder();
             sb.AppendLine($"{result.checkType} Check:");
-            sb.AppendLine($"  Base d{result.dieSize}: {result.baseRoll}");
+            sb.AppendLine($"  Base d{result.DieSize}: {result.BaseRoll}");
             
-            foreach (var mod in result.modifiers)
+            foreach (var mod in result.Modifiers)
             {
                 string sign = mod.Value >= 0 ? "+" : "";
-                string sourceInfo = mod.Source?.name != mod.SourceDisplayName 
-                    ? $" ({mod.Source?.name})" 
+                string sourceName = mod.Source != null ? mod.Source.name : mod.SourceDisplayName;
+                string sourceInfo = !string.IsNullOrEmpty(sourceName) 
+                    ? $" ({sourceName})" 
                     : "";
                 sb.AppendLine($"  {mod.SourceDisplayName}: {sign}{(int)mod.Value}{sourceInfo}");
             }
@@ -204,10 +207,10 @@ namespace Assets.Scripts.Combat
             sb.AppendLine("  ─────────────");
             sb.AppendLine($"  Total: {result.Total}");
             
-            if (result.targetValue > 0)
+            if (result.TargetValue > 0)
             {
-                sb.AppendLine($"  vs DC: {result.targetValue}");
-                if (result.success.HasValue)
+                sb.AppendLine($"  vs DC: {result.TargetValue}");
+                if (result.Success.HasValue)
                 {
                     string resultText = result.Succeeded ? "SUCCESS" : "FAILURE";
                     sb.AppendLine($"  Result: {resultText}");
@@ -774,7 +777,7 @@ namespace Assets.Scripts.Combat
             // Format source and target with component names and vehicle context
             string sourceName = FormatEntityWithVehicle(evt.Source, attackerVehicle);
             string targetName = FormatEntityWithVehicle(evt.Target, targetVehicle);
-            string skillName = action?.SourceName ?? evt.CausalSource?.name ?? "attack";
+            string skillName = action?.SourceName ?? (evt.CausalSource != null ? evt.CausalSource.name : "attack");
             
             string resultText = evt.IsHit 
                 ? $"<color={Colors.Success}>Hit</color>" 
@@ -789,7 +792,7 @@ namespace Assets.Scripts.Combat
                 EventType.Combat,
                 importance,
                 message,
-                targetVehicle?.currentStage,
+                targetVehicle != null ? targetVehicle.currentStage : null,
                 attackerVehicle, targetVehicle
             );
             
@@ -830,7 +833,7 @@ namespace Assets.Scripts.Combat
             Vehicle targetVehicle = EntityHelpers.GetParentVehicle(evt.Target);
             
             string targetName = FormatEntityWithVehicle(evt.Target, targetVehicle);
-            string skillName = action?.SourceName ?? evt.CausalSource?.name ?? "effect";
+            string skillName = action?.SourceName ?? (evt.CausalSource != null ? evt.CausalSource.name : "effect");
             string saveTypeName = evt.Result?.saveType.ToString() ?? "Mobility";
             
             string resultText = evt.Succeeded 
@@ -847,7 +850,7 @@ namespace Assets.Scripts.Combat
                 EventType.Combat,
                 importance,
                 message,
-                targetVehicle?.currentStage,
+                targetVehicle != null ? targetVehicle.currentStage : null,
                 sourceVehicle, targetVehicle
             );
             
@@ -859,7 +862,7 @@ namespace Assets.Scripts.Combat
             // Add DC breakdown for tooltip
             if (evt.Result != null && evt.CausalSource is Skill skill)
             {
-                logEvt.WithMetadata("dcBreakdown", FormatDCDetailed(evt.Result.targetValue, skill.name, evt.Result.saveType));
+                logEvt.WithMetadata("dcBreakdown", FormatDCDetailed(evt.Result.TargetValue, skill.name, evt.Result.saveType));
             }
             
             // Add target's save modifier breakdown
@@ -884,7 +887,7 @@ namespace Assets.Scripts.Combat
             Vehicle sourceVehicle = EntityHelpers.GetParentVehicle(evt.Source);
             
             string sourceName = FormatEntityWithVehicle(evt.Source, sourceVehicle);
-            string skillName = action?.SourceName ?? evt.CausalSource?.name ?? "task";
+            string skillName = action?.SourceName ?? (evt.CausalSource != null ? evt.CausalSource.name : "task");
             string checkTypeName = evt.Result?.checkType.ToString() ?? "Mobility";
             
             string resultText = evt.Succeeded 
@@ -901,7 +904,7 @@ namespace Assets.Scripts.Combat
                 EventType.Combat,
                 importance,
                 message,
-                sourceVehicle?.currentStage,
+                sourceVehicle != null ? sourceVehicle.currentStage : null,
                 sourceVehicle, null
             );
             
@@ -913,7 +916,7 @@ namespace Assets.Scripts.Combat
             // Add DC breakdown for tooltip
             if (evt.Result != null && evt.CausalSource is Skill skill)
             {
-                logEvt.WithMetadata("dcBreakdown", $"{checkTypeName} Check DC: {evt.Result.targetValue} ({skill.name})");
+                logEvt.WithMetadata("dcBreakdown", $"{checkTypeName} Check DC: {evt.Result.TargetValue} ({skill.name})");
             }
         }
         
@@ -957,7 +960,7 @@ namespace Assets.Scripts.Combat
                 EventType.Combat,
                 EventImportance.High,
                 message,
-                targetVehicle?.currentStage ?? attackerVehicle?.currentStage,
+                targetVehicle != null ? targetVehicle.currentStage : (attackerVehicle != null ? attackerVehicle.currentStage : null),
                 attackerVehicle, targetVehicle
             );
             
@@ -986,7 +989,7 @@ namespace Assets.Scripts.Combat
             Vehicle targetVehicle = EntityHelpers.GetParentVehicle(evt.Target);
             
             string targetName = FormatEntityWithVehicle(evt.Target, targetVehicle);
-            string causalSourceName = evt.CausalSource?.name ?? "Unknown";
+            string causalSourceName = evt.CausalSource != null ? evt.CausalSource.name : null ?? "Unknown";
             
             int damage = evt.Result.finalDamage;
             string damageType = evt.Result.damageType.ToString();
@@ -1007,14 +1010,14 @@ namespace Assets.Scripts.Combat
                     : $"{sourceName} deals <color={Colors.Damage}>{damage}</color> {damageType} damage to {targetName}";
             }
             
-            bool playerInvolved = (attackerVehicle?.controlType == ControlType.Player) ||
-                                  (targetVehicle?.controlType == ControlType.Player);
+            bool playerInvolved = (attackerVehicle != null && attackerVehicle.controlType == ControlType.Player) ||
+                                  (targetVehicle != null && targetVehicle.controlType == ControlType.Player);
             
             var logEvt = RaceHistory.Log(
                 EventType.Combat,
                 playerInvolved ? EventImportance.High : EventImportance.Medium,
                 message,
-                targetVehicle?.currentStage,
+                targetVehicle != null ? targetVehicle.currentStage : null,
                 attackerVehicle, targetVehicle
             );
             
@@ -1057,7 +1060,7 @@ namespace Assets.Scripts.Combat
             if (evt.Source == null)
             {
                 // No source (environmental, etc.)
-                string causalName = evt.CausalSource?.name ?? action?.SourceName ?? "Unknown";
+                string causalName = evt.CausalSource != null ? evt.CausalSource.name : null ?? action?.SourceName ?? "Unknown";
                 message = $"{targetName} gains <color={color}>{effect.effectName}</color> from {causalName} ({durationText})";
             }
             else if (isSelfTarget)
@@ -1072,8 +1075,8 @@ namespace Assets.Scripts.Combat
                 message = $"{sourceName} {actionVerb} <color={color}>{effect.effectName}</color> on {targetName} ({durationText})";
             }
             
-            bool playerInvolved = (sourceVehicle?.controlType == ControlType.Player) ||
-                                  (targetVehicle?.controlType == ControlType.Player);
+            bool playerInvolved = (sourceVehicle != null && sourceVehicle.controlType == ControlType.Player) ||
+                                  (targetVehicle != null && targetVehicle.controlType == ControlType.Player);
             EventImportance importance;
             if (playerInvolved && !isBuff)
                 importance = EventImportance.High;
@@ -1086,7 +1089,7 @@ namespace Assets.Scripts.Combat
                 EventType.StatusEffect,
                 importance,
                 message,
-                targetVehicle?.currentStage,
+                targetVehicle != null ? targetVehicle.currentStage : null,
                 sourceVehicle, targetVehicle
             );
             
@@ -1107,7 +1110,7 @@ namespace Assets.Scripts.Combat
                 EventType.StatusEffect,
                 EventImportance.Low,
                 $"{targetName}'s {evt.Expired.template.effectName} has expired",
-                targetVehicle?.currentStage,
+                targetVehicle != null ? targetVehicle.currentStage : null,
                 null, targetVehicle
             );
             
@@ -1175,15 +1178,15 @@ namespace Assets.Scripts.Combat
                 ? $"{targetName} {restorationText}"
                 : $"{sourceName} {restorationText} to {targetName}";
             
-            bool playerInvolved = (sourceVehicle?.controlType == ControlType.Player) ||
-                                  (targetVehicle?.controlType == ControlType.Player);
+            bool playerInvolved = (sourceVehicle != null && sourceVehicle.controlType == ControlType.Player) ||
+                                  (targetVehicle != null && targetVehicle.controlType == ControlType.Player);
             EventImportance importance = playerInvolved ? EventImportance.Medium : EventImportance.Low;
             
             var logEvt = RaceHistory.Log(
                 EventType.Resource,
                 importance,
                 message,
-                targetVehicle?.currentStage,
+                targetVehicle != null ? targetVehicle.currentStage : null,
                 sourceVehicle, targetVehicle
             );
             
@@ -1205,13 +1208,13 @@ namespace Assets.Scripts.Combat
             
             string message = $"{targetName} {action_verb} <color={color}>{absChange}</color> {resourceName}";
             
-            bool playerInvolved = (targetVehicle?.controlType == ControlType.Player);
+            bool playerInvolved = targetVehicle != null && targetVehicle.controlType == ControlType.Player;
             
             var logEvt = RaceHistory.Log(
                 EventType.Resource,
                 playerInvolved ? EventImportance.Medium : EventImportance.Low,
                 message,
-                targetVehicle?.currentStage,
+                targetVehicle != null ? targetVehicle.currentStage : null,
                 sourceVehicle, targetVehicle
             );
             
@@ -1229,7 +1232,7 @@ namespace Assets.Scripts.Combat
         private static string FormatEntityWithVehicle(Entity entity, Vehicle parentVehicle = null)
         {
             parentVehicle ??= EntityHelpers.GetParentVehicle(entity);
-            string vehicleName = parentVehicle?.vehicleName ?? "Unknown";
+            string vehicleName = parentVehicle != null ? parentVehicle.vehicleName : null ?? "Unknown";
             
             if (entity is VehicleComponent component)
             {

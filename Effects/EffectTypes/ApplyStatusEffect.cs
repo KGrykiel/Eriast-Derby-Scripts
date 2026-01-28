@@ -56,19 +56,5 @@ public class ApplyStatusEffect : EffectBase
         // - LOGGING (automatic)
         target.ApplyStatusEffect(statusEffect, source != null ? source : user);
     }
-    
-    /// <summary>
-    /// Get description for UI/logging.
-    /// </summary>
-    public string GetDescription()
-    {
-        if (statusEffect == null) return "No effect";
-        
-        string duration = statusEffect.baseDuration < 0 
-            ? "indefinite" 
-            : $"{statusEffect.baseDuration} turns";
-        
-        return $"Apply {statusEffect.effectName} ({duration})";
-    }
 }
 

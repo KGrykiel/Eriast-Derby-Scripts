@@ -1,7 +1,4 @@
-﻿using UnityEngine;
-using System.Collections.Generic;
-
-/// <summary>
+﻿/// <summary>
 /// Custom component - a flexible component for user-defined purposes.
 /// Can be configured to provide modifiers to other components, enable any role, and use any component type.
 /// Use this for components that don't fit the standard categories.

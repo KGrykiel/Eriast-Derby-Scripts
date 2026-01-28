@@ -241,7 +241,7 @@ namespace Assets.Scripts.Managers.Logging
                 $"{vehicle.vehicleName} entered {newStage.stageName}",
                 newStage,
                 vehicle
-            ).WithMetadata("previousStage", previousStage?.stageName ?? "None")
+            ).WithMetadata("previousStage", previousStage != null ? previousStage.stageName : null ?? "None")
              .WithMetadata("carriedProgress", carriedProgress)
              .WithMetadata("isPlayerChoice", isPlayerChoice);
         }

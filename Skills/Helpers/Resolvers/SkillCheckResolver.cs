@@ -23,7 +23,7 @@ namespace Assets.Scripts.Skills.Helpers.Resolvers
             Skill skill = ctx.Skill;
             
             // Use source component or source vehicle's chassis for the check
-            Entity checkingEntity = ctx.SourceEntity != null ? ctx.SourceEntity : ctx.SourceVehicle?.chassis;
+            Entity checkingEntity = ctx.SourceEntity != null ? ctx.SourceEntity : ctx.SourceVehicle != null ? ctx.SourceVehicle.chassis : null;
             
             // Perform the skill check
             int dc = skill.checkDC;

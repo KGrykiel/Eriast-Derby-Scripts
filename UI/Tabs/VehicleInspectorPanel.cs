@@ -5,7 +5,6 @@ using System.Collections.Generic;
 using System.Linq;
 using Assets.Scripts.Logging;
 using Assets.Scripts.UI.Components;
-using Assets.Scripts.Core;
 
 /// <summary>
 /// Inspector panel for detailed vehicle examination.
@@ -441,7 +440,7 @@ public class VehicleInspectorPanel : MonoBehaviour
         }
         
         // Rebuild parent content container
-        Transform content = componentListContainer?.parent;
+        Transform content = componentListContainer != null ? componentListContainer.parent : null;
         while (content != null)
         {
             var contentSizeFitter = content.GetComponent<ContentSizeFitter>();
@@ -782,7 +781,7 @@ public class VehicleInspectorPanel : MonoBehaviour
                 }
                 
                 // Character name
-                string characterName = seat.assignedCharacter?.characterName ?? "<color=#FF6666>Unassigned</color>";
+                string characterName = seat.assignedCharacter != null ? seat.assignedCharacter.characterName : null ?? "<color=#FF6666>Unassigned</color>";
                 
                 // Roles enabled by this seat
                 RoleType roles = seat.GetEnabledRoles();

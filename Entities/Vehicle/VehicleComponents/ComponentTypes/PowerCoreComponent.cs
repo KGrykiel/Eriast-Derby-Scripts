@@ -215,10 +215,11 @@ namespace Assets.Scripts.Entities.Vehicle.VehicleComponents.ComponentTypes
             // Log power draw (debug level)
             if (parentVehicle != null)
             {
+                string requesterName = requester != null ? requester.name : "Unknown";
                 RaceHistory.Log(
                     Logging.EventType.Resource,
                     EventImportance.Debug,
-                    $"{parentVehicle.vehicleName}: {requester?.name ?? "Unknown"} drew {amount} power ({reason})",
+                    $"{parentVehicle.vehicleName}: {requesterName} drew {amount} power ({reason})",
                     parentVehicle.currentStage,
                     parentVehicle
                 ).WithMetadata("powerDrawn", amount)

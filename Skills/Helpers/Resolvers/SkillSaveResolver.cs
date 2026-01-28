@@ -47,7 +47,7 @@ namespace Assets.Scripts.Skills.Helpers.Resolvers
             
             // Perform the saving throw (SaveCalculator handles DC calculation)
             // Use source vehicle's chassis for DC calculation if available
-            Entity dcSource = sourceComponent != null ? sourceComponent : ctx.SourceVehicle?.chassis;
+            Entity dcSource = sourceComponent != null ? sourceComponent : ctx.SourceVehicle != null ? ctx.SourceVehicle.chassis : null;
             SaveResult saveRoll = SaveCalculator.PerformSavingThrow(
                 savingEntity, 
                 skill, 
@@ -79,7 +79,7 @@ namespace Assets.Scripts.Skills.Helpers.Resolvers
             VehicleComponent targetComponent,
             Skill skill)
         {
-            string targetComponentName = targetComponent?.name;
+            string targetComponentName = targetComponent != null ? targetComponent.name : null;
             
             CombatEventBus.EmitSavingThrow(
                 saveRoll,

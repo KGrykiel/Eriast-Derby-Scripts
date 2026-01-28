@@ -52,7 +52,7 @@ public class ResourceRestorationEffect : EffectBase
         
         // Store context for breakdown
         breakdown.resourceType = resourceType;
-        breakdown.source = source?.name ?? "unknown";
+        breakdown.source = source != null ? source.name : null ?? "unknown";
         
         // Emit event for logging (CombatEventBus handles aggregation)
         if (breakdown.actualChange != 0)

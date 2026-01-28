@@ -167,11 +167,11 @@ public class EventFeed : MonoBehaviour
         {
             return evt.importance switch
             {
-                EventImportance.Critical => criticalToggle?.isOn ?? true,
-                EventImportance.High => highToggle?.isOn ?? true,
-                EventImportance.Medium => mediumToggle?.isOn ?? true,
-                EventImportance.Low => lowToggle?.isOn ?? false,
-                EventImportance.Debug => debugToggle?.isOn ?? false,
+                EventImportance.Critical => criticalToggle == null || criticalToggle.isOn,
+                EventImportance.High => highToggle == null || highToggle.isOn,
+                EventImportance.Medium => mediumToggle == null || mediumToggle.isOn,
+                EventImportance.Low => lowToggle != null && lowToggle.isOn,
+                EventImportance.Debug => debugToggle != null && debugToggle.isOn,
                 _ => false
             };
         }).ToList();

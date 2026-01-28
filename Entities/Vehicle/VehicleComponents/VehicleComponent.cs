@@ -232,13 +232,13 @@ public abstract class VehicleComponent : Entity
         base.RemoveModifier(modifier);
         
         // Log removal (for debugging/tracking)
-        string vehicleName = parentVehicle?.vehicleName ?? "Unknown";
+        string vehicleName = parentVehicle != null ? parentVehicle.vehicleName : null ?? "Unknown";
         
         RaceHistory.Log(
             EventType.Modifier,
             EventImportance.Debug,
             $"{vehicleName}'s {name} lost {modifier.Type} {modifier.Attribute} {modifier.Value:+0;-0} modifier",
-            parentVehicle?.currentStage,
+            parentVehicle != null ? parentVehicle.currentStage : null,
             parentVehicle
         ).WithMetadata("component", name)
          .WithMetadata("modifierType", modifier.Type.ToString())
@@ -295,7 +295,7 @@ public abstract class VehicleComponent : Entity
             }
             
             // Also check chassis status effects (vehicle-wide stuns are applied to chassis)
-            if (parentVehicle?.chassis != null && parentVehicle.chassis != this)
+            if (parentVehicle != null ? parentVehicle.chassis : null != null && parentVehicle.chassis != this)
             {
                 foreach (var statusEffect in parentVehicle.chassis.GetActiveStatusEffects())
                 {
@@ -326,7 +326,7 @@ public abstract class VehicleComponent : Entity
         }
         
         // Also check chassis status effects (vehicle-wide immobilization)
-        if (parentVehicle?.chassis != null && parentVehicle.chassis != this)
+        if (parentVehicle != null ? parentVehicle.chassis : null != null && parentVehicle.chassis != this)
         {
             foreach (var statusEffect in parentVehicle.chassis.GetActiveStatusEffects())
             {
@@ -347,12 +347,12 @@ public abstract class VehicleComponent : Entity
     protected override void OnEntityDestroyed()
     {
         // Log destruction
-        string vehicleName = parentVehicle != null ? parentVehicle.vehicleName : null ?? "Unknown";
+        string vehicleName = parentVehicle != null ? parentVehicle.vehicleName : "Unknown";
         RaceHistory.Log(
             EventType.Combat,
             EventImportance.High,
             $"[DESTROYED] {vehicleName}'s {name} was destroyed!",
-            parentVehicle?.currentStage,
+            parentVehicle != null ? parentVehicle.currentStage : null,
             parentVehicle
         ).WithMetadata("componentName", name)
          .WithMetadata("componentType", componentType.ToString());
@@ -460,7 +460,7 @@ public abstract class VehicleComponent : Entity
         if (!IsOperational) return true;
         
         // Skip if no power core
-        var powerCore = parentVehicle?.powerCore;
+        var powerCore = parentVehicle != null ? parentVehicle.powerCore : null;
         if (powerCore == null) return true;
         
         // Calculate actual power draw (may be modified by status effects)
@@ -498,11 +498,12 @@ public abstract class VehicleComponent : Entity
     /// </summary>
     protected virtual void OnPowerStarved()
     {
+        string vehicleName = parentVehicle != null ? parentVehicle.vehicleName : "Unknown";
         RaceHistory.Log(
             EventType.Resource,
             EventImportance.Medium,
-            $"{parentVehicle?.vehicleName}: {name} shut down due to insufficient power",
-            parentVehicle?.currentStage,
+            $"{vehicleName}: {name} shut down due to insufficient power",
+            parentVehicle != null ? parentVehicle.currentStage : null,
             parentVehicle
         ).WithMetadata("component", name)
          .WithMetadata("requiredPower", GetActualPowerDraw())

@@ -179,7 +179,9 @@ public class RollTooltip : MonoBehaviour
         float scaleFactor = parentCanvas != null ? parentCanvas.scaleFactor : 1f;
         Vector2 scaledTooltipSize = tooltipSize * scaleFactor;
         
-        Camera cam = parentCanvas?.renderMode == RenderMode.ScreenSpaceOverlay ? null : parentCanvas?.worldCamera;
+        Camera cam = (parentCanvas != null && parentCanvas.renderMode == RenderMode.ScreenSpaceOverlay) 
+            ? null 
+            : (parentCanvas != null ? parentCanvas.worldCamera : null);
         
         // Get target element bounds in screen space
         Vector2 targetCenter;

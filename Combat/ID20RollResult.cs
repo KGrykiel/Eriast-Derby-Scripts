@@ -9,22 +9,22 @@ namespace Assets.Scripts.Combat
     public interface ID20RollResult
     {
         /// <summary>The actual d20 result (1-20)</summary>
-        int baseRoll { get; set; }
+        int BaseRoll { get; set; }
         
         /// <summary>Size of die rolled (always 20 for d20 rolls)</summary>
-        int dieSize { get; set; }
+        int DieSize { get; set; }
         
         /// <summary>Number of dice (always 1 for standard d20 rolls)</summary>
-        int diceCount { get; set; }
+        int DiceCount { get; set; }
         
         /// <summary>All bonuses and penalties applied to the roll</summary>
-        List<AttributeModifier> modifiers { get; set; }
+        List<AttributeModifier> Modifiers { get; set; }
         
         /// <summary>Target number to beat (AC, DC, etc.)</summary>
-        int targetValue { get; set; }
+        int TargetValue { get; set; }
         
         /// <summary>Whether the roll succeeded (null if not yet evaluated)</summary>
-        bool? success { get; set; }
+        bool? Success { get; set; }
         
         /// <summary>Total roll after all modifiers (baseRoll + sum of modifiers)</summary>
         int Total { get; }

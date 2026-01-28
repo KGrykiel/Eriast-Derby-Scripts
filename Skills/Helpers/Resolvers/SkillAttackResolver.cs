@@ -75,13 +75,13 @@ namespace Assets.Scripts.Skills.Helpers.Resolvers
             // Emit event
             EmitAttackEvent(attackRoll, sourceComponent, targetEntity, ctx.TargetComponent, skill, isChassisFallback: false);
             
-            if (attackRoll.success != true)
+            if (attackRoll.Success != true)
             {
                 return false;
             }
             
             // Hit - apply effects with crit state
-            SkillEffectApplicator.ApplyAllEffects(ctx.WithCriticalHit(attackRoll.isCriticalHit));
+            SkillEffectApplicator.ApplyAllEffects(ctx.WithCriticalHit(attackRoll.IsCriticalHit));
             return true;
         }
         
@@ -106,11 +106,11 @@ namespace Assets.Scripts.Skills.Helpers.Resolvers
                 character: character,
                 additionalPenalty: 0);
 
-            if (componentRoll.success == true)
+            if (componentRoll.Success == true)
             {
                 // Component hit - emit event and apply effects to component
                 EmitAttackEvent(componentRoll, sourceComponent, targetComponent, targetComponent, skill, isChassisFallback: false);
-                SkillEffectApplicator.ApplyAllEffects(ctx.WithCriticalHit(componentRoll.isCriticalHit));
+                SkillEffectApplicator.ApplyAllEffects(ctx.WithCriticalHit(componentRoll.IsCriticalHit));
                 return true;
             }
 
@@ -127,11 +127,11 @@ namespace Assets.Scripts.Skills.Helpers.Resolvers
                 character: character,
                 additionalPenalty: skill.componentTargetingPenalty);
 
-            if (chassisRoll.success == true)
+            if (chassisRoll.Success == true)
             {
                 // Chassis hit - retarget context to chassis
                 EmitAttackEvent(chassisRoll, sourceComponent, chassisFallback, targetComponent, skill, isChassisFallback: true);
-                SkillEffectApplicator.ApplyAllEffects(ctx.WithTarget(chassisFallback).WithCriticalHit(chassisRoll.isCriticalHit));
+                SkillEffectApplicator.ApplyAllEffects(ctx.WithTarget(chassisFallback).WithCriticalHit(chassisRoll.IsCriticalHit));
                 return true;
             }
 
@@ -161,7 +161,7 @@ namespace Assets.Scripts.Skills.Helpers.Resolvers
                 attackerEntity,
                 targetEntity,
                 skill,
-                isHit: attackRoll.success == true,
+                isHit: attackRoll.Success == true,
                 targetCompName,
                 isChassisFallback);
         }

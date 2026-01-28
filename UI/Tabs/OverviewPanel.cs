@@ -90,8 +90,8 @@ public class OverviewPanel : MonoBehaviour
             display += $"{posIcon} {name}\n";
 
             // Location
-            string stageName = vehicle.currentStage?.stageName ?? "Unknown";
-            float stageLength = vehicle.currentStage?.length ?? 0;
+            string stageName = vehicle.currentStage != null ? vehicle.currentStage.stageName : "Unknown";
+            float stageLength = vehicle.currentStage != null ? vehicle.currentStage.length : 0;
             display += $"   {stageName} ({vehicle.progress:F1}/{stageLength:F0}m)";
 
             // Distance to finish

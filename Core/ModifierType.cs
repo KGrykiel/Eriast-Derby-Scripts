@@ -78,7 +78,7 @@ public class AttributeModifier
     /// <summary>
     /// Display name for UI (shows source name or "Unknown")
     /// </summary>
-    public string SourceDisplayName => Source?.name ?? "Unknown";
+    public string SourceDisplayName => Source != null ? Source.name : null ?? "Unknown";
     
     /// <summary>
     /// Is this modifier dispellable? (Status effects are, equipment is not)

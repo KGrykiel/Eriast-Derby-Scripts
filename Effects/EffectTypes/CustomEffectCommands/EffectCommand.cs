@@ -1,5 +1,4 @@
 ﻿using UnityEngine;
-using Assets.Scripts.Effects;
 
 namespace Assets.Scripts.Effects.EffectTypes.CustomEffectCommands
 {

@@ -56,7 +56,7 @@ namespace Assets.Scripts.Managers.PlayerUI
                     else
                         statusIcon = "[ ]";  // Ready to act
                     
-                    string characterName = seat.assignedCharacter?.characterName ?? "Unassigned";
+                    string characterName = seat.assignedCharacter != null ? seat.assignedCharacter.characterName : null ?? "Unassigned";
                     string tabText = $"{statusIcon} {seat.seatName} ({characterName})";
                     
                     seatTabButtons[i].GetComponentInChildren<TextMeshProUGUI>().text = tabText;
@@ -82,7 +82,7 @@ namespace Assets.Scripts.Managers.PlayerUI
         {
             if (ui.currentRoleText == null || currentSeat == null) return;
             
-            string characterName = currentSeat.assignedCharacter?.characterName ?? "Unassigned";
+            string characterName = currentSeat.assignedCharacter != null ? currentSeat.assignedCharacter.characterName : null ?? "Unassigned";
             string status = currentSeat.HasActedThisTurn() ? "- ACTED" : "- Ready";
             ui.currentRoleText.text = $"<b>{currentSeat.seatName}</b> ({characterName}) {status}";
         }
@@ -151,7 +151,7 @@ namespace Assets.Scripts.Managers.PlayerUI
                     }
                     
                     // Disable if not enough energy OR seat has already acted
-                    int currentEnergy = playerVehicle.powerCore?.currentEnergy ?? 0;
+                    int currentEnergy = playerVehicle.powerCore != null ? playerVehicle.powerCore.currentEnergy : 0;
                     bool canAfford = currentEnergy >= skill.energyCost;
                     bool canUse = canAfford && !seatHasActed;
                     skillButtons[i].interactable = canUse;

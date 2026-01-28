@@ -160,7 +160,7 @@ public class DriveComponent : VehicleComponent
         
         // Get chassis drag coefficient with modifiers (aerodynamics of vehicle body)
         float vehicleDrag = 0.1f; // Default fallback
-        if (parentVehicle?.chassis != null)
+        if (parentVehicle != null ? parentVehicle.chassis : null != null)
         {
             vehicleDrag = parentVehicle.chassis.GetDragCoefficient();
         }

@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
-using Assets.Scripts.Combat.SkillChecks;
 
 namespace Assets.Scripts.Entities.Vehicle
 {

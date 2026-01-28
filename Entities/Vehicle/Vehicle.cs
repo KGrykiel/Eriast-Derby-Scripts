@@ -1,14 +1,11 @@
 ﻿using UnityEngine;
-using TMPro;
 using System.Collections.Generic;
 using System.Linq;
 using EventType = Assets.Scripts.Logging.EventType;
 using Assets.Scripts.Logging;
 using Assets.Scripts.Entities.Vehicle.VehicleComponents.ComponentTypes;
 using Assets.Scripts.Entities.Vehicle;
-using Assets.Scripts.Core;
 using Assets.Scripts.Combat.Saves;
-using Assets.Scripts.Managers;
 using SkillContext = Assets.Scripts.Skills.Helpers.SkillContext;
 
 /// <summary>

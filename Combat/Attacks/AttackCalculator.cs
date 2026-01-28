@@ -1,5 +1,4 @@
 ﻿using System.Collections.Generic;
-using Assets.Scripts.Core;
 
 namespace Assets.Scripts.Combat.Attacks
 {
@@ -55,18 +54,18 @@ namespace Assets.Scripts.Combat.Attacks
 
             // Get target's defense value
             int defenseValue = target.GetArmorClass();
-            result.targetValue = defenseValue;
+            result.TargetValue = defenseValue;
             
             // Evaluate: Critical hit (natural 20) auto-hits, critical miss (natural 1) auto-misses
             if (IsNatural20(result))
             {
-                result.success = true;
-                result.isCriticalHit = true;
+                result.Success = true;
+                result.IsCriticalHit = true;
             }
             else if (IsNatural1(result))
             {
-                result.success = false;
-                result.isCriticalMiss = true;
+                result.Success = false;
+                result.IsCriticalMiss = true;
             }
             else
             {
@@ -163,7 +162,7 @@ namespace Assets.Scripts.Combat.Attacks
             // Use explicit character if provided, otherwise look up from seat
             PlayerCharacter character = explicitCharacter;
             
-            if (character == null && sourceComponent?.ParentVehicle != null)
+            if (character == null && sourceComponent != null ? sourceComponent.ParentVehicle : null != null)
             {
                 // Fallback: Get character from seat that controls this component
                 var seat = sourceComponent.ParentVehicle.GetSeatForComponent(sourceComponent);
@@ -200,14 +199,14 @@ namespace Assets.Scripts.Combat.Attacks
         /// </summary>
         public static bool IsCriticalThreat(AttackResult result, int criticalRange = 20)
         {
-            return result.baseRoll >= criticalRange;
+            return result.BaseRoll >= criticalRange;
         }
         
         private static void AddPenalty(AttackResult result, int penalty, string reason)
         {
             if (penalty != 0)
             {
-                result.modifiers.Add(new AttributeModifier(
+                result.Modifiers.Add(new AttributeModifier(
                     Attribute.AttackBonus,
                     ModifierType.Flat,
                     -penalty,

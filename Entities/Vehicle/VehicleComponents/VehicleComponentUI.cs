@@ -158,8 +158,8 @@ public static class VehicleComponentUI
             status += $"Enables: {component.roleType}\n";
         
         // Get character from seat that controls this component
-        var seat = component.ParentVehicle?.GetSeatForComponent(component);
-        if (seat?.assignedCharacter != null)
+        var seat = component.ParentVehicle != null ? component.ParentVehicle.GetSeatForComponent(component) : null;
+        if (seat != null && seat.assignedCharacter != null)
             status += $"Operated by: {seat.assignedCharacter.characterName}\n";
         
         if (component.componentSkills != null && component.componentSkills.Count > 0)

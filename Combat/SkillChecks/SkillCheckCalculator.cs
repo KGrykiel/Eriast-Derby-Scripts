@@ -147,7 +147,7 @@ namespace Assets.Scripts.Combat.SkillChecks
             else if (entity is VehicleComponent component)
             {
                 Vehicle parentVehicle = EntityHelpers.GetParentVehicle(component);
-                return parentVehicle?.chassis;
+                return parentVehicle != null ? parentVehicle.chassis : null;
             }
             return null;
         }

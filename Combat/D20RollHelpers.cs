@@ -26,7 +26,7 @@ namespace Assets.Scripts.Combat
             {
                 if (mod.Value != 0)
                 {
-                    result.modifiers.Add(mod);
+                    result.Modifiers.Add(mod);
                 }
             }
         }
@@ -66,8 +66,8 @@ namespace Assets.Scripts.Combat
         /// </summary>
         public static void EvaluateAgainstTarget(ID20RollResult result, int targetValue)
         {
-            result.targetValue = targetValue;
-            result.success = result.Total >= targetValue;
+            result.TargetValue = targetValue;
+            result.Success = result.Total >= targetValue;
         }
         
         // ==================== SPECIAL ROLLS ====================
@@ -75,12 +75,12 @@ namespace Assets.Scripts.Combat
         /// <summary>
         /// Check if this is a natural 20 (critical success potential).
         /// </summary>
-        public static bool IsNatural20(ID20RollResult result) => result.baseRoll == 20;
+        public static bool IsNatural20(ID20RollResult result) => result.BaseRoll == 20;
         
         /// <summary>
         /// Check if this is a natural 1 (critical failure potential).
         /// </summary>
-        public static bool IsNatural1(ID20RollResult result) => result.baseRoll == 1;
+        public static bool IsNatural1(ID20RollResult result) => result.BaseRoll == 1;
     }
 }
 
