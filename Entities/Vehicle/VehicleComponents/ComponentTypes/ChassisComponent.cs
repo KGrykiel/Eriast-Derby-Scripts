@@ -73,12 +73,6 @@ public class ChassisComponent : VehicleComponent
     public int GetMobility() => StatCalculator.GatherAttributeValue(this, Attribute.Mobility, baseMobility);
     public int GetDragCoefficientPercent() => StatCalculator.GatherAttributeValue(this, Attribute.DragCoefficient, baseDragCoefficientPercent);
     
-    /// <summary>
-    /// Get drag coefficient as actual ratio (for physics calculations).
-    /// Converts percentage to decimal: 10 -> 0.10
-    /// </summary>
-    public float GetDragCoefficientRatio() => GetDragCoefficientPercent() / 100f;
-    
     // ==================== STATS ====================
     
     /// <summary>

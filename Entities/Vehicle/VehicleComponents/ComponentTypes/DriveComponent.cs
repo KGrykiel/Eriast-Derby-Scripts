@@ -1,4 +1,5 @@
 ﻿using Assets.Scripts.Core;
+using Assets.Scripts.Entities.Vehicle;
 using Assets.Scripts.Logging;
 using System.Collections.Generic;
 using UnityEngine;
@@ -34,18 +35,18 @@ public class DriveComponent : VehicleComponent
     private int currentSpeed = 0;
 
     [SerializeField]
-    [Tooltip("Target speed as proportion of maxSpeed (0.0 = stopped, 1.0 = full speed). Set by Driver during action phase.")]
-    [Range(0f, 1.0f)]
+    [Tooltip("Target speed as percentage of maxSpeed (0 = stopped, 100 = full speed). Set by Driver during action phase. INTEGER-FIRST.")]
+    [Range(0, 100)]
     [ReadOnly]
-    private float targetSpeed = 0f;
+    private int targetSpeedPercent = 0;
     
     // Cached maxSpeed to detect changes from buffs/debuffs
     private int lastKnownMaxSpeed;
     
     [Header("Mechanical Properties")]
     [SerializeField]
-    [Tooltip("Mechanical friction from drive system as percentage (100 = 1.0 normal). Higher = more friction. INTEGER-FIRST.")]
-    private int frictionPercent = 100;  // 100 = 1.0 friction
+    [Tooltip("Constant friction from drive system in units/turn (rolling resistance, mechanical friction). Typical: 1-3. INTEGER.")]
+    private int baseFriction = 2;  // Constant 2 units lost per turn
     
     /// <summary>
     /// Called when component is first added or reset in Editor.
@@ -95,84 +96,55 @@ public class DriveComponent : VehicleComponent
     public int GetBaseAcceleration() => baseAcceleration;
     public int GetBaseDeceleration() => baseDeceleration;
     public int GetBaseStability() => baseStability;
-    public int GetBaseFrictionPercent() => frictionPercent;
+    public int GetBaseFriction() => baseFriction;
     
     // Modified value accessors (return values with all modifiers applied via StatCalculator)
     public int GetMaxSpeed() => StatCalculator.GatherAttributeValue(this, Attribute.MaxSpeed, baseMaxSpeed);
     public int GetAcceleration() => StatCalculator.GatherAttributeValue(this, Attribute.Acceleration, baseAcceleration);
     public int GetDeceleration() => StatCalculator.GatherAttributeValue(this, Attribute.Deceleration, baseDeceleration);
     public int GetStability() => StatCalculator.GatherAttributeValue(this, Attribute.Stability, baseStability);
-    public int GetFrictionPercent() => StatCalculator.GatherAttributeValue(this, Attribute.BaseFriction, frictionPercent);
-    
-    /// <summary>
-    /// Get friction as actual ratio (for physics calculations).
-    /// Converts percentage to decimal: 100 -> 1.0
-    /// </summary>
-    public float GetFrictionRatio() => GetFrictionPercent() / 100f;
+    public int GetFriction() => StatCalculator.GatherAttributeValue(this, Attribute.BaseFriction, baseFriction);
     
     // Runtime state accessor (not a stat, just current value)
     public int GetCurrentSpeed() => currentSpeed;
+    
     
     
     // ==================== POWER MANAGEMENT ====================
     
     /// <summary>
     /// Get actual power draw based on current speed.
-    /// Uses physics-based friction model: Power = basePowerDraw + baseFriction + (chassis.dragCoefficient * currentSpeed)
-    /// baseFriction = mechanical friction from drive system
-    /// dragCoefficient = aerodynamic drag from chassis/vehicle body
-    /// Higher speeds = more power consumption due to air resistance.
+    /// Uses VehiclePhysicsCalculator for integer-based physics.
+    /// Higher speeds = more power consumption due to drag.
+    /// INTEGER-FIRST: Pure integer math, no floats.
     /// </summary>
     public override int GetActualPowerDraw()
     {
         if (!IsOperational) return 0;
         
-        // Get friction as ratio (convert from percentage)
-        float modifiedFriction = GetFrictionRatio();
-        
-        // Get chassis drag coefficient as ratio
-        float vehicleDrag = 0.1f; // Default fallback
-        if (parentVehicle != null && parentVehicle.chassis != null)
-        {
-            vehicleDrag = parentVehicle.chassis.GetDragCoefficientRatio();
-        }
-        
-        // Physics: Power needed to overcome friction
-        // modifiedFriction = mechanical (drive-specific, affected by terrain/maintenance)
-        // vehicleDrag * speed = aerodynamic (chassis-specific, modified by components)
-        float frictionForce = modifiedFriction + (vehicleDrag * currentSpeed);
-        
-        // Get base power with modifiers using accessor method
-        int basePower = GetPowerDrawPerTurn();
-        
-        int totalCost = Mathf.RoundToInt(basePower + frictionForce);
-        return Mathf.Max(0, totalCost);
+        return VehiclePhysicsCalculator.CalculateSpeedPowerCost(
+            currentSpeed,
+            GetPowerDrawPerTurn(),
+            GetFriction(),
+            parentVehicle.chassis.GetDragCoefficientPercent()
+        );
     }
     
     /// <summary>
     /// Apply natural friction when drive is unpowered (destroyed/disabled).
     /// Called at start of turn BEFORE power draw.
-    /// friction_loss = baseFriction + (chassis.dragCoefficient * currentSpeed)
     /// Vehicle gradually decelerates to a stop.
-    /// INTEGER: Rounds friction to int (discrete deceleration).
+    /// INTEGER-FIRST: Pure integer math, no floats.
     /// </summary>
     public void ApplyFriction()
     {
         if (currentSpeed <= 0) return;
         
-        // Get friction as ratio (convert from percentage)
-        float modifiedFriction = GetFrictionRatio();
-        
-        // Get chassis drag coefficient as ratio
-        float vehicleDrag = 0.1f; // Default fallback
-        if (parentVehicle != null && parentVehicle.chassis != null)
-        {
-            vehicleDrag = parentVehicle.chassis.GetDragCoefficientRatio();
-        }
-        
-        // Physics: friction = constant mechanical + aerodynamic drag
-        float frictionLossFloat = modifiedFriction + (vehicleDrag * currentSpeed);
-        int frictionLoss = Mathf.RoundToInt(frictionLossFloat);  // Round to int (D&D discrete)
+        int frictionLoss = VehiclePhysicsCalculator.CalculateFrictionLoss(
+            currentSpeed,
+            GetFriction(),
+            parentVehicle.chassis.GetDragCoefficientPercent()
+        );
         
         int oldSpeed = currentSpeed;
         currentSpeed = Mathf.Max(0, currentSpeed - frictionLoss);
@@ -258,7 +230,7 @@ public class DriveComponent : VehicleComponent
     /// <summary>
     /// Adjusts current speed toward target speed, respecting acceleration/deceleration limits.
     /// Called at start of turn to apply player/AI speed intentions.
-    /// Target speed is proportional (0-1), converted to absolute based on current maxSpeed.
+    /// Target speed is percentage (0-100), converted to absolute based on current maxSpeed.
     /// Also auto-scales currentSpeed when maxSpeed changes due to buffs/debuffs.
     /// INTEGER: Discrete acceleration/deceleration (D&D style).
     /// </summary>
@@ -273,8 +245,8 @@ public class DriveComponent : VehicleComponent
         if (lastKnownMaxSpeed > 0 && currentMaxSpeed != lastKnownMaxSpeed)
         {
             int oldSpeed = currentSpeed;
-            // Scale proportionally, round to int
-            currentSpeed = Mathf.RoundToInt(currentSpeed * (currentMaxSpeed / (float)lastKnownMaxSpeed));
+            // Scale proportionally using integer math
+            currentSpeed = (currentSpeed * currentMaxSpeed) / lastKnownMaxSpeed;
             currentSpeed = Mathf.Clamp(currentSpeed, 0, currentMaxSpeed);
             
             if (parentVehicle != null && currentSpeed != oldSpeed)
@@ -293,8 +265,8 @@ public class DriveComponent : VehicleComponent
         }
         lastKnownMaxSpeed = currentMaxSpeed;
         
-        // Now do normal acceleration/deceleration toward target
-        int targetSpeedAbsolute = Mathf.RoundToInt(targetSpeed * currentMaxSpeed);
+        // Now do normal acceleration/deceleration toward target (integer division)
+        int targetSpeedAbsolute = (targetSpeedPercent * currentMaxSpeed) / 100;
         int speedDiff = targetSpeedAbsolute - currentSpeed;
         
         if (speedDiff == 0)
@@ -313,31 +285,32 @@ public class DriveComponent : VehicleComponent
     }
     
     /// <summary>
-    /// Set target speed as a proportion of maxSpeed (0.0-1.0).
+    /// Set target speed as a percentage of maxSpeed (0-100).
     /// Called via CustomEffect skills during action phase.
-    /// 0.0 = stop, 0.5 = cruise at half speed, 1.0 = full speed.
+    /// 0 = stop, 50 = cruise at half speed, 100 = full speed.
     /// Automatically adapts to maxSpeed changes (buffs/debuffs).
+    /// INTEGER-FIRST: Pure integer percentage.
     /// </summary>
-    public void SetTargetSpeed(float proportionalSpeed)
+    public void SetTargetSpeed(int speedPercent)
     {
         if (isDestroyed) return;
         
-        float oldTarget = targetSpeed;
-        targetSpeed = Mathf.Clamp01(proportionalSpeed); // Clamp to 0-1 range
+        int oldTarget = targetSpeedPercent;
+        targetSpeedPercent = Mathf.Clamp(speedPercent, 0, 100);
         
-        if (Mathf.Abs(targetSpeed - oldTarget) > 0.01f && parentVehicle != null)
+        if (targetSpeedPercent != oldTarget && parentVehicle != null)
         {
-            float maxSpeed = GetMaxSpeed();
-            float targetAbsolute = targetSpeed * maxSpeed;
+            int maxSpeed = GetMaxSpeed();
+            int targetAbsolute = (targetSpeedPercent * maxSpeed) / 100;
             
             RaceHistory.Log(
                 Assets.Scripts.Logging.EventType.Movement,
                 EventImportance.Low,
-                $"{parentVehicle.vehicleName} set target speed: {oldTarget * 100:F0}% → {targetSpeed * 100:F0}% ({targetAbsolute:F1} units/turn)",
+                $"{parentVehicle.vehicleName} set target speed: {oldTarget}% → {targetSpeedPercent}% ({targetAbsolute} units/turn)",
                 parentVehicle.currentStage,
                 parentVehicle
             ).WithMetadata("oldTargetPercent", oldTarget)
-             .WithMetadata("newTargetPercent", targetSpeed)
+             .WithMetadata("newTargetPercent", targetSpeedPercent)
              .WithMetadata("targetAbsolute", targetAbsolute)
              .WithMetadata("currentSpeed", currentSpeed)
              .WithMetadata("maxSpeed", maxSpeed);
@@ -359,7 +332,7 @@ public class DriveComponent : VehicleComponent
         int modifiedAccel = GetAcceleration();
         int modifiedDecel = GetDeceleration();
         int modifiedStab = GetStability();
-        int modifiedFriction = GetFrictionPercent();
+        int modifiedFriction = GetFriction();
         
         // Core drive stats
         stats.Add(VehicleComponentUI.DisplayStat.WithTooltip("Max Speed", "MSPD", Attribute.MaxSpeed, baseMaxSpeed, modifiedSpeed));
@@ -367,12 +340,12 @@ public class DriveComponent : VehicleComponent
         stats.Add(VehicleComponentUI.DisplayStat.WithTooltip("Deceleration", "DECEL", Attribute.Deceleration, baseDeceleration, modifiedDecel));
         stats.Add(VehicleComponentUI.DisplayStat.WithTooltip("Stability", "STAB", Attribute.Stability, baseStability, modifiedStab));
         
-        // Target speed (show as percentage and absolute)
-        int targetAbsolute = Mathf.RoundToInt(targetSpeed * modifiedSpeed);
-        stats.Add(VehicleComponentUI.DisplayStat.Simple("Target Speed", "TGT", $"{targetSpeed * 100:F0}% ({targetAbsolute})"));
+        // Target speed (show as percentage and absolute) - INTEGER division
+        int targetAbsolute = (targetSpeedPercent * modifiedSpeed) / 100;
+        stats.Add(VehicleComponentUI.DisplayStat.Simple("Target Speed", "TGT", $"{targetSpeedPercent}% ({targetAbsolute})"));
         
-        // Physics properties (displayed as percentage)
-        stats.Add(VehicleComponentUI.DisplayStat.WithTooltip("Friction", "FRIC", Attribute.BaseFriction, frictionPercent, modifiedFriction, "%"));
+        // Physics properties (constant friction, not percentage)
+        stats.Add(VehicleComponentUI.DisplayStat.WithTooltip("Friction", "FRIC", Attribute.BaseFriction, baseFriction, modifiedFriction));
         
         // Add base class stats (power draw)
         stats.AddRange(base.GetDisplayStats());

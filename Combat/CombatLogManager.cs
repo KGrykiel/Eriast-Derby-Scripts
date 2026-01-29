@@ -312,15 +312,6 @@ namespace Assets.Scripts.Combat
         }
         
         /// <summary>
-        /// Format defense value for an entity (convenience method).
-        /// </summary>
-        public static string FormatEntityDefense(Entity target, string defenseName = "AC")
-        {
-            var (total, baseValue, modifiers) = StatCalculator.GatherDefenseValueWithBreakdown(target, defenseName);
-            return FormatDefenseDetailed(total, baseValue, modifiers, defenseName);
-        }
-        
-        /// <summary>
         /// Format a damage result for display.
         /// Short format: "15 Fire" or "15 Fire (Resistant)"
         /// </summary>

@@ -3,16 +3,17 @@
 namespace Assets.Scripts.Effects.EffectTypes.CustomEffectCommands
 {
     /// <summary>
-    /// Sets the target speed (as proportion 0-1) on the source vehicle's drive component.
+    /// Sets the target speed (as percentage 0-100) on the source vehicle's drive component.
     /// Used by driver skills to control vehicle speed during action phase.
     /// Reads speed value from ParameterizedSkill.floatParameter if available.
+    /// INTEGER-FIRST: Uses integer percentage (0-100).
     /// </summary>
     [CreateAssetMenu(fileName = "SetSpeed", menuName = "Racing/Commands/Set Speed")]
     public class SetSpeedCommand : EffectCommand
     {
-        [Tooltip("Default target speed if skill is not a ParameterizedSkill")]
-        [Range(0f, 1.0f)]
-        public float defaultTargetSpeed = 1.0f;
+        [Tooltip("Default target speed percentage (0-100) if skill is not a ParameterizedSkill")]
+        [Range(0, 100)]
+        public int defaultTargetSpeedPercent = 100;
 
         public override void Execute(Entity user, Entity target, EffectContext context, object source)
         {
@@ -24,17 +25,17 @@ namespace Assets.Scripts.Effects.EffectTypes.CustomEffectCommands
                 return;
             }
 
-            // Try to read speed from CustomEffect.floatParameter
-            float speedToSet = defaultTargetSpeed;
+            // Try to read speed from CustomEffect.intParameter
+            int speedPercent = defaultTargetSpeedPercent;
             
-            if (source is CustomEffect customEffect && customEffect.floatParameter >= 0f)
+            if (source is CustomEffect customEffect && customEffect.intParameter >= 0)
             {
-                // Effect provides parameter value
-                speedToSet = customEffect.floatParameter;
+                // Effect provides parameter value (0-100 percentage)
+                speedPercent = customEffect.intParameter;
             }
 
-            // Set the target speed (proportional)
-            drive.SetTargetSpeed(speedToSet);
+            // Set the target speed (integer percentage)
+            drive.SetTargetSpeed(speedPercent);
         }
     }
 }

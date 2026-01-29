@@ -92,8 +92,7 @@ namespace Assets.Scripts.Core
         /// Returns int (already integer-first design).
         /// </summary>
         public static (int total, int baseValue, List<AttributeModifier> modifiers) GatherDefenseValueWithBreakdown(
-            Entity target,
-            string defenseType = "AC")
+            Entity target)
         {
             if (target == null)
             {
