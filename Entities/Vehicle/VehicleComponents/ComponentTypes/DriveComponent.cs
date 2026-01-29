@@ -1,7 +1,6 @@
 ﻿using Assets.Scripts.Core;
 using Assets.Scripts.Entities;
 using Assets.Scripts.Entities.Vehicle;
-using Assets.Scripts.Logging;
 using System.Collections.Generic;
 using UnityEngine;
 

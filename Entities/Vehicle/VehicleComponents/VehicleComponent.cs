@@ -1,10 +1,8 @@
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
-using EventType = Assets.Scripts.Logging.EventType;
 using System;
 using Assets.Scripts.Entities;
-using Assets.Scripts.Logging;
 using Assets.Scripts.Core;
 using Assets.Scripts.Entities.Vehicle.VehicleComponents;
 

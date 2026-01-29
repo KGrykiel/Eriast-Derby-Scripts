@@ -1,7 +1,6 @@
 using UnityEngine;
 using System.Collections.Generic;
 using Assets.Scripts.Entities;
-using Assets.Scripts.Logging;
 using Assets.Scripts.Core;
 
 /// <summary>
