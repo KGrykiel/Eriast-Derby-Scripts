@@ -8,7 +8,7 @@ using EventCard = Assets.Scripts.Events.EventCard.EventCard;
 public class Stage : MonoBehaviour
 {
     public string stageName;
-    public float length = 10f;
+    public int length = 100;  // INTEGER: D&D-style discrete distance
     public List<Stage> nextStages = new();
 
     [Header("Race Configuration")]

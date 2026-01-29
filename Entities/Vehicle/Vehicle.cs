@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using EventType = Assets.Scripts.Logging.EventType;
 using Assets.Scripts.Logging;
+using Assets.Scripts.Entities;
 using Assets.Scripts.Entities.Vehicle.VehicleComponents.ComponentTypes;
 using Assets.Scripts.Entities.Vehicle;
 using Assets.Scripts.Combat.Saves;
@@ -31,8 +32,13 @@ public class Vehicle : MonoBehaviour
     public string vehicleName;
 
     public ControlType controlType = ControlType.Player;
+    
+    [Header("Vehicle Size & Balance")]
+    [Tooltip("Size category determines AC, mobility, speed, and initiative modifiers. See SizeBalancing.md.")]
+    public VehicleSizeCategory sizeCategory = VehicleSizeCategory.Medium;
+    
     [HideInInspector] public Stage currentStage;
-    [HideInInspector] public float progress = 0f;
+    [HideInInspector] public int progress = 0;  // INTEGER: D&D-style discrete position
     [HideInInspector] public bool hasLoggedMovementWarningThisTurn = false;
 
     [Header("Crew & Seats")]
@@ -63,6 +69,9 @@ public class Vehicle : MonoBehaviour
         // Initialize component coordinator
         componentCoordinator = new VehicleComponentCoordinator(this);
         componentCoordinator.InitializeComponents();
+        
+        // Apply size-based modifiers
+        ApplySizeModifiers();
     }
     
     void OnValidate()
@@ -129,6 +138,29 @@ public class Vehicle : MonoBehaviour
     }
 
     // ==================== CROSS-COMPONENT MODIFIER SYSTEM ====================
+
+    /// <summary>
+    /// Apply size-based modifiers to all components.
+    /// Called during vehicle initialization.
+    /// Size modifiers automatically route to correct components (AC→Chassis, Speed→Drive, etc.)
+    /// </summary>
+    private void ApplySizeModifiers()
+    {
+        // Get size modifiers from static utility
+        var sizeModifiers = VehicleSizeModifiers.GetModifiers(sizeCategory, this);
+        
+        // Apply each modifier to the appropriate component
+        foreach (var modifier in sizeModifiers)
+        {
+            // Route modifier to correct component based on attribute
+            VehicleComponent targetComponent = ResolveModifierTarget(modifier.Attribute);
+            
+            if (targetComponent != null && !targetComponent.isDestroyed)
+            {
+                targetComponent.AddModifier(modifier);
+            }
+        }
+    }
 
     /// <summary>
     /// Initialize all component-provided modifiers.
@@ -273,28 +305,8 @@ public class Vehicle : MonoBehaviour
         Status = VehicleStatus.Destroyed;
         
         // Log destruction event
-        RaceHistory.Log(
-            EventType.Destruction,
-            EventImportance.Critical,
-            $"[DEAD] {vehicleName} has been destroyed!",
-            currentStage,
-            this
-        ).WithMetadata("finalHealth", chassis != null ? chassis.health : 0)
-         .WithMetadata("finalStage", currentStage != null ? currentStage.stageName : "None");
-        
-        // Log tragic moment if vehicle was leading
-        bool wasLeading = progress > 50f;
-        if (wasLeading)
-        {
-            RaceHistory.Log(
-                EventType.TragicMoment,
-                EventImportance.High,
-                $"[TRAGIC] {vehicleName} was destroyed while in the lead!",
-                currentStage,
-                this
-            );
-        }
-        
+        this.LogVehicleDestroyed();
+
         // TODO: Consider a better pattern for this (event bus, dependency injection, etc.)
         // Direct call to GameManager for immediate turn order removal
         var gameManager = FindFirstObjectByType<GameManager>();

@@ -79,7 +79,7 @@ public class GameManager : MonoBehaviour
         foreach (var vehicle in vehicles)
         {
             Stage startStage = entryStage != null ? entryStage : (stages.Count > 0 ? stages[0] : null);
-            vehicle.progress = 0f;
+            vehicle.progress = 0;  // INTEGER: D&D-style discrete position
             
             // Set initial stage and position directly (no events during initialization)
             vehicle.currentStage = startStage;

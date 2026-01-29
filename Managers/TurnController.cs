@@ -36,10 +36,10 @@ public class TurnController : MonoBehaviour
     public event Action<Vehicle, string> OnMovementBlocked;
     
     /// <summary>Fired when movement executes. Args: (vehicle, distance, speed, oldProgress, newProgress)</summary>
-    public event Action<Vehicle, float, float, float, float> OnMovementExecuted;
+    public event Action<Vehicle, int, int, int, int> OnMovementExecuted;
     
     /// <summary>Fired when vehicle enters a new stage. Args: (vehicle, newStage, previousStage, carriedProgress, isPlayerChoice)</summary>
-    public event Action<Vehicle, Stage, Stage, float, bool> OnStageEntered;
+    public event Action<Vehicle, Stage, Stage, int, bool> OnStageEntered;
 
     /// <summary>
     /// Initialize with vehicle list (same list as TurnStateMachine uses).
@@ -195,11 +195,11 @@ public class TurnController : MonoBehaviour
         }
         
         var drive = vehicle.GetDriveComponent();
-        float distance = drive != null ? drive.GetCurrentSpeed() : 0f;
+        int distance = drive != null ? drive.GetCurrentSpeed() : 0;  // INTEGER: D&D-style discrete movement
         
         if (vehicle.currentStage != null && distance > 0)
         {
-            float oldProgress = vehicle.progress;
+            int oldProgress = vehicle.progress;
             vehicle.progress += distance;
             OnMovementExecuted?.Invoke(vehicle, distance, drive.GetCurrentSpeed(), oldProgress, vehicle.progress);
         }

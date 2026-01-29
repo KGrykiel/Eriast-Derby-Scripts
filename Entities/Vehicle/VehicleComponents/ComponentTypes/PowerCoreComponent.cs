@@ -1,4 +1,5 @@
 ﻿using Assets.Scripts.Core;
+using Assets.Scripts.Entities;
 using Assets.Scripts.Logging;
 using System.Collections.Generic;
 using UnityEngine;
@@ -196,19 +197,7 @@ namespace Assets.Scripts.Entities.Vehicle.VehicleComponents.ComponentTypes
             currentTurnPowerDraw += amount;
             
             // Log power draw (debug level)
-            if (parentVehicle != null)
-            {
-                string requesterName = requester != null ? requester.name : "Unknown";
-                RaceHistory.Log(
-                    Logging.EventType.Resource,
-                    EventImportance.Debug,
-                    $"{parentVehicle.vehicleName}: {requesterName} drew {amount} power ({reason})",
-                    parentVehicle.currentStage,
-                    parentVehicle
-                ).WithMetadata("powerDrawn", amount)
-                 .WithMetadata("remainingEnergy", currentEnergy)
-                 .WithMetadata("turnDrawTotal", currentTurnPowerDraw);
-            }
+            this.LogPowerDraw(amount, requester, reason, currentEnergy, currentTurnPowerDraw);
             
             return true;
         }

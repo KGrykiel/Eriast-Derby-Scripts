@@ -166,46 +166,6 @@ public class WeaponComponent : VehicleComponent
     }
     
     /// <summary>
-    /// Check if this weapon has ammunition available.
-    /// Returns true if unlimited ammo or ammo remaining.
-    /// </summary>
-    public bool HasAmmo()
-    {
-        return GetMaxAmmo() == -1 || currentAmmo > 0;
-    }
-    
-    /// <summary>
-    /// Consume one unit of ammunition.
-    /// Call this when the weapon is fired.
-    /// </summary>
-    public void ConsumeAmmo()
-    {
-        int maxAmmo = GetMaxAmmo();
-        if (maxAmmo != -1 && currentAmmo > 0)
-        {
-            currentAmmo--;
-            
-            if (currentAmmo == 0)
-            {
-                Debug.LogWarning($"[Weapon] {name} is out of ammo!");
-            }
-        }
-    }
-    
-    /// <summary>
-    /// Reload/restock ammunition.
-    /// Can be called by Engineer or during pit stops.
-    /// </summary>
-    public void Reload(int amount)
-    {
-        int maxAmmo = GetMaxAmmo();
-        if (maxAmmo == -1) return; // Unlimited ammo, can't reload
-        
-        currentAmmo = Math.Min(currentAmmo + amount, maxAmmo);
-        Debug.Log($"[Weapon] {name} reloaded to {currentAmmo}/{maxAmmo} ammo");
-    }
-    
-    /// <summary>
     /// Called when weapon is destroyed.
     /// Vehicle loses one Gunner role slot.
     /// </summary>
@@ -217,29 +177,5 @@ public class WeaponComponent : VehicleComponent
         Debug.LogWarning($"[Weapon] {name} destroyed! One Gunner role slot lost!");
         
         // The base class already logs that the "Gunner" role is no longer available
-    }
-    
-    /// <summary>
-    /// Get status summary including ammo count and damage.
-    /// </summary>
-    public string GetStatusSummary()
-    {
-        string status = VehicleComponentUI.GetStatusSummary(this);
-        
-        // Add damage info
-        status += $"Damage: {DamageString}\n";
-        
-        // Add ammo info if weapon has limited ammo
-        int maxAmmo = GetMaxAmmo();
-        if (maxAmmo != -1)
-        {
-            status += $"Ammo: {currentAmmo}/{maxAmmo}\n";
-        }
-        else
-        {
-            status += "Ammo: Unlimited\n";
-        }
-        
-        return status;
     }
 }

@@ -224,6 +224,23 @@ namespace Assets.Scripts.Entities
              .WithMetadata("manuallyDisabled", isDisabled);
         }
         
+        // ==================== VEHICLE STATUS LOGGING ====================
+        
+        /// <summary>
+        /// Log vehicle destruction.
+        /// </summary>
+        public static void LogVehicleDestroyed(this global::Vehicle vehicle)
+        {
+            RaceHistory.Log(
+                EventType.Destruction,
+                EventImportance.Critical,
+                $"[DEAD] {vehicle.vehicleName} has been destroyed!",
+                vehicle.currentStage,
+                vehicle
+            ).WithMetadata("finalHealth", vehicle.chassis != null ? vehicle.chassis.health : 0)
+             .WithMetadata("finalStage", vehicle.currentStage != null ? vehicle.currentStage.stageName : "None");
+        }
+
         // ==================== RESOURCE LOGGING ====================
         
         /// <summary>
@@ -265,6 +282,26 @@ namespace Assets.Scripts.Entities
             ).WithMetadata("regenAmount", regenAmount)
              .WithMetadata("currentEnergy", currentEnergy)
              .WithMetadata("maxEnergy", maxEnergy);
+        }
+        
+        /// <summary>
+        /// Log power draw from a component.
+        /// </summary>
+        public static void LogPowerDraw(this PowerCoreComponent powerCore, int amount, VehicleComponent requester, string reason, int remainingEnergy, int turnDrawTotal)
+        {
+            if (powerCore.ParentVehicle == null) return;
+            
+            string requesterName = requester != null ? requester.name : "Unknown";
+            
+            RaceHistory.Log(
+                EventType.Resource,
+                EventImportance.Debug,
+                $"{powerCore.ParentVehicle.vehicleName}: {requesterName} drew {amount} power ({reason})",
+                powerCore.ParentVehicle.currentStage,
+                powerCore.ParentVehicle
+            ).WithMetadata("powerDrawn", amount)
+             .WithMetadata("remainingEnergy", remainingEnergy)
+             .WithMetadata("turnDrawTotal", turnDrawTotal);
         }
     }
 }

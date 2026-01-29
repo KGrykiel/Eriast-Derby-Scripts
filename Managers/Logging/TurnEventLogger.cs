@@ -217,12 +217,12 @@ namespace Assets.Scripts.Managers.Logging
             ).WithMetadata("reason", reason);
         }
         
-        private void LogMovementExecuted(Vehicle vehicle, float distance, float speed, float oldProgress, float newProgress)
+        private void LogMovementExecuted(Vehicle vehicle, int distance, int speed, int oldProgress, int newProgress)
         {
             RaceHistory.Log(
                 EventType.Movement,
                 EventImportance.Low,
-                $"{vehicle.vehicleName} moved {distance:F1} units (speed {speed:F1})",
+                $"{vehicle.vehicleName} moved {distance} units (speed {speed})",
                 vehicle.currentStage,
                 vehicle
             ).WithMetadata("distance", distance)
@@ -231,7 +231,7 @@ namespace Assets.Scripts.Managers.Logging
              .WithMetadata("newProgress", newProgress);
         }
         
-        private void LogStageEntered(Vehicle vehicle, Stage newStage, Stage previousStage, float carriedProgress, bool isPlayerChoice)
+        private void LogStageEntered(Vehicle vehicle, Stage newStage, Stage previousStage, int carriedProgress, bool isPlayerChoice)
         {
             EventImportance importance = isPlayerChoice ? EventImportance.Medium : EventImportance.Low;
             

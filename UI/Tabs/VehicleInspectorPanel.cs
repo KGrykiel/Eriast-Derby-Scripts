@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Assets.Scripts.Logging;
 using Assets.Scripts.UI.Components;
+using Assets.Scripts.Entities.Vehicle;
 
 /// <summary>
 /// Inspector panel for detailed vehicle examination.
@@ -35,6 +36,7 @@ public class VehicleInspectorPanel : MonoBehaviour
     public TMP_Text vehicleSpeedValueText;
     public TMP_Text vehicleACValueText;
     public TMP_Text vehicleEnergyRegenValueText;
+    public TMP_Text vehicleSizeValueText;
     
     [Header("Components Section")]
     public Transform componentListContainer;
@@ -360,6 +362,27 @@ public class VehicleInspectorPanel : MonoBehaviour
             else
             {
                 vehicleEnergyRegenValueText.text = $"{modifiedRegen}";
+            }
+        }
+        
+        // Vehicle Size - displays size category with color coding and tooltip
+        if (vehicleSizeValueText != null)
+        {
+            var sizeDisplay = vehicleSizeValueText.GetComponent<SizeDisplay>();
+            string sizeText = selectedVehicle.sizeCategory.ToString();
+            Color sizeColor = GetSizeColor(selectedVehicle.sizeCategory);
+            string tooltip = BuildSizeTooltip(selectedVehicle.sizeCategory);
+            
+            if (sizeDisplay != null)
+            {
+                // Use SizeDisplay component for tooltip support
+                sizeDisplay.UpdateDisplay(selectedVehicle.sizeCategory, sizeColor, tooltip);
+            }
+            else
+            {
+                // Fallback: just set text and color
+                vehicleSizeValueText.text = sizeText;
+                vehicleSizeValueText.color = sizeColor;
             }
         }
     }
@@ -901,6 +924,59 @@ public class VehicleInspectorPanel : MonoBehaviour
             ComponentExposure.Protected => new Color(1f, 0.67f, 0.27f),
             ComponentExposure.Internal => new Color(1f, 0.53f, 0.27f),
             ComponentExposure.Shielded => new Color(0.53f, 0.87f, 1f),
+            _ => Color.white
+        };
+    }
+    
+    /// <summary>
+    /// Build a rich tooltip showing all size modifiers.
+    /// Dynamically reads from VehicleSizeModifiers to stay in sync.
+    /// </summary>
+    private string BuildSizeTooltip(VehicleSizeCategory size)
+    {
+        var modifiers = VehicleSizeModifiers.GetModifiers(size, null);
+        
+        string tooltip = $"<b>{size} Vehicle</b>\n\n";
+        
+        if (modifiers.Count == 0)
+        {
+            tooltip += "No modifiers (baseline)";
+            return tooltip;
+        }
+        
+        tooltip += "<b>Modifiers:</b>\n";
+        
+        foreach (var mod in modifiers)
+        {
+            string sign = mod.Value >= 0 ? "+" : "";
+            string attrName = mod.Attribute.ToString();
+            
+            // Format attribute name nicely
+            attrName = attrName switch
+            {
+                "ArmorClass" => "AC",
+                "MaxSpeed" => "Max Speed",
+                _ => attrName
+            };
+            
+            tooltip += $"  {sign}{mod.Value} {attrName}\n";
+        }
+        return tooltip;
+    }
+    
+    /// <summary>
+    /// Get color for size category text.
+    /// Tiny/Small = green (bonuses), Medium = white (baseline), Large/Huge = orange (penalties).
+    /// </summary>
+    private Color GetSizeColor(VehicleSizeCategory size)
+    {
+        return size switch
+        {
+            VehicleSizeCategory.Tiny => new Color(0.4f, 1f, 0.4f),
+            VehicleSizeCategory.Small => new Color(0.6f, 1f, 0.6f),
+            VehicleSizeCategory.Medium => Color.white,
+            VehicleSizeCategory.Large => new Color(1f, 0.7f, 0.4f),
+            VehicleSizeCategory.Huge => new Color(1f, 0.5f, 0.3f),
             _ => Color.white
         };
     }
