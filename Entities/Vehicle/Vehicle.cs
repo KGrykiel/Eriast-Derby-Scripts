@@ -33,10 +33,6 @@ public class Vehicle : MonoBehaviour
 
     public ControlType controlType = ControlType.Player;
     
-    [Header("Vehicle Size & Balance")]
-    [Tooltip("Size category determines AC, mobility, speed, and initiative modifiers. See SizeBalancing.md.")]
-    public VehicleSizeCategory sizeCategory = VehicleSizeCategory.Medium;
-    
     [HideInInspector] public Stage currentStage;
     [HideInInspector] public int progress = 0;  // INTEGER: D&D-style discrete position
     [HideInInspector] public bool hasLoggedMovementWarningThisTurn = false;
@@ -146,8 +142,14 @@ public class Vehicle : MonoBehaviour
     /// </summary>
     private void ApplySizeModifiers()
     {
-        // Get size modifiers from static utility
-        var sizeModifiers = VehicleSizeModifiers.GetModifiers(sizeCategory, this);
+        if (chassis == null)
+        {
+            Debug.LogWarning($"[Vehicle] {vehicleName} has no chassis - cannot apply size modifiers");
+            return;
+        }
+        
+        // Get size modifiers from chassis's size category
+        var sizeModifiers = VehicleSizeModifiers.GetModifiers(chassis.sizeCategory, this);
         
         // Apply each modifier to the appropriate component
         foreach (var modifier in sizeModifiers)

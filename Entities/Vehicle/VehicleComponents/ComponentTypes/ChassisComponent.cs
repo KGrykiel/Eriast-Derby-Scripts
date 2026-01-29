@@ -1,12 +1,14 @@
 using UnityEngine;
 using System.Collections.Generic;
 using Assets.Scripts.Entities;
+using Assets.Scripts.Entities.Vehicle;
 using Assets.Scripts.Core;
 
 /// <summary>
 /// Chassis component - the structural foundation of a vehicle.
 /// MANDATORY: Every vehicle must have exactly one chassis.
 /// The chassis IS the vehicle - Entity.maxHealth IS the vehicle's max HP, Entity.armorClass IS the vehicle's AC.
+/// The chassis also determines the vehicle's SIZE CATEGORY (for balancing modifiers).
 /// 
 /// NOTE: Base values only. Use StatCalculator.GatherDefenseValue() for AC with modifiers.
 /// </summary>
@@ -16,6 +18,10 @@ public class ChassisComponent : VehicleComponent
     [SerializeField]
     [Tooltip("Base mobility for saving throws (dodging, evasion). Higher = easier to dodge AOE/traps (base value before modifiers).")]
     private int baseMobility = 8;
+    
+    [Header("Chassis Size")]
+    [Tooltip("Size category determines AC, mobility, and speed modifiers. Larger = easier to hit, harder to maneuver.")]
+    public VehicleSizeCategory sizeCategory = VehicleSizeCategory.Medium;
     
     [Header("Aerodynamic Properties")]
     [SerializeField]
@@ -40,6 +46,7 @@ public class ChassisComponent : VehicleComponent
         baseArmorClass = 18;      // This IS the vehicle's AC
         baseMobility = 8;     // Default mobility for saves
         baseComponentSpace = -2000; // Provides space (negative value)
+        sizeCategory = VehicleSizeCategory.Medium; // Default size
         
         // Chassis provides space, doesn't consume it
         basePowerDrawPerTurn = 0;  // Passive structure

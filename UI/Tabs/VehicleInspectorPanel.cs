@@ -366,17 +366,18 @@ public class VehicleInspectorPanel : MonoBehaviour
         }
         
         // Vehicle Size - displays size category with color coding and tooltip
-        if (vehicleSizeValueText != null)
+        if (vehicleSizeValueText != null && selectedVehicle.chassis != null)
         {
             var sizeDisplay = vehicleSizeValueText.GetComponent<SizeDisplay>();
-            string sizeText = selectedVehicle.sizeCategory.ToString();
-            Color sizeColor = GetSizeColor(selectedVehicle.sizeCategory);
-            string tooltip = BuildSizeTooltip(selectedVehicle.sizeCategory);
+            var sizeCategory = selectedVehicle.chassis.sizeCategory;
+            string sizeText = sizeCategory.ToString();
+            Color sizeColor = GetSizeColor(sizeCategory);
+            string tooltip = BuildSizeTooltip(sizeCategory);
             
             if (sizeDisplay != null)
             {
                 // Use SizeDisplay component for tooltip support
-                sizeDisplay.UpdateDisplay(selectedVehicle.sizeCategory, sizeColor, tooltip);
+                sizeDisplay.UpdateDisplay(sizeCategory, sizeColor, tooltip);
             }
             else
             {
