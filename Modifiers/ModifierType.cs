@@ -25,6 +25,13 @@ public enum ModifierCategory
     StatusEffect,
     
     /// <summary>
+    /// Dynamic modifier calculated from other attributes.
+    /// Not stored on entity - evaluated on-demand during stat calculation.
+    /// Example: Speed ? AC (fast vehicles harder to hit)
+    /// </summary>
+    Dynamic,
+    
+    /// <summary>
     /// Modifier from nearby entities (auras, leadership bonuses).
     /// Future enhancement - not yet implemented.
     /// </summary>
@@ -75,10 +82,14 @@ public class AttributeModifier
     // Category tracking (for grouping and filtering)
     public ModifierCategory Category;
     
+    // Optional display name override (for Dynamic modifiers)
+    public string DisplayNameOverride;
+    
     /// <summary>
-    /// Display name for UI (shows source name or "Unknown")
+    /// Display name for UI (uses override if set, otherwise source name, or "Unknown")
+    /// For Dynamic modifiers, this shows the formula (e.g., "Speed ? AC")
     /// </summary>
-    public string SourceDisplayName => Source != null ? Source.name : null ?? "Unknown";
+    public string SourceDisplayName => DisplayNameOverride ?? (Source != null ? Source.name : "Unknown");
     
     /// <summary>
     /// Is this modifier dispellable? (Status effects are, equipment is not)
@@ -102,7 +113,8 @@ public class AttributeModifier
         ModifierType type,
         float value,
         UnityEngine.Object source = null,
-        ModifierCategory category = ModifierCategory.Other
+        ModifierCategory category = ModifierCategory.Other,
+        string displayNameOverride = null
     )
     {
         Attribute = attribute;
@@ -110,6 +122,7 @@ public class AttributeModifier
         Value = value;
         Source = source;
         Category = category;
+        DisplayNameOverride = displayNameOverride;
     }
 }
 

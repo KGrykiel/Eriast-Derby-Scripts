@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using Assets.Scripts.Modifiers.DynamicModifiers;
 
 namespace Assets.Scripts.Core
 {
@@ -14,6 +15,7 @@ namespace Assets.Scripts.Core
     /// Modifier sources (all stored in Entity.entityModifiers):
     /// - Status effect modifiers (Category = StatusEffect)
     /// - Cross-component modifiers (Category = Equipment)
+    /// - Dynamic modifiers (Category = Dynamic) - calculated on-demand, not stored
     /// 
     /// Used by:
     /// - CombatLogManager (for tooltip formatting)
@@ -31,6 +33,7 @@ namespace Assets.Scripts.Core
         /// All modifiers are stored in entity.entityModifiers:
         /// - Status effects add modifiers with Category = StatusEffect
         /// - Cross-component bonuses add modifiers with Category = Equipment
+        /// - Dynamic modifiers calculated on-demand with Category = Dynamic
         /// 
         /// Returns: (final value, base value, modifier list for tooltips)
         /// Base value is returned separately - it's NOT a modifier.
@@ -50,6 +53,9 @@ namespace Assets.Scripts.Core
             // Gather all modifiers from entity's modifier list
             // This includes both status effect modifiers and cross-component equipment modifiers
             GatherEntityModifiers(entity, attribute, modifiers);
+            
+            // DYNAMIC MODIFIERS: Evaluate formulas on-demand (comment out this line to disable)
+            modifiers.AddRange(DynamicModifierEvaluator.EvaluateAll(entity, attribute));
             
             // Calculate total: base + flat modifiers, then apply multipliers
             float total = CalculateTotal(baseValue, modifiers);
