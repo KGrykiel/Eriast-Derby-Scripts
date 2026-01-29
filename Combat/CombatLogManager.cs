@@ -450,12 +450,13 @@ namespace Assets.Scripts.Combat
         /// ═══════════════════════════════
         /// Total Modifiers:          +15  Speed
         /// Final Value:               65  Speed
+        /// INTEGER-FIRST DESIGN: All values are integers (D&D discrete stats).
         /// </summary>
         public static string FormatStatBreakdown(
             Entity entity, 
             Attribute attribute, 
-            float baseValue, 
-            float finalValue)
+            int baseValue, 
+            int finalValue)
         {
             if (entity == null)
             {

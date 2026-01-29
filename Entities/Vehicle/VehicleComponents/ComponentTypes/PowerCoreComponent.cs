@@ -21,8 +21,8 @@ namespace Assets.Scripts.Entities.Vehicle.VehicleComponents.ComponentTypes
         private int baseMaxEnergy = 50;
         
         [SerializeField]
-        [Tooltip("Energy regenerated per turn (base value before modifiers)")]
-        private float baseEnergyRegen = 5f;
+        [Tooltip("Energy regenerated per turn. INTEGER-FIRST.")]
+        private int baseEnergyRegen = 5;
         
         [Header("Power Distribution Limits (Optional)")]
         [SerializeField]
@@ -56,7 +56,7 @@ namespace Assets.Scripts.Entities.Vehicle.VehicleComponents.ComponentTypes
             // Set energy system defaults
             currentEnergy = 50;
             baseMaxEnergy = 50;
-            baseEnergyRegen = 5f;
+            baseEnergyRegen = 5;
             
             // Power core does NOT enable a role
             roleType = RoleType.None;
@@ -84,12 +84,13 @@ namespace Assets.Scripts.Entities.Vehicle.VehicleComponents.ComponentTypes
         
         // Base value accessors (return raw field values without modifiers)
         public int GetBaseMaxEnergy() => baseMaxEnergy;
-        public float GetBaseEnergyRegen() => baseEnergyRegen;
+        public int GetBaseEnergyRegen() => baseEnergyRegen;
         public int GetBaseMaxPowerDrawPerTurn() => baseMaxPowerDrawPerTurn;
         
         // Modified value accessors (return values with all modifiers applied via StatCalculator)
-        public int GetMaxEnergy() => Mathf.RoundToInt(StatCalculator.GatherAttributeValue(this, Attribute.MaxEnergy, baseMaxEnergy));
-        public float GetEnergyRegen() => StatCalculator.GatherAttributeValue(this, Attribute.EnergyRegen, baseEnergyRegen);
+        // INTEGER-FIRST: All stats are integers
+        public int GetMaxEnergy() => StatCalculator.GatherAttributeValue(this, Attribute.MaxEnergy, baseMaxEnergy);
+        public int GetEnergyRegen() => StatCalculator.GatherAttributeValue(this, Attribute.EnergyRegen, baseEnergyRegen);
         
         // MaxPowerDrawPerTurn is a configuration setting, not a modified stat
         public int GetMaxPowerDrawPerTurn() => baseMaxPowerDrawPerTurn;
@@ -98,6 +99,7 @@ namespace Assets.Scripts.Entities.Vehicle.VehicleComponents.ComponentTypes
         /// Regenerates energy at the start of turn.
         /// Cannot regenerate if power core is destroyed.
         /// Uses StatCalculator for modifier-adjusted values.
+        /// INTEGER-FIRST: All values are integers.
         /// </summary>
         public void RegenerateEnergy()
         {
@@ -107,12 +109,12 @@ namespace Assets.Scripts.Entities.Vehicle.VehicleComponents.ComponentTypes
                 return;
             }
             
-            // Use accessor methods for modified values
-            float regenRate = GetEnergyRegen();
+            // Use accessor methods for modified values (all integers now)
+            int regenRate = GetEnergyRegen();
             int maxCap = GetMaxEnergy();
             
             int oldEnergy = currentEnergy;
-            currentEnergy = Mathf.Min(currentEnergy + Mathf.RoundToInt(regenRate), maxCap);
+            currentEnergy = Mathf.Min(currentEnergy + regenRate, maxCap);
             
             int regenAmount = currentEnergy - oldEnergy;
             
@@ -133,14 +135,15 @@ namespace Assets.Scripts.Entities.Vehicle.VehicleComponents.ComponentTypes
         /// <summary>
         /// Get the stats to display in the UI for this power core.
         /// Uses StatCalculator for modified values.
+        /// INTEGER-FIRST: All stats are integers.
         /// </summary>
         public override List<VehicleComponentUI.DisplayStat> GetDisplayStats()
         {
             var stats = new List<VehicleComponentUI.DisplayStat>();
             
-            // Get modified values using accessor methods
-            float modifiedMaxEnergy = GetMaxEnergy();
-            float modifiedRegen = GetEnergyRegen();
+            // Get modified values using accessor methods (all integers)
+            int modifiedMaxEnergy = GetMaxEnergy();
+            int modifiedRegen = GetEnergyRegen();
             
             // Energy bar with tooltip for max energy modifiers
             stats.Add(VehicleComponentUI.DisplayStat.BarWithTooltip("Energy", "EN", Attribute.MaxEnergy, currentEnergy, baseMaxEnergy, modifiedMaxEnergy));

@@ -432,6 +432,7 @@ public abstract class VehicleComponent : Entity
     /// Override in subclasses to provide component-specific stats.
     /// Base implementation returns common stats (power draw if non-zero).
     /// Uses StatCalculator for modified values.
+    /// INTEGER-FIRST: All stats are integers.
     /// </summary>
     public virtual List<VehicleComponentUI.DisplayStat> GetDisplayStats()
     {
@@ -440,7 +441,7 @@ public abstract class VehicleComponent : Entity
         // Add power draw if non-zero (common to many components)
         if (basePowerDrawPerTurn > 0)
         {
-            float modifiedPower = GetPowerDrawPerTurn();
+            int modifiedPower = GetPowerDrawPerTurn();
             stats.Add(VehicleComponentUI.DisplayStat.WithTooltip("Power", "PWR", Attribute.PowerDraw, basePowerDrawPerTurn, modifiedPower, "/turn"));
         }
         

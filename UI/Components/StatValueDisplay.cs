@@ -29,11 +29,11 @@ namespace Assets.Scripts.UI.Components
         private TextMeshProUGUI textComponent;
         private RectTransform rectTransform;
         
-        // Tooltip data
+        // Tooltip data - INTEGER-FIRST DESIGN
         private Entity tooltipEntity;
         private Attribute tooltipAttribute;
-        private float tooltipBaseValue;
-        private float tooltipFinalValue;
+        private int tooltipBaseValue;
+        private int tooltipFinalValue;
         
         void Awake()
         {
@@ -44,17 +44,18 @@ namespace Assets.Scripts.UI.Components
         /// <summary>
         /// Update the displayed stat value with color coding.
         /// Uses StatCalculator to determine if stat is modified.
+        /// INTEGER-FIRST DESIGN: All stat values are integers (D&D discrete stats).
         /// </summary>
         /// <param name="entity">Entity for tooltip breakdown (can be null if no tooltip)</param>
         /// <param name="attribute">Attribute for tooltip breakdown</param>
-        /// <param name="baseValue">Base value (unmodified)</param>
-        /// <param name="finalValue">Final value (with modifiers)</param>
+        /// <param name="baseValue">Base value (unmodified) - INTEGER</param>
+        /// <param name="finalValue">Final value (with modifiers) - INTEGER</param>
         /// <param name="displayText">Custom display text (if null, uses finalValue)</param>
         public void UpdateDisplay(
             Entity entity,
             Attribute attribute,
-            float baseValue,
-            float finalValue,
+            int baseValue,
+            int finalValue,
             string displayText = null)
         {
             if (textComponent == null) return;
@@ -65,13 +66,13 @@ namespace Assets.Scripts.UI.Components
             tooltipBaseValue = baseValue;
             tooltipFinalValue = finalValue;
             
-            // Set display text
-            textComponent.text = displayText ?? finalValue.ToString("F1");
+            // Set display text (integer, no decimal places)
+            textComponent.text = displayText ?? finalValue.ToString();
             
             // Set color based on modifiers
-            float totalModifiers = finalValue - baseValue;
+            int totalModifiers = finalValue - baseValue;
             
-            if (Mathf.Approximately(totalModifiers, 0f))
+            if (totalModifiers == 0)
             {
                 textComponent.color = normalColor;
             }

@@ -238,7 +238,7 @@ public class VehicleInspectorPanel : MonoBehaviour
             var hpDisplay = vehicleHPValueText.GetComponent<StatValueDisplay>();
             int currentHealth = selectedVehicle.chassis?.GetCurrentHealth() ?? 0;
             int maxHealth = selectedVehicle.chassis?.GetMaxHealth() ?? 0;
-            float baseMaxHP = selectedVehicle.chassis?.GetBaseMaxHealth() ?? 100;
+            int baseMaxHP = selectedVehicle.chassis?.GetBaseMaxHealth() ?? 100;  // INTEGER-FIRST
             
             if (hpDisplay != null)
             {
@@ -270,7 +270,7 @@ public class VehicleInspectorPanel : MonoBehaviour
             var energyDisplay = vehicleEnergyValueText.GetComponent<StatValueDisplay>();
             int currentEnergy = selectedVehicle.powerCore?.GetCurrentEnergy() ?? 0;
             int maxEnergy = selectedVehicle.powerCore?.GetMaxEnergy() ?? 0;
-            float baseMaxEnergy = selectedVehicle.powerCore?.GetBaseMaxEnergy() ?? 100;
+            int baseMaxEnergy = selectedVehicle.powerCore?.GetBaseMaxEnergy() ?? 100;  // INTEGER-FIRST
             
             if (energyDisplay != null)
             {
@@ -338,28 +338,28 @@ public class VehicleInspectorPanel : MonoBehaviour
         if (vehicleEnergyRegenValueText != null)
         {
             var regenDisplay = vehicleEnergyRegenValueText.GetComponent<StatValueDisplay>();
-            float modifiedRegen = selectedVehicle.powerCore?.GetEnergyRegen() ?? 0f;
+            int modifiedRegen = selectedVehicle.powerCore?.GetEnergyRegen() ?? 0;  // INTEGER-FIRST
             
             if (regenDisplay != null && selectedVehicle.powerCore != null)
             {
-                float baseRegen = selectedVehicle.powerCore.GetBaseEnergyRegen();
+                int baseRegen = selectedVehicle.powerCore.GetBaseEnergyRegen();
                 
                 regenDisplay.UpdateDisplay(
                     selectedVehicle.powerCore,
                     Attribute.EnergyRegen,
                     baseRegen,
                     modifiedRegen,
-                    $"{modifiedRegen:F1}"
+                    $"{modifiedRegen}"  // No decimals
                 );
             }
             else if (regenDisplay != null)
             {
                 // No power core - show 0 with no modifiers (resets color to white)
-                regenDisplay.UpdateDisplaySimple(0, 0, $"{modifiedRegen:F1}");
+                regenDisplay.UpdateDisplaySimple(0, 0, $"{modifiedRegen}");
             }
             else
             {
-                vehicleEnergyRegenValueText.text = $"{modifiedRegen:F1}";
+                vehicleEnergyRegenValueText.text = $"{modifiedRegen}";
             }
         }
     }

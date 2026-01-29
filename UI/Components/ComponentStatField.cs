@@ -153,13 +153,13 @@ namespace Assets.Scripts.UI.Components
             // Determine display text
             string displayText = maxValue > 0 
                 ? $"{currentValue:F0}/{maxValue:F0}" 
-                : $"{currentValue:F1}";
+                : $"{currentValue:F0}";  // INTEGER-FIRST: No decimal places
             
             // Use StatValueDisplay if available for tooltip support
             if (statDisplay != null && entity != null && runtimeAttribute.HasValue)
             {
-                float baseValue = maxValue > 0 ? maxValue : currentValue;
-                float finalValue = maxValue > 0 ? maxValue : currentValue;
+                int baseValue = maxValue > 0 ? Mathf.RoundToInt(maxValue) : Mathf.RoundToInt(currentValue);
+                int finalValue = maxValue > 0 ? Mathf.RoundToInt(maxValue) : Mathf.RoundToInt(currentValue);
                 
                 statDisplay.UpdateDisplay(
                     entity,
@@ -224,8 +224,9 @@ namespace Assets.Scripts.UI.Components
         
         /// <summary>
         /// Update with entity for tooltip support and value string.
+        /// INTEGER-FIRST: Values are integers.
         /// </summary>
-        public void UpdateDisplay(Entity entity, string valueString, float baseValue, float finalValue, bool hasThisStat)
+        public void UpdateDisplay(Entity entity, string valueString, int baseValue, int finalValue, bool hasThisStat)
         {
             gameObject.SetActive(hasThisStat);
             

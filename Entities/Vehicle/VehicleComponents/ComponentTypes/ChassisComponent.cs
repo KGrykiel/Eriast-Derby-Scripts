@@ -19,8 +19,8 @@ public class ChassisComponent : VehicleComponent
     
     [Header("Aerodynamic Properties")]
     [SerializeField]
-    [Tooltip("Aerodynamic drag coefficient of vehicle body (0.05 = streamlined, 0.15 = bulky) (base value before modifiers). Components can modify this.")]
-    private float baseDragCoefficient = 0.1f;
+    [Tooltip("Aerodynamic drag coefficient as percentage (10 = 0.10, 15 = 0.15). Higher = more drag. INTEGER-FIRST.")]
+    private int baseDragCoefficientPercent = 10;  // 10 = 0.10 drag
     
     /// <summary>
     /// Called when component is first added or reset in Editor.
@@ -67,11 +67,17 @@ public class ChassisComponent : VehicleComponent
     
     // Base value accessors (return raw field values without modifiers)
     public int GetBaseMobility() => baseMobility;
-    public float GetBaseDragCoefficient() => baseDragCoefficient;
+    public int GetBaseDragCoefficientPercent() => baseDragCoefficientPercent;
     
     // Modified value accessors (return values with all modifiers applied via StatCalculator)
-    public int GetMobility() => Mathf.RoundToInt(StatCalculator.GatherAttributeValue(this, Attribute.Mobility, baseMobility));
-    public float GetDragCoefficient() => StatCalculator.GatherAttributeValue(this, Attribute.DragCoefficient, baseDragCoefficient);
+    public int GetMobility() => StatCalculator.GatherAttributeValue(this, Attribute.Mobility, baseMobility);
+    public int GetDragCoefficientPercent() => StatCalculator.GatherAttributeValue(this, Attribute.DragCoefficient, baseDragCoefficientPercent);
+    
+    /// <summary>
+    /// Get drag coefficient as actual ratio (for physics calculations).
+    /// Converts percentage to decimal: 10 -> 0.10
+    /// </summary>
+    public float GetDragCoefficientRatio() => GetDragCoefficientPercent() / 100f;
     
     // ==================== STATS ====================
     
@@ -85,19 +91,19 @@ public class ChassisComponent : VehicleComponent
         
         // componentSpace is negative for chassis (provides space)
         int baseSpace = -GetBaseComponentSpace();
-        float modifiedSpace = -GetComponentSpace();
+        int modifiedSpace = -GetComponentSpace();
         if (baseSpace > 0 || modifiedSpace > 0)
         {
             stats.Add(VehicleComponentUI.DisplayStat.WithTooltip("Capacity", "CAP", Attribute.ComponentSpace, baseSpace, modifiedSpace));
         }
 
         // Use accessor methods for modified values
-        float modifiedMobility = GetMobility();
+        int modifiedMobility = GetMobility();
         stats.Add(VehicleComponentUI.DisplayStat.WithTooltip("Mobility", "MBL", Attribute.Mobility, baseMobility, modifiedMobility));
         
-        // Aerodynamic properties
-        float modifiedDrag = GetDragCoefficient();
-        stats.Add(VehicleComponentUI.DisplayStat.WithTooltip("Drag", "DRAG", Attribute.DragCoefficient, baseDragCoefficient, modifiedDrag));
+        // Aerodynamic properties (displayed as percentage)
+        int modifiedDrag = GetDragCoefficientPercent();
+        stats.Add(VehicleComponentUI.DisplayStat.WithTooltip("Drag", "DRAG", Attribute.DragCoefficient, baseDragCoefficientPercent, modifiedDrag, "%"));
         
         // Don't add base class stats - chassis doesn't draw power
 

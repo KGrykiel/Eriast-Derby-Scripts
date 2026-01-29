@@ -46,7 +46,7 @@ namespace Assets.Scripts.Combat
             if (entity == null) return;
             
             var (_, _, appliedMods) = StatCalculator.GatherAttributeValueWithBreakdown(
-                entity, attribute, 0f);
+                entity, attribute, 0);  // Integer base value
             
             foreach (var mod in appliedMods)
             {
