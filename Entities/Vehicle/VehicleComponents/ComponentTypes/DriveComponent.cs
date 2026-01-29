@@ -1,4 +1,5 @@
 ﻿using Assets.Scripts.Core;
+using Assets.Scripts.Entities;
 using Assets.Scripts.Entities.Vehicle;
 using Assets.Scripts.Logging;
 using System.Collections.Generic;
@@ -149,19 +150,7 @@ public class DriveComponent : VehicleComponent
         int oldSpeed = currentSpeed;
         currentSpeed = Mathf.Max(0, currentSpeed - frictionLoss);
         
-        if (currentSpeed != oldSpeed && parentVehicle != null)
-        {
-            RaceHistory.Log(
-                Assets.Scripts.Logging.EventType.Movement,
-                EventImportance.Low,
-                $"{parentVehicle.vehicleName} slowed by friction: {oldSpeed} → {currentSpeed}",
-                parentVehicle.currentStage,
-                parentVehicle
-            ).WithMetadata("oldSpeed", oldSpeed)
-             .WithMetadata("newSpeed", currentSpeed)
-             .WithMetadata("frictionLoss", frictionLoss)
-             .WithMetadata("reason", "UnpoweredFriction");
-        }
+        this.LogSpeedChange(oldSpeed, currentSpeed, "friction", frictionLoss);
     }
     
     // ==================== ACCELERATION SYSTEM ====================
@@ -183,18 +172,7 @@ public class DriveComponent : VehicleComponent
         int oldSpeed = currentSpeed;
         currentSpeed = Mathf.Min(currentSpeed + actualIncrease, modifiedMaxSpeed);
         
-        if (currentSpeed != oldSpeed && parentVehicle != null)
-        {
-            RaceHistory.Log(
-                Assets.Scripts.Logging.EventType.Movement,
-                EventImportance.Low,
-                $"{parentVehicle.vehicleName} accelerated: {oldSpeed} → {currentSpeed}",
-                parentVehicle.currentStage,
-                parentVehicle
-            ).WithMetadata("oldSpeed", oldSpeed)
-             .WithMetadata("newSpeed", currentSpeed)
-             .WithMetadata("maxSpeed", modifiedMaxSpeed);
-        }
+        this.LogSpeedChange(oldSpeed, currentSpeed, "acceleration");
     }
     
     /// <summary>
@@ -213,17 +191,7 @@ public class DriveComponent : VehicleComponent
         int oldSpeed = currentSpeed;
         currentSpeed = Mathf.Max(currentSpeed - actualDecrease, 0);
         
-        if (currentSpeed != oldSpeed && parentVehicle != null)
-        {
-            RaceHistory.Log(
-                Assets.Scripts.Logging.EventType.Movement,
-                EventImportance.Low,
-                $"{parentVehicle.vehicleName} decelerated: {oldSpeed} → {currentSpeed}",
-                parentVehicle.currentStage,
-                parentVehicle
-            ).WithMetadata("oldSpeed", oldSpeed)
-             .WithMetadata("newSpeed", currentSpeed);
-        }
+        this.LogSpeedChange(oldSpeed, currentSpeed, "deceleration");
     }
     
     
@@ -249,19 +217,7 @@ public class DriveComponent : VehicleComponent
             currentSpeed = (currentSpeed * currentMaxSpeed) / lastKnownMaxSpeed;
             currentSpeed = Mathf.Clamp(currentSpeed, 0, currentMaxSpeed);
             
-            if (parentVehicle != null && currentSpeed != oldSpeed)
-            {
-                RaceHistory.Log(
-                    Assets.Scripts.Logging.EventType.Modifier,
-                    EventImportance.Low,
-                    $"{parentVehicle.vehicleName}'s speed scaled: {oldSpeed} → {currentSpeed} (maxSpeed: {lastKnownMaxSpeed} → {currentMaxSpeed})",
-                    parentVehicle.currentStage,
-                    parentVehicle
-                ).WithMetadata("oldSpeed", oldSpeed)
-                 .WithMetadata("newSpeed", currentSpeed)
-                 .WithMetadata("oldMaxSpeed", lastKnownMaxSpeed)
-                 .WithMetadata("newMaxSpeed", currentMaxSpeed);
-            }
+            this.LogSpeedScaling(oldSpeed, currentSpeed, lastKnownMaxSpeed, currentMaxSpeed);
         }
         lastKnownMaxSpeed = currentMaxSpeed;
         
@@ -298,23 +254,7 @@ public class DriveComponent : VehicleComponent
         int oldTarget = targetSpeedPercent;
         targetSpeedPercent = Mathf.Clamp(speedPercent, 0, 100);
         
-        if (targetSpeedPercent != oldTarget && parentVehicle != null)
-        {
-            int maxSpeed = GetMaxSpeed();
-            int targetAbsolute = (targetSpeedPercent * maxSpeed) / 100;
-            
-            RaceHistory.Log(
-                Assets.Scripts.Logging.EventType.Movement,
-                EventImportance.Low,
-                $"{parentVehicle.vehicleName} set target speed: {oldTarget}% → {targetSpeedPercent}% ({targetAbsolute} units/turn)",
-                parentVehicle.currentStage,
-                parentVehicle
-            ).WithMetadata("oldTargetPercent", oldTarget)
-             .WithMetadata("newTargetPercent", targetSpeedPercent)
-             .WithMetadata("targetAbsolute", targetAbsolute)
-             .WithMetadata("currentSpeed", currentSpeed)
-             .WithMetadata("maxSpeed", maxSpeed);
-        }
+        this.LogTargetSpeedSet(oldTarget, targetSpeedPercent);
     }
     
     

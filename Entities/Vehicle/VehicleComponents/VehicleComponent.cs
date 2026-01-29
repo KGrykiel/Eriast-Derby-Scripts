@@ -3,6 +3,7 @@ using System.Linq;
 using UnityEngine;
 using EventType = Assets.Scripts.Logging.EventType;
 using System;
+using Assets.Scripts.Entities;
 using Assets.Scripts.Logging;
 using Assets.Scripts.Core;
 using Assets.Scripts.Entities.Vehicle.VehicleComponents;
@@ -102,8 +103,8 @@ public abstract class VehicleComponent : Entity
     public int GetBasePowerDrawPerTurn() => basePowerDrawPerTurn;
     
     // Modified value accessors (return values with all modifiers applied via StatCalculator)
-    public virtual int GetComponentSpace() => Mathf.RoundToInt(StatCalculator.GatherAttributeValue(this, Attribute.ComponentSpace, baseComponentSpace));
-    public virtual int GetPowerDrawPerTurn() => Mathf.RoundToInt(StatCalculator.GatherAttributeValue(this, Attribute.PowerDraw, basePowerDrawPerTurn));
+    public virtual int GetComponentSpace() => StatCalculator.GatherAttributeValue(this, Attribute.ComponentSpace, baseComponentSpace);
+    public virtual int GetPowerDrawPerTurn() => StatCalculator.GatherAttributeValue(this, Attribute.PowerDraw, basePowerDrawPerTurn);
     
     // ==================== CROSS-COMPONENT MODIFIER SYSTEM ====================
     
@@ -232,18 +233,7 @@ public abstract class VehicleComponent : Entity
         base.RemoveModifier(modifier);
         
         // Log removal (for debugging/tracking)
-        string vehicleName = parentVehicle != null ? parentVehicle.vehicleName : null ?? "Unknown";
-        
-        RaceHistory.Log(
-            EventType.Modifier,
-            EventImportance.Debug,
-            $"{vehicleName}'s {name} lost {modifier.Type} {modifier.Attribute} {modifier.Value:+0;-0} modifier",
-            parentVehicle != null ? parentVehicle.currentStage : null,
-            parentVehicle
-        ).WithMetadata("component", name)
-         .WithMetadata("modifierType", modifier.Type.ToString())
-         .WithMetadata("attribute", modifier.Attribute.ToString())
-         .WithMetadata("removed", true);
+        this.LogModifierRemoved(modifier);
     }
     
     // ==================== ENTITY OVERRIDES ====================
@@ -346,23 +336,14 @@ public abstract class VehicleComponent : Entity
     /// </summary>
     protected override void OnEntityDestroyed()
     {
-        // Log destruction
-        string vehicleName = parentVehicle != null ? parentVehicle.vehicleName : "Unknown";
-        RaceHistory.Log(
-            EventType.Combat,
-            EventImportance.High,
-            $"[DESTROYED] {vehicleName}'s {name} was destroyed!",
-            parentVehicle != null ? parentVehicle.currentStage : null,
-            parentVehicle
-        ).WithMetadata("componentName", name)
-         .WithMetadata("componentType", componentType.ToString());
+        this.LogComponentDestroyed();
         
-        Debug.LogWarning($"[Component] {name} on {vehicleName} was destroyed!");
+        Debug.LogWarning($"[Component] {name} on {parentVehicle?.vehicleName ?? "Unknown"} was destroyed!");
         
         // If this component enabled a role, that role is now unavailable
         if (roleType != RoleType.None)
         {
-            Debug.Log($"[Component] Role '{roleType}' is no longer available on {vehicleName}");
+            Debug.Log($"[Component] Role '{roleType}' is no longer available on {parentVehicle?.vehicleName ?? "Unknown"}");
         }
         
         // Notify subclasses
@@ -499,16 +480,7 @@ public abstract class VehicleComponent : Entity
     /// </summary>
     protected virtual void OnPowerStarved()
     {
-        string vehicleName = parentVehicle != null ? parentVehicle.vehicleName : "Unknown";
-        RaceHistory.Log(
-            EventType.Resource,
-            EventImportance.Medium,
-            $"{vehicleName}: {name} shut down due to insufficient power",
-            parentVehicle != null ? parentVehicle.currentStage : null,
-            parentVehicle
-        ).WithMetadata("component", name)
-         .WithMetadata("requiredPower", GetActualPowerDraw())
-         .WithMetadata("reason", "InsufficientPower");
+        this.LogPowerStarved(GetActualPowerDraw());
         
         // Component becomes temporarily disabled until power is restored
         // (Or Technician manually re-enables it)
@@ -542,18 +514,7 @@ public abstract class VehicleComponent : Entity
                 OnComponentEnabled();
             }
             
-            if (parentVehicle != null)
-            {
-                string state = disabled ? "disabled" : "enabled";
-                RaceHistory.Log(
-                    EventType.Resource,
-                    EventImportance.Low,
-                    $"{parentVehicle.vehicleName}: {name} {state} by engineer",
-                    parentVehicle.currentStage,
-                    parentVehicle
-                ).WithMetadata("component", name)
-                 .WithMetadata("manuallyDisabled", isManuallyDisabled);
-            }
+            this.LogManualStateChange(isManuallyDisabled);
         }
         
         return true;

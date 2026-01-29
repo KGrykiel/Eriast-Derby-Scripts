@@ -1,4 +1,5 @@
 ﻿using Assets.Scripts.Core;
+using Assets.Scripts.Entities;
 using Assets.Scripts.Logging;
 using System.Collections.Generic;
 using UnityEngine;
@@ -118,18 +119,7 @@ namespace Assets.Scripts.Entities.Vehicle.VehicleComponents.ComponentTypes
             
             int regenAmount = currentEnergy - oldEnergy;
             
-            if (regenAmount > 0 && parentVehicle != null)
-            {
-                RaceHistory.Log(
-                    Logging.EventType.Resource,
-                    EventImportance.Debug,
-                    $"{parentVehicle.vehicleName} regenerated {regenAmount} energy ({currentEnergy}/{maxCap})",
-                    parentVehicle.currentStage,
-                    parentVehicle
-                ).WithMetadata("regenAmount", regenAmount)
-                 .WithMetadata("currentEnergy", currentEnergy)
-                 .WithMetadata("maxEnergy", maxCap);
-            }
+            this.LogEnergyRegeneration(regenAmount, currentEnergy, maxCap);
         }
         
         /// <summary>
@@ -173,16 +163,7 @@ namespace Assets.Scripts.Entities.Vehicle.VehicleComponents.ComponentTypes
             // Log catastrophic failure
             Debug.LogError($"[PowerCore] CRITICAL: {parentVehicle.vehicleName}'s {name} destroyed! Vehicle has no power!");
             
-            RaceHistory.Log(
-                Logging.EventType.Combat,
-                EventImportance.Critical,
-                $"[CRITICAL] {parentVehicle.vehicleName}'s Power Core destroyed! Vehicle is powerless!",
-                parentVehicle.currentStage,
-                parentVehicle
-            ).WithMetadata("componentName", name)
-             .WithMetadata("componentType", "PowerCore")
-             .WithMetadata("currentEnergy", 0)
-             .WithMetadata("catastrophicFailure", true);
+            this.LogPowerCoreDestroyed();
         }
         
         // ==================== POWER MANAGEMENT METHODS ====================

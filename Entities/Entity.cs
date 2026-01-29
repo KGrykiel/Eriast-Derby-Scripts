@@ -73,8 +73,8 @@ public abstract class Entity : MonoBehaviour
     public int GetBaseArmorClass() => baseArmorClass;
     
     // Modified value accessors (return values with all modifiers applied via StatCalculator)
-    public virtual int GetMaxHealth() => Mathf.RoundToInt(StatCalculator.GatherAttributeValue(this, Attribute.MaxHealth, baseMaxHealth));
-    public virtual int GetArmorClass() => Mathf.RoundToInt(StatCalculator.GatherAttributeValue(this, Attribute.ArmorClass, baseArmorClass));
+    public virtual int GetMaxHealth() => StatCalculator.GatherAttributeValue(this, Attribute.MaxHealth, baseMaxHealth);
+    public virtual int GetArmorClass() => StatCalculator.GatherAttributeValue(this, Attribute.ArmorClass, baseArmorClass);
     
     // ==================== ENTITY FEATURES ====================
     

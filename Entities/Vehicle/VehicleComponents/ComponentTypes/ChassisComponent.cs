@@ -1,5 +1,6 @@
 using UnityEngine;
 using System.Collections.Generic;
+using Assets.Scripts.Entities;
 using Assets.Scripts.Logging;
 using Assets.Scripts.Core;
 
@@ -116,15 +117,7 @@ public class ChassisComponent : VehicleComponent
         
         Debug.LogError($"[Chassis] CRITICAL: {parentVehicle.vehicleName}'s {name} destroyed! Vehicle structure collapsed!");
         
-        RaceHistory.Log(
-            Assets.Scripts.Logging.EventType.Combat,
-            EventImportance.Critical,
-            $"[CRITICAL] {parentVehicle.vehicleName}'s Chassis destroyed! Vehicle structural collapse imminent!",
-            parentVehicle.currentStage,
-            parentVehicle
-        ).WithMetadata("componentName", name)
-         .WithMetadata("componentType", "Chassis")
-         .WithMetadata("catastrophicFailure", true);
+        this.LogChassisDestroyed();
         
         // Immediately mark vehicle as destroyed (fires event for immediate handling)
         parentVehicle.MarkAsDestroyed();
