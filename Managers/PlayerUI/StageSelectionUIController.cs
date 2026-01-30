@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using TMPro;
 using UnityEngine.UI;
+using Assets.Scripts.Stages;
 
 namespace Assets.Scripts.Managers.PlayerUI
 {

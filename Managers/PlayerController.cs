@@ -4,6 +4,7 @@ using UnityEngine;
 using Assets.Scripts.Entities.Vehicle;
 using Assets.Scripts.Managers.PlayerUI;
 using Assets.Scripts.Skills.Helpers;
+using Assets.Scripts.Stages;
 
 /// <summary>
 /// Orchestrates player input and coordinates between UI controllers and game systems.

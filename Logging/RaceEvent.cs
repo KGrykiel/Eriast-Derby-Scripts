@@ -1,5 +1,6 @@
 ﻿using UnityEngine;
 using System.Collections.Generic;
+using Assets.Scripts.Stages;
 
 namespace Assets.Scripts.Logging
 {

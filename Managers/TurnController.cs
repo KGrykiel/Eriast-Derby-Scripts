@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 using Assets.Scripts.Logging;
+using Assets.Scripts.Stages;
 
 /// <summary>
 /// Handles vehicle-specific turn operations.

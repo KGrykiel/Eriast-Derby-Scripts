@@ -4,6 +4,7 @@ using UnityEngine;
 using Assets.Scripts.Managers;
 using Assets.Scripts.Managers.Logging;
 using Assets.Scripts.Logging;
+using Assets.Scripts.Stages;
 
 [RequireComponent(typeof(PlayerController))]
 

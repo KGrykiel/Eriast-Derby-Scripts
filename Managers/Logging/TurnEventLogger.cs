@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 using Assets.Scripts.Logging;
+using Assets.Scripts.Stages;
 using EventType = Assets.Scripts.Logging.EventType;
 
 namespace Assets.Scripts.Managers.Logging

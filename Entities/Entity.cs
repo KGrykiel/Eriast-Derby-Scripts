@@ -252,6 +252,22 @@ public abstract class Entity : MonoBehaviour
     }
     
     /// <summary>
+    /// Remove all status effects applied by a specific source.
+    /// Much more efficient than searching by template.
+    /// Useful for removing stage/lane effects when leaving.
+    /// </summary>
+    public virtual void RemoveStatusEffectsFromSource(Object source)
+    {
+        if (source == null) return;
+        
+        var toRemove = activeStatusEffects.Where(e => e.applier == source).ToList();
+        foreach (var effect in toRemove)
+        {
+            RemoveStatusEffect(effect);
+        }
+    }
+    
+    /// <summary>
     /// Get all active status effects on this entity.
     /// </summary>
     public virtual List<AppliedStatusEffect> GetActiveStatusEffects()

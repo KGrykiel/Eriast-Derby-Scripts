@@ -5,6 +5,7 @@ using System.Linq;
 using EventType = Assets.Scripts.Logging.EventType;
 using Assets.Scripts.Logging;
 using Assets.Scripts.Managers;
+using Assets.Scripts.Stages;
 
 /// <summary>
 /// Overview panel showing race leaderboard and event summary.

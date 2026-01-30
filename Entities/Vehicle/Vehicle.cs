@@ -1,12 +1,12 @@
 ﻿using UnityEngine;
 using System.Collections.Generic;
 using System.Linq;
-using EventType = Assets.Scripts.Logging.EventType;
-using Assets.Scripts.Logging;
 using Assets.Scripts.Entities;
 using Assets.Scripts.Entities.Vehicle.VehicleComponents.ComponentTypes;
 using Assets.Scripts.Entities.Vehicle;
 using Assets.Scripts.Combat.Saves;
+using Assets.Scripts.Stages;
+using Assets.Scripts.Stages.Lanes;
 using SkillContext = Assets.Scripts.Skills.Helpers.SkillContext;
 
 /// <summary>
@@ -36,6 +36,10 @@ public class Vehicle : MonoBehaviour
     [HideInInspector] public Stage currentStage;
     [HideInInspector] public int progress = 0;  // INTEGER: D&D-style discrete position
     [HideInInspector] public bool hasLoggedMovementWarningThisTurn = false;
+    
+    [Header("Lane System")]
+    [Tooltip("Current lane this vehicle is in (null if stage has no lanes)")]
+    [HideInInspector] public StageLane currentLane;
 
     [Header("Crew & Seats")]
     [Tooltip("Physical positions where characters sit and control components. " +

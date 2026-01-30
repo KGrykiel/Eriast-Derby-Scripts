@@ -4,6 +4,7 @@ using UnityEngine;
 using Assets.Scripts.Combat.SkillChecks;
 using Assets.Scripts.Combat.Saves;
 using Assets.Scripts.Combat;
+using Assets.Scripts.Stages;
 
 namespace Assets.Scripts.Events.EventCard.EventCardTypes
 {
