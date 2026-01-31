@@ -38,19 +38,43 @@ public class GameManager : MonoBehaviour
     // Cached references
     private List<Stage> stages;
     public Vehicle playerVehicle;
+    private bool isGameOver = false; // Prevent re-entry during game over processing
 
     // ==================== PUBLIC API ====================
     
     /// <summary>
     /// Handle vehicle destruction immediately. Called by Vehicle.MarkAsDestroyed().
     /// Removes vehicle from turn order right away (mid-turn safe).
+    /// Ends game if player vehicle is destroyed.
     /// </summary>
     public void HandleVehicleDestroyed(Vehicle vehicle)
     {
         if (vehicle == null || stateMachine == null) return;
+        if (isGameOver) return; // Prevent re-entry during game over processing
         
         Debug.Log($"[GameManager] {vehicle.vehicleName} destroyed - removing from turn order immediately");
         stateMachine.RemoveVehicle(vehicle);
+        
+        // Check if player vehicle was destroyed - GAME OVER
+        if (vehicle == playerVehicle)
+        {
+            isGameOver = true; // Set flag immediately to prevent re-entry
+            Debug.Log($"[GameManager] Player vehicle destroyed - GAME OVER");
+            
+            // Log game over event
+            RaceHistory.Log(
+                Assets.Scripts.Logging.EventType.Destruction,
+                EventImportance.Critical,
+                $"<color=#FF0000><b>GAME OVER</b></color> - {playerVehicle.vehicleName} has been destroyed!",
+                playerVehicle.currentStage,
+                playerVehicle
+            );
+            
+            // Transition to game over (stops state machine loop)
+            stateMachine.TransitionTo(TurnPhase.GameOver);
+            
+            RefreshAllPanels();
+        }
     }
 
     // ==================== INITIALIZATION ====================
@@ -88,6 +112,18 @@ public class GameManager : MonoBehaviour
             {
                 Vector3 stagePos = startStage.transform.position;
                 vehicle.transform.position = new Vector3(stagePos.x, stagePos.y, vehicle.transform.position.z);
+                
+                // Add to stage's vehicle list
+                if (!startStage.vehiclesInStage.Contains(vehicle))
+                {
+                    startStage.vehiclesInStage.Add(vehicle);
+                }
+                
+                // Assign to default lane (middle lane)
+                if (startStage.lanes != null && startStage.lanes.Count > 0)
+                {
+                    startStage.AssignVehicleToDefaultLane(vehicle);
+                }
             }
         }
     }
@@ -144,7 +180,7 @@ public class GameManager : MonoBehaviour
     /// </summary>
     private void ProcessStateMachine()
     {
-        while (stateMachine.IsActive && !stateMachine.IsWaitingForPlayer)
+        while (stateMachine.IsActive && !stateMachine.IsWaitingForPlayer && !isGameOver)
         {
             switch (stateMachine.CurrentPhase)
             {
@@ -177,7 +213,7 @@ public class GameManager : MonoBehaviour
             }
         }
         
-        if (stateMachine.IsWaitingForPlayer)
+        if (stateMachine.IsWaitingForPlayer && !isGameOver)
         {
             RefreshAllPanels();
         }
@@ -258,6 +294,14 @@ public class GameManager : MonoBehaviour
 
     private void HandleGameOver()
     {
+        Debug.Log("[GameManager] Game Over - simulation stopped");
+        
+        // Stop any ongoing UI updates
+        if (statusNotesText != null)
+        {
+            statusNotesText.text = "<color=#FF0000><b>GAME OVER</b></color>\nYour vehicle has been destroyed!";
+        }
+        
         RefreshAllPanels();
     }
 

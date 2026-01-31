@@ -43,13 +43,6 @@ namespace Assets.Scripts.Stages
     [Tooltip("Lanes in this stage - auto-populated from child StageLane components")]
     public List<StageLane> lanes = new();
     
-    [Header("Unity Events")]
-    [Tooltip("Triggered when any vehicle enters this stage")]
-    public UnityEvent onEnter;
-    
-    [Tooltip("Triggered when any vehicle leaves this stage")]
-    public UnityEvent onLeave;
-    
     // ==================== RUNTIME DATA ====================
     
     /// <summary>
@@ -111,9 +104,6 @@ namespace Assets.Scripts.Stages
         
         // Draw and trigger event card
         DrawAndTriggerEventCard(vehicle);
-        
-        // Trigger Unity events
-        onEnter?.Invoke();
     }
     
     /// <summary>
@@ -174,9 +164,6 @@ namespace Assets.Scripts.Stages
             // Log stage exit
             this.LogStageExit(vehicle, vehiclesInStage.Count);
         }
-        
-        // Trigger Unity events
-        onLeave?.Invoke();
     }
     
     // ==================== STAGE STATUS EFFECTS ====================

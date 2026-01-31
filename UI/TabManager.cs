@@ -12,12 +12,14 @@ public class TabManager : MonoBehaviour
     public Button overviewTabButton;
     public Button inspectorTabButton;
     public Button logTabButton;
+    public Button lanesTabButton;
 
     [Header("Tab Panels")]
     public GameObject focusPanel;
     public GameObject overviewPanel;
     public GameObject inspectorPanel;
     public GameObject logPanel;
+    public GameObject lanesPanel;
 
     [Header("Active Tab Color")]
     public Color activeColor = new(0.3f, 0.5f, 0.8f);
@@ -32,6 +34,8 @@ public class TabManager : MonoBehaviour
         overviewTabButton.onClick.AddListener(() => ShowTab(overviewPanel, overviewTabButton));
         inspectorTabButton.onClick.AddListener(() => ShowTab(inspectorPanel, inspectorTabButton));
         logTabButton.onClick.AddListener(() => ShowTab(logPanel, logTabButton));
+        if (lanesTabButton != null)
+            lanesTabButton.onClick.AddListener(() => ShowTab(lanesPanel, lanesTabButton));
 
         // Show focus tab by default
         ShowTab(focusPanel, focusTabButton);
@@ -44,12 +48,14 @@ public class TabManager : MonoBehaviour
         overviewPanel.SetActive(false);
         inspectorPanel.SetActive(false);
         logPanel.SetActive(false);
+        if (lanesPanel != null) lanesPanel.SetActive(false);
 
         // Reset all button colors
         SetButtonColor(focusTabButton, inactiveColor);
         SetButtonColor(overviewTabButton, inactiveColor);
         SetButtonColor(inspectorTabButton, inactiveColor);
         SetButtonColor(logTabButton, inactiveColor);
+        if (lanesTabButton != null) SetButtonColor(lanesTabButton, inactiveColor);
 
         // Show selected panel
         panelToShow.SetActive(true);

@@ -53,6 +53,7 @@ public class VehicleInspectorPanel : MonoBehaviour
     // Private state
     private List<Vehicle> allVehicles = new();
     private Vehicle selectedVehicle;
+    private Vehicle pendingVehicleSelection; // Vehicle to select after initialization
     private bool initialized = false;
     
     // Component entry pool
@@ -76,7 +77,27 @@ public class VehicleInspectorPanel : MonoBehaviour
         // Force refresh when panel becomes active
         if (initialized)
         {
+            // Apply pending selection if any
+            if (pendingVehicleSelection != null && allVehicles != null)
+            {
+                int index = allVehicles.IndexOf(pendingVehicleSelection);
+                if (index >= 0)
+                {
+                    selectedVehicle = pendingVehicleSelection;
+                    if (vehicleDropdown != null)
+                    {
+                        // Force dropdown to show correct value
+                        vehicleDropdown.value = index;
+                    }
+                }
+                pendingVehicleSelection = null;
+            }
             RefreshDetails();
+        }
+        else
+        {
+            // Try to initialize and apply pending selection
+            TryInitialize();
         }
     }
 
@@ -158,11 +179,23 @@ public class VehicleInspectorPanel : MonoBehaviour
             options.Add($"{statusIcon} {typeIcon} {vehicle.vehicleName}");
         }
       
+      
         vehicleDropdown.AddOptions(options);
         
         if (allVehicles.Count > 0)
         {
-            selectedVehicle = allVehicles[0];
+            // Use pending selection if set, otherwise default to first
+            if (pendingVehicleSelection != null && allVehicles.Contains(pendingVehicleSelection))
+            {
+                selectedVehicle = pendingVehicleSelection;
+                int index = allVehicles.IndexOf(pendingVehicleSelection);
+                vehicleDropdown.SetValueWithoutNotify(index);
+                pendingVehicleSelection = null;
+            }
+            else
+            {
+                selectedVehicle = allVehicles[0];
+            }
             RefreshDetails();
         }
     }
@@ -172,6 +205,48 @@ public class VehicleInspectorPanel : MonoBehaviour
         if (index >= 0 && index < allVehicles.Count && allVehicles[index] != null)
         {
             selectedVehicle = allVehicles[index];
+            RefreshDetails();
+        }
+    }
+    
+    /// <summary>
+    /// Select a specific vehicle by reference.
+    /// Called externally (e.g., from VehicleCard click).
+    /// </summary>
+    public void SelectVehicle(Vehicle vehicle)
+    {
+        if (vehicle == null) return;
+        
+        // If panel is not active, store for when it becomes active
+        if (!gameObject.activeInHierarchy)
+        {
+            pendingVehicleSelection = vehicle;
+            return;
+        }
+        
+        // If not initialized, store for later
+        if (!initialized || allVehicles == null || allVehicles.Count == 0)
+        {
+            pendingVehicleSelection = vehicle;
+            TryInitialize();
+            return;
+        }
+        
+        // Panel is active and initialized - apply immediately
+        int index = allVehicles.IndexOf(vehicle);
+        if (index >= 0)
+        {
+            selectedVehicle = vehicle;
+            if (vehicleDropdown != null)
+            {
+                vehicleDropdown.value = index;
+            }
+            RefreshDetails();
+        }
+        else
+        {
+            // Vehicle not in list - just set it directly
+            selectedVehicle = vehicle;
             RefreshDetails();
         }
     }
