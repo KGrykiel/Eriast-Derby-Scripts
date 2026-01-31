@@ -9,14 +9,14 @@ namespace Assets.Scripts.Stages.Lanes
     /// Lanes provide tactical positioning - different lanes have different modifiers
     /// that affect speed, defense, and role-specific checks.
     /// 
-    /// Design: Data-driven. Designer sets modifiers in inspector, calculators read them.
-    /// Lane index is auto-calculated by the parent Stage based on position in list.
+    /// Design: MonoBehaviour attached to child GameObjects under Stage.
+    /// Stage auto-discovers lanes from children, similar to how Vehicle discovers components.
+    /// Lane GameObject is used as the source for StatusEffects, enabling efficient removal.
     /// 
     /// Modifiers are applied via StatusEffect that gets applied to ALL vehicle components.
     /// Each component uses only the modifiers relevant to it (AC for all, MaxSpeed for drive, etc.)
     /// </summary>
-    [System.Serializable]
-    public class StageLane
+    public class StageLane : MonoBehaviour
     {
         // ==================== IDENTITY ====================
         
@@ -43,6 +43,16 @@ namespace Assets.Scripts.Stages.Lanes
         [Header("Every Turn Effects")]
         [Tooltip("Effects that trigger every turn for vehicles in this lane")]
         public List<LaneTurnEffect> turnEffects = new();
+        
+        // ==================== STAGE TRANSITION ====================
+        
+        [Header("Stage Transition")]
+        [Tooltip("Which stage this lane leads to (null = use Stage.nextStages default)")]
+        public Stage nextStage;
+        
+        [Tooltip("Which lane in the target stage to enter (-1 = use proportional mapping)")]
+        [Range(-1, 10)]
+        public int targetLaneIndex = -1;
         
         // ==================== RUNTIME DATA ====================
         

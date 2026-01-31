@@ -31,13 +31,11 @@ public class DriveComponent : VehicleComponent
     
     [Header("Speed Management")]
     [Tooltip("Current actual speed in units/turn. INTEGER: D&D-style discrete position.")]
-    [ReadOnly]
     private int currentSpeed = 0;
 
     [SerializeField]
     [Tooltip("Target speed as percentage of maxSpeed (0 = stopped, 100 = full speed). Set by Driver during action phase. INTEGER-FIRST.")]
     [Range(0, 100)]
-    [ReadOnly]
     private int targetSpeedPercent = 0;
     
     // Cached maxSpeed to detect changes from buffs/debuffs

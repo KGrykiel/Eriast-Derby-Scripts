@@ -24,7 +24,6 @@ public abstract class VehicleComponent : Entity
 {
     [Header("Component Identity")]
     [Tooltip("Category of this component (locked for specific component types)")]
-    [ReadOnly]
     public ComponentType componentType = ComponentType.Custom;
     
     [Header("Component-Specific Stats")]

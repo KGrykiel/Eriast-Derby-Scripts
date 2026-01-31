@@ -34,6 +34,7 @@ public class Vehicle : MonoBehaviour
     public ControlType controlType = ControlType.Player;
     
     [HideInInspector] public Stage currentStage;
+    [HideInInspector] public Stage previousStage; // For smart lane positioning
     [HideInInspector] public int progress = 0;  // INTEGER: D&D-style discrete position
     [HideInInspector] public bool hasLoggedMovementWarningThisTurn = false;
     

@@ -1,5 +1,4 @@
 ﻿using System.Collections.Generic;
-using System.Linq;
 using UnityEngine;
 using UnityEngine.Events;
 using Assets.Scripts.Stages.Lanes;
@@ -41,7 +40,7 @@ namespace Assets.Scripts.Stages
     public List<EventCard> eventCards = new();
     
     [Header("Lane System")]
-    [Tooltip("Lanes in this stage (1-5 lanes). Single lane = no multi-lane tactics")]
+    [Tooltip("Lanes in this stage - auto-populated from child StageLane components")]
     public List<StageLane> lanes = new();
     
     [Header("Unity Events")]
@@ -61,6 +60,12 @@ namespace Assets.Scripts.Stages
     public List<Vehicle> vehiclesInStage = new();
     
     // ==================== UNITY LIFECYCLE ====================
+    
+    private void Awake()
+    {
+        // Auto-discover lanes from children (similar to Vehicle component discovery)
+        DiscoverLanes();
+    }
     
     private void OnDrawGizmos()
     {
@@ -98,10 +103,10 @@ namespace Assets.Scripts.Stages
             ApplyStageStatusEffect(vehicle);
         }
         
-        // Assign to default lane (if stage has lanes)
+        // Assign to lane using smart positioning
         if (lanes != null && lanes.Count > 0)
         {
-            AssignVehicleToDefaultLane(vehicle);
+            AssignVehicleToEntryLane(vehicle);
         }
         
         // Draw and trigger event card
@@ -109,6 +114,25 @@ namespace Assets.Scripts.Stages
         
         // Trigger Unity events
         onEnter?.Invoke();
+    }
+    
+    /// <summary>
+    /// Get the next stage for a vehicle based on its current lane.
+    /// Used by TurnController/PlayerController for stage transitions.
+    /// </summary>
+    public Stage GetNextStageForVehicle(Vehicle vehicle)
+    {
+        var currentLane = GetVehicleLane(vehicle);
+        
+        // Lane has explicit next stage mapping?
+        if (currentLane?.nextStage != null)
+            return currentLane.nextStage;
+        
+        // Fallback: Use stage's default next stage list
+        if (nextStages != null && nextStages.Count > 0)
+            return nextStages[0];
+        
+        return null;
     }
     
     /// <summary>
@@ -124,6 +148,9 @@ namespace Assets.Scripts.Stages
         
         if (wasPresent)
         {
+            // Track previous stage for smart lane positioning
+            vehicle.previousStage = this;
+            
             // Remove stage StatusEffect from all components
             if (stageStatusEffect != null)
             {
@@ -136,13 +163,13 @@ namespace Assets.Scripts.Stages
             {
                 if (currentLane.laneStatusEffect != null)
                 {
-                    RemoveLaneStatusEffect(vehicle, currentLane.laneStatusEffect);
+                    RemoveLaneStatusEffect(vehicle, currentLane);
                 }
                 
                 currentLane.vehiclesInLane.Remove(vehicle);
             }
             
-            vehicle.currentLane = null;
+            // NOTE: Don't clear currentLane here - needed for smart positioning in next stage
             
             // Log stage exit
             this.LogStageExit(vehicle, vehiclesInStage.Count);
@@ -203,6 +230,27 @@ namespace Assets.Scripts.Stages
     }
     
     // ==================== LANE SYSTEM ====================
+    
+    /// <summary>
+    /// Discover all lane components from children.
+    /// Called automatically in Awake, similar to Vehicle component discovery.
+    /// </summary>
+    private void DiscoverLanes()
+    {
+        lanes.Clear();
+        
+        // Find all StageLane components in direct children only
+        foreach (Transform child in transform)
+        {
+            if (child.TryGetComponent<StageLane>(out var lane))
+            {
+                lanes.Add(lane);
+            }
+        }
+        
+        // Sort by sibling index for consistent lane ordering
+        lanes.Sort((a, b) => a.transform.GetSiblingIndex().CompareTo(b.transform.GetSiblingIndex()));
+    }
     
     /// <summary>
     /// Get the number of lanes in this stage.
@@ -280,7 +328,7 @@ namespace Assets.Scripts.Stages
         // Remove old lane StatusEffect
         if (currentLane != null && currentLane != targetLane && currentLane.laneStatusEffect != null)
         {
-            RemoveLaneStatusEffect(vehicle, currentLane.laneStatusEffect);
+            RemoveLaneStatusEffect(vehicle, currentLane);
         }
         
         // Update lane lists
@@ -300,7 +348,7 @@ namespace Assets.Scripts.Stages
         // Apply new lane StatusEffect
         if (targetLane.laneStatusEffect != null)
         {
-            ApplyLaneStatusEffect(vehicle, targetLane.laneStatusEffect);
+            ApplyLaneStatusEffect(vehicle, targetLane.laneStatusEffect, targetLane);
         }
     }
     
@@ -321,39 +369,100 @@ namespace Assets.Scripts.Stages
     }
     
     /// <summary>
-    /// Apply lane StatusEffect to all components of a vehicle.
+    /// Assign a vehicle to entry lane using smart positioning.
+    /// Handles explicit targeting, proportional mapping, and fallback to middle.
     /// </summary>
-    private void ApplyLaneStatusEffect(Vehicle vehicle, StatusEffect laneEffect)
+    private void AssignVehicleToEntryLane(Vehicle vehicle)
+    {
+        if (vehicle == null || lanes == null || lanes.Count == 0)
+            return;
+        
+        StageLane targetLane = null;
+        
+        // Try to get lane from previous stage's explicit mapping
+        if (vehicle.previousStage != null && vehicle.currentLane != null)
+        {
+            var previousLane = vehicle.currentLane; // Still holds lane from previous stage
+            
+            // Check if previous lane has explicit target lane index
+            if (previousLane.targetLaneIndex >= 0 && previousLane.targetLaneIndex < lanes.Count)
+            {
+                targetLane = lanes[previousLane.targetLaneIndex];
+            }
+            else
+            {
+                // Use proportional mapping
+                targetLane = GetProportionalLane(vehicle.previousStage, previousLane);
+            }
+        }
+        
+        // Fallback to middle lane
+        if (targetLane == null)
+        {
+            int defaultLaneIndex = lanes.Count / 2;
+            targetLane = lanes[defaultLaneIndex];
+        }
+        
+        AssignVehicleToLane(vehicle, targetLane);
+    }
+    
+    /// <summary>
+    /// Map a lane from previous stage to this stage proportionally.
+    /// Preserves tactical positioning (left stays left, right stays right).
+    /// </summary>
+    private StageLane GetProportionalLane(Stage previousStage, StageLane previousLane)
+    {
+        if (previousStage == null || previousLane == null)
+            return null;
+        
+        int oldLaneIndex = previousStage.GetLaneIndex(previousLane);
+        int oldLaneCount = previousStage.GetLaneCount();
+        
+        if (oldLaneIndex < 0 || oldLaneCount <= 0)
+            return null;
+        
+        // Calculate relative position (0.0 = leftmost, 1.0 = rightmost)
+        float positionRatio = oldLaneCount > 1 
+            ? oldLaneIndex / (float)(oldLaneCount - 1) 
+            : 0.5f; // Middle if previous stage had 1 lane
+        
+        // Map to new stage lanes
+        int newLaneIndex = Mathf.RoundToInt(positionRatio * (lanes.Count - 1));
+        newLaneIndex = Mathf.Clamp(newLaneIndex, 0, lanes.Count - 1);
+        
+        return lanes[newLaneIndex];
+    }
+    
+    /// <summary>
+    /// Apply lane StatusEffect to all components of a vehicle.
+    /// Uses lane GameObject as source for efficient removal.
+    /// </summary>
+    private void ApplyLaneStatusEffect(Vehicle vehicle, StatusEffect laneEffect, StageLane lane)
     {
         foreach (var component in vehicle.AllComponents)
         {
             if (component != null)
             {
-                component.ApplyStatusEffect(laneEffect, this);
+                // Use lane GameObject as source (not stage)
+                component.ApplyStatusEffect(laneEffect, lane);
             }
         }
     }
     
     /// <summary>
     /// Remove lane StatusEffect from all components of a vehicle.
-    /// Uses template-based removal to avoid removing stage effects.
+    /// Uses source-based removal for efficiency.
     /// </summary>
-    private void RemoveLaneStatusEffect(Vehicle vehicle, StatusEffect laneEffect)
+    private void RemoveLaneStatusEffect(Vehicle vehicle, StageLane lane)
     {
-        if (laneEffect == null) return;
+        if (lane == null) return;
         
         foreach (var component in vehicle.AllComponents)
         {
             if (component != null)
             {
-                // Find and remove effects matching this specific lane template
-                var appliedEffects = component.GetActiveStatusEffects();
-                var matchingEffects = appliedEffects.Where(a => a.template == laneEffect).ToList();
-                
-                foreach (var applied in matchingEffects)
-                {
-                    component.RemoveStatusEffect(applied);
-                }
+                // Remove all effects from this lane (source-based removal)
+                component.RemoveStatusEffectsFromSource(lane);
             }
         }
     }

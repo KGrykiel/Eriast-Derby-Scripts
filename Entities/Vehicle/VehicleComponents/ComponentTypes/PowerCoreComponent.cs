@@ -29,7 +29,6 @@ namespace Assets.Scripts.Entities.Vehicle.VehicleComponents.ComponentTypes
         private int baseMaxPowerDrawPerTurn = 0;  // Default 0 = unlimited, for marathon resource model
         
         [Header("Runtime State")]
-        [ReadOnly]
         [Tooltip("Total power drawn this turn (resets at start of turn)")]
         public int currentTurnPowerDraw = 0;
         

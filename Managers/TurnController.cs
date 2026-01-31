@@ -93,8 +93,14 @@ public class TurnController : MonoBehaviour
         // 6. Reset seat turn states
         vehicle.ResetComponentsForNewTurn();
 
-        // 7. Status effects at turn start
+        // 7. Update status effects at turn start
         vehicle.UpdateStatusEffects();
+        
+        // 8. Process lane turn effects (hazards, environmental checks)
+        if (vehicle.currentStage != null)
+        {
+            vehicle.currentStage.ProcessLaneTurnEffects(vehicle);
+        }
     }
     
     /// <summary>
