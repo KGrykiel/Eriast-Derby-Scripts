@@ -3,31 +3,11 @@ using Assets.Scripts.Effects;
 
 /// <summary>
 /// Abstract base class for all effects.
-/// Provides common helper methods for working with Entities and VehicleComponents.
+/// Subclasses implement Apply() to define specific effect behavior.
+/// Use EntityHelpers for common entity operations (GetParentVehicle, GetEntityDisplayName, etc.)
 /// </summary>
 [System.Serializable]
 public abstract class EffectBase : IEffect
 {
     public abstract void Apply(Entity user, Entity target, EffectContext context, Object source = null);
-    
-    // ==================== HELPER METHODS (Delegates to EntityHelpers) ====================
-    
-    /// <summary>
-    /// Get the parent vehicle for an entity.
-    /// If entity is a VehicleComponent, return its parent vehicle.
-    /// Returns null if entity is not a vehicle component.
-    /// </summary>
-    protected static Vehicle GetParentVehicle(Entity entity)
-    {
-        return EntityHelpers.GetParentVehicle(entity);
-    }
-    
-    /// <summary>
-    /// Get a display name for any entity.
-    /// For VehicleComponents, includes the parent vehicle name.
-    /// </summary>
-    protected static string GetEntityDisplayName(Entity entity)
-    {
-        return EntityHelpers.GetEntityDisplayName(entity);
-    }
 }

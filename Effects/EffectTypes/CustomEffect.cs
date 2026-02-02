@@ -27,9 +27,9 @@ public class CustomEffect : EffectBase
             command.Execute(user, target, context, this);
 
             // Log command execution
-            Vehicle vehicle = GetParentVehicle(target);
-            string targetName = GetEntityDisplayName(target);
-            string userName = GetEntityDisplayName(user);
+            Vehicle vehicle = EntityHelpers.GetParentVehicle(target);
+            string targetName = EntityHelpers.GetEntityDisplayName(target);
+            string userName = EntityHelpers.GetEntityDisplayName(user);
             string sourceText = source != null ? source.name : "unknown source";
   
             RaceHistory.Log(

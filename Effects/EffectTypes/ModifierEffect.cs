@@ -75,7 +75,7 @@ public class AttributeModifierEffect : EffectBase
         
         // Fallback: If target is not a component, try routing through vehicle
         // (This shouldn't happen with new routing, but kept for safety)
-        Vehicle vehicle = GetParentVehicle(target);
+        Vehicle vehicle = EntityHelpers.GetParentVehicle(target);
         if (vehicle != null)
         {
             VehicleComponent component = vehicle.ResolveModifierTarget(attribute);

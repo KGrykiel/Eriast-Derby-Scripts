@@ -42,7 +42,7 @@ namespace Assets.Scripts.Effects.EffectTypes
         public override void Apply(Entity user, Entity target, EffectContext context, Object source = null)
         {
             // Get vehicle (from target or parent)
-            Vehicle vehicle = GetParentVehicle(target);
+            Vehicle vehicle = EntityHelpers.GetParentVehicle(target);
             if (vehicle == null || vehicle.currentStage == null)
             {
                 return; // Silent fail - caller should validate before applying
