@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using UnityEngine;
+using Assets.Scripts.Managers.TurnPhases;
 
 namespace Assets.Scripts.Managers
 {
@@ -37,13 +38,14 @@ namespace Assets.Scripts.Managers
 
     /// <summary>
     /// State machine for managing turn-based game flow.
-    /// Separates WHAT (phases) from HOW (GameManager orchestration).
+    /// Uses Chain of Responsibility pattern - phase handlers process their phase
+    /// and return the next phase to transition to.
     /// 
     /// Phase flow:
     /// RoundStart → TurnStart → (PlayerAction | AIAction) → TurnEnd → [next turn or RoundEnd]
     /// RoundEnd → RoundStart (next round)
     /// 
-    /// Events allow clean hooking without tight coupling.
+    /// Events are emitted via TurnEventBus for clean decoupling.
     /// </summary>
     public class TurnStateMachine
     {
@@ -54,6 +56,9 @@ namespace Assets.Scripts.Managers
         private Dictionary<Vehicle, int> initiativeOrder = new();
         private int currentTurnIndex = 0;
         private int currentRound = 0;
+        
+        // Phase handlers (Chain of Responsibility)
+        private Dictionary<TurnPhase, ITurnPhaseHandler> phaseHandlers = new();
         
         // ==================== PUBLIC PROPERTIES ====================
         
@@ -81,41 +86,13 @@ namespace Assets.Scripts.Managers
         /// <summary>Is this the last turn in the round?</summary>
         public bool IsLastTurnInRound => currentTurnIndex >= vehicles.Count - 1;
         
-        
         /// <summary>Is the game active (not inactive or game over)?</summary>
         public bool IsActive => currentPhase != TurnPhase.Inactive && currentPhase != TurnPhase.GameOver;
         
         /// <summary>Is the state machine waiting for player input?</summary>
         public bool IsWaitingForPlayer => currentPhase == TurnPhase.PlayerAction;
         
-        // ==================== EVENTS ====================
-        
-        /// <summary>Fired when phase changes. Args: (oldPhase, newPhase)</summary>
-        public event Action<TurnPhase, TurnPhase> OnPhaseChanged;
-        
-        /// <summary>Fired at start of each round. Args: roundNumber</summary>
-        public event Action<int> OnRoundStarted;
-        
-        /// <summary>Fired at end of each round. Args: roundNumber</summary>
-        public event Action<int> OnRoundEnded;
-        
-        /// <summary>Fired at start of a vehicle's turn. Args: vehicle</summary>
-        public event Action<Vehicle> OnTurnStarted;
-        
-        /// <summary>Fired at end of a vehicle's turn. Args: vehicle</summary>
-        public event Action<Vehicle> OnTurnEnded;
-        
-        /// <summary>Fired when game ends</summary>
-        public event Action OnGameOver;
-        
-        /// <summary>Fired when initiative is rolled. Args: (vehicle, initiativeValue)</summary>
-        public event Action<Vehicle, int> OnInitiativeRolled;
-        
-        /// <summary>Fired when a vehicle is removed from turn order. Args: vehicle</summary>
-        public event Action<Vehicle> OnVehicleRemoved;
-        
         // ==================== INITIALIZATION ====================
-        
         
         /// <summary>
         /// Initialize the state machine with vehicles.
@@ -126,12 +103,18 @@ namespace Assets.Scripts.Managers
             vehicles = new List<Vehicle>(vehicleList);
             initiativeOrder.Clear();
             
+            // Register phase handlers
+            RegisterPhaseHandlers();
+            
+            // Subscribe to vehicle destruction events
+            TurnEventBus.OnVehicleDestroyed += HandleVehicleDestroyed;
+            
             // Roll initiative for each vehicle
             foreach (var vehicle in vehicles)
             {
                 int initiative = RollUtility.RollInitiative();
                 initiativeOrder[vehicle] = initiative;
-                OnInitiativeRolled?.Invoke(vehicle, initiative);
+                TurnEventBus.EmitInitiativeRolled(vehicle, initiative);
             }
             
             // Sort by initiative (descending)
@@ -143,10 +126,92 @@ namespace Assets.Scripts.Managers
             TransitionTo(TurnPhase.RoundStart);
         }
         
+        /// <summary>
+        /// Handle vehicle destruction event - remove from turn order.
+        /// Called via TurnEventBus.OnVehicleDestroyed.
+        /// </summary>
+        private void HandleVehicleDestroyed(Vehicle vehicle)
+        {
+            RemoveVehicle(vehicle);
+        }
+        
+        /// <summary>
+        /// Register all phase handlers for the Chain of Responsibility.
+        /// </summary>
+        private void RegisterPhaseHandlers()
+        {
+            phaseHandlers.Clear();
+            
+            var handlers = new ITurnPhaseHandler[]
+            {
+                new RoundStartHandler(),
+                new TurnStartHandler(),
+                new PlayerActionHandler(),
+                new AIActionHandler(),
+                new TurnEndHandler(),
+                new RoundEndHandler(),
+                new GameOverHandler()
+            };
+            
+            foreach (var handler in handlers)
+            {
+                phaseHandlers[handler.Phase] = handler;
+            }
+        }
+        
+        // ==================== PHASE PROCESSING (Chain of Responsibility) ====================
+        
+        /// <summary>
+        /// Process the current phase using the registered handler.
+        /// Returns null if execution should pause (waiting for player input or game over).
+        /// Returns next phase to transition to otherwise.
+        /// </summary>
+        public TurnPhase? ProcessCurrentPhase(TurnPhaseContext context)
+        {
+            if (!phaseHandlers.TryGetValue(currentPhase, out var handler))
+            {
+                Debug.LogError($"[TurnStateMachine] No handler registered for phase: {currentPhase}");
+                return null;
+            }
+            
+            return handler.Execute(context);
+        }
+        
+        /// <summary>
+        /// Run the state machine until it hits a pause point (player input or game over).
+        /// Call this to start or resume execution.
+        /// </summary>
+        public void Run(TurnPhaseContext context)
+        {
+            while (IsActive && !IsWaitingForPlayer && !context.IsGameOver)
+            {
+                TurnPhase? nextPhase = ProcessCurrentPhase(context);
+                
+                if (nextPhase.HasValue)
+                {
+                    TransitionTo(nextPhase.Value);
+                }
+                else
+                {
+                    break;  // Paused (waiting for player) or game over
+                }
+            }
+        }
+        
+        /// <summary>
+        /// Resume execution after a pause (e.g., player ended turn).
+        /// Transitions to the specified phase and continues running.
+        /// </summary>
+        public void Resume(TurnPhaseContext context, TurnPhase nextPhase)
+        {
+            TransitionTo(nextPhase);
+            Run(context);
+        }
+        
         // ==================== STATE TRANSITIONS ====================
         
         /// <summary>
-        /// Transition to a new phase. Fires events.
+        /// Transition to a new phase. Emits events via TurnEventBus.
         /// </summary>
         public void TransitionTo(TurnPhase newPhase)
         {
@@ -157,15 +222,14 @@ namespace Assets.Scripts.Managers
             
             Debug.Log($"[TurnStateMachine] {oldPhase} → {newPhase}");
             
-            OnPhaseChanged?.Invoke(oldPhase, newPhase);
+            TurnEventBus.EmitPhaseChanged(oldPhase, newPhase);
             
-            // Execute phase-specific entry logic
+            // Execute phase-specific entry logic (emits events)
             ExecutePhaseEntry(newPhase);
         }
         
         /// <summary>
-        /// Phase entry logic - fires events for each phase.
-        /// Logging is handled by TurnEventLogger which subscribes to these events.
+        /// Phase entry logic - emits events via TurnEventBus for each phase.
         /// </summary>
         private void ExecutePhaseEntry(TurnPhase phase)
         {
@@ -173,14 +237,14 @@ namespace Assets.Scripts.Managers
             {
                 case TurnPhase.RoundStart:
                     currentRound++;
-                    OnRoundStarted?.Invoke(currentRound);
+                    TurnEventBus.EmitRoundStarted(currentRound);
                     break;
                     
                 case TurnPhase.TurnStart:
                     var vehicle = CurrentVehicle;
                     if (vehicle != null)
                     {
-                        OnTurnStarted?.Invoke(vehicle);
+                        TurnEventBus.EmitTurnStarted(vehicle);
                     }
                     break;
                     
@@ -188,16 +252,16 @@ namespace Assets.Scripts.Managers
                     var endingVehicle = CurrentVehicle;
                     if (endingVehicle != null)
                     {
-                        OnTurnEnded?.Invoke(endingVehicle);
+                        TurnEventBus.EmitTurnEnded(endingVehicle);
                     }
                     break;
                     
                 case TurnPhase.RoundEnd:
-                    OnRoundEnded?.Invoke(currentRound);
+                    TurnEventBus.EmitRoundEnded(currentRound);
                     break;
                     
                 case TurnPhase.GameOver:
-                    OnGameOver?.Invoke();
+                    TurnEventBus.EmitGameOver();
                     break;
             }
         }
@@ -234,7 +298,7 @@ namespace Assets.Scripts.Managers
             vehicles.RemoveAt(index);
             initiativeOrder.Remove(vehicle);
             
-            OnVehicleRemoved?.Invoke(vehicle);
+            TurnEventBus.EmitVehicleRemoved(vehicle);
             
             // Adjust current index if needed
             if (index < currentTurnIndex)

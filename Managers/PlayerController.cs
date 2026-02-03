@@ -2,14 +2,18 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 using Assets.Scripts.Entities.Vehicle;
+using Assets.Scripts.Managers;
 using Assets.Scripts.Managers.PlayerUI;
 using Assets.Scripts.Skills.Helpers;
 using Assets.Scripts.Stages;
 
 /// <summary>
-/// Orchestrates player input and coordinates between UI controllers and game systems.
+/// Orchestrates player input for player-controlled vehicles.
+/// Works with WHATEVER vehicle is currently taking its turn (if player-controlled).
+/// Supports multiple player vehicles - each triggers PlayerAction phase when it's their turn.
+/// 
 /// UI display logic has been extracted to specialized controllers.
-/// Fires events for logging (TurnEventLogger subscribes).
+/// Events are emitted via TurnEventBus for logging.
 /// </summary>
 public class PlayerController : MonoBehaviour
 {
@@ -20,8 +24,7 @@ public class PlayerController : MonoBehaviour
     private PlayerUIReferences ui;
 
     private TurnController turnController;
-    private GameManager gameManager;
-    private Vehicle playerVehicle;
+    private TurnStateMachine stateMachine;
     private Action onPlayerTurnComplete;
     
     // UI Coordinator (owns all UI sub-controllers)
@@ -41,19 +44,23 @@ public class PlayerController : MonoBehaviour
     
     #endregion
     
-    #region Events
+    #region Properties
     
-    /// <summary>Fired when player vehicle cannot act. Args: (vehicle, reason)</summary>
-    public event Action<Vehicle, string> OnPlayerCannotAct;
-    
-    /// <summary>Fired when player action phase starts. Args: vehicle</summary>
-    public event Action<Vehicle> OnPlayerActionPhaseStarted;
-    
-    /// <summary>Fired when player ends their turn. Args: vehicle</summary>
-    public event Action<Vehicle> OnPlayerEndedTurn;
-    
-    /// <summary>Fired when player triggers movement manually. Args: vehicle</summary>
-    public event Action<Vehicle> OnPlayerTriggeredMovement;
+    /// <summary>
+    /// Get the current player vehicle (the one whose turn it is).
+    /// Returns null if not in a player's turn.
+    /// </summary>
+    private Vehicle CurrentPlayerVehicle
+    {
+        get
+        {
+            if (stateMachine == null) return null;
+            var current = stateMachine.CurrentVehicle;
+            if (current != null && current.controlType == ControlType.Player)
+                return current;
+            return null;
+        }
+    }
     
     #endregion
 
@@ -61,12 +68,12 @@ public class PlayerController : MonoBehaviour
 
     /// <summary>
     /// Initializes the player controller with required references.
+    /// No specific vehicle needed - works with whatever player vehicle is taking its turn.
     /// </summary>
-    public void Initialize(Vehicle player, TurnController controller, GameManager manager, Action turnCompleteCallback)
+    public void Initialize(TurnController controller, TurnStateMachine machine, Action turnCompleteCallback)
     {
-        playerVehicle = player;
         turnController = controller;
-        gameManager = manager;
+        stateMachine = machine;
         onPlayerTurnComplete = turnCompleteCallback;
         
         // Initialize UI coordinator (owns all UI sub-controllers)
@@ -98,11 +105,14 @@ public class PlayerController : MonoBehaviour
     {
         if (isSelectingStage) return;
         
+        var vehicle = CurrentPlayerVehicle;
+        if (vehicle == null) return;
+        
         // Check if vehicle can operate
-        if (!playerVehicle.IsOperational())
+        if (!vehicle.IsOperational())
         {
-            string reason = playerVehicle.GetNonOperationalReason();
-            OnPlayerCannotAct?.Invoke(playerVehicle, reason);
+            string reason = vehicle.GetNonOperationalReason();
+            TurnEventBus.EmitPlayerCannotAct(vehicle, reason);
             
             // Auto-end turn if vehicle is non-operational
             onPlayerTurnComplete?.Invoke();
@@ -110,20 +120,20 @@ public class PlayerController : MonoBehaviour
         }
 
         // Handle stage transitions
-        while (playerVehicle.progress >= playerVehicle.currentStage.length)
+        while (vehicle.progress >= vehicle.currentStage.length)
         {
-            if (playerVehicle.currentStage.nextStages.Count == 0)
+            if (vehicle.currentStage.nextStages.Count == 0)
             {
                 break;
             }
-            else if (playerVehicle.currentStage.nextStages.Count == 1)
+            else if (vehicle.currentStage.nextStages.Count == 1)
             {
-                turnController.MoveToStage(playerVehicle, playerVehicle.currentStage.nextStages[0]);
+                turnController.MoveToStage(vehicle, vehicle.currentStage.nextStages[0], isPlayerChoice: true);
             }
             else
             {
                 isSelectingStage = true;
-                uiCoordinator.StageSelection.ShowStageSelection(playerVehicle.currentStage.nextStages, OnStageSelected);
+                uiCoordinator.StageSelection.ShowStageSelection(vehicle.currentStage.nextStages, OnStageSelected);
                 return;
             }
         }
@@ -137,23 +147,27 @@ public class PlayerController : MonoBehaviour
     /// </summary>
     private void StartPlayerActionPhase()
     {
+        var vehicle = CurrentPlayerVehicle;
+        if (vehicle == null) return;
+        
         isPlayerTurnActive = true;
         
         // Reset all components for new turn
-        playerVehicle.ResetComponentsForNewTurn();
+        vehicle.ResetComponentsForNewTurn();
         
         // Get available seats (seats that can act)
-        availableSeats = playerVehicle.GetActiveSeats();
+        availableSeats = vehicle.GetActiveSeats();
+        
         
         // Enable move button (player can trigger movement anytime during action phase)
         if (ui.moveForwardButton != null)
             ui.moveForwardButton.interactable = true;
         
         // Show UI via coordinator
-        uiCoordinator.ShowTurnUI(availableSeats, playerVehicle, OnSeatSelected, OnSkillSelected);
-        uiCoordinator.UpdateTurnStatusDisplay(playerVehicle);
+        uiCoordinator.ShowTurnUI(availableSeats, vehicle, OnSeatSelected, OnSkillSelected);
+        uiCoordinator.UpdateTurnStatusDisplay(vehicle);
         
-        OnPlayerActionPhaseStarted?.Invoke(playerVehicle);
+        TurnEventBus.EmitPlayerActionPhaseStarted(vehicle);
     }
 
     /// <summary>
@@ -163,12 +177,17 @@ public class PlayerController : MonoBehaviour
     public void OnEndTurnClicked()
     {
         if (!isPlayerTurnActive) return;
+        
+        var vehicle = CurrentPlayerVehicle;
 
         isPlayerTurnActive = false;
         ClearPlayerSelections();
         uiCoordinator.HideTurnUI();
 
-        OnPlayerEndedTurn?.Invoke(playerVehicle);
+        if (vehicle != null)
+        {
+            TurnEventBus.EmitPlayerEndedTurn(vehicle);
+        }
         onPlayerTurnComplete?.Invoke();
     }
     
@@ -180,10 +199,11 @@ public class PlayerController : MonoBehaviour
     public void OnMoveForwardClicked()
     {
         if (!isPlayerTurnActive) return;
-        if (playerVehicle == null || gameManager == null) return;
         
-        // Trigger movement via GameManager
-        bool success = gameManager.TriggerPlayerMovement();
+        var vehicle = CurrentPlayerVehicle;
+        if (vehicle == null) return;
+        
+        bool success = turnController.ExecuteMovement(vehicle);
         
         if (success)
         {
@@ -191,7 +211,37 @@ public class PlayerController : MonoBehaviour
             if (ui.moveForwardButton != null)
                 ui.moveForwardButton.interactable = false;
             
-            OnPlayerTriggeredMovement?.Invoke(playerVehicle);
+            // Handle stage transitions - may show crossroads UI
+            CheckForCrossroads();
+            
+            TurnEventBus.EmitPlayerTriggeredMovement(vehicle);
+        }
+    }
+    
+    /// <summary>
+    /// Check if player reached a crossroads and show stage selection UI if needed.
+    /// Does NOT restart the action phase - just handles stage transitions.
+    /// </summary>
+    private void CheckForCrossroads()
+    {
+        var vehicle = CurrentPlayerVehicle;
+        if (vehicle == null || vehicle.currentStage == null) return;
+        
+        while (vehicle.progress >= vehicle.currentStage.length && 
+               vehicle.currentStage.nextStages.Count > 0)
+        {
+            if (vehicle.currentStage.nextStages.Count == 1)
+            {
+                // Single path - automatically transition
+                turnController.MoveToStage(vehicle, vehicle.currentStage.nextStages[0], isPlayerChoice: true);
+            }
+            else
+            {
+                // Crossroads - show stage selection UI
+                isSelectingStage = true;
+                uiCoordinator.StageSelection.ShowStageSelection(vehicle.currentStage.nextStages, OnStageSelected);
+                return;
+            }
         }
     }
 
@@ -207,8 +257,14 @@ public class PlayerController : MonoBehaviour
     {
         if (seatIndex < 0 || seatIndex >= availableSeats.Count) return;
         
+        
         currentSeat = availableSeats[seatIndex];
-        uiCoordinator.ShowSeatDetails(seatIndex, availableSeats, playerVehicle, OnSkillSelected);
+        
+        var vehicle = CurrentPlayerVehicle;
+        if (vehicle != null)
+        {
+            uiCoordinator.ShowSeatDetails(seatIndex, availableSeats, vehicle, OnSkillSelected);
+        }
     }
 
     /// <summary>
@@ -218,6 +274,9 @@ public class PlayerController : MonoBehaviour
     private void OnSkillSelected(int skillIndex)
     {
         if (currentSeat == null) return;
+        
+        var vehicle = CurrentPlayerVehicle;
+        if (vehicle == null) return;
 
         List<Skill> availableSkills = uiCoordinator.GetAvailableSkills(currentSeat);
         if (skillIndex < 0 || skillIndex >= availableSkills.Count) return;
@@ -230,20 +289,20 @@ public class PlayerController : MonoBehaviour
         // Source component selection first (self-targeting skills)
         if (SkillNeedsSourceComponentSelection(selectedSkill))
         {
-            uiCoordinator.TargetSelection.ShowSourceComponentSelection(playerVehicle, OnSourceComponentSelected);
+            uiCoordinator.TargetSelection.ShowSourceComponentSelection(vehicle, OnSourceComponentSelected);
             return;
         }
 
         // Self-targeted or AoE - execute immediately
         if (!SkillNeedsTarget(selectedSkill))
         {
-            selectedTarget = playerVehicle;
+            selectedTarget = vehicle;
             ExecuteSkill();
             return;
         }
 
         // Needs target selection
-        List<Vehicle> validTargets = turnController.GetValidTargets(playerVehicle);
+        List<Vehicle> validTargets = turnController.GetValidTargets(vehicle);
         uiCoordinator.TargetSelection.ShowTargetSelection(validTargets, OnTargetSelected, OnTargetCancelClicked);
     }
 
@@ -260,32 +319,41 @@ public class PlayerController : MonoBehaviour
     private void ExecuteSkill()
     {
         if (selectedSkill == null) return;
+        
+        var vehicle = CurrentPlayerVehicle;
+        if (vehicle == null) return;
 
-        Vehicle target = selectedTarget != null ? selectedTarget : playerVehicle;
+        Vehicle target = selectedTarget != null ? selectedTarget : vehicle;
         Entity targetEntity = selectedTargetComponent != null ? selectedTargetComponent : target.chassis;
-        PlayerCharacter character = currentSeat?.assignedCharacter;
+        PlayerCharacter character = currentSeat != null ? currentSeat.assignedCharacter : null;
 
         var ctx = new SkillContext
         {
             Skill = selectedSkill,
-            SourceVehicle = playerVehicle,
+            SourceVehicle = vehicle,
             SourceEntity = selectedSkillSourceComponent,
             SourceCharacter = character,
             TargetEntity = targetEntity,
             IsCriticalHit = false
         };
 
-        playerVehicle.ExecuteSkill(ctx);
+        vehicle.ExecuteSkill(ctx);
 
-        currentSeat?.MarkAsActed();
-        uiCoordinator.RefreshAfterSkill(availableSeats, currentSeat, playerVehicle, OnSeatSelected, OnSkillSelected);
-        uiCoordinator.UpdateTurnStatusDisplay(playerVehicle);
-        gameManager.RefreshAllPanels();
+        if (currentSeat != null)
+        {
+            currentSeat.MarkAsActed();
+        }
+        uiCoordinator.RefreshAfterSkill(availableSeats, currentSeat, vehicle, OnSeatSelected, OnSkillSelected);
+        uiCoordinator.UpdateTurnStatusDisplay(vehicle);
+        
+        // Panels handle their own refresh via Update() polling
+        // No need to manually trigger refresh here
         
         ClearPlayerSelections();
     }
 
     #endregion
+
 
     #region UI Callbacks
 
@@ -325,18 +393,20 @@ public class PlayerController : MonoBehaviour
     /// </summary>
     private void OnSourceComponentSelected(VehicleComponent component)
     {
+        var vehicle = CurrentPlayerVehicle;
+        
         // For source component selection, we're self-targeting
-        selectedTarget = playerVehicle;
+        selectedTarget = vehicle;
         selectedTargetComponent = component;
         uiCoordinator.TargetSelection.Hide();
 
         // After selecting source component, check if skill also needs enemy target selection
         bool needsEnemyTarget = SkillNeedsTarget(selectedSkill);
         
-        if (needsEnemyTarget)
+        if (needsEnemyTarget && vehicle != null)
         {
             // Skill needs to target an enemy vehicle - show normal target selection
-            List<Vehicle> validTargets = turnController.GetValidTargets(playerVehicle);
+            List<Vehicle> validTargets = turnController.GetValidTargets(vehicle);
             uiCoordinator.TargetSelection.ShowTargetSelection(validTargets, OnTargetSelected, OnTargetCancelClicked);
         }
         else
@@ -360,10 +430,15 @@ public class PlayerController : MonoBehaviour
     /// </summary>
     private void OnStageSelected(Stage selectedStage)
     {
+        var vehicle = CurrentPlayerVehicle;
+        
         uiCoordinator.StageSelection.Hide();
         isSelectingStage = false;
 
-        turnController.MoveToStage(playerVehicle, selectedStage);
+        if (vehicle != null)
+        {
+            turnController.MoveToStage(vehicle, selectedStage, isPlayerChoice: true);
+        }
         ProcessPlayerMovement();
     }
 

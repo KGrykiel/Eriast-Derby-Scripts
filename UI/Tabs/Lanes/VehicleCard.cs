@@ -68,11 +68,11 @@ namespace Assets.Scripts.UI.Tabs.Lanes
                 tabManager.inspectorTabButton.onClick.Invoke();
             }
             
-            // Now select vehicle (panel should be active now)
-            var gameManager = FindFirstObjectByType<GameManager>();
-            if (gameManager != null && gameManager.vehicleInspectorPanel != null)
+            // Find and select vehicle in inspector panel
+            var inspectorPanel = FindFirstObjectByType<VehicleInspectorPanel>();
+            if (inspectorPanel != null)
             {
-                gameManager.vehicleInspectorPanel.SelectVehicle(vehicle);
+                inspectorPanel.SelectVehicle(vehicle);
             }
         }
     }

@@ -1,159 +1,46 @@
-using System;
 using System.Collections.Generic;
 using UnityEngine;
 using Assets.Scripts.Logging;
+using Assets.Scripts.Managers;
 using Assets.Scripts.Stages;
 
 /// <summary>
-/// Handles vehicle-specific turn operations.
-/// State management (rounds, turn order, phases) is handled by TurnStateMachine.
+/// Service class for vehicle operations during turns.
+/// Phase handlers orchestrate turn flow and call these utilities.
+/// Events are emitted via TurnEventBus.
+/// 
+/// Plain C# class (not MonoBehaviour) - purely stateless utilities.
 /// 
 /// Responsibilities:
-/// - Execute turn start/end logic on vehicles
-/// - Handle movement execution
-/// - Manage power draw for components
+/// - Movement execution
+/// - Power management utilities
 /// - Stage transitions
 /// - Combat targeting
 /// 
-/// Fires events for logging (TurnEventLogger subscribes).
-/// Called by GameManager during phase transitions.
+/// NOTE: Turn start/end orchestration is handled by TurnStartHandler/TurnEndHandler.
+/// This class is just utilities that handlers call.
 /// </summary>
-public class TurnController : MonoBehaviour
+public class TurnController
 {
-    // Reference to vehicles (set during Initialize, shared with TurnStateMachine)
-    private List<Vehicle> vehicles;
+    private readonly List<Vehicle> vehicles;
     
     public IReadOnlyList<Vehicle> AllVehicles => vehicles;
-    
-    // ==================== EVENTS ====================
-    
-    /// <summary>Fired when a vehicle auto-moves at turn end</summary>
-    public event Action<Vehicle> OnAutoMovement;
-    
-    /// <summary>Fired when a component shuts down due to insufficient power. Args: (vehicle, component, requiredPower, availablePower)</summary>
-    public event Action<Vehicle, VehicleComponent, int, int> OnComponentPowerShutdown;
-    
-    /// <summary>Fired when movement is blocked. Args: (vehicle, reason)</summary>
-    public event Action<Vehicle, string> OnMovementBlocked;
-    
-    /// <summary>Fired when movement executes. Args: (vehicle, distance, speed, oldProgress, newProgress)</summary>
-    public event Action<Vehicle, int, int, int, int> OnMovementExecuted;
-    
-    /// <summary>Fired when vehicle enters a new stage. Args: (vehicle, newStage, previousStage, carriedProgress, isPlayerChoice)</summary>
-    public event Action<Vehicle, Stage, Stage, int, bool> OnStageEntered;
 
-    /// <summary>
-    /// Initialize with vehicle list (same list as TurnStateMachine uses).
-    /// </summary>
-    public void Initialize(List<Vehicle> vehicleList)
+    public TurnController(List<Vehicle> vehicleList)
     {
-        vehicles = vehicleList;
+        vehicles = vehicleList ?? new List<Vehicle>();
     }
 
-    // ==================== TURN EXECUTION ====================
-    
-    /// <summary>
-    /// Execute turn start logic for a vehicle.
-    /// Called by GameManager during TurnStart phase.
-    /// 
-    /// Order:
-    /// 1. Regenerate power
-    /// 2. Reset per-turn power tracking
-    /// 3. Accelerate (TODO: will be player/AI controlled later)
-    /// 4. Draw continuous power for all components
-    /// 5. Reset movement flag
-    /// 6. Reset seat/component states
-    /// </summary>
-    public void StartTurn(Vehicle vehicle)
-    {
-        if (vehicle == null) return;
-        
-        // 1. Regenerate power FIRST (see full resources before paying costs)
-        if (vehicle.powerCore != null && !vehicle.powerCore.isDestroyed)
-        {
-            vehicle.powerCore.RegenerateEnergy();
-        }
-        
-        // 2. Reset per-turn power tracking
-        if (vehicle.powerCore != null)
-        {
-            vehicle.powerCore.ResetTurnPowerTracking();
-        }
-        
-        // 3. Accelerate - for now, everyone goes full throttle (TODO: player/AI control)
-        AccelerateVehicle(vehicle);
-        
-        // 4. Draw continuous power for all components (drive pays based on CURRENT speed)
-        DrawContinuousPowerForAllComponents(vehicle);
-        
-        // 5. Reset movement flag - player controls when movement happens
-        vehicle.hasMovedThisTurn = false;
-        vehicle.hasLoggedMovementWarningThisTurn = false;
-        
-        // 6. Reset seat turn states
-        vehicle.ResetComponentsForNewTurn();
-
-        // 7. Update status effects at turn start
-        vehicle.UpdateStatusEffects();
-        
-        // 8. Process lane turn effects (hazards, environmental checks)
-        if (vehicle.currentStage != null)
-        {
-            vehicle.currentStage.ProcessLaneTurnEffects(vehicle);
-        }
-    }
-    
-    /// <summary>
-    /// Adjust vehicle speed toward target at start of turn.
-    /// Player/AI sets targetSpeed during action phase, this applies the change.
-    /// Speed changes gradually based on acceleration/deceleration limits.
-    /// If drive is unpowered/destroyed, applies friction to slow vehicle down.
-    /// </summary>
-    private void AccelerateVehicle(Vehicle vehicle)
-    {
-        var drive = vehicle.GetDriveComponent();
-        if (drive == null) return;
-        
-        if (!drive.IsOperational)
-        {
-            // Unpowered drive: vehicle coasts to a stop via friction
-            drive.ApplyFriction();
-            return;
-        }
-        
-        // Move currentSpeed toward targetSpeed (respects acceleration limits)
-        drive.AdjustSpeedTowardTarget();
-    }
-    
-    /// <summary>
-    /// Execute turn end logic for a vehicle.
-    /// Called by GameManager during TurnEnd phase.
-    /// 
-    /// Order:
-    /// 1. Auto-trigger movement if not moved (mandatory)
-    /// 2. Update status effects
-    /// </summary>
-    public void EndTurn(Vehicle vehicle)
-    {
-        if (vehicle == null) return;
-        
-        // 1. FORCE movement if player hasn't triggered it yet
-        if (!vehicle.hasMovedThisTurn)
-        {
-            OnAutoMovement?.Invoke(vehicle);
-            ExecuteMovement(vehicle);
-        }
-    }
-    
     // ==================== POWER MANAGEMENT ====================
     
     /// <summary>
     /// Draw continuous power for all components.
     /// Components pay based on CURRENT state (drive pays for current speed).
+    /// Emits OnComponentPowerShutdown via TurnEventBus for any components that shut down.
     /// </summary>
-    private void DrawContinuousPowerForAllComponents(Vehicle vehicle)
+    public void DrawContinuousPowerForAllComponents(Vehicle vehicle)
     {
-        if (vehicle.powerCore == null) return;
+        if (vehicle == null || vehicle.powerCore == null) return;
         
         foreach (var component in vehicle.AllComponents)
         {
@@ -166,10 +53,33 @@ public class TurnController : MonoBehaviour
             
             if (!success)
             {
-                OnComponentPowerShutdown?.Invoke(vehicle, component, powerCost, vehicle.powerCore.currentEnergy);
+                TurnEventBus.EmitComponentPowerShutdown(vehicle, component, powerCost, vehicle.powerCore.currentEnergy);
                 component.SetManuallyDisabled(true);
             }
         }
+    }
+    
+    // ==================== SPEED/ACCELERATION ====================
+    
+    /// <summary>
+    /// Adjust vehicle speed toward target at start of turn.
+    /// Player/AI sets targetSpeed during action phase, this applies the change.
+    /// If drive is unpowered/destroyed, applies friction to slow vehicle down.
+    /// </summary>
+    public void AccelerateVehicle(Vehicle vehicle)
+    {
+        if (vehicle == null) return;
+        
+        var drive = vehicle.GetDriveComponent();
+        if (drive == null) return;
+        
+        if (!drive.IsOperational)
+        {
+            drive.ApplyFriction();
+            return;
+        }
+        
+        drive.AdjustSpeedTowardTarget();
     }
     
     // ==================== MOVEMENT ====================
@@ -177,6 +87,7 @@ public class TurnController : MonoBehaviour
     /// <summary>
     /// Execute movement for a vehicle.
     /// Movement is FREE - power was already paid at turn start.
+    /// Emits movement events via TurnEventBus.
     /// </summary>
     public bool ExecuteMovement(Vehicle vehicle)
     {
@@ -193,7 +104,7 @@ public class TurnController : MonoBehaviour
             if (!vehicle.hasLoggedMovementWarningThisTurn)
             {
                 string reason = vehicle.GetCannotMoveReason();
-                OnMovementBlocked?.Invoke(vehicle, reason);
+                TurnEventBus.EmitMovementBlocked(vehicle, reason);
                 vehicle.hasLoggedMovementWarningThisTurn = true;
             }
             
@@ -202,13 +113,13 @@ public class TurnController : MonoBehaviour
         }
         
         var drive = vehicle.GetDriveComponent();
-        int distance = drive != null ? drive.GetCurrentSpeed() : 0;  // INTEGER: D&D-style discrete movement
+        int distance = drive != null ? drive.GetCurrentSpeed() : 0;
         
         if (vehicle.currentStage != null && distance > 0)
         {
             int oldProgress = vehicle.progress;
             vehicle.progress += distance;
-            OnMovementExecuted?.Invoke(vehicle, distance, drive.GetCurrentSpeed(), oldProgress, vehicle.progress);
+            TurnEventBus.EmitMovementExecuted(vehicle, distance, drive.GetCurrentSpeed(), oldProgress, vehicle.progress);
         }
         
         vehicle.hasMovedThisTurn = true;
@@ -218,8 +129,9 @@ public class TurnController : MonoBehaviour
     /// <summary>
     /// Move a vehicle to a specific stage (handles overflow progress).
     /// Handles stage enter/leave events, position updates, and finish line detection.
+    /// Emits OnStageEntered via TurnEventBus.
     /// </summary>
-    public void MoveToStage(Vehicle vehicle, Stage stage)
+    public void MoveToStage(Vehicle vehicle, Stage stage, bool isPlayerChoice = false)
     {
         if (vehicle == null || stage == null) return;
 
@@ -236,33 +148,20 @@ public class TurnController : MonoBehaviour
         vehicle.currentStage = stage;
         
         // Update Unity transform position
-        if (stage != null)
-        {
-            Vector3 stagePos = stage.transform.position;
-            vehicle.transform.position = new Vector3(stagePos.x, stagePos.y, vehicle.transform.position.z);
-        }
+        Vector3 stagePos = stage.transform.position;
+        vehicle.transform.position = new Vector3(stagePos.x, stagePos.y, vehicle.transform.position.z);
         
         // Trigger enter event on new stage
-        if (stage != null)
+        stage.TriggerEnter(vehicle);
+        
+        // Check for finish line and emit event (TurnEventLogger will log it)
+        if (stage.isFinishLine)
         {
-            stage.TriggerEnter(vehicle);
-            
-            // Check for finish line
-            if (stage.isFinishLine)
-            {
-                RaceHistory.Log(
-                    Assets.Scripts.Logging.EventType.FinishLine,
-                    EventImportance.Critical,
-                    $"[FINISH] {vehicle.vehicleName} crossed the finish line!",
-                    stage,
-                    vehicle
-                );
-            }
+            TurnEventBus.EmitFinishLineCrossed(vehicle, stage);
         }
         
-        // Fire event for UI/logging
-        bool isPlayerChoice = vehicle.controlType == ControlType.Player;
-        OnStageEntered?.Invoke(vehicle, stage, previousStage, vehicle.progress, isPlayerChoice);
+        // Emit event for UI/logging
+        TurnEventBus.EmitStageEntered(vehicle, stage, previousStage, vehicle.progress, isPlayerChoice);
     }
     
     // ==================== COMBAT ====================

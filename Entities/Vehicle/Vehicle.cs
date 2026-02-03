@@ -5,6 +5,7 @@ using Assets.Scripts.Entities;
 using Assets.Scripts.Entities.Vehicle.VehicleComponents.ComponentTypes;
 using Assets.Scripts.Entities.Vehicle;
 using Assets.Scripts.Combat.Saves;
+using Assets.Scripts.Managers;
 using Assets.Scripts.Stages;
 using Assets.Scripts.Stages.Lanes;
 using SkillContext = Assets.Scripts.Skills.Helpers.SkillContext;
@@ -303,7 +304,7 @@ public class Vehicle : MonoBehaviour
     
     /// <summary>
     /// Mark vehicle as destroyed. Called immediately when chassis is destroyed.
-    /// Sets status, logs event, and notifies GameManager for immediate handling.
+    /// Emits destruction event via TurnEventBus - subscribers handle the rest.
     /// </summary>
     public void MarkAsDestroyed()
     {
@@ -314,10 +315,8 @@ public class Vehicle : MonoBehaviour
         // Log destruction event
         this.LogVehicleDestroyed();
 
-        // TODO: Consider a better pattern for this (event bus, dependency injection, etc.)
-        // Direct call to GameManager for immediate turn order removal
-        var gameManager = FindFirstObjectByType<GameManager>();
-        gameManager?.HandleVehicleDestroyed(this);
+        // Emit event - TurnStateMachine removes from turn order, GameManager checks game over
+        TurnEventBus.EmitVehicleDestroyed(this);
     }
     
     // ==================== OPERATIONAL STATUS ====================

@@ -307,7 +307,6 @@ public abstract class VehicleComponent : Entity
         // Check this component's own status effects
         foreach (var statusEffect in activeStatusEffects)
         {
-            Debug.Log(statusEffect.PreventsMovement);
             if (statusEffect.PreventsMovement)
                 return false;
         }

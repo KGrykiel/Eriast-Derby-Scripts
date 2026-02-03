@@ -23,13 +23,16 @@ public class FocusPanel : MonoBehaviour
     private GameManager gameManager;
     private Vehicle playerVehicle;
     
+    
     void Start()
     {
         gameManager = FindFirstObjectByType<GameManager>();
         
+        // Get first player vehicle (or current one if multiple exist)
         if (gameManager != null)
         {
-            playerVehicle = gameManager.playerVehicle;
+            var playerVehicles = gameManager.GetPlayerVehicles();
+            playerVehicle = playerVehicles.Count > 0 ? playerVehicles[0] : null;
         }
         
         RefreshPanel();
@@ -45,6 +48,24 @@ public class FocusPanel : MonoBehaviour
     
     public void RefreshPanel()
     {
+        // Update player vehicle reference in case it changed (e.g., current turn vehicle)
+        if (gameManager != null)
+        {
+            var stateMachine = gameManager.GetStateMachine();
+            if (stateMachine != null && stateMachine.CurrentVehicle != null 
+                && stateMachine.CurrentVehicle.controlType == ControlType.Player)
+            {
+                // Show the currently active player vehicle
+                playerVehicle = stateMachine.CurrentVehicle;
+            }
+            else if (playerVehicle == null || playerVehicle.Status == VehicleStatus.Destroyed)
+            {
+                // Fallback to first alive player vehicle
+                var playerVehicles = gameManager.GetPlayerVehicles();
+                playerVehicle = playerVehicles.Find(v => v.Status != VehicleStatus.Destroyed);
+            }
+        }
+        
         if (playerVehicle != null)
         {
             UpdatePlayerStatus();
@@ -124,8 +145,14 @@ public class FocusPanel : MonoBehaviour
             return;
         }
         
-        // Get all vehicles in the same stage using TurnController
-        var turnController = FindFirstObjectByType<TurnController>();
+        // Get all vehicles via GameManager
+        if (gameManager == null)
+        {
+            sameStageVehiclesText.text = "<color=#888888>GameManager not found</color>";
+            return;
+        }
+        
+        var turnController = gameManager.GetTurnController();
         if (turnController == null)
         {
             sameStageVehiclesText.text = "<color=#888888>TurnController not found</color>";

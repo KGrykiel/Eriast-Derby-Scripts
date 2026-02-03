@@ -1,13 +1,15 @@
 using UnityEngine;
 using UnityEngine.UI;
-using UnityEngine.InputSystem; // Add this
+using UnityEngine.InputSystem;
 
 /// <summary>
-/// Manages switching between DM Interface and Game View.
-/// Allows DM to toggle between detailed analytics and actual gameplay.
+/// Manages UI view switching between DM Interface and Game View.
+/// Panels handle their own refresh independently via Update() polling.
 /// </summary>
 public class UIManager : MonoBehaviour
 {
+    public static UIManager Instance { get; private set; }
+    
     [Header("UI Canvases")]
     [Tooltip("The main DM interface canvas (tabs, leaderboards, events)")]
     public Canvas dmInterfaceCanvas;
@@ -23,9 +25,20 @@ public class UIManager : MonoBehaviour
     public Button returnToGameButton;
 
     [Header("Settings")]
-    public Key toggleHotkey = Key.Tab; // Changed from KeyCode to Key
+    public Key toggleHotkey = Key.Tab;
 
     private bool isDMInterfaceActive = false;
+
+    void Awake()
+    {
+        // Singleton pattern
+        if (Instance != null && Instance != this)
+        {
+            Destroy(gameObject);
+            return;
+        }
+        Instance = this;
+    }
 
     void Start()
     {
@@ -49,6 +62,8 @@ public class UIManager : MonoBehaviour
         }
     }
 
+    // ==================== VIEW SWITCHING ====================
+
     /// <summary>
     /// Shows the DM Interface (tabs, analytics, detailed view).
     /// </summary>
@@ -56,9 +71,6 @@ public class UIManager : MonoBehaviour
     {
         if (dmInterfaceCanvas != null)
             dmInterfaceCanvas.gameObject.SetActive(true);
-
-        //if (gameViewCanvas != null)
-        //    gameViewCanvas.gameObject.SetActive(false);
 
         isDMInterfaceActive = true;
 
