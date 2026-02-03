@@ -4,6 +4,7 @@ using TMPro;
 using UnityEngine.UI;
 using Assets.Scripts.Stages;
 
+// DEPREECATED
 namespace Assets.Scripts.Managers.PlayerUI
 {
     /// <summary>

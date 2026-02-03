@@ -39,7 +39,7 @@ public class GameManager : MonoBehaviour
 
     // Controllers
     private TurnStateMachine stateMachine;
-    private TurnController turnController;
+    private TurnService turnController;
     private PlayerController playerController;
     private TurnEventLogger eventLogger;
     
@@ -129,7 +129,7 @@ public class GameManager : MonoBehaviour
         eventLogger.LogTurnOrderEstablished(stateMachine.AllVehicles);
         
         // Initialize turn controller (plain C# service, not MonoBehaviour)
-        turnController = new TurnController(new List<Vehicle>(stateMachine.AllVehicles));
+        turnController = new TurnService(new List<Vehicle>(stateMachine.AllVehicles));
 
         // Initialize player controller (works with any player-controlled vehicle)
         playerController = GetComponent<PlayerController>();
@@ -215,5 +215,5 @@ public class GameManager : MonoBehaviour
     }
     
     public TurnStateMachine GetStateMachine() => stateMachine;
-    public TurnController GetTurnController() => turnController;
+    public TurnService GetTurnController() => turnController;
 }

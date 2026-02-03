@@ -26,11 +26,11 @@
     {
         // Core references
         public TurnStateMachine StateMachine { get; }
-        public TurnController TurnController { get; }
+        public TurnService TurnController { get; }
         public PlayerController PlayerController { get; }
         
         // Current state (derived from StateMachine)
-        public Vehicle CurrentVehicle => StateMachine != null ? StateMachine.CurrentVehicle : null;
+        public Vehicle CurrentVehicle => StateMachine?.CurrentVehicle;
         public int CurrentRound => StateMachine != null ? StateMachine.CurrentRound : 0;
         public bool IsPlayerTurn => CurrentVehicle != null && CurrentVehicle.controlType == ControlType.Player;
         
@@ -38,7 +38,7 @@
         public bool IsGameOver { get; set; }
         public bool ShouldRefreshUI { get; set; }
         
-        public TurnPhaseContext(TurnStateMachine stateMachine, TurnController turnController, 
+        public TurnPhaseContext(TurnStateMachine stateMachine, TurnService turnController, 
                                  PlayerController playerController)
         {
             StateMachine = stateMachine;

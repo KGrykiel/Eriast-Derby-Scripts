@@ -19,13 +19,13 @@ using Assets.Scripts.Stages;
 /// NOTE: Turn start/end orchestration is handled by TurnStartHandler/TurnEndHandler.
 /// This class is just utilities that handlers call.
 /// </summary>
-public class TurnController
+public class TurnService
 {
     private readonly List<Vehicle> vehicles;
     
     public IReadOnlyList<Vehicle> AllVehicles => vehicles;
 
-    public TurnController(List<Vehicle> vehicleList)
+    public TurnService(List<Vehicle> vehicleList)
     {
         vehicles = vehicleList ?? new List<Vehicle>();
     }

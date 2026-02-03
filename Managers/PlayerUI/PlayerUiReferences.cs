@@ -29,6 +29,7 @@ namespace Assets.Scripts.Managers.PlayerUI
         public Button targetButtonPrefab;
         public Button targetCancelButton;
         
+        //DEPRECATED
         [Header("Stage Selection")]
         public GameObject stageSelectionPanel;
         public Transform stageButtonContainer;

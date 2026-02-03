@@ -23,7 +23,7 @@ public class PlayerController : MonoBehaviour
     [SerializeField]
     private PlayerUIReferences ui;
 
-    private TurnController turnController;
+    private TurnService turnController;
     private TurnStateMachine stateMachine;
     private Action onPlayerTurnComplete;
     
@@ -39,7 +39,6 @@ public class PlayerController : MonoBehaviour
     private Skill selectedSkill = null;
     private VehicleComponent selectedSkillSourceComponent = null;
     private VehicleComponent selectedTargetComponent = null;
-    private bool isSelectingStage = false;
     private bool isPlayerTurnActive = false;
     
     #endregion
@@ -70,7 +69,7 @@ public class PlayerController : MonoBehaviour
     /// Initializes the player controller with required references.
     /// No specific vehicle needed - works with whatever player vehicle is taking its turn.
     /// </summary>
-    public void Initialize(TurnController controller, TurnStateMachine machine, Action turnCompleteCallback)
+    public void Initialize(TurnService controller, TurnStateMachine machine, Action turnCompleteCallback)
     {
         turnController = controller;
         stateMachine = machine;
@@ -98,13 +97,11 @@ public class PlayerController : MonoBehaviour
 
     /// <summary>
     /// Processes player movement through stages.
-    /// Automatically moves through linear paths, pauses at crossroads for player choice.
-    /// Then shows action UI for player to take actions.
+    /// Stage transitions are now handled by the lane system - no manual selection needed.
+    /// Shows action UI for player to take actions.
     /// </summary>
     public void ProcessPlayerMovement()
     {
-        if (isSelectingStage) return;
-        
         var vehicle = CurrentPlayerVehicle;
         if (vehicle == null) return;
         
@@ -119,25 +116,9 @@ public class PlayerController : MonoBehaviour
             return;
         }
 
-        // Handle stage transitions
-        while (vehicle.progress >= vehicle.currentStage.length)
-        {
-            if (vehicle.currentStage.nextStages.Count == 0)
-            {
-                break;
-            }
-            else if (vehicle.currentStage.nextStages.Count == 1)
-            {
-                turnController.MoveToStage(vehicle, vehicle.currentStage.nextStages[0], isPlayerChoice: true);
-            }
-            else
-            {
-                isSelectingStage = true;
-                uiCoordinator.StageSelection.ShowStageSelection(vehicle.currentStage.nextStages, OnStageSelected);
-                return;
-            }
-        }
-
+        // Stage transitions are handled by lane system (StageLane.nextStage)
+        // No manual crossroads selection - lane determines which stage you enter
+        
         // Movement complete, show action UI
         StartPlayerActionPhase();
     }
@@ -195,6 +176,7 @@ public class PlayerController : MonoBehaviour
     /// Handles Move Forward button click. Triggers movement during action phase.
     /// Movement is FREE (power already paid at turn start).
     /// Can only be clicked once per turn.
+    /// Stage transitions are handled automatically by lane system.
     /// </summary>
     public void OnMoveForwardClicked()
     {
@@ -211,37 +193,9 @@ public class PlayerController : MonoBehaviour
             if (ui.moveForwardButton != null)
                 ui.moveForwardButton.interactable = false;
             
-            // Handle stage transitions - may show crossroads UI
-            CheckForCrossroads();
+            // Stage transitions handled by lane system (no UI popup needed)
             
             TurnEventBus.EmitPlayerTriggeredMovement(vehicle);
-        }
-    }
-    
-    /// <summary>
-    /// Check if player reached a crossroads and show stage selection UI if needed.
-    /// Does NOT restart the action phase - just handles stage transitions.
-    /// </summary>
-    private void CheckForCrossroads()
-    {
-        var vehicle = CurrentPlayerVehicle;
-        if (vehicle == null || vehicle.currentStage == null) return;
-        
-        while (vehicle.progress >= vehicle.currentStage.length && 
-               vehicle.currentStage.nextStages.Count > 0)
-        {
-            if (vehicle.currentStage.nextStages.Count == 1)
-            {
-                // Single path - automatically transition
-                turnController.MoveToStage(vehicle, vehicle.currentStage.nextStages[0], isPlayerChoice: true);
-            }
-            else
-            {
-                // Crossroads - show stage selection UI
-                isSelectingStage = true;
-                uiCoordinator.StageSelection.ShowStageSelection(vehicle.currentStage.nextStages, OnStageSelected);
-                return;
-            }
         }
     }
 
@@ -423,23 +377,6 @@ public class PlayerController : MonoBehaviour
     {
         ClearPlayerSelections();
         uiCoordinator.TargetSelection.Hide();
-    }
-
-    /// <summary>
-    /// Called when player selects a stage at a crossroads.
-    /// </summary>
-    private void OnStageSelected(Stage selectedStage)
-    {
-        var vehicle = CurrentPlayerVehicle;
-        
-        uiCoordinator.StageSelection.Hide();
-        isSelectingStage = false;
-
-        if (vehicle != null)
-        {
-            turnController.MoveToStage(vehicle, selectedStage, isPlayerChoice: true);
-        }
-        ProcessPlayerMovement();
     }
 
     #endregion

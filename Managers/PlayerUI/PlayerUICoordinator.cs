@@ -6,21 +6,19 @@ namespace Assets.Scripts.Managers.PlayerUI
 {
     /// <summary>
     /// Coordinates all player UI controllers and provides high-level orchestration.
-    /// Owns sub-controllers for seats, skills, targets, and stages.
+    /// Owns sub-controllers for seats, skills, and targets.
     /// </summary>
     public class PlayerUICoordinator
     {
         private readonly PlayerUIReferences ui;
         private readonly SeatSkillUIController seatSkillUI;
         private readonly TargetSelectionUIController targetSelectionUI;
-        private readonly StageSelectionUIController stageSelectionUI;
         
         public PlayerUICoordinator(PlayerUIReferences uiReferences)
         {
             ui = uiReferences;
             seatSkillUI = new SeatSkillUIController(ui);
             targetSelectionUI = new TargetSelectionUIController(ui);
-            stageSelectionUI = new StageSelectionUIController(ui);
         }
         
         // ==================== TURN UI ====================
@@ -93,7 +91,6 @@ namespace Assets.Scripts.Managers.PlayerUI
                 ui.playerTurnPanel.SetActive(false);
 
             targetSelectionUI.Hide();
-            stageSelectionUI.Hide();
         }
         
         /// <summary>
@@ -135,10 +132,5 @@ namespace Assets.Scripts.Managers.PlayerUI
         /// Access target selection UI controller.
         /// </summary>
         public TargetSelectionUIController TargetSelection => targetSelectionUI;
-        
-        /// <summary>
-        /// Access stage selection UI controller.
-        /// </summary>
-        public StageSelectionUIController StageSelection => stageSelectionUI;
     }
 }
