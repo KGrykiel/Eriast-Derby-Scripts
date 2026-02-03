@@ -68,7 +68,7 @@
             while (vehicle.progress >= vehicle.currentStage.length)
             {
                 var currentLane = vehicle.currentLane;
-                Assets.Scripts.Stages.Stage nextStage = null;
+                Stages.Stage nextStage = null;
                 
                 // Determine next stage from lane system
                 if (currentLane != null && currentLane.nextStage != null)
