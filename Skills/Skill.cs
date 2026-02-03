@@ -4,11 +4,32 @@ using Assets.Scripts.Combat.SkillChecks;
 using Assets.Scripts.Combat.Saves;
 
 /// <summary>
-/// Base skill data container (ScriptableObject).
-/// Execution logic is handled by SkillExecutor.
+/// Skill categories for editor organization and preset initialization.
+/// Category is descriptive metadata only - does NOT enforce which effects can be used.
 /// </summary>
-public abstract class Skill : ScriptableObject
+public enum SkillCategory
 {
+    Attack,      // Damage-focused skills
+    Restoration, // Healing/repair skills
+    Buff,        // Stat enhancement skills
+    Debuff,      // Status effect/penalty skills
+    Utility,     // Movement, lanes, non-combat
+    Special,     // Complex/custom behaviors
+    Custom       // Fully manual configuration
+}
+
+/// <summary>
+/// Skill data container (ScriptableObject).
+/// Execution logic is handled by SkillExecutor.
+/// Preset initialization is handled by SkillCreator (editor-only).
+/// </summary>
+public class Skill : ScriptableObject
+{
+    [Header("Classification")]
+    [Tooltip("Category for editor organization and default presets. Potentially also for future sorting. Does not restrict effects.")]
+    public SkillCategory category = SkillCategory.Attack;
+    
+    [Header("Basic Properties")]
     public string description;
     public int energyCost = 1;
 
@@ -25,7 +46,7 @@ public abstract class Skill : ScriptableObject
     
     [Header("Skill Check Configuration")]
     [Tooltip("If skillRollType = SkillCheck, what check must user make?")]
-    public SkillCheckType checkType = SkillCheckType.Mobility;
+    public SkillCheckType checkType = SkillCheckType.None;
     
     [Tooltip("Difficulty class for skill check")]
     public int checkDC = 15;

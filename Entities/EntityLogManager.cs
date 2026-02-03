@@ -223,23 +223,6 @@ namespace Assets.Scripts.Entities
             ).WithMetadata("component", component.name)
              .WithMetadata("manuallyDisabled", isDisabled);
         }
-        
-        // ==================== VEHICLE STATUS LOGGING ====================
-        
-        /// <summary>
-        /// Log vehicle destruction.
-        /// </summary>
-        public static void LogVehicleDestroyed(this global::Vehicle vehicle)
-        {
-            RaceHistory.Log(
-                EventType.Destruction,
-                EventImportance.Critical,
-                $"[DEAD] {vehicle.vehicleName} has been destroyed!",
-                vehicle.currentStage,
-                vehicle
-            ).WithMetadata("finalHealth", vehicle.chassis != null ? vehicle.chassis.health : 0)
-             .WithMetadata("finalStage", vehicle.currentStage != null ? vehicle.currentStage.stageName : "None");
-        }
 
         // ==================== RESOURCE LOGGING ====================
         

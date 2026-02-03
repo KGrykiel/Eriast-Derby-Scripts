@@ -1,6 +1,4 @@
-﻿using Assets.Scripts.Logging;
-
-namespace Assets.Scripts.Managers.TurnPhases
+﻿namespace Assets.Scripts.Managers.TurnPhases
 {
     /// <summary>
     /// Handles TurnStart phase - the beginning of a vehicle's turn.
@@ -85,7 +83,7 @@ namespace Assets.Scripts.Managers.TurnPhases
         private TurnPhase? AdvanceToNextTurnOrRoundEnd(TurnPhaseContext context)
         {
             bool newRound = context.StateMachine.AdvanceToNextTurn();
-            RaceHistory.AdvanceTurn();
+            // Round counter is tracked by TurnStateMachine, no need to notify RaceHistory
             return newRound ? TurnPhase.RoundEnd : TurnPhase.TurnStart;
         }
     }

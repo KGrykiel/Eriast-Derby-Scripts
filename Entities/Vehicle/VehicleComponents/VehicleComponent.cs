@@ -334,8 +334,6 @@ public abstract class VehicleComponent : Entity
     {
         this.LogComponentDestroyed();
         
-        Debug.LogWarning($"[Component] {name} on {parentVehicle?.vehicleName ?? "Unknown"} was destroyed!");
-        
         // If this component enabled a role, that role is now unavailable
         if (roleType != RoleType.None)
         {

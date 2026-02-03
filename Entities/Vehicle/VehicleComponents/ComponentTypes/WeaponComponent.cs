@@ -163,18 +163,4 @@ public class WeaponComponent : VehicleComponent
         
         return stats;
     }
-    
-    /// <summary>
-    /// Called when weapon is destroyed.
-    /// Vehicle loses one Gunner role slot.
-    /// </summary>
-    protected override void OnComponentDestroyed()
-    {
-        base.OnComponentDestroyed();
-        
-        // Weapon destruction disables one Gunner slot
-        Debug.LogWarning($"[Weapon] {name} destroyed! One Gunner role slot lost!");
-        
-        // The base class already logs that the "Gunner" role is no longer available
-    }
 }

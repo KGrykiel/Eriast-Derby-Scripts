@@ -157,9 +157,6 @@ namespace Assets.Scripts.Entities.Vehicle.VehicleComponents.ComponentTypes
             // Drain all energy immediately
             currentEnergy = 0;
             
-            // Log catastrophic failure
-            Debug.LogError($"[PowerCore] CRITICAL: {parentVehicle.vehicleName}'s {name} destroyed! Vehicle has no power!");
-            
             this.LogPowerCoreDestroyed();
         }
         

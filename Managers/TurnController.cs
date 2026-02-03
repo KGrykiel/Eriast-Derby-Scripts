@@ -1,6 +1,5 @@
 using System.Collections.Generic;
 using UnityEngine;
-using Assets.Scripts.Logging;
 using Assets.Scripts.Managers;
 using Assets.Scripts.Stages;
 

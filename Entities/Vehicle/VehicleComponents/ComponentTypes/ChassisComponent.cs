@@ -121,8 +121,6 @@ public class ChassisComponent : VehicleComponent
         
         if (parentVehicle == null) return;
         
-        Debug.LogError($"[Chassis] CRITICAL: {parentVehicle.vehicleName}'s {name} destroyed! Vehicle structure collapsed!");
-        
         this.LogChassisDestroyed();
         
         // Immediately mark vehicle as destroyed (fires event for immediate handling)

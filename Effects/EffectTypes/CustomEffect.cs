@@ -1,6 +1,5 @@
 using System;
 using UnityEngine;
-using Assets.Scripts.Logging;
 using Assets.Scripts.Effects;
 using Assets.Scripts.Effects.EffectTypes.CustomEffectCommands;
 
@@ -31,18 +30,6 @@ public class CustomEffect : EffectBase
             string targetName = EntityHelpers.GetEntityDisplayName(target);
             string userName = EntityHelpers.GetEntityDisplayName(user);
             string sourceText = source != null ? source.name : "unknown source";
-  
-            RaceHistory.Log(
-                Assets.Scripts.Logging.EventType.SkillUse,
-                EventImportance.Debug,
-                $"[CUSTOM] {effectName} executed {command.name} by {userName} from {sourceText}",
-                vehicle != null ? vehicle.currentStage : null,
-                vehicle
-            ).WithMetadata("effectName", effectName)
-             .WithMetadata("commandName", command.name)
-             .WithMetadata("userName", userName)
-             .WithMetadata("targetName", targetName)
-             .WithMetadata("source", sourceText);
         }
     }
 }

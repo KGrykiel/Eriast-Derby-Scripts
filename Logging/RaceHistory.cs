@@ -9,6 +9,8 @@ namespace Assets.Scripts.Logging
     /// Central event logging system for the race.
     /// Replaces SimulationLogger with structured, filterable event tracking.
     /// Supports highlight reel generation and per-vehicle narratives.
+    /// 
+    /// Round/turn tracking is owned by TurnStateMachine - this logger just reads it.
     /// </summary>
     public class RaceHistory : MonoBehaviour
     {
@@ -38,11 +40,6 @@ namespace Assets.Scripts.Logging
         private Dictionary<Vehicle, List<RaceEvent>> vehicleEvents = new();
         
         /// <summary>
-        /// Current turn number.
-        /// </summary>
-        private int currentTurn = 0;
-        
-        /// <summary>
         /// Maximum number of events to keep in memory (prevent memory bloat).
         /// Older events are archived/discarded.
         /// </summary>
@@ -63,6 +60,7 @@ namespace Assets.Scripts.Logging
         
         /// <summary>
         /// Convenience method for logging simple events.
+        /// Round number is read from TurnStateMachine (single source of truth).
         /// </summary>
         public static RaceEvent Log(
             EventType type,
@@ -71,8 +69,11 @@ namespace Assets.Scripts.Logging
             Stage location = null,
             params Vehicle[] vehicles)
         {
+            // Get current round from TurnStateMachine (single source of truth)
+            int currentRound = GetCurrentRound();
+            
             RaceEvent evt = new(
-                Instance.currentTurn,
+                currentRound,
                 type,
                 importance,
                 description,
@@ -86,13 +87,24 @@ namespace Assets.Scripts.Logging
         }
         
         /// <summary>
+        /// Get current round number from TurnStateMachine.
+        /// Returns 0 if no GameManager/TurnStateMachine exists (shouldn't happen in normal play).
+        /// </summary>
+        private static int GetCurrentRound()
+        {
+            var gameManager = FindFirstObjectByType<GameManager>();
+            var stateMachine = gameManager?.GetStateMachine();
+            return stateMachine?.CurrentRound ?? 0;
+        }
+        
+        /// <summary>
         /// Internal event logging implementation.
         /// </summary>
         private void LogEventInternal(RaceEvent evt)
         {
-            // Ensure turn number is set
+            // Ensure turn number is set (fallback if not passed in constructor)
             if (evt.turnNumber == 0)
-                evt.turnNumber = currentTurn;
+                evt.turnNumber = GetCurrentRound();
             
             allEvents.Add(evt);
             
@@ -128,16 +140,6 @@ namespace Assets.Scripts.Logging
             #endif
         }
         
-        /// <summary>
-        /// Advances the turn counter.
-        /// Call this when a new round begins (all vehicles have taken their turns).
-        /// </summary>
-        public static void AdvanceTurn()
-        {
-            Instance.currentTurn++;
-            // Logging removed - TurnController now logs round changes
-            // This prevents duplicate "Turn X" / "Round X" messages
-        }
         
         /// <summary>
         /// Gets all events for a specific vehicle.
@@ -253,6 +255,7 @@ namespace Assets.Scripts.Logging
             return story;
         }
         
+        
         /// <summary>
         /// Clears all event history (for new race).
         /// </summary>
@@ -260,8 +263,7 @@ namespace Assets.Scripts.Logging
         {
             Instance.allEvents.Clear();
             Instance.vehicleEvents.Clear();
-            Instance.currentTurn = 1; // Start at round 1, not 0
-            // Logging removed - race initialization is logged by GameManager
+            // Round counter is owned by TurnStateMachine, not RaceHistory
         }
         
         /// <summary>

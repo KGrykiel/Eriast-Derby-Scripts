@@ -1,7 +1,6 @@
 ﻿using UnityEngine;
 using System.Collections.Generic;
 using System.Linq;
-using Assets.Scripts.Entities;
 using Assets.Scripts.Entities.Vehicle.VehicleComponents.ComponentTypes;
 using Assets.Scripts.Entities.Vehicle;
 using Assets.Scripts.Combat.Saves;
@@ -311,9 +310,6 @@ public class Vehicle : MonoBehaviour
         if (Status == VehicleStatus.Destroyed) return; // Already handled
         
         Status = VehicleStatus.Destroyed;
-        
-        // Log destruction event
-        this.LogVehicleDestroyed();
 
         // Emit event - TurnStateMachine removes from turn order, GameManager checks game over
         TurnEventBus.EmitVehicleDestroyed(this);

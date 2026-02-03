@@ -90,22 +90,4 @@ public class AttributeModifierEffect : EffectBase
             target.AddModifier(ToRuntimeModifier(actualSource));
         }
     }
-    
-    /// <summary>
-    /// Get description for UI/logging.
-    /// </summary>
-    public string GetDescription()
-    {
-        string sign = value >= 0 ? "+" : "";
-        string typeStr = type == ModifierType.Multiplier ? "×" : "";
-        
-        if (type == ModifierType.Multiplier)
-        {
-            return $"{typeStr}{value} {attribute} (permanent)";
-        }
-        else
-        {
-            return $"{sign}{value} {attribute} (permanent)";
-        }
-    }
 }

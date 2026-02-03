@@ -289,18 +289,4 @@ public class DriveComponent : VehicleComponent
         
         return stats;
     }
-    
-    /// <summary>
-    /// Called when drive is destroyed.
-    /// Vehicle loses ability to move (Driver role becomes unavailable).
-    /// </summary>
-    protected override void OnComponentDestroyed()
-    {
-        base.OnComponentDestroyed();
-        
-        // Drive destruction disables movement
-        Debug.LogWarning($"[Drive] {name} destroyed! Vehicle cannot move - Driver role disabled!");
-        
-        // The base class already logs that the "Driver" role is no longer available
-    }
 }

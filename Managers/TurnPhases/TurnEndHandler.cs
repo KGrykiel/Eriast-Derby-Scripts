@@ -1,6 +1,4 @@
-﻿using Assets.Scripts.Logging;
-
-namespace Assets.Scripts.Managers.TurnPhases
+﻿namespace Assets.Scripts.Managers.TurnPhases
 {
     /// <summary>
     /// Handles TurnEnd phase - end-of-turn effects, advance to next turn.
@@ -38,6 +36,7 @@ namespace Assets.Scripts.Managers.TurnPhases
             
             // === END TURN END LOGIC ===
             
+            
             // Request UI refresh after turn ends
             context.ShouldRefreshUI = true;
             
@@ -46,7 +45,7 @@ namespace Assets.Scripts.Managers.TurnPhases
             
             if (newRound)
             {
-                RaceHistory.AdvanceTurn();
+                // Round counter is tracked by TurnStateMachine, no need to notify RaceHistory
                 return TurnPhase.RoundEnd;
             }
             
