@@ -3,34 +3,15 @@
 namespace Assets.Scripts.Combat.Attacks
 {
     /// <summary>
-    /// Calculator for attack rolls (d20 + modifiers vs AC).
-    /// 
-    /// Responsibilities:
-    /// - Rolling d20 attacks
-    /// - Gathering attack modifiers from all sources
-    /// - Evaluating hit/miss against AC
-    /// - Crit/fumble detection
-    /// 
-    /// DESIGN: Entities store raw base values. This calculator gathers modifiers
-    /// from all sources and computes final values. Provides breakdown data for tooltips.
-    /// 
-    /// NOTE: Defense values (AC) delegated to StatCalculator (single source of truth).
+    /// Calculator for attack rolls (d20 + bonuses vs AC).
+    /// Gathers bonuses, rolls d20, builds complete result in one shot.
+    /// Handles critical hits (natural 20) and critical misses (natural 1).
     /// </summary>
     public static class AttackCalculator
     {
-        // ==================== ATTACK ROLLING ====================
-        
         /// <summary>
-        /// Perform a complete attack roll with modifiers and evaluation.
-        /// This is the primary method for making attacks.
-        /// Handles critical hits (natural 20) and critical misses (natural 1).
+        /// Perform a complete attack roll. Gathers all bonuses, rolls, evaluates, returns complete result.
         /// </summary>
-        /// <param name="attacker">Entity making the attack (for status effect modifiers)</param>
-        /// <param name="target">Entity being attacked (for AC calculation)</param>
-        /// <param name="sourceComponent">Component used for attack (weapon bonus)</param>
-        /// <param name="skill">Skill being used (for skill-specific modifiers)</param>
-        /// <param name="character">Character providing attack bonus (explicit, or derived from seat if null)</param>
-        /// <param name="additionalPenalty">Extra penalty (e.g., component targeting)</param>
         public static AttackResult PerformAttack(
             Entity attacker,
             Entity target,
@@ -39,187 +20,76 @@ namespace Assets.Scripts.Combat.Attacks
             PlayerCharacter character = null,
             int additionalPenalty = 0)
         {
-            // Roll the d20
-            var result = RollAttack();
+            int baseRoll = RollUtility.RollD20();
+            var bonuses = GatherBonuses(attacker, sourceComponent, skill, character);
             
-            // Gather and add attack modifiers
-            var modifiers = GatherAttackModifiers(attacker, sourceComponent, skill, character);
-            D20RollHelpers.AddModifiers(result, modifiers);
-            
-            // Add any additional penalty (e.g., component targeting)
             if (additionalPenalty != 0)
             {
-                AddPenalty(result, additionalPenalty, "Targeting Penalty");
+                bonuses.Add(new RollBonus("Targeting Penalty", -additionalPenalty));
             }
-
-            // Get target's defense value
+            
             int defenseValue = target.GetArmorClass();
-            result.TargetValue = defenseValue;
+            int total = baseRoll + SumBonuses(bonuses);
             
-            // Evaluate: Critical hit (natural 20) auto-hits, critical miss (natural 1) auto-misses
-            if (IsNatural20(result))
-            {
-                result.Success = true;
-                result.IsCriticalHit = true;
-            }
-            else if (IsNatural1(result))
-            {
-                result.Success = false;
-                result.IsCriticalMiss = true;
-            }
-            else
-            {
-                // Normal evaluation
-                D20RollHelpers.EvaluateAgainstTarget(result, defenseValue);
-            }
+            // Crit/fumble detection
+            bool isCrit = baseRoll == 20;
+            bool isFumble = baseRoll == 1;
+            bool success = isCrit || (!isFumble && total >= defenseValue);
             
-            return result;
+            return new AttackResult(baseRoll, bonuses, defenseValue, success, isCrit, isFumble);
         }
         
         /// <summary>
-        /// Roll a d20 attack and create an attack result.
+        /// Gather all bonuses for an attack roll as RollBonus entries.
         /// </summary>
-        public static AttackResult RollAttack()
-        {
-            int roll = RollUtility.RollD20();
-            return AttackResult.FromD20(roll);
-        }
-        
-        // ==================== ATTACK MODIFIER GATHERING ====================
-        
-        /// <summary>
-        /// Gather attack modifiers from all sources.
-        /// 
-        /// Sources:
-        /// - Intrinsic (weapon, character): Raw values converted to modifiers here
-        /// - Applied (buffs, debuffs): Pre-existing modifiers on entity
-        /// - Skill-specific: Skill grants bonus/penalty (future)
-        /// </summary>
-        /// <param name="attacker">Entity making attack (for status effect modifiers)</param>
-        /// <param name="sourceComponent">Component used (weapon bonus)</param>
-        /// <param name="skill">Skill being used</param>
-        /// <param name="character">Character providing bonus (explicit, or derived from seat if null)</param>
-        public static List<AttributeModifier> GatherAttackModifiers(
+        public static List<RollBonus> GatherBonuses(
             Entity attacker,
             VehicleComponent sourceComponent = null,
             Skill skill = null,
             PlayerCharacter character = null)
         {
-            var modifiers = new List<AttributeModifier>();
+            var bonuses = new List<RollBonus>();
             
-            // 1. Intrinsic: Weapon enhancement bonus
-            GatherWeaponBonus(sourceComponent, modifiers);
-            
-            // 2. Intrinsic: Character attack bonus (from explicit param or seat lookup)
-            GatherCharacterBonus(sourceComponent, character, modifiers);
-            
-            // 3. Applied: Status effects and equipment (shared helper)
-            if (attacker != null)
-            {
-                D20RollHelpers.GatherAppliedModifiers(attacker, Attribute.AttackBonus, modifiers);
-            }
-            
-            // 4. Skill-specific modifiers (future)
-            if (skill != null)
-            {
-                GatherSkillModifiers(skill, modifiers);
-            }
-            
-            return modifiers;
-        }
-        
-        // ==================== MODIFIER SOURCES ====================
-        
-        /// <summary>
-        /// Intrinsic: Weapon's inherent accuracy bonus.
-        /// </summary>
-        private static void GatherWeaponBonus(VehicleComponent sourceComponent, List<AttributeModifier> modifiers)
-        {
+            // Weapon enhancement bonus
             if (sourceComponent is WeaponComponent weapon)
             {
                 int attackBonus = weapon.GetAttackBonus();
                 if (attackBonus != 0)
                 {
-                    modifiers.Add(new AttributeModifier(
-                        Attribute.AttackBonus,
-                        ModifierType.Flat,
-                        attackBonus,
-                        weapon));
+                    bonuses.Add(new RollBonus(weapon.name ?? "Weapon", attackBonus));
                 }
             }
-        }
-        
-        /// <summary>
-        /// Intrinsic: Character's base attack bonus.
-        /// Uses explicit character if provided, otherwise queries through VehicleSeat system.
-        /// For character personal skills, only character bonus applies (no component lookup).
-        /// </summary>
-        /// <param name="sourceComponent">Component for seat lookup (can be null for personal skills)</param>
-        /// <param name="explicitCharacter">Character passed explicitly (takes priority)</param>
-        /// <param name="modifiers">Modifier list to add to</param>
-        private static void GatherCharacterBonus(VehicleComponent sourceComponent, PlayerCharacter explicitCharacter, List<AttributeModifier> modifiers)
-        {
-            // Use explicit character if provided, otherwise look up from seat
-            PlayerCharacter character = explicitCharacter;
             
-            if (character == null && sourceComponent != null && sourceComponent.ParentVehicle != null)
+            // Character attack bonus (explicit or derived from seat)
+            PlayerCharacter resolvedCharacter = character;
+            if (resolvedCharacter == null && sourceComponent != null && sourceComponent.ParentVehicle != null)
             {
-                // Fallback: Get character from seat that controls this component
                 var seat = sourceComponent.ParentVehicle.GetSeatForComponent(sourceComponent);
-                character = seat?.assignedCharacter;
+                resolvedCharacter = seat?.assignedCharacter;
             }
-            
-            if (character != null)
+            if (resolvedCharacter != null)
             {
-                int charBonus = character.baseAttackBonus;
+                int charBonus = resolvedCharacter.baseAttackBonus;
                 if (charBonus != 0)
                 {
-                    modifiers.Add(new AttributeModifier(
-                        Attribute.AttackBonus,
-                        ModifierType.Flat,
-                        charBonus,
-                        character));
+                    bonuses.Add(new RollBonus(resolvedCharacter.characterName, charBonus));
                 }
             }
-        }
-        
-        /// <summary>
-        /// Skill-specific: Skill grants attack bonus/penalty (e.g., "Power Attack").
-        /// </summary>
-        private static void GatherSkillModifiers(Skill skill, List<AttributeModifier> modifiers)
-        {
-            // Future: Skill-specific attack bonuses
-        }
-        
-        // ==================== RESULT HELPERS ====================
-        
-        /// <summary>
-        /// Check if an attack roll is within the critical threat range.
-        /// Currently only natural 20, but expandable to 19-20, 18-20, etc.
-        /// </summary>
-        public static bool IsCriticalThreat(AttackResult result, int criticalRange = 20)
-        {
-            return result.BaseRoll >= criticalRange;
-        }
-        
-        private static void AddPenalty(AttackResult result, int penalty, string reason)
-        {
-            if (penalty != 0)
+            
+            // Applied: status effects and equipment on attacker
+            if (attacker != null)
             {
-                result.Modifiers.Add(new AttributeModifier(
-                    Attribute.AttackBonus,
-                    ModifierType.Flat,
-                    -penalty,
-                    null));
+                bonuses.AddRange(D20RollHelpers.GatherAppliedBonuses(attacker, Attribute.AttackBonus));
             }
+            
+            return bonuses;
         }
         
-        // ==================== CRIT/FUMBLE ====================
-        
-        /// <summary>Check if this is a natural 20 (critical hit potential).</summary>
-        public static bool IsNatural20(AttackResult result) => D20RollHelpers.IsNatural20(result);
-        
-        /// <summary>Check if this is a natural 1 (automatic miss).</summary>
-        public static bool IsNatural1(AttackResult result) => D20RollHelpers.IsNatural1(result);
+        private static int SumBonuses(List<RollBonus> bonuses)
+        {
+            int sum = 0;
+            foreach (var b in bonuses) sum += b.Value;
+            return sum;
+        }
     }
 }

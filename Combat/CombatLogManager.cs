@@ -55,7 +55,7 @@ namespace Assets.Scripts.Combat
             string modStr = result.TotalModifier >= 0 
                 ? $"+{result.TotalModifier}" 
                 : $"{result.TotalModifier}";
-            string output = $"{result.Total} (d{result.DieSize}: {result.BaseRoll}{modStr})";
+            string output = $"{result.Total} (d20: {result.BaseRoll}{modStr})";
             
             if (result.TargetValue > 0 && result.Success.HasValue)
             {
@@ -75,16 +75,12 @@ namespace Assets.Scripts.Combat
             
             var sb = new StringBuilder();
             sb.AppendLine("Attack Roll Breakdown:");
-            sb.AppendLine($"  Base d{result.DieSize}: {result.BaseRoll}");
+            sb.AppendLine($"  d20: {result.BaseRoll}");
             
-            foreach (var mod in result.Modifiers)
+            foreach (var bonus in result.Bonuses)
             {
-                string sign = mod.Value >= 0 ? "+" : "";
-                string sourceName = mod.Source != null ? mod.Source.name : mod.SourceDisplayName;
-                string sourceInfo = !string.IsNullOrEmpty(sourceName) 
-                    ? $" ({sourceName})" 
-                    : "";
-                sb.AppendLine($"  {mod.SourceDisplayName}: {sign}{(int)mod.Value}{sourceInfo}");
+                string sign = bonus.Value >= 0 ? "+" : "";
+                sb.AppendLine($"  {bonus.Label}: {sign}{bonus.Value}");
             }
             
             sb.AppendLine("  ─────────────");
@@ -113,7 +109,7 @@ namespace Assets.Scripts.Combat
             string modStr = result.TotalModifier >= 0 
                 ? $"+{result.TotalModifier}" 
                 : $"{result.TotalModifier}";
-            string output = $"{result.Total} (d{result.DieSize}: {result.BaseRoll}{modStr})";
+            string output = $"{result.Total} (d20: {result.BaseRoll}{modStr})";
             
             if (result.TargetValue > 0 && result.Success.HasValue)
             {
@@ -133,29 +129,12 @@ namespace Assets.Scripts.Combat
             
             var sb = new StringBuilder();
             sb.AppendLine($"{result.saveType} Save:");
-            sb.AppendLine($"  Base d{result.DieSize}: {result.BaseRoll}");
+            sb.AppendLine($"  d20: {result.BaseRoll}");
             
-            foreach (var mod in result.Modifiers)
+            foreach (var bonus in result.Bonuses)
             {
-                string sign = mod.Value >= 0 ? "+" : "";
-                string sourceName = mod.Source != null ? mod.Source.name : mod.SourceDisplayName;
-                string sourceInfo = !string.IsNullOrEmpty(sourceName) 
-                    ? $" ({sourceName})" 
-                    : "";
-                sb.AppendLine($"  {mod.SourceDisplayName}: {sign}{(int)mod.Value}{sourceInfo}");
-            }
-            
-            sb.AppendLine("  ─────────────");
-            sb.AppendLine($"  Total: {result.Total}");
-            
-            if (result.TargetValue > 0)
-            {
-                sb.AppendLine($"  vs DC: {result.TargetValue}");
-                if (result.Success.HasValue)
-                {
-                    string resultText = result.Succeeded ? "SAVED (resisted)" : "FAILED (affected)";
-                    sb.AppendLine($"  Result: {resultText}");
-                }
+                string sign = bonus.Value >= 0 ? "+" : "";
+                sb.AppendLine($"  {bonus.Label}: {sign}{bonus.Value}");
             }
             
             return sb.ToString();
@@ -172,7 +151,7 @@ namespace Assets.Scripts.Combat
             string modStr = result.TotalModifier >= 0 
                 ? $"+{result.TotalModifier}" 
                 : $"{result.TotalModifier}";
-            string output = $"{result.Total} (d{result.DieSize}: {result.BaseRoll}{modStr})";
+            string output = $"{result.Total} (d20: {result.BaseRoll}{modStr})";
             
             if (result.TargetValue > 0 && result.Success.HasValue)
             {
@@ -192,16 +171,12 @@ namespace Assets.Scripts.Combat
             
             var sb = new StringBuilder();
             sb.AppendLine($"{result.checkType} Check:");
-            sb.AppendLine($"  Base d{result.DieSize}: {result.BaseRoll}");
+            sb.AppendLine($"  d20: {result.BaseRoll}");
             
-            foreach (var mod in result.Modifiers)
+            foreach (var bonus in result.Bonuses)
             {
-                string sign = mod.Value >= 0 ? "+" : "";
-                string sourceName = mod.Source != null ? mod.Source.name : mod.SourceDisplayName;
-                string sourceInfo = !string.IsNullOrEmpty(sourceName) 
-                    ? $" ({sourceName})" 
-                    : "";
-                sb.AppendLine($"  {mod.SourceDisplayName}: {sign}{(int)mod.Value}{sourceInfo}");
+                string sign = bonus.Value >= 0 ? "+" : "";
+                sb.AppendLine($"  {bonus.Label}: {sign}{bonus.Value}");
             }
             
             sb.AppendLine("  ─────────────");
@@ -250,22 +225,23 @@ namespace Assets.Scripts.Combat
                 return $"{saveType} Save: +0";
             }
             
-            var modifiers = SaveCalculator.GatherSaveModifiers(target, saveType);
-            int total = modifiers.Sum(m => (int)m.Value);
+            var bonuses = SaveCalculator.GatherBonuses(target, saveType);
+            int total = 0;
+            foreach (var b in bonuses) total += b.Value;
             
             var sb = new StringBuilder();
             sb.AppendLine($"{saveType} Save Breakdown:");
             
-            if (modifiers.Count == 0)
+            if (bonuses.Count == 0)
             {
                 sb.AppendLine("  No modifiers (+0)");
             }
             else
             {
-                foreach (var mod in modifiers)
+                foreach (var bonus in bonuses)
                 {
-                    string sign = mod.Value >= 0 ? "+" : "";
-                    sb.AppendLine($"  {mod.SourceDisplayName}: {sign}{(int)mod.Value}");
+                    string sign = bonus.Value >= 0 ? "+" : "";
+                    sb.AppendLine($"  {bonus.Label}: {sign}{bonus.Value}");
                 }
             }
             

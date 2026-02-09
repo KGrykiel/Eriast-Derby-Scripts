@@ -4,27 +4,12 @@ namespace Assets.Scripts.Combat.Saves
 {
     /// <summary>
     /// Central calculator for all saving throw logic.
-    /// 
-    /// Responsibilities:
-    /// - Rolling d20 saving throws (uses RollUtility)
-    /// - Gathering save modifiers from all sources
-    /// - Calculating Save DC for skills
-    /// - Evaluating success/failure
-    /// 
-    /// DESIGN: Entities store raw base values (e.g., chassis.baseMobility).
-    /// This calculator gathers modifiers via StatCalculator and computes final values.
-    /// Returns breakdown data for tooltips.
-    /// 
-    /// Flow: Target rolls d20 + save bonus vs DC
-    /// Success = Total >= DC (target resists the effect)
+    /// Gathers bonuses, rolls d20, builds complete result in one shot.
     /// </summary>
     public static class SaveCalculator
     {
-        // ==================== SAVE ROLLING ====================
-        
         /// <summary>
         /// Perform a saving throw for a skill. Calculates DC from skill and user.
-        /// This is the primary method for skill-based saves.
         /// </summary>
         public static SaveResult PerformSavingThrow(Entity target, Skill skill, Entity dcSource)
         {
@@ -34,111 +19,106 @@ namespace Assets.Scripts.Combat.Saves
         
         /// <summary>
         /// Perform a saving throw with explicit DC.
-        /// Use this for non-skill saves (environmental hazards, traps with fixed DC).
+        /// Gathers all bonuses, rolls, evaluates, returns complete result.
         /// </summary>
         public static SaveResult PerformSavingThrow(Entity target, SaveType saveType, int dc)
         {
-            // Roll the d20
-            var result = RollSavingThrow(saveType);
+            int baseRoll = RollUtility.RollD20();
+            var bonuses = GatherBonuses(target, saveType);
+            int total = baseRoll + SumBonuses(bonuses);
+            bool success = total >= dc;
             
-            // Gather and add save modifiers
-            var modifiers = GatherSaveModifiers(target, saveType);
-            D20RollHelpers.AddModifiers(result, modifiers);
-            
-            // Evaluate: Success if Total >= DC
-            D20RollHelpers.EvaluateAgainstTarget(result, dc);
-            
-            return result;
+            return new SaveResult(baseRoll, saveType, bonuses, dc, success);
         }
         
         /// <summary>
-        /// Roll a d20 saving throw and create a save result.
+        /// Gather all bonuses for a saving throw as RollBonus entries.
         /// </summary>
-        public static SaveResult RollSavingThrow(SaveType saveType)
+        public static List<RollBonus> GatherBonuses(Entity target, SaveType saveType)
         {
-            int roll = RollUtility.RollD20();
-            return SaveResult.FromD20(roll, saveType);
-        }
-        
-        // ==================== SAVE MODIFIER GATHERING ====================
-        
-        /// <summary>
-        /// Gather save modifiers from all sources.
-        /// 
-        /// Sources:
-        /// - Intrinsic (chassis): Base save value from chassis design
-        /// - Applied (buffs, debuffs): Pre-existing modifiers on entity
-        /// </summary>
-        public static List<AttributeModifier> GatherSaveModifiers(
-            Entity target,
-            SaveType saveType)
-        {
-            var modifiers = new List<AttributeModifier>();
+            var bonuses = new List<RollBonus>();
             
-            // 1. Intrinsic: Base save from chassis
-            GatherBaseSaveBonus(target, saveType, modifiers);
-            
-            // 2. Applied: Status effects and equipment (shared helper)
-            if (target != null)
+            // Intrinsic: base save value from the appropriate entity
+            Entity sourceEntity = GetSourceEntityForSave(target, saveType);
+            if (sourceEntity != null)
             {
-                D20RollHelpers.GatherAppliedModifiers(target, SaveTypeToAttribute(saveType), modifiers);
-            }
-            
-            return modifiers;
-        }
-        
-        // ==================== MODIFIER SOURCES ====================
-        
-        /// <summary>
-        /// Intrinsic: Chassis's base mobility value (used for both saves and checks).
-        /// </summary>
-        private static void GatherBaseSaveBonus(Entity target, SaveType saveType, List<AttributeModifier> modifiers)
-        {
-            // Source mobility directly from chassis
-            if (target is ChassisComponent chassis)
-            {
-                int mobility = chassis.GetBaseMobility();
-                if (mobility != 0)
+                int baseValue = GetBaseSaveValue(sourceEntity, saveType);
+                if (baseValue != 0)
                 {
-                    modifiers.Add(new AttributeModifier(
-                        Attribute.Mobility,
-                        ModifierType.Flat,
-                        mobility,
-                        target));
+                    bonuses.Add(new RollBonus(sourceEntity.name ?? saveType.ToString(), baseValue));
                 }
             }
+            
+            // Applied: status effects and equipment
+            if (sourceEntity != null)
+            {
+                Attribute attribute = SaveTypeToAttribute(saveType);
+                bonuses.AddRange(D20RollHelpers.GatherAppliedBonuses(sourceEntity, attribute));
+            }
+            
+            return bonuses;
         }
-
+        
+        // ==================== ROUTING ====================
+        
+        private static Entity GetSourceEntityForSave(Entity target, SaveType saveType)
+        {
+            return saveType switch
+            {
+                SaveType.Mobility => GetChassisFromEntity(target),
+                // Future: Stability → drive, Systems → power core, etc.
+                _ => null
+            };
+        }
+        
+        private static int GetBaseSaveValue(Entity entity, SaveType saveType)
+        {
+            if (entity is ChassisComponent chassis)
+            {
+                return saveType switch
+                {
+                    SaveType.Mobility => chassis.GetBaseMobility(),
+                    _ => 0
+                };
+            }
+            return 0;
+        }
+        
+        private static ChassisComponent GetChassisFromEntity(Entity entity)
+        {
+            if (entity is ChassisComponent chassis)
+                return chassis;
+            if (entity is VehicleComponent component)
+            {
+                Vehicle parentVehicle = EntityHelpers.GetParentVehicle(component);
+                return parentVehicle?.chassis;
+            }
+            return null;
+        }
+        
         // ==================== DC CALCULATION ====================
         
-        /// <summary>
-        /// Calculate the Save DC for a skill.
-        /// DC = Skill's base DC + User's DC bonus (future).
-        /// </summary>
         public static int CalculateSaveDC(Skill skill, Entity user)
         {
-            int baseDC = skill.saveDCBase;
-            
-            // Future: Add user's DC bonus based on relevant attribute
-            // int userBonus = GetUserDCBonus(user, skill.saveDCAttribute);
-            // return baseDC + userBonus;
-            
-            return baseDC;
+            return skill.saveDCBase;
         }
         
         // ==================== HELPERS ====================
         
-        /// <summary>
-        /// Map SaveType to corresponding Attribute for modifier gathering.
-        /// Currently only Mobility exists (same stat used for saves and checks).
-        /// </summary>
         public static Attribute SaveTypeToAttribute(SaveType saveType)
         {
             return saveType switch
             {
                 SaveType.Mobility => Attribute.Mobility,
-                _ => Attribute.Mobility // Default fallback
+                _ => Attribute.Mobility
             };
+        }
+        
+        private static int SumBonuses(List<RollBonus> bonuses)
+        {
+            int sum = 0;
+            foreach (var b in bonuses) sum += b.Value;
+            return sum;
         }
     }
 }

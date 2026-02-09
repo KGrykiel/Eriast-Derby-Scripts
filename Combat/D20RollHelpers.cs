@@ -4,83 +4,33 @@ using Assets.Scripts.Core;
 namespace Assets.Scripts.Combat
 {
     /// <summary>
-    /// Shared helper methods for all d20 roll calculators.
-    /// Eliminates duplication between AttackCalculator, SaveCalculator, and future calculators.
-    /// 
-    /// Used by:
-    /// - AttackCalculator (attack rolls)
-    /// - SaveCalculator (saving throws)
-    /// - Future: SkillCheckCalculator, OpposedCheckCalculator
+    /// Shared helper methods for d20 roll calculators.
+    /// Converts entity modifiers (AttributeModifier) to roll contributions (RollBonus).
     /// </summary>
     public static class D20RollHelpers
     {
-        // ==================== MODIFIER OPERATIONS ====================
-        
         /// <summary>
-        /// Add modifiers to a d20 roll result.
-        /// Shared by all calculators - applies modifiers to any roll type.
+        /// Gather applied modifiers (status effects, equipment) from an entity
+        /// and convert them to RollBonus entries for a d20 roll result.
         /// </summary>
-        public static void AddModifiers(ID20RollResult result, List<AttributeModifier> modifiers)
+        public static List<RollBonus> GatherAppliedBonuses(Entity entity, Attribute attribute)
         {
-            foreach (var mod in modifiers)
-            {
-                if (mod.Value != 0)
-                {
-                    result.Modifiers.Add(mod);
-                }
-            }
-        }
-        
-        /// <summary>
-        /// Gather applied modifiers (status effects, equipment) from an entity.
-        /// This is the "applied modifiers" step shared by all d20 calculators.
-        /// 
-        /// Delegates to StatCalculator (single source of truth) to get modifiers
-        /// that are already on the entity.
-        /// </summary>
-        public static void GatherAppliedModifiers(
-            Entity entity,
-            Attribute attribute,
-            List<AttributeModifier> modifiers)
-        {
-            if (entity == null) return;
+            var bonuses = new List<RollBonus>();
+            if (entity == null) return bonuses;
             
             var (_, _, appliedMods) = StatCalculator.GatherAttributeValueWithBreakdown(
-                entity, attribute, 0);  // Integer base value
+                entity, attribute, 0);
             
             foreach (var mod in appliedMods)
             {
                 if (mod.Value != 0)
                 {
-                    modifiers.Add(mod);
+                    bonuses.Add(new RollBonus(mod.SourceDisplayName, (int)mod.Value));
                 }
             }
+            
+            return bonuses;
         }
-        
-        // ==================== EVALUATION ====================
-        
-        /// <summary>
-        /// Evaluate d20 roll against target number.
-        /// Success if Total >= targetValue.
-        /// Shared by all calculators - same logic for attacks, saves, checks.
-        /// </summary>
-        public static void EvaluateAgainstTarget(ID20RollResult result, int targetValue)
-        {
-            result.TargetValue = targetValue;
-            result.Success = result.Total >= targetValue;
-        }
-        
-        // ==================== SPECIAL ROLLS ====================
-        
-        /// <summary>
-        /// Check if this is a natural 20 (critical success potential).
-        /// </summary>
-        public static bool IsNatural20(ID20RollResult result) => result.BaseRoll == 20;
-        
-        /// <summary>
-        /// Check if this is a natural 1 (critical failure potential).
-        /// </summary>
-        public static bool IsNatural1(ID20RollResult result) => result.BaseRoll == 1;
     }
 }
 

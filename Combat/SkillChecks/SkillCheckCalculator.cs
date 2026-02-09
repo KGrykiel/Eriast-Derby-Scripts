@@ -4,108 +4,53 @@ namespace Assets.Scripts.Combat.SkillChecks
 {
     /// <summary>
     /// Central calculator for all skill check logic.
-    /// 
-    /// Responsibilities:
-    /// - Rolling d20 skill checks (uses RollUtility)
-    /// - Gathering skill check modifiers from all sources
-    /// - Evaluating success/failure
-    /// 
-    /// DESIGN: Follows same pattern as AttackCalculator and SaveCalculator.
-    /// Characters/entities store base skill values, this gathers modifiers and computes finals.
-    /// Returns breakdown data for tooltips.
-    /// 
-    /// Flow: Character rolls d20 + skill bonus vs DC
-    /// Success = Total >= DC (character succeeds at the task)
+    /// Gathers bonuses, rolls d20, builds complete result in one shot.
     /// </summary>
     public static class SkillCheckCalculator
     {
-        // ==================== SKILL CHECK ROLLING ====================
-        
         /// <summary>
-        /// Perform a skill check.
-        /// This is the primary method for making skill checks.
+        /// Perform a skill check. Gathers all bonuses, rolls, evaluates, returns complete result.
         /// </summary>
         public static SkillCheckResult PerformSkillCheck(
             Entity entity,
             SkillCheckType checkType,
             int dc)
         {
-            // Roll the d20
-            var result = RollSkillCheck(checkType);
+            int baseRoll = RollUtility.RollD20();
+            var bonuses = GatherBonuses(entity, checkType);
+            int total = baseRoll + SumBonuses(bonuses);
+            bool success = total >= dc;
             
-            // Gather and add skill modifiers
-            var modifiers = GatherSkillCheckModifiers(entity, checkType);
-            D20RollHelpers.AddModifiers(result, modifiers);
-            
-            // Evaluate: Success if Total >= DC
-            D20RollHelpers.EvaluateAgainstTarget(result, dc);
-            
-            return result;
+            return new SkillCheckResult(baseRoll, checkType, bonuses, dc, success);
         }
         
         /// <summary>
-        /// Roll a d20 skill check and create a result.
+        /// Gather all bonuses for a skill check as RollBonus entries.
         /// </summary>
-        public static SkillCheckResult RollSkillCheck(SkillCheckType checkType)
+        public static List<RollBonus> GatherBonuses(Entity entity, SkillCheckType checkType)
         {
-            int roll = RollUtility.RollD20();
-            return SkillCheckResult.FromD20(roll, checkType);
-        }
-        
-        // ==================== SKILL MODIFIER GATHERING ====================
-        
-        /// <summary>
-        /// Gather skill check modifiers from all sources.
-        /// 
-        /// Sources:
-        /// - Intrinsic: Base skill value from appropriate component
-        /// - Applied: Status effects and equipment on that component
-        /// </summary>
-        public static List<AttributeModifier> GatherSkillCheckModifiers(
-            Entity entity,
-            SkillCheckType checkType)
-        {
-            var modifiers = new List<AttributeModifier>();
+            var bonuses = new List<RollBonus>();
             
-            // Get the entity that owns this skill (e.g., chassis for Mobility)
             Entity sourceEntity = GetSourceEntityForCheck(entity, checkType);
             if (sourceEntity == null)
-                return modifiers;
+                return bonuses;
             
-            // Get the corresponding attribute
-            Attribute attribute = SkillCheckTypeToAttribute(checkType);
-            
-            // 1. Intrinsic: Base skill value from source entity
-            float baseValue = GetBaseSkillValue(sourceEntity, checkType);
+            // Intrinsic: base value from source entity
+            int baseValue = GetBaseSkillValue(sourceEntity, checkType);
             if (baseValue != 0)
             {
-                modifiers.Add(new AttributeModifier(
-                    attribute,
-                    ModifierType.Flat,
-                    baseValue,
-                    sourceEntity));
+                bonuses.Add(new RollBonus(GetBaseValueLabel(sourceEntity, checkType), baseValue));
             }
             
-            // 2. Applied: Status effects and equipment from source entity
-            D20RollHelpers.GatherAppliedModifiers(sourceEntity, attribute, modifiers);
+            // Applied: status effects and equipment on source entity
+            Attribute attribute = SkillCheckTypeToAttribute(checkType);
+            bonuses.AddRange(D20RollHelpers.GatherAppliedBonuses(sourceEntity, attribute));
             
-            return modifiers;
+            return bonuses;
         }
         
-        // ==================== MODIFIER SOURCES ====================
+        // ==================== ROUTING ====================
         
-        /// <summary>
-        /// Get the entity that should be the source for a skill check.
-        /// Routes to appropriate component based on check type.
-        /// 
-        /// Current routing:
-        /// - Mobility → Chassis (vehicle maneuverability)
-        /// 
-        /// Future routing examples:
-        /// - Perception → Character or Sensor component
-        /// - Mechanics → Drive component or Character
-        /// - Electronics → Sensor component or Character
-        /// </summary>
         private static Entity GetSourceEntityForCheck(Entity entity, SkillCheckType checkType)
         {
             return checkType switch
@@ -115,56 +60,56 @@ namespace Assets.Scripts.Combat.SkillChecks
             };
         }
         
-        /// <summary>
-        /// Get base skill value from the source entity.
-        /// 
-        /// TEMPORARY: Only supports Mobility from chassis.
-        /// When adding more skill types, add cases here to read from appropriate fields.
-        /// </summary>
-        private static float GetBaseSkillValue(Entity entity, SkillCheckType checkType)
+        private static int GetBaseSkillValue(Entity entity, SkillCheckType checkType)
         {
             if (entity is ChassisComponent chassis)
             {
                 return checkType switch
                 {
                     SkillCheckType.Mobility => chassis.GetBaseMobility(),
-                    _ => 0f
+                    _ => 0
                 };
             }
-            return 0f;
+            return 0;
         }
         
-        /// <summary>
-        /// Helper: Get chassis from entity (handles both direct chassis and components).
-        /// TEMPORARY: Currently only used for Mobility checks.
-        /// </summary>
+        private static string GetBaseValueLabel(Entity entity, SkillCheckType checkType)
+        {
+            return checkType switch
+            {
+                SkillCheckType.Mobility => entity.name ?? "Chassis Mobility",
+                _ => entity.name ?? "Base"
+            };
+        }
+        
         private static ChassisComponent GetChassisFromEntity(Entity entity)
         {
             if (entity is ChassisComponent chassis)
-            {
                 return chassis;
-            }
-            else if (entity is VehicleComponent component)
+            if (entity is VehicleComponent component)
             {
                 Vehicle parentVehicle = EntityHelpers.GetParentVehicle(component);
-                return parentVehicle != null ? parentVehicle.chassis : null;
+                return parentVehicle?.chassis;
             }
             return null;
         }
         
         // ==================== HELPERS ====================
         
-        /// <summary>
-        /// Map SkillCheckType to corresponding Attribute for modifier gathering.
-        /// Currently only Mobility exists (same stat used for saves and checks).
-        /// </summary>
         public static Attribute SkillCheckTypeToAttribute(SkillCheckType checkType)
         {
             return checkType switch
             {
                 SkillCheckType.Mobility => Attribute.Mobility,
-                _ => Attribute.Mobility // Default fallback
+                _ => Attribute.Mobility
             };
+        }
+        
+        private static int SumBonuses(List<RollBonus> bonuses)
+        {
+            int sum = 0;
+            foreach (var b in bonuses) sum += b.Value;
+            return sum;
         }
     }
 }
