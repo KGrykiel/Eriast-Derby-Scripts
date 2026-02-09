@@ -84,7 +84,8 @@ namespace Assets.Scripts.Combat.Damage
             Object causalSource,
             DamageSource sourceType = DamageSource.Ability)
         {
-            var result = DamageCalculator.FromFlat(damage, damageType, causalSource != null ? causalSource.name : null ?? "Unknown");
+            string sourceName = causalSource != null ? causalSource.name : "Unknown";
+            var result = DamageCalculator.FromFlat(damage, damageType, sourceName);
             return Apply(result, target, attacker, causalSource, sourceType);
         }
         
@@ -99,7 +100,8 @@ namespace Assets.Scripts.Combat.Damage
             Object causalSource,
             DamageSource sourceType = DamageSource.Effect)
         {
-            var result = DamageCalculator.FromFlat(damage, damageType, causalSource != null ? causalSource.name : null ?? "Environmental");
+            string sourceName = causalSource != null ? causalSource.name : "Environmental";
+            var result = DamageCalculator.FromFlat(damage, damageType, sourceName);
             return Apply(result, target, null, causalSource, sourceType);
         }
         
@@ -116,7 +118,8 @@ namespace Assets.Scripts.Combat.Damage
             Object causalSource,
             DamageSource sourceType = DamageSource.Effect)
         {
-            var result = DamageCalculator.FromDice(diceCount, dieSize, bonus, damageType, causalSource != null ? causalSource.name : null ?? "Environmental");
+            string sourceName = causalSource != null ? causalSource.name : "Environmental";
+            var result = DamageCalculator.FromDice(diceCount, dieSize, bonus, damageType, sourceName);
             return Apply(result, target, null, causalSource, sourceType);
         }
         

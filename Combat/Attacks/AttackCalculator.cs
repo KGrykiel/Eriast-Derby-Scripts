@@ -162,7 +162,7 @@ namespace Assets.Scripts.Combat.Attacks
             // Use explicit character if provided, otherwise look up from seat
             PlayerCharacter character = explicitCharacter;
             
-            if (character == null && sourceComponent != null ? sourceComponent.ParentVehicle : null != null)
+            if (character == null && sourceComponent != null && sourceComponent.ParentVehicle != null)
             {
                 // Fallback: Get character from seat that controls this component
                 var seat = sourceComponent.ParentVehicle.GetSeatForComponent(sourceComponent);

@@ -282,7 +282,7 @@ public abstract class VehicleComponent : Entity
             }
             
             // Also check chassis status effects (vehicle-wide stuns are applied to chassis)
-            if (parentVehicle != null ? parentVehicle.chassis : null != null && parentVehicle.chassis != this)
+            if (parentVehicle != null && parentVehicle.chassis != null && parentVehicle.chassis != this)
             {
                 foreach (var statusEffect in parentVehicle.chassis.GetActiveStatusEffects())
                 {
@@ -312,7 +312,7 @@ public abstract class VehicleComponent : Entity
         }
         
         // Also check chassis status effects (vehicle-wide immobilization)
-        if (parentVehicle != null ? parentVehicle.chassis : null != null && parentVehicle.chassis != this)
+        if (parentVehicle != null && parentVehicle.chassis != null && parentVehicle.chassis != this)
         {
             foreach (var statusEffect in parentVehicle.chassis.GetActiveStatusEffects())
             {
