@@ -4,12 +4,12 @@ using System.Linq;
 using System.Text;
 using EventType = Assets.Scripts.Logging.EventType;
 using Assets.Scripts.Logging;
-using Assets.Scripts.Combat.SkillChecks;
 using Assets.Scripts.StatusEffects;
-using Assets.Scripts.Combat.Saves;
 using Assets.Scripts.Combat.Damage;
 using Assets.Scripts.Core;
 using Assets.Scripts.Combat.Attacks;
+using Assets.Scripts.Combat.Saves;
+using Assets.Scripts.Combat.SkillChecks;
 
 namespace Assets.Scripts.Combat
 {
@@ -128,13 +128,26 @@ namespace Assets.Scripts.Combat
             if (result == null) return "No roll data";
             
             var sb = new StringBuilder();
-            sb.AppendLine($"{result.saveType} Save:");
+            sb.AppendLine($"{result.saveSpec.DisplayName} Save:");
             sb.AppendLine($"  d20: {result.BaseRoll}");
             
             foreach (var bonus in result.Bonuses)
             {
                 string sign = bonus.Value >= 0 ? "+" : "";
                 sb.AppendLine($"  {bonus.Label}: {sign}{bonus.Value}");
+            }
+            
+            sb.AppendLine("  ─────────────");
+            sb.AppendLine($"  Total: {result.Total}");
+            
+            if (result.TargetValue > 0)
+            {
+                sb.AppendLine($"  vs DC: {result.TargetValue}");
+                if (result.Success.HasValue)
+                {
+                    string resultText = result.Succeeded ? "SAVED" : "FAILED";
+                    sb.AppendLine($"  Result: {resultText}");
+                }
             }
             
             return sb.ToString();
@@ -170,7 +183,7 @@ namespace Assets.Scripts.Combat
             if (result == null) return "No roll data";
             
             var sb = new StringBuilder();
-            sb.AppendLine($"{result.checkType} Check:");
+            sb.AppendLine($"{result.checkSpec.DisplayName} Check:");
             sb.AppendLine($"  d20: {result.BaseRoll}");
             
             foreach (var bonus in result.Bonuses)
@@ -203,10 +216,10 @@ namespace Assets.Scripts.Combat
         ///   ─────────────
         ///   Total DC: 15
         /// </summary>
-        public static string FormatDCDetailed(int dc, string skillName, SaveType saveType)
+        public static string FormatDCDetailed(int dc, string skillName, SaveSpec saveSpec)
         {
             var sb = new StringBuilder();
-            sb.AppendLine($"{saveType} Save DC Breakdown:");
+            sb.AppendLine($"{saveSpec.DisplayName} Save DC Breakdown:");
             sb.AppendLine($"  Base DC: {dc} ({skillName})");
             // Future: Add user bonuses to DC here
             sb.AppendLine("  ─────────────");
@@ -218,19 +231,19 @@ namespace Assets.Scripts.Combat
         /// <summary>
         /// Format a save modifier breakdown for tooltips (target's save bonus).
         /// </summary>
-        public static string FormatSaveModifiersDetailed(Entity target, SaveType saveType)
+        public static string FormatSaveModifiersDetailed(Entity target, SaveSpec saveSpec)
         {
             if (target == null)
             {
-                return $"{saveType} Save: +0";
+                return $"{saveSpec.DisplayName} Save: +0";
             }
             
-            var bonuses = SaveCalculator.GatherBonuses(target, saveType);
+            var bonuses = SaveCalculator.GatherBonuses(saveSpec, component: target);
             int total = 0;
             foreach (var b in bonuses) total += b.Value;
             
             var sb = new StringBuilder();
-            sb.AppendLine($"{saveType} Save Breakdown:");
+            sb.AppendLine($"{saveSpec.DisplayName} Save Breakdown:");
             
             if (bonuses.Count == 0)
             {
@@ -802,7 +815,7 @@ namespace Assets.Scripts.Combat
             
             string targetName = FormatEntityWithVehicle(evt.Target, targetVehicle);
             string skillName = action?.SourceName ?? (evt.CausalSource != null ? evt.CausalSource.name : "effect");
-            string saveTypeName = evt.Result?.saveType.ToString() ?? "Mobility";
+            string saveTypeName = evt.Result?.saveSpec.DisplayName ?? "Mobility";
             
             string resultText = evt.Succeeded 
                 ? $"<color={Colors.Success}>Saved</color>" 
@@ -830,14 +843,14 @@ namespace Assets.Scripts.Combat
             // Add DC breakdown for tooltip
             if (evt.Result != null && evt.CausalSource is Skill skill)
             {
-                logEvt.WithMetadata("dcBreakdown", FormatDCDetailed(evt.Result.TargetValue, skill.name, evt.Result.saveType));
+                logEvt.WithMetadata("dcBreakdown", FormatDCDetailed(evt.Result.TargetValue, skill.name, evt.Result.saveSpec));
             }
             
-            // Add target's save modifier breakdown
-            if (evt.Target != null && evt.Result != null)
-            {
-                logEvt.WithMetadata("saveModifiersBreakdown", FormatSaveModifiersDetailed(evt.Target, evt.Result.saveType));
-            }
+            //// Add target's save modifier breakdown
+            //if (evt.Target != null && evt.Result != null)
+            //{
+            //    logEvt.WithMetadata("saveModifiersBreakdown", FormatSaveModifiersDetailed(evt.Target, evt.Result.saveSpec));
+            //}
         }
         
         // ==================== SKILL CHECK LOGGING ====================
@@ -856,7 +869,7 @@ namespace Assets.Scripts.Combat
             
             string sourceName = FormatEntityWithVehicle(evt.Source, sourceVehicle);
             string skillName = action?.SourceName ?? (evt.CausalSource != null ? evt.CausalSource.name : "task");
-            string checkTypeName = evt.Result?.checkType.ToString() ?? "Mobility";
+            string checkTypeName = evt.Result?.checkSpec.DisplayName ?? "Mobility";
             
             string resultText = evt.Succeeded 
                 ? $"<color={Colors.Success}>Success</color>" 

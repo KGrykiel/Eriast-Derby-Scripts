@@ -2,6 +2,7 @@
 using Assets.Scripts.Stages.Lanes;
 using Assets.Scripts.Combat.SkillChecks;
 using Assets.Scripts.Combat.Saves;
+using Assets.Scripts.Combat;
 using EventType = Assets.Scripts.Logging.EventType;
 
 namespace Assets.Scripts.Stages
@@ -103,7 +104,7 @@ namespace Assets.Scripts.Stages
             if (string.IsNullOrEmpty(narrative))
             {
                 narrative = $"{vehicle.vehicleName} {(checkResult.Succeeded ? "passed" : "failed")} {effect.effectName} " +
-                           $"({checkResult.checkType} DC {checkResult.TargetValue}: rolled {checkResult.Total})";
+                           $"({checkResult.checkSpec.DisplayName} DC {checkResult.TargetValue}: rolled {checkResult.Total})";
             }
             
             RaceHistory.Log(
@@ -115,7 +116,7 @@ namespace Assets.Scripts.Stages
             ).WithMetadata("laneName", lane.laneName)
              .WithMetadata("effectName", effect.effectName)
              .WithMetadata("success", checkResult.Succeeded)
-             .WithMetadata("checkType", checkResult.checkType.ToString())
+             .WithMetadata("checkType", checkResult.checkSpec.DisplayName)
              .WithMetadata("dc", checkResult.TargetValue)
              .WithMetadata("roll", checkResult.Total);
         }
@@ -137,7 +138,7 @@ namespace Assets.Scripts.Stages
             if (string.IsNullOrEmpty(narrative))
             {
                 narrative = $"{vehicle.vehicleName} {(saveResult.Succeeded ? "passed" : "failed")} {effect.effectName} " +
-                           $"({saveResult.saveType} DC {saveResult.TargetValue}: rolled {saveResult.Total})";
+                           $"({saveResult.saveSpec.DisplayName} DC {saveResult.TargetValue}: rolled {saveResult.Total})";
             }
             
             RaceHistory.Log(
@@ -149,7 +150,7 @@ namespace Assets.Scripts.Stages
             ).WithMetadata("laneName", lane.laneName)
              .WithMetadata("effectName", effect.effectName)
              .WithMetadata("success", saveResult.Succeeded)
-             .WithMetadata("saveType", saveResult.saveType.ToString())
+             .WithMetadata("saveType", saveResult.saveSpec.DisplayName)
              .WithMetadata("dc", saveResult.TargetValue)
              .WithMetadata("roll", saveResult.Total);
         }

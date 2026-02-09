@@ -111,32 +111,19 @@ namespace Assets.Scripts.Events.EventCard.EventCardTypes
         /// </summary>
         private CardResolutionResult ResolveSkillCheck(CardChoice choice, Vehicle vehicle)
         {
-            if (choice.skillCheckType == SkillCheckType.None)
-            {
-                Debug.LogError($"[ChoiceCard] SkillCheck choice '{choice.choiceText}' has no skill type defined!");
-                return new CardResolutionResult(false, "Invalid skill check configuration");
-            }
-            
-            // Chassis makes all checks for now (universal, always present)
-            if (vehicle.chassis == null)
-            {
-                Debug.LogError($"[ChoiceCard] Vehicle {vehicle.vehicleName} has no chassis!");
-                return new CardResolutionResult(false, "No chassis to make check!");
-            }
-            
             var checkResult = SkillCheckCalculator.PerformSkillCheck(
-                vehicle.chassis, 
-                choice.skillCheckType, 
-                choice.dc);
+                vehicle, choice.checkSpec, choice.dc);
             
-            // Emit to CombatEventBus for logging
+            if (checkResult == null)
+            {
+                ApplyEffects(choice.failureEffects, vehicle);
+                return new CardResolutionResult(false, "Unable to attempt check");
+            }
+            
             CombatEventBus.EmitSkillCheck(
-                checkResult,
-                vehicle.chassis,
-                this, // Event card is the source
-                checkResult.Succeeded);
+                checkResult, vehicle.chassis, this, checkResult.Succeeded);
             
-            if (checkResult.Succeeded == true)
+            if (checkResult.Succeeded)
             {
                 ApplyEffects(choice.effects, vehicle);
                 return new CardResolutionResult(true, choice.outcomeNarrative);
@@ -153,34 +140,20 @@ namespace Assets.Scripts.Events.EventCard.EventCardTypes
         /// </summary>
         private CardResolutionResult ResolveSavingThrow(CardChoice choice, Vehicle vehicle)
         {
-            if (choice.saveType == SaveType.None)
-            {
-                Debug.LogError($"[ChoiceCard] SavingThrow choice '{choice.choiceText}' has no save type defined!");
-                return new CardResolutionResult(false, "Invalid saving throw configuration");
-            }
-            
-            // Chassis makes all saves (represents vehicle body)
-            if (vehicle.chassis == null)
-            {
-                Debug.LogError($"[ChoiceCard] Vehicle {vehicle.vehicleName} has no chassis!");
-                return new CardResolutionResult(false, "No chassis to make save!");
-            }
-            
             var saveResult = SaveCalculator.PerformSavingThrow(
-                vehicle.chassis, 
-                choice.saveType, 
-                choice.dc);
+                vehicle, choice.saveSpec, choice.dc, choice.preferredRole);
             
-            // Emit to CombatEventBus for logging
+            if (saveResult == null)
+            {
+                ApplyEffects(choice.failureEffects, vehicle);
+                return new CardResolutionResult(false, "Unable to attempt save");
+            }
+            
             CombatEventBus.EmitSavingThrow(
-                saveResult,
-                null,  // No source entity for environmental hazards
-                vehicle.chassis,
-                this,  // Event card is the causal source
-                saveResult.Succeeded,
-                "Chassis"); // Target component name
+                saveResult, null, vehicle.chassis, this,
+                saveResult.Succeeded, "Vehicle");
             
-            if (saveResult.Succeeded == true)
+            if (saveResult.Succeeded)
             {
                 ApplyEffects(choice.effects, vehicle);
                 return new CardResolutionResult(true, choice.outcomeNarrative);
@@ -221,14 +194,17 @@ namespace Assets.Scripts.Events.EventCard.EventCardTypes
         [Tooltip("Type of check this choice requires")]
         public ChoiceCheckType checkType = ChoiceCheckType.None;
         
-        [Tooltip("Skill check type (if checkType = SkillCheck)")]
-        public SkillCheckType skillCheckType = SkillCheckType.None;
+        [Tooltip("Skill check spec (if checkType = SkillCheck)")]
+        public CheckSpec checkSpec;
         
-        [Tooltip("Save type (if checkType = SavingThrow)")]
-        public SaveType saveType = SaveType.None;
+        [Tooltip("Save spec (if checkType = SavingThrow)")]
+        public SaveSpec saveSpec;
         
         [Tooltip("Difficulty class for the check/save")]
         public int dc = 15;
+        
+        [Tooltip("Which role should handle this check/save? (None = auto-pick)")]
+        public RoleType preferredRole = RoleType.None;
         
         [Header("Effects")]
         [Tooltip("Effects applied if choice succeeds (or no check required)")]

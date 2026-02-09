@@ -10,59 +10,48 @@ namespace Assets.Scripts.Skills.Helpers.Resolvers
     /// Flow: Target rolls d20 + save bonus vs skill's DC
     /// - Save SUCCESS = target resisted = effects DON'T apply
     /// - Save FAILURE = target failed to resist = effects apply
-    /// 
-    /// IMPORTANT: The entity making the save is determined by SaveType, NOT by targeting.
-    /// Vehicle.ResolveSavingEntity() centralizes this logic.
-    /// 
-    /// ARCHITECTURE: Uses SkillContext for all execution data.
     /// </summary>
     public static class SkillSaveResolver
     {
-        /// <summary>
-        /// Execute a saving throw skill.
-        /// Returns true if effects were applied (target failed save).
-        /// </summary>
         public static bool Execute(SkillContext ctx)
         {
             Skill skill = ctx.Skill;
-            VehicleComponent sourceComponent = ctx.SourceComponent;
             Vehicle targetVehicle = ctx.TargetVehicle;
+
+            Entity dcSource = ctx.SourceComponent;
+            int dc = SaveCalculator.CalculateSaveDC(skill, dcSource);
             
-            // For non-vehicle targets, use target entity directly for save
-            Entity savingEntity;
+            SaveResult saveRoll;
+            
             if (targetVehicle != null)
             {
-                savingEntity = targetVehicle.ResolveSavingEntity(skill.saveType);
+                // Vehicle target: use vehicle-level overload (handles resolution)
+                saveRoll = SaveCalculator.PerformSavingThrow(
+                    targetVehicle, 
+                    skill.saveSpec, 
+                    dc,
+                    skill.savePreferredRole,
+                    ctx.TargetComponent);
+                
+                if (saveRoll == null)
+                {
+                    // Can't attempt save — auto-fail, apply effects
+                    SkillEffectApplicator.ApplyAllEffects(ctx);
+                    return true;
+                }
             }
             else
             {
-                savingEntity = ctx.TargetEntity;
+                // Non-vehicle target: save with target entity as component
+                saveRoll = SaveCalculator.PerformSavingThrow(
+                    skill.saveSpec, dc, component: ctx.TargetEntity);
             }
             
-            if (savingEntity == null)
-            {
-                Debug.LogWarning($"[SkillSaveResolver] {skill.name}: Could not resolve saving entity!");
-                return false;
-            }
+            EmitSaveEvent(saveRoll, ctx.SourceComponent, saveRoll != null ? ctx.TargetEntity : null, ctx.TargetComponent, skill);
             
-            // Perform the saving throw (SaveCalculator handles DC calculation)
-            // Use source vehicle's chassis for DC calculation if available
-            Entity dcSource = sourceComponent != null ? sourceComponent : ctx.SourceVehicle != null ? ctx.SourceVehicle.chassis : null;
-            SaveResult saveRoll = SaveCalculator.PerformSavingThrow(
-                savingEntity, 
-                skill, 
-                dcSource);
-            
-            // Emit event
-            EmitSaveEvent(saveRoll, sourceComponent, savingEntity, ctx.TargetComponent, skill);
-            
-            // If save succeeded, target resisted - don't apply effects
             if (saveRoll.Succeeded)
-            {
                 return false;
-            }
             
-            // Target failed save - apply effects
             SkillEffectApplicator.ApplyAllEffects(ctx);
             return true;
         }

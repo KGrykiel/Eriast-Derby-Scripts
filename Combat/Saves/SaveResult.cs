@@ -10,7 +10,7 @@ namespace Assets.Scripts.Combat.Saves
     [System.Serializable]
     public class SaveResult : ID20RollResult
     {
-        public SaveType saveType;
+        public SaveSpec saveSpec;
         
         public int BaseRoll { get; }
         public List<RollBonus> Bonuses { get; }
@@ -23,13 +23,13 @@ namespace Assets.Scripts.Combat.Saves
         
         public SaveResult(
             int baseRoll,
-            SaveType saveType,
+            SaveSpec saveSpec,
             List<RollBonus> bonuses,
             int targetValue,
             bool success)
         {
             BaseRoll = baseRoll;
-            this.saveType = saveType;
+            this.saveSpec = saveSpec;
             Bonuses = bonuses ?? new List<RollBonus>();
             TargetValue = targetValue;
             Success = success;

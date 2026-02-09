@@ -31,6 +31,51 @@ namespace Assets.Scripts.Combat
             
             return bonuses;
         }
+        
+        /// <summary>
+        /// Sum all bonus values in a list. Shared by all calculators.
+        /// </summary>
+        public static int SumBonuses(List<RollBonus> bonuses)
+        {
+            int sum = 0;
+            foreach (var b in bonuses) sum += b.Value;
+            return sum;
+        }
+        
+        /// <summary>
+        /// Gather component bonuses for a vehicle attribute check/save.
+        /// Gets the base value from the component and any applied modifiers.
+        /// </summary>
+        public static void GatherComponentBonuses(
+            Entity component,
+            Attribute vehicleAttribute,
+            string displayLabel,
+            List<RollBonus> bonuses)
+        {
+            int baseValue = GetComponentBaseValue(component, vehicleAttribute);
+            if (baseValue != 0)
+            {
+                bonuses.Add(new RollBonus(displayLabel, baseValue));
+            }
+            
+            bonuses.AddRange(GatherAppliedBonuses(component, vehicleAttribute));
+        }
+        
+        /// <summary>
+        /// Get the base value a component provides for a vehicle attribute.
+        /// </summary>
+        private static int GetComponentBaseValue(Entity component, Attribute vehicleAttribute)
+        {
+            if (component is ChassisComponent chassis)
+            {
+                return vehicleAttribute switch
+                {
+                    Attribute.Mobility => chassis.GetBaseMobility(),
+                    _ => 0
+                };
+            }
+            return 0;
+        }
     }
 }
 

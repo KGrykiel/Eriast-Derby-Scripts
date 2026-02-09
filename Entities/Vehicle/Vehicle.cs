@@ -223,24 +223,6 @@ public class Vehicle : MonoBehaviour
     }
     
     /// <summary>
-    /// Resolve which entity makes a saving throw based on SaveType.
-    /// Centralizes save entity resolution - vehicle knows its own component structure.
-    /// </summary>
-    /// <param name="saveType">Type of save being made</param>
-    /// <returns>The entity that makes the save</returns>
-    public Entity ResolveSavingEntity(SaveType saveType)
-    {
-        return saveType switch
-        {
-            SaveType.Mobility => chassis,  // Chassis has baseMobility
-            // Future save types:
-            // SaveType.Systems => powerCore,      // PowerCore has system resilience
-            // SaveType.Stability => chassis,      // Chassis handles stability
-            _ => chassis  // Default to chassis for unknown types
-        };
-    }
-    
-    /// <summary>
     /// Route an effect to the appropriate component.
     /// If playerSelectedComponent provided, uses it. Otherwise auto-routes based on effect type.
     /// </summary>

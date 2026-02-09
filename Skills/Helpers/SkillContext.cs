@@ -58,24 +58,24 @@
         /// <summary>
         /// Target's parent vehicle, if target is a VehicleComponent. Null for Props/NPCs.
         /// </summary>
-        public Vehicle TargetVehicle => (TargetEntity as VehicleComponent)?.ParentVehicle;
+        public readonly Vehicle TargetVehicle => (TargetEntity as VehicleComponent)?.ParentVehicle;
         
         /// <summary>
         /// Source as VehicleComponent, if applicable. Null for character-only skills.
         /// </summary>
-        public VehicleComponent SourceComponent => SourceEntity as VehicleComponent;
+        public readonly VehicleComponent SourceComponent => SourceEntity as VehicleComponent;
         
         /// <summary>
         /// Target as VehicleComponent, if applicable. Null for Props/NPCs.
         /// </summary>
-        public VehicleComponent TargetComponent => TargetEntity as VehicleComponent;
+        public readonly VehicleComponent TargetComponent => TargetEntity as VehicleComponent;
         
         // ===== IMMUTABLE COPY METHODS =====
 
         /// <summary>
         /// Create a copy with a different target. Used for chassis fallback in two-stage attacks.
         /// </summary>
-        public SkillContext WithTarget(Entity newTarget)
+        public readonly SkillContext WithTarget(Entity newTarget)
         {
             var copy = this;
             copy.TargetEntity = newTarget;
@@ -85,7 +85,7 @@
         /// <summary>
         /// Create a copy with IsCriticalHit set. Used by resolvers after roll.
         /// </summary>
-        public SkillContext WithCriticalHit(bool isCrit)
+        public readonly SkillContext WithCriticalHit(bool isCrit)
         {
             var copy = this;
             copy.IsCriticalHit = isCrit;

@@ -1,5 +1,6 @@
 ﻿using Assets.Scripts.Combat.SkillChecks;
 using Assets.Scripts.Combat;
+using UnityEngine;
 
 namespace Assets.Scripts.Skills.Helpers.Resolvers
 {
@@ -9,36 +10,29 @@ namespace Assets.Scripts.Skills.Helpers.Resolvers
     /// Flow: User rolls d20 + skill bonus vs DC
     /// - Success = effects apply
     /// - Failure = effects don't apply
-    /// 
-    /// ARCHITECTURE: Uses SkillContext for all execution data.
     /// </summary>
     public static class SkillCheckResolver
     {
-        /// <summary>
-        /// Execute a skill check skill.
-        /// Returns true if effects were applied (check succeeded).
-        /// </summary>
         public static bool Execute(SkillContext ctx)
         {
             Skill skill = ctx.Skill;
             
-            // Use source component or source vehicle's chassis for the check
-            Entity checkingEntity = ctx.SourceEntity != null ? ctx.SourceEntity : ctx.SourceVehicle != null ? ctx.SourceVehicle.chassis : null;
+            var checkResult = SkillCheckCalculator.PerformSkillCheck(
+                ctx.SourceVehicle,
+                skill.checkSpec,
+                skill.checkDC);
             
-            // Perform the skill check
-            int dc = skill.checkDC;
-            SkillCheckResult checkResult = SkillCheckCalculator.PerformSkillCheck(checkingEntity, skill.checkType, dc);
-
-            // Emit event
-            EmitCheckEvent(checkResult, ctx.SourceComponent, skill);
-            
-            // If check failed, don't apply effects
-            if (!checkResult.Succeeded)
+            if (checkResult == null)
             {
+                Debug.LogWarning($"[SkillCheckResolver] {skill.name}: Check cannot be attempted");
                 return false;
             }
+
+            EmitCheckEvent(checkResult, ctx.SourceComponent, skill);
             
-            // Check succeeded - apply effects
+            if (!checkResult.Succeeded)
+                return false;
+            
             SkillEffectApplicator.ApplyAllEffects(ctx);
             return true;
         }

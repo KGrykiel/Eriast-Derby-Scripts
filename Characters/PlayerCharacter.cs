@@ -4,18 +4,11 @@ using Assets.Scripts.Characters;
 
 /// <summary>
 /// Represents a character that can operate vehicle components.
-/// 
-/// Characters have:
-/// - 5 core attributes (DEX, INT, WIS, CON, CHA) following D&D conventions
-/// - 10 skill ranks representing training (Piloting, Mechanics, etc.)
-/// - Skill proficiencies chosen at character creation (grants level-based bonus)
-/// - A level that scales proficiency bonus
+/// This is a data class — characters store attributes, proficiencies, and identity.
+/// All bonus calculations are performed by the calculators (SkillCheckCalculator, SaveCalculator).
 /// 
 /// Characters work through vehicle components. Their seat determines which components
-/// they can use (and thus which component bonuses apply), while their personal training
-/// (skill ranks, proficiencies) stays with them regardless of where they sit.
-/// 
-/// See Characters.md for full design documentation.
+/// they can use. CheckResolver resolves the character + component pairing.
 /// </summary>
 [CreateAssetMenu(fileName = "New Character", menuName = "Racing/Player Character")]
 public class PlayerCharacter : ScriptableObject
@@ -36,6 +29,10 @@ public class PlayerCharacter : ScriptableObject
     // ==================== ATTRIBUTES ====================
     
     [Header("Attributes (3-20, default 10)")]
+    [Tooltip("Raw physical power, lifting, breaking. May govern future melee/grapple skills.")]
+    [SerializeField, Range(3, 20)]
+    private int strength = 10;
+    
     [Tooltip("Reflexes, hand-eye coordination, fine motor control. Governs: Piloting, Defensive Maneuvers, Stunts, Stealth.")]
     [SerializeField, Range(3, 20)]
     private int dexterity = 10;
@@ -82,6 +79,7 @@ public class PlayerCharacter : ScriptableObject
     {
         return attribute switch
         {
+            CharacterAttribute.Strength => strength,
             CharacterAttribute.Dexterity => dexterity,
             CharacterAttribute.Intelligence => intelligence,
             CharacterAttribute.Wisdom => wisdom,
@@ -120,28 +118,6 @@ public class PlayerCharacter : ScriptableObject
         return IsProficient(skill) ? level : 0;
     }
     
-    // ==================== COMBINED BONUS METHODS ====================
-    
-    /// <summary>
-    /// Get the total skill check bonus for a character skill (without component bonus).
-    /// Formula: attribute modifier + proficiency bonus (if proficient).
-    /// Follows D&D 5e conventions - no separate skill ranks.
-    /// </summary>
-    public int GetSkillCheckBonus(CharacterSkill skill)
-    {
-        CharacterAttribute attribute = CharacterSkillHelper.GetPrimaryAttribute(skill);
-        return GetAttributeModifier(attribute) + GetProficiencyBonus(skill);
-    }
-    
-    /// <summary>
-    /// Get the saving throw bonus for a character attribute.
-    /// Formula: attribute modifier + half level (rounded down).
-    /// </summary>
-    public int GetSaveBonus(CharacterAttribute attribute)
-    {
-        return GetAttributeModifier(attribute) + (level / 2);
-    }
-    
     // ==================== LEGACY METHODS ====================
     
     /// <summary>
@@ -165,6 +141,7 @@ public class PlayerCharacter : ScriptableObject
             summary += $"{description}\n\n";
         }
         
+        summary += $"STR {strength} ({GetAttributeModifier(CharacterAttribute.Strength):+#;-#;0}) | ";
         summary += $"DEX {dexterity} ({GetAttributeModifier(CharacterAttribute.Dexterity):+#;-#;0}) | ";
         summary += $"INT {intelligence} ({GetAttributeModifier(CharacterAttribute.Intelligence):+#;-#;0}) | ";
         summary += $"WIS {wisdom} ({GetAttributeModifier(CharacterAttribute.Wisdom):+#;-#;0}) | ";

@@ -38,15 +38,18 @@ public class Skill : ScriptableObject
     public SkillRollType skillRollType = SkillRollType.None;
     
     [Header("Saving Throw Configuration")]
-    [Tooltip("If skillRollType = SavingThrow, what save must target make?")]
-    public SaveType saveType = SaveType.Mobility;
+    [Tooltip("If skillRollType = SavingThrow, what save must the target make?")]
+    public SaveSpec saveSpec;
     
     [Tooltip("Base difficulty class for saving throw (before user bonuses)")]
     public int saveDCBase = 15;
     
+    [Tooltip("Which role should handle this save? (None = auto-pick based on context)")]
+    public RoleType savePreferredRole = RoleType.None;
+    
     [Header("Skill Check Configuration")]
-    [Tooltip("If skillRollType = SkillCheck, what check must user make?")]
-    public SkillCheckType checkType = SkillCheckType.None;
+    [Tooltip("If skillRollType = SkillCheck, what check must the user make?")]
+    public CheckSpec checkSpec;
     
     [Tooltip("Difficulty class for skill check")]
     public int checkDC = 15;

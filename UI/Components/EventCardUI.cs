@@ -6,8 +6,7 @@ using UnityEngine.EventSystems;
 using TMPro;
 using Assets.Scripts.Events.EventCard.EventCardTypes;
 using Assets.Scripts.Events.EventCard;
-using Assets.Scripts.Combat.SkillChecks;
-using Assets.Scripts.Combat.Saves;
+using Assets.Scripts.Combat;
 
 namespace Assets.Scripts.UI.Components
 {
@@ -230,13 +229,13 @@ namespace Assets.Scripts.UI.Components
             var tooltip = "";
             
             // Show check requirements
-            if (choice.checkType == ChoiceCheckType.SavingThrow && choice.saveType != SaveType.None)
+            if (choice.checkType == ChoiceCheckType.SavingThrow)
             {
-                tooltip += $"{choice.saveType} Save DC {choice.dc}\n";
+                tooltip += $"{choice.saveSpec.DisplayName} Save DC {choice.dc}\n";
             }
-            else if (choice.checkType == ChoiceCheckType.SkillCheck && choice.skillCheckType != SkillCheckType.None)
+            else if (choice.checkType == ChoiceCheckType.SkillCheck)
             {
-                tooltip += $"{choice.skillCheckType} Check DC {choice.dc}\n";
+                tooltip += $"{choice.checkSpec.DisplayName} Check DC {choice.dc}\n";
             }
             else
             {
@@ -296,13 +295,13 @@ namespace Assets.Scripts.UI.Components
             var tooltip = "";
             
             // Show check requirements
-            if (choice.checkType == ChoiceCheckType.SavingThrow && choice.saveType != SaveType.None)
+            if (choice.checkType == ChoiceCheckType.SavingThrow)
             {
-                tooltip += $"<b>{choice.saveType} Save DC {choice.dc}</b>\n";
+                tooltip += $"<b>{choice.saveSpec.DisplayName} Save DC {choice.dc}</b>\n";
             }
-            else if (choice.checkType == ChoiceCheckType.SkillCheck && choice.skillCheckType != SkillCheckType.None)
+            else if (choice.checkType == ChoiceCheckType.SkillCheck)
             {
-                tooltip += $"<b>{choice.skillCheckType} Check DC {choice.dc}</b>\n";
+                tooltip += $"<b>{choice.checkSpec.DisplayName} Check DC {choice.dc}</b>\n";
             }
             else
             {

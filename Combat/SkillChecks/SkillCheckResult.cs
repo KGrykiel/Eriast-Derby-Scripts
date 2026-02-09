@@ -10,7 +10,7 @@ namespace Assets.Scripts.Combat.SkillChecks
     [System.Serializable]
     public class SkillCheckResult : ID20RollResult
     {
-        public SkillCheckType checkType;
+        public CheckSpec checkSpec;
         
         public int BaseRoll { get; }
         public List<RollBonus> Bonuses { get; }
@@ -23,13 +23,13 @@ namespace Assets.Scripts.Combat.SkillChecks
         
         public SkillCheckResult(
             int baseRoll,
-            SkillCheckType checkType,
+            CheckSpec checkSpec,
             List<RollBonus> bonuses,
             int targetValue,
             bool success)
         {
             BaseRoll = baseRoll;
-            this.checkType = checkType;
+            this.checkSpec = checkSpec;
             Bonuses = bonuses ?? new List<RollBonus>();
             TargetValue = targetValue;
             Success = success;

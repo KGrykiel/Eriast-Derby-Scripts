@@ -29,7 +29,7 @@ namespace Assets.Scripts.Combat.Attacks
             }
             
             int defenseValue = target.GetArmorClass();
-            int total = baseRoll + SumBonuses(bonuses);
+            int total = baseRoll + D20RollHelpers.SumBonuses(bonuses);
             
             // Crit/fumble detection
             bool isCrit = baseRoll == 20;
@@ -83,13 +83,6 @@ namespace Assets.Scripts.Combat.Attacks
             }
             
             return bonuses;
-        }
-        
-        private static int SumBonuses(List<RollBonus> bonuses)
-        {
-            int sum = 0;
-            foreach (var b in bonuses) sum += b.Value;
-            return sum;
         }
     }
 }

@@ -33,15 +33,18 @@ namespace Assets.Scripts.Stages.Lanes
         [Tooltip("Type of check required (None = effects always apply)")]
         public LaneCheckType checkType = LaneCheckType.None;
         
-        [Tooltip("Skill check type (if checkType = SkillCheck)")]
-        public SkillCheckType skillCheckType = SkillCheckType.None;
+        [Tooltip("Skill check spec (if checkType = SkillCheck)")]
+        public CheckSpec checkSpec;
         
-        [Tooltip("Save type (if checkType = SavingThrow)")]
-        public SaveType saveType = SaveType.None;
+        [Tooltip("Save spec (if checkType = SavingThrow)")]
+        public SaveSpec saveSpec;
         
         [Tooltip("Difficulty class for the check/save")]
         [Range(5, 30)]
         public int dc = 15;
+        
+        [Tooltip("Which role should handle this check/save? (None = auto-pick)")]
+        public RoleType preferredRole = RoleType.None;
         
         [Header("Effects")]
         [Tooltip("Effects applied on successful check (or always if no check)")]

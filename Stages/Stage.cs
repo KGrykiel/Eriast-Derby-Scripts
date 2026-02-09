@@ -507,24 +507,18 @@ namespace Assets.Scripts.Stages
     /// </summary>
     private void ResolveSkillCheckTurnEffect(Vehicle vehicle, StageLane lane, LaneTurnEffect effect)
     {
-        if (vehicle.chassis == null) return;
-        
-        // Perform skill check
         var result = SkillCheckCalculator.PerformSkillCheck(
-            vehicle.chassis,
-            effect.skillCheckType,
-            effect.dc
-        );
+            vehicle, effect.checkSpec, effect.dc);
         
-        // Emit event for logging
+        if (result == null)
+        {
+            ApplyTurnEffects(vehicle, effect.onFailure);
+            return;
+        }
+        
         CombatEventBus.Emit(new SkillCheckEvent(
-            result,
-            vehicle.chassis,
-            this,
-            result.Succeeded
-        ));
+            result, vehicle.chassis, this, result.Succeeded));
         
-        // Apply appropriate effects
         if (result.Succeeded)
         {
             ApplyTurnEffects(vehicle, effect.onSuccess);
@@ -534,7 +528,6 @@ namespace Assets.Scripts.Stages
             ApplyTurnEffects(vehicle, effect.onFailure);
         }
         
-        // Log result
         this.LogLaneTurnEffectWithCheck(vehicle, lane, effect, result);
     }
     
@@ -543,26 +536,19 @@ namespace Assets.Scripts.Stages
     /// </summary>
     private void ResolveSavingThrowTurnEffect(Vehicle vehicle, StageLane lane, LaneTurnEffect effect)
     {
-        if (vehicle.chassis == null) return;
-        
-        // Perform saving throw
         var result = SaveCalculator.PerformSavingThrow(
-            vehicle.chassis,
-            effect.saveType,
-            effect.dc
-        );
+            vehicle, effect.saveSpec, effect.dc, effect.preferredRole);
         
-        // Emit event for logging
+        if (result == null)
+        {
+            ApplyTurnEffects(vehicle, effect.onFailure);
+            return;
+        }
+        
         CombatEventBus.EmitSavingThrow(
-            result,
-            null,
-            vehicle.chassis,
-            this,
-            result.Succeeded,
-            "Chassis"
-        );
+            result, null, vehicle.chassis, this,
+            result.Succeeded, "Vehicle");
         
-        // Apply appropriate effects
         if (result.Succeeded)
         {
             ApplyTurnEffects(vehicle, effect.onSuccess);
@@ -572,7 +558,6 @@ namespace Assets.Scripts.Stages
             ApplyTurnEffects(vehicle, effect.onFailure);
         }
         
-        // Log result
         this.LogLaneTurnEffectWithSave(vehicle, lane, effect, result);
     }
     

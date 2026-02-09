@@ -2,8 +2,9 @@
 using UnityEngine;
 using UnityEditor;
 using System.Collections.Generic;
+using Assets.Scripts.Entities.Vehicle;
 using Assets.Scripts.Combat.SkillChecks;
-using CombatSaveType = Assets.Scripts.Combat.Saves.SaveType;
+using Assets.Scripts.Combat.Saves;
 
 namespace Assets.Scripts.Skills
 {
@@ -118,54 +119,55 @@ namespace Assets.Scripts.Skills
             {
                 case SkillCategory.Attack:
                     skill.skillRollType = SkillRollType.AttackRoll;
-                    skill.saveType = CombatSaveType.Mobility;
+                    skill.saveSpec = SaveSpec.None;
                     skill.saveDCBase = 0;
-                    skill.checkType = SkillCheckType.None;
+                    skill.checkSpec = CheckSpec.None;
                     skill.checkDC = 0;
                     skill.targetingMode = TargetingMode.Enemy;
                     break;
                     
                 case SkillCategory.Restoration:
                     skill.skillRollType = SkillRollType.None;
-                    skill.saveType = CombatSaveType.Mobility;
+                    skill.saveSpec = SaveSpec.None;
                     skill.saveDCBase = 0;
-                    skill.checkType = SkillCheckType.None;
+                    skill.checkSpec = CheckSpec.None;
                     skill.checkDC = 0;
                     skill.targetingMode = TargetingMode.SourceComponent;
                     break;
                     
                 case SkillCategory.Buff:
                     skill.skillRollType = SkillRollType.SkillCheck;
-                    skill.saveType = CombatSaveType.None;
+                    skill.saveSpec = SaveSpec.None;
                     skill.saveDCBase = 0;
-                    skill.checkType = SkillCheckType.Mobility;
+                    skill.checkSpec = CheckSpec.ForVehicle(VehicleCheckAttribute.Mobility);
                     skill.checkDC = 15;
                     skill.targetingMode = TargetingMode.Self;
                     break;
                     
                 case SkillCategory.Debuff:
                     skill.skillRollType = SkillRollType.SavingThrow;
-                    skill.saveType = CombatSaveType.Mobility;
+                    skill.saveSpec = SaveSpec.ForVehicle(VehicleCheckAttribute.Mobility);
                     skill.saveDCBase = 15;
-                    skill.checkType = SkillCheckType.None;
+                    skill.savePreferredRole = RoleType.None;
+                    skill.checkSpec = CheckSpec.None;
                     skill.checkDC = 0;
                     skill.targetingMode = TargetingMode.Enemy;
                     break;
                     
                 case SkillCategory.Utility:
                     skill.skillRollType = SkillRollType.None;
-                    skill.saveType = CombatSaveType.None;
+                    skill.saveSpec = SaveSpec.None;
                     skill.saveDCBase = 0;
-                    skill.checkType = SkillCheckType.None;
+                    skill.checkSpec = CheckSpec.None;
                     skill.checkDC = 0;
                     skill.targetingMode = TargetingMode.Self;
                     break;
                     
                 case SkillCategory.Special:
                     skill.skillRollType = SkillRollType.None;
-                    skill.saveType = CombatSaveType.None;
+                    skill.saveSpec = SaveSpec.None;
                     skill.saveDCBase = 0;
-                    skill.checkType = SkillCheckType.None;
+                    skill.checkSpec = CheckSpec.None;
                     skill.checkDC = 0;
                     skill.targetingMode = TargetingMode.Enemy;
                     break;
