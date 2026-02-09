@@ -31,7 +31,4 @@ public enum Attribute
     // Resistances
     MagicResistance,
     PhysicalResistance,
-    
-    // Add more as needed
-    // Future: Add Perception, Mechanics, etc. when you actually need them
 }
