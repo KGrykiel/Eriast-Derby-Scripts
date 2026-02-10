@@ -1,6 +1,5 @@
 ﻿using System.Collections.Generic;
 using Assets.Scripts.Characters;
-using Assets.Scripts.Entities.Vehicle;
 
 namespace Assets.Scripts.Combat.SkillChecks
 {
@@ -14,28 +13,30 @@ namespace Assets.Scripts.Combat.SkillChecks
         /// <summary>
         /// Perform a skill check for a vehicle. Resolves which component and character
         /// are involved, gathers bonuses, rolls, returns complete result.
-        /// Returns null if the check can't be attempted.
         /// </summary>
+        /// <param name="initiatingCharacter">Character who initiated this check (for character-initiated skills). 
+        /// Null for vehicle-wide checks like event cards, which route to best character.</param>
         public static SkillCheckResult PerformSkillCheck(
             Vehicle vehicle,
             CheckSpec checkSpec,
-            int dc)
+            int dc,
+            Character initiatingCharacter = null)
         {
-            var resolution = CheckResolver.ResolveSkillCheck(vehicle, checkSpec);
-            if (!resolution.CanAttempt)
+            var routing = CheckRouter.RouteSkillCheck(vehicle, checkSpec, initiatingCharacter);
+            if (!routing.CanAttempt)
             {
                 // Component required but unavailable - automatic failure
                 return SkillCheckResult.AutoFail(checkSpec, dc);
             }
-            
-            return PerformSkillCheck(checkSpec, dc, resolution.Component, resolution.Character);
+
+            return PerformSkillCheck(checkSpec, dc, routing.Component, routing.Character);
         }
-        
+
         /// <summary>
-        /// Perform a skill check with already-resolved component and character.
-        /// Use this when you've already determined who/what is making the check.
+        /// Perform a skill check with already-routed component and character.
+        /// Internal helper - use the vehicle-level overload instead.
         /// </summary>
-        public static SkillCheckResult PerformSkillCheck(
+        private static SkillCheckResult PerformSkillCheck(
             CheckSpec checkSpec,
             int dc,
             Entity component = null,

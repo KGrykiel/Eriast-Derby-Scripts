@@ -2,7 +2,6 @@
 using Assets.Scripts.Stages.Lanes;
 using Assets.Scripts.Combat.SkillChecks;
 using Assets.Scripts.Combat.Saves;
-using Assets.Scripts.Combat;
 using EventType = Assets.Scripts.Logging.EventType;
 
 namespace Assets.Scripts.Stages

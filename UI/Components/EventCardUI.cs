@@ -6,7 +6,6 @@ using UnityEngine.EventSystems;
 using TMPro;
 using Assets.Scripts.Events.EventCard.EventCardTypes;
 using Assets.Scripts.Events.EventCard;
-using Assets.Scripts.Combat;
 
 namespace Assets.Scripts.UI.Components
 {

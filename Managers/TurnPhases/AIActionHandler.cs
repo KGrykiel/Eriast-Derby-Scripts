@@ -1,6 +1,4 @@
-﻿using UnityEngine;
-
-namespace Assets.Scripts.Managers.TurnPhases
+﻿namespace Assets.Scripts.Managers.TurnPhases
 {
     /// <summary>
     /// Handles AIAction phase - AI executes movement and actions synchronously.

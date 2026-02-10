@@ -1,6 +1,5 @@
 ﻿using System.Collections.Generic;
 using Assets.Scripts.Characters;
-using Assets.Scripts.Entities.Vehicle;
 
 namespace Assets.Scripts.Combat.Saves
 {
@@ -21,14 +20,14 @@ namespace Assets.Scripts.Combat.Saves
             int dc,
             VehicleComponent targetComponent = null)
         {
-            var resolution = CheckResolver.ResolveSave(vehicle, saveSpec, targetComponent);
-            if (!resolution.CanAttempt)
+            var routing = CheckRouter.RouteSave(vehicle, saveSpec, targetComponent);
+            if (!routing.CanAttempt)
             {
                 // Component required but unavailable - automatic failure
                 return SaveResult.AutoFail(saveSpec, dc);
             }
-            
-            return PerformSavingThrow(saveSpec, dc, resolution.Component, resolution.Character);
+
+            return PerformSavingThrow(saveSpec, dc, routing.Component, routing.Character);
         }
 
         /// <summary>

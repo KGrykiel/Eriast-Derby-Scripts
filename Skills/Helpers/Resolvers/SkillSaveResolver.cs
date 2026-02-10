@@ -1,5 +1,4 @@
-﻿using UnityEngine;
-using Assets.Scripts.Combat.Saves;
+﻿using Assets.Scripts.Combat.Saves;
 using Assets.Scripts.Combat;
 
 namespace Assets.Scripts.Skills.Helpers.Resolvers

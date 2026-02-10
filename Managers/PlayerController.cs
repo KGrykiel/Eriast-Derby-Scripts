@@ -5,7 +5,6 @@ using Assets.Scripts.Entities.Vehicle;
 using Assets.Scripts.Managers;
 using Assets.Scripts.Managers.PlayerUI;
 using Assets.Scripts.Skills.Helpers;
-using Assets.Scripts.Stages;
 
 /// <summary>
 /// Orchestrates player input for player-controlled vehicles.

@@ -25,17 +25,20 @@ namespace Assets.Scripts.Combat.Saves
         [Tooltip("Character attribute to save against (when domain = Character)")]
         public CharacterAttribute characterAttribute;
         
-        [Tooltip("Component that must be targeted for this save (None = any character can save)")]
-        public ComponentType? requiredComponentType;
-        
+        [Tooltip("Does this save require a specific component?")]
+        public bool requiresComponent;
+
+        [Tooltip("Component type required (only used if requiresComponent is true)")]
+        public ComponentType requiredComponentType;
+
         /// <summary>Display-friendly name for logs and tooltips.</summary>
         public readonly string DisplayName => domain == CheckDomain.Character
             ? characterAttribute.ToString()
             : vehicleAttribute.ToString();
-        
+
         public readonly bool IsCharacterSave => domain == CheckDomain.Character;
         public readonly bool IsVehicleSave => domain == CheckDomain.Vehicle;
-        public readonly bool RequiresComponent => requiredComponentType.HasValue;
+        public readonly bool RequiresComponent => requiresComponent;
         
         // ==================== FACTORIES ====================
         
@@ -45,7 +48,7 @@ namespace Assets.Scripts.Combat.Saves
             {
                 domain = CheckDomain.Vehicle,
                 vehicleAttribute = attribute,
-                requiredComponentType = null
+                requiresComponent = false
             };
         }
         
@@ -57,7 +60,8 @@ namespace Assets.Scripts.Combat.Saves
             {
                 domain = CheckDomain.Character,
                 characterAttribute = attribute,
-                requiredComponentType = requiredComponent
+                requiresComponent = requiredComponent.HasValue,
+                requiredComponentType = requiredComponent ?? default
             };
         }
         

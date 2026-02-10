@@ -1,5 +1,4 @@
 ﻿using UnityEngine;
-using Assets.Scripts.Characters;
 using Assets.Scripts.Combat.SkillChecks;
 using Assets.Scripts.Combat.Saves;
 using Assets.Scripts.Combat.Damage;

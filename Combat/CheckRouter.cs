@@ -6,21 +6,21 @@ using Assets.Scripts.Entities.Vehicle;
 namespace Assets.Scripts.Combat
 {
     /// <summary>
-    /// Resolves who and what is involved in a check or save.
+    /// Routes who and what is involved in a check or save.
     /// 
     /// Given a vehicle and a spec, determines:
     /// - Which component is needed (and whether it's functional)
     /// - Which character operates it (from seat assignment)
     /// - Whether the attempt is even possible
     /// 
-    /// The calculator receives the resolved data — it never routes.
+    /// The calculator receives the routed data — it never routes.
     /// </summary>
-    public static class CheckResolver
+    public static class CheckRouter
     {
         /// <summary>
-        /// Result of resolving a check. Contains everything the calculator needs.
+        /// Result of routing a check. Contains everything the calculator needs.
         /// </summary>
-        public class Resolution
+        public class RoutingResult
         {
             /// <summary>The component involved (for base value + applied modifiers). Null if none.</summary>
             public Entity Component;
@@ -34,19 +34,19 @@ namespace Assets.Scripts.Combat
             /// <summary>Why the check can't be attempted (for UI/narrative). Null if CanAttempt is true.</summary>
             public string FailureReason;
             
-            public static Resolution Success(Entity component, Character character = null)
+            public static RoutingResult Success(Entity component, Character character = null)
             {
-                return new Resolution
+                return new RoutingResult
                 {
                     Component = component,
                     Character = character,
                     CanAttempt = true
                 };
             }
-            
-            public static Resolution Failure(string reason)
+
+            public static RoutingResult Failure(string reason)
             {
-                return new Resolution
+                return new RoutingResult
                 {
                     CanAttempt = false,
                     FailureReason = reason
@@ -54,93 +54,102 @@ namespace Assets.Scripts.Combat
             }
         }
         
-        // ==================== SKILL CHECK RESOLUTION ====================
-        
+        // ==================== SKILL CHECK ROUTING ====================
+
         /// <summary>
-        /// Resolve a skill check: which component and character are involved?
+        /// Route a skill check: which component and character are involved?
         /// </summary>
-        public static Resolution ResolveSkillCheck(Vehicle vehicle, CheckSpec spec)
+        /// <param name="vehicle">Vehicle attempting the check</param>
+        /// <param name="spec">What type of check is being made</param>
+        /// <param name="initiatingCharacter">Character who initiated this check (for character-initiated skills). Null for vehicle-wide checks like event cards.</param>
+        public static RoutingResult RouteSkillCheck(Vehicle vehicle, CheckSpec spec, Character initiatingCharacter = null)
         {
             if (vehicle == null)
-                return Resolution.Failure("No vehicle");
-            
+                return RoutingResult.Failure("No vehicle");
+
             if (spec.IsCharacterCheck)
-                return ResolveCharacterSkillCheck(vehicle, spec);
-            
-            return ResolveVehicleCheck(vehicle, spec);
+                return RouteCharacterSkillCheck(vehicle, spec, initiatingCharacter);
+
+            return RouteVehicleCheck(vehicle, spec);
         }
-        
+
         /// <summary>
-        /// Resolve a saving throw: which component and character are involved?
+        /// Route a saving throw: which component and character are involved?
         /// </summary>
-        public static Resolution ResolveSave(
+        public static RoutingResult RouteSave(
             Vehicle vehicle, 
             SaveSpec spec,
             VehicleComponent targetComponent = null)
         {
             if (vehicle == null)
-                return Resolution.Failure("No vehicle");
-            
+                return RoutingResult.Failure("No vehicle");
+
             if (spec.IsCharacterSave)
-                return ResolveCharacterSave(vehicle, spec, targetComponent);
-            
-            return ResolveVehicleSave(vehicle, spec);
+                return RouteCharacterSave(vehicle, spec, targetComponent);
+
+            return RouteVehicleSave(vehicle, spec);
         }
-        
-        // ==================== VEHICLE CHECKS ====================
-        
-        private static Resolution ResolveVehicleCheck(Vehicle vehicle, CheckSpec spec)
+
+        // ==================== VEHICLE CHECK ROUTING ====================
+
+        private static RoutingResult RouteVehicleCheck(Vehicle vehicle, CheckSpec spec)
         {
             Entity component = GetComponentForVehicleAttribute(vehicle, spec.vehicleAttribute);
             if (component == null)
-                return Resolution.Failure($"No component available for {spec.DisplayName}");
-            
-            return Resolution.Success(component);
+                return RoutingResult.Failure($"No component available for {spec.DisplayName}");
+
+            return RoutingResult.Success(component);
         }
-        
-        private static Resolution ResolveVehicleSave(Vehicle vehicle, SaveSpec spec)
+
+        private static RoutingResult RouteVehicleSave(Vehicle vehicle, SaveSpec spec)
         {
             Entity component = GetComponentForVehicleAttribute(vehicle, spec.vehicleAttribute);
             if (component == null)
-                return Resolution.Failure($"No component available for {spec.DisplayName} save");
-            
-            return Resolution.Success(component);
+                return RoutingResult.Failure($"No component available for {spec.DisplayName} save");
+
+            return RoutingResult.Success(component);
         }
-        
-        // ==================== CHARACTER CHECKS ====================
-        
-        private static Resolution ResolveCharacterSkillCheck(Vehicle vehicle, CheckSpec spec)
+
+        // ==================== CHARACTER CHECK ROUTING ====================
+
+        private static RoutingResult RouteCharacterSkillCheck(Vehicle vehicle, CheckSpec spec, Character initiatingCharacter)
         {
             // If check requires a specific component type, find it and its operator
             if (spec.RequiresComponent)
             {
-                VehicleComponent component = GetComponentByType(vehicle, spec.requiredComponentType.Value);
+                VehicleComponent component = GetComponentByType(vehicle, spec.requiredComponentType);
                 if (component == null)
-                    return Resolution.Failure($"No {spec.requiredComponentType.Value} component on vehicle");
-                
+                    return RoutingResult.Failure($"No {spec.requiredComponentType} component on vehicle");
+
                 if (!component.IsOperational)
-                    return Resolution.Failure($"{component.name} is not operational");
-                
+                    return RoutingResult.Failure($"{component.name} is not operational");
+
                 var seat = vehicle.GetSeatForComponent(component);
                 if (seat == null)
-                    return Resolution.Failure($"No seat controls {component.name}");
-                
+                    return RoutingResult.Failure($"No seat controls {component.name}");
+
                 Character character = seat.assignedCharacter;
                 if (character == null)
-                    return Resolution.Failure($"{seat.seatName} has no assigned character");
-                
-                return Resolution.Success(component, character);
+                    return RoutingResult.Failure($"{seat.seatName} has no assigned character");
+
+                return RoutingResult.Success(component, character);
             }
-            
-            // No component required - use character with best modifier for this skill
+
+            // Priority 1: Specific character initiated this skill (character-initiated skills)
+            if (initiatingCharacter != null)
+            {
+                return RoutingResult.Success(null, initiatingCharacter);
+            }
+
+            // Priority 2: No specific character - use character with best modifier (event cards, lane effects)
             Character bestCharacter = GetCharacterWithBestSkillModifier(vehicle, spec.characterSkill);
             if (bestCharacter == null)
-                return Resolution.Failure($"No character available for {spec.DisplayName}");
-            
-            return Resolution.Success(null, bestCharacter);
+                return RoutingResult.Failure($"No character available for {spec.DisplayName}");
+
+            return RoutingResult.Success(null, bestCharacter);
         }
-        
-        private static Resolution ResolveCharacterSave(
+
+        private static RoutingResult RouteCharacterSave(
             Vehicle vehicle,
             SaveSpec spec,
             VehicleComponent targetComponent)
@@ -148,47 +157,47 @@ namespace Assets.Scripts.Combat
             // If save requires a specific component type, find it and its operator
             if (spec.RequiresComponent)
             {
-                VehicleComponent component = GetComponentByType(vehicle, spec.requiredComponentType.Value);
+                VehicleComponent component = GetComponentByType(vehicle, spec.requiredComponentType);
                 if (component == null)
-                    return Resolution.Failure($"No {spec.requiredComponentType.Value} component on vehicle");
-                
+                    return RoutingResult.Failure($"No {spec.requiredComponentType} component on vehicle");
+
                 if (!component.IsOperational)
-                    return Resolution.Failure($"{component.name} is not operational");
-                
+                    return RoutingResult.Failure($"{component.name} is not operational");
+
                 var seat = vehicle.GetSeatForComponent(component);
                 if (seat == null)
-                    return Resolution.Failure($"No seat controls {component.name}");
-                
+                    return RoutingResult.Failure($"No seat controls {component.name}");
+
                 Character character = seat.assignedCharacter;
                 if (character == null)
-                    return Resolution.Failure($"{seat.seatName} has no assigned character");
-                
-                return Resolution.Success(component, character);
+                    return RoutingResult.Failure($"{seat.seatName} has no assigned character");
+
+                return RoutingResult.Success(component, character);
             }
-            
+
             // No component required - route based on context
             Character resolvedCharacter = null;
-            
+
             // Priority 1: Target component specified (attacked location)
             if (targetComponent != null && targetComponent.IsOperational)
             {
                 var seat = vehicle.GetSeatForComponent(targetComponent);
                 resolvedCharacter = seat?.assignedCharacter;
                 if (resolvedCharacter != null)
-                    return Resolution.Success(targetComponent, resolvedCharacter);
+                    return RoutingResult.Success(targetComponent, resolvedCharacter);
             }
-            
+
             // Priority 2: Best modifier for the save attribute
             resolvedCharacter = GetCharacterWithBestSaveModifier(vehicle, spec.characterAttribute);
             if (resolvedCharacter != null)
-                return Resolution.Success(null, resolvedCharacter);
-            
+                return RoutingResult.Success(null, resolvedCharacter);
+
             // Priority 3: First assigned character (fallback)
             resolvedCharacter = GetFirstAssignedCharacter(vehicle);
             if (resolvedCharacter == null)
-                return Resolution.Failure("No character available for save");
-            
-            return Resolution.Success(null, resolvedCharacter);
+                return RoutingResult.Failure("No character available for save");
+
+            return RoutingResult.Success(null, resolvedCharacter);
         }
         
         // ==================== COMPONENT ROUTING ====================

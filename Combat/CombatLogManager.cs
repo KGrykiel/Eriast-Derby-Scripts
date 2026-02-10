@@ -4,7 +4,6 @@ using System.Linq;
 using System.Text;
 using EventType = Assets.Scripts.Logging.EventType;
 using Assets.Scripts.Logging;
-using Assets.Scripts.Characters;
 using Assets.Scripts.StatusEffects;
 using Assets.Scripts.Combat.Damage;
 using Assets.Scripts.Core;

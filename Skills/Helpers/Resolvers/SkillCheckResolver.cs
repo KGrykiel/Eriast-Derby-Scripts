@@ -16,12 +16,13 @@ namespace Assets.Scripts.Skills.Helpers.Resolvers
         public static bool Execute(SkillContext ctx)
         {
             Skill skill = ctx.Skill;
-            
+
             var checkResult = SkillCheckCalculator.PerformSkillCheck(
                 ctx.SourceVehicle,
                 skill.checkSpec,
-                skill.checkDC);
-            
+                skill.checkDC,
+                ctx.SourceCharacter);  // Pass initiating character
+
             if (checkResult == null)
             {
                 Debug.LogWarning($"[SkillCheckResolver] {skill.name}: Check cannot be attempted");
