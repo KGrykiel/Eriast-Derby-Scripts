@@ -11,7 +11,7 @@ using Assets.Scripts.Characters;
 /// they can use. CheckResolver resolves the character + component pairing.
 /// </summary>
 [CreateAssetMenu(fileName = "New Character", menuName = "Racing/Player Character")]
-public class PlayerCharacter : ScriptableObject
+public class Character : ScriptableObject
 {
     [Header("Character Identity")]
     [Tooltip("Character's display name")]
@@ -22,7 +22,7 @@ public class PlayerCharacter : ScriptableObject
     public string description = "";
 
     [Header("Level")]
-    [Tooltip("Character level. Proficiency bonus equals level.")]
+    [Tooltip("Character level (1-20). Proficiency bonus: +2 (lvl 1-4), +3 (5-8), +4 (9-12), +5 (13-16), +6 (17-20)")]
     [Min(1)]
     public int level = 1;
     
@@ -111,11 +111,15 @@ public class PlayerCharacter : ScriptableObject
     
     /// <summary>
     /// Get the proficiency bonus for a skill.
-    /// Returns level if proficient, 0 otherwise.
+    /// D&D 5e progression: +2 (lvl 1-4), +3 (5-8), +4 (9-12), +5 (13-16), +6 (17-20)
+    /// Formula: (level - 1) / 4 + 2
     /// </summary>
     public int GetProficiencyBonus(CharacterSkill skill)
     {
-        return IsProficient(skill) ? level : 0;
+        if (!IsProficient(skill))
+            return 0;
+        
+        return (level - 1) / 4 + 2;
     }
     
     // ==================== LEGACY METHODS ====================
@@ -127,38 +131,5 @@ public class PlayerCharacter : ScriptableObject
     public List<Skill> GetPersonalSkills()
     {
         return personalSkills != null ? new List<Skill>(personalSkills) : new List<Skill>();
-    }
-    
-    /// <summary>
-    /// Get a display-friendly summary of this character.
-    /// </summary>
-    public string GetCharacterSummary()
-    {
-        string summary = $"<b>{characterName}</b> (Level {level})\n";
-        
-        if (!string.IsNullOrEmpty(description))
-        {
-            summary += $"{description}\n\n";
-        }
-        
-        summary += $"STR {strength} ({GetAttributeModifier(CharacterAttribute.Strength):+#;-#;0}) | ";
-        summary += $"DEX {dexterity} ({GetAttributeModifier(CharacterAttribute.Dexterity):+#;-#;0}) | ";
-        summary += $"INT {intelligence} ({GetAttributeModifier(CharacterAttribute.Intelligence):+#;-#;0}) | ";
-        summary += $"WIS {wisdom} ({GetAttributeModifier(CharacterAttribute.Wisdom):+#;-#;0}) | ";
-        summary += $"CON {constitution} ({GetAttributeModifier(CharacterAttribute.Constitution):+#;-#;0}) | ";
-        summary += $"CHA {charisma} ({GetAttributeModifier(CharacterAttribute.Charisma):+#;-#;0})\n\n";
-        
-        if (proficientSkills.Count > 0)
-        {
-            summary += "Proficiencies: ";
-            for (int i = 0; i < proficientSkills.Count; i++)
-            {
-                if (i > 0) summary += ", ";
-                summary += proficientSkills[i].ToString();
-            }
-            summary += $" (+{level})\n";
-        }
-        
-        return summary;
     }
 }

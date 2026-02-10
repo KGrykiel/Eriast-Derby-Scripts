@@ -80,6 +80,23 @@ public class ChassisComponent : VehicleComponent
     public int GetMobility() => StatCalculator.GatherAttributeValue(this, Attribute.Mobility, baseMobility);
     public int GetDragCoefficientPercent() => StatCalculator.GatherAttributeValue(this, Attribute.DragCoefficient, baseDragCoefficientPercent);
     
+    // ==================== D20 ROLL BASE VALUES ====================
+    
+    /// <summary>
+    /// Provide base check values for d20 rolls (checks and saves).
+    /// Chassis provides base Mobility for dodge/evasion rolls.
+    /// Add more check attributes here as chassis features expand (e.g., Stability for balance checks).
+    /// </summary>
+    public override int GetBaseCheckValue(VehicleCheckAttribute checkAttribute)
+    {
+        return checkAttribute switch
+        {
+            VehicleCheckAttribute.Mobility => baseMobility,
+            // Future: VehicleCheckAttribute.Stability => baseStability,
+            _ => base.GetBaseCheckValue(checkAttribute)
+        };
+    }
+    
     // ==================== STATS ====================
     
     /// <summary>

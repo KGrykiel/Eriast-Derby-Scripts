@@ -68,12 +68,11 @@ namespace Assets.Scripts.Skills.Helpers.Resolvers
             var attackRoll = AttackCalculator.PerformAttack(
                 attacker: sourceComponent,
                 target: targetEntity,
-                sourceComponent: sourceComponent,
                 skill: skill,
                 character: ctx.SourceCharacter);
             
             // Emit event
-            EmitAttackEvent(attackRoll, sourceComponent, targetEntity, ctx.TargetComponent, skill, isChassisFallback: false);
+            EmitAttackEvent(attackRoll, sourceComponent, targetEntity, ctx.TargetComponent, skill, isChassisFallback: false, ctx.SourceCharacter);
             
             if (attackRoll.Success != true)
             {
@@ -94,14 +93,13 @@ namespace Assets.Scripts.Skills.Helpers.Resolvers
             VehicleComponent sourceComponent = ctx.SourceComponent;
             VehicleComponent targetComponent = ctx.TargetComponent;
             Skill skill = ctx.Skill;
-            PlayerCharacter character = ctx.SourceCharacter;
+            Character character = ctx.SourceCharacter;
             
             // ==================== STAGE 1: Component AC (NO PENALTY) ====================
             
             var componentRoll = AttackCalculator.PerformAttack(
                 attacker: sourceComponent,
                 target: targetComponent,
-                sourceComponent: sourceComponent,
                 skill: skill,
                 character: character,
                 additionalPenalty: 0);
@@ -109,20 +107,19 @@ namespace Assets.Scripts.Skills.Helpers.Resolvers
             if (componentRoll.Success == true)
             {
                 // Component hit - emit event and apply effects to component
-                EmitAttackEvent(componentRoll, sourceComponent, targetComponent, targetComponent, skill, isChassisFallback: false);
+                EmitAttackEvent(componentRoll, sourceComponent, targetComponent, targetComponent, skill, isChassisFallback: false, character);
                 SkillEffectApplicator.ApplyAllEffects(ctx.WithCriticalHit(componentRoll.IsCriticalHit));
                 return true;
             }
 
             // Stage 1 Miss - emit event
-            EmitAttackEvent(componentRoll, sourceComponent, targetComponent, targetComponent, skill, isChassisFallback: false);
+            EmitAttackEvent(componentRoll, sourceComponent, targetComponent, targetComponent, skill, isChassisFallback: false, character);
 
             // ==================== STAGE 2: Chassis AC (WITH PENALTY) ====================
             
             var chassisRoll = AttackCalculator.PerformAttack(
                 attacker: sourceComponent,
                 target: chassisFallback,
-                sourceComponent: sourceComponent,
                 skill: skill,
                 character: character,
                 additionalPenalty: skill.componentTargetingPenalty);
@@ -130,13 +127,13 @@ namespace Assets.Scripts.Skills.Helpers.Resolvers
             if (chassisRoll.Success == true)
             {
                 // Chassis hit - retarget context to chassis
-                EmitAttackEvent(chassisRoll, sourceComponent, chassisFallback, targetComponent, skill, isChassisFallback: true);
+                EmitAttackEvent(chassisRoll, sourceComponent, chassisFallback, targetComponent, skill, isChassisFallback: true, character);
                 SkillEffectApplicator.ApplyAllEffects(ctx.WithTarget(chassisFallback).WithCriticalHit(chassisRoll.IsCriticalHit));
                 return true;
             }
 
             // Stage 2 Miss - emit event
-            EmitAttackEvent(chassisRoll, sourceComponent, chassisFallback, targetComponent, skill, isChassisFallback: true);
+            EmitAttackEvent(chassisRoll, sourceComponent, chassisFallback, targetComponent, skill, isChassisFallback: true, character);
             
             return false;
         }
@@ -145,6 +142,8 @@ namespace Assets.Scripts.Skills.Helpers.Resolvers
         
         /// <summary>
         /// Emit attack roll event.
+        /// Character is passed directly from the caller (not stored on AttackResult)
+        /// because the caller already has it — unlike saves/checks where it's resolved internally.
         /// </summary>
         private static void EmitAttackEvent(
             AttackResult attackRoll,
@@ -152,7 +151,8 @@ namespace Assets.Scripts.Skills.Helpers.Resolvers
             Entity targetEntity,
             VehicleComponent originalTargetComponent,
             Skill skill,
-            bool isChassisFallback)
+            bool isChassisFallback,
+            Character character)
         {
             string targetCompName = originalTargetComponent != null ? originalTargetComponent.name : null;
             
@@ -163,7 +163,8 @@ namespace Assets.Scripts.Skills.Helpers.Resolvers
                 skill,
                 isHit: attackRoll.Success == true,
                 targetCompName,
-                isChassisFallback);
+                isChassisFallback,
+                character: character);
         }
         
         /// <summary>

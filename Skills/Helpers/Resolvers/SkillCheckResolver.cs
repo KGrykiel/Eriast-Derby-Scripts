@@ -51,7 +51,8 @@ namespace Assets.Scripts.Skills.Helpers.Resolvers
                 checkResult,
                 sourceComponent,
                 skill,
-                succeeded: checkResult.Succeeded);
+                succeeded: checkResult.Succeeded,
+                character: checkResult.Character);  // Pass character from result
         }
     }
 }

@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using Assets.Scripts.Core;
+using Assets.Scripts.Entities.Vehicle;
 
 namespace Assets.Scripts.Combat
 {
@@ -46,35 +47,40 @@ namespace Assets.Scripts.Combat
         /// Gather component bonuses for a vehicle attribute check/save.
         /// Gets the base value from the component and any applied modifiers.
         /// </summary>
+        /// <param name="component">Component providing the check bonus</param>
+        /// <param name="checkAttribute">Check attribute (Mobility, Stability) - constrained subset for type safety</param>
+        /// <param name="displayLabel">Label for the roll bonus tooltip</param>
+        /// <param name="bonuses">List to add bonuses to</param>
         public static void GatherComponentBonuses(
             Entity component,
-            Attribute vehicleAttribute,
+            VehicleCheckAttribute checkAttribute,
             string displayLabel,
             List<RollBonus> bonuses)
         {
-            int baseValue = GetComponentBaseValue(component, vehicleAttribute);
+            int baseValue = GetComponentBaseValue(component, checkAttribute);
             if (baseValue != 0)
             {
                 bonuses.Add(new RollBonus(displayLabel, baseValue));
             }
             
-            bonuses.AddRange(GatherAppliedBonuses(component, vehicleAttribute));
+            // Convert to full Attribute only for StatCalculator lookup
+            Attribute attribute = checkAttribute.ToAttribute();
+            bonuses.AddRange(GatherAppliedBonuses(component, attribute));
         }
         
         /// <summary>
-        /// Get the base value a component provides for a vehicle attribute.
+        /// Get the base value a component provides for a d20 check/save.
+        /// Delegates to the component itself via polymorphism - components know their own base check values.
+        /// Uses VehicleCheckAttribute (constrained subset) for type safety.
         /// </summary>
-        private static int GetComponentBaseValue(Entity component, Attribute vehicleAttribute)
+        private static int GetComponentBaseValue(Entity component, VehicleCheckAttribute checkAttribute)
         {
-            if (component is ChassisComponent chassis)
+            if (component == null)
             {
-                return vehicleAttribute switch
-                {
-                    Attribute.Mobility => chassis.GetBaseMobility(),
-                    _ => 0
-                };
+                return 0;
             }
-            return 0;
+            
+            return component.GetBaseCheckValue(checkAttribute);
         }
     }
 }

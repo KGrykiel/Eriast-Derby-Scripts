@@ -505,61 +505,49 @@ namespace Assets.Scripts.Stages
     /// <summary>
     /// Resolve a turn effect that requires a skill check.
     /// </summary>
-    private void ResolveSkillCheckTurnEffect(Vehicle vehicle, StageLane lane, LaneTurnEffect effect)
-    {
-        var result = SkillCheckCalculator.PerformSkillCheck(
-            vehicle, effect.checkSpec, effect.dc);
-        
-        if (result == null)
+        private void ResolveSkillCheckTurnEffect(Vehicle vehicle, StageLane lane, LaneTurnEffect effect)
         {
-            ApplyTurnEffects(vehicle, effect.onFailure);
-            return;
+            var result = SkillCheckCalculator.PerformSkillCheck(
+                vehicle, effect.checkSpec, effect.dc);
+            
+            CombatEventBus.Emit(new SkillCheckEvent(
+                result, vehicle.chassis, this, result.Succeeded));
+            
+            if (result.Succeeded)
+            {
+                ApplyTurnEffects(vehicle, effect.onSuccess);
+            }
+            else
+            {
+                ApplyTurnEffects(vehicle, effect.onFailure);
+            }
+            
+            this.LogLaneTurnEffectWithCheck(vehicle, lane, effect, result);
         }
-        
-        CombatEventBus.Emit(new SkillCheckEvent(
-            result, vehicle.chassis, this, result.Succeeded));
-        
-        if (result.Succeeded)
-        {
-            ApplyTurnEffects(vehicle, effect.onSuccess);
-        }
-        else
-        {
-            ApplyTurnEffects(vehicle, effect.onFailure);
-        }
-        
-        this.LogLaneTurnEffectWithCheck(vehicle, lane, effect, result);
-    }
     
     /// <summary>
     /// Resolve a turn effect that requires a saving throw.
     /// </summary>
-    private void ResolveSavingThrowTurnEffect(Vehicle vehicle, StageLane lane, LaneTurnEffect effect)
-    {
-        var result = SaveCalculator.PerformSavingThrow(
-            vehicle, effect.saveSpec, effect.dc, effect.preferredRole);
-        
-        if (result == null)
+        private void ResolveSavingThrowTurnEffect(Vehicle vehicle, StageLane lane, LaneTurnEffect effect)
         {
-            ApplyTurnEffects(vehicle, effect.onFailure);
-            return;
+            var result = SaveCalculator.PerformSavingThrow(
+                vehicle, effect.saveSpec, effect.dc);
+            
+            CombatEventBus.EmitSavingThrow(
+                result, null, vehicle.chassis, this,
+                result.Succeeded, "Vehicle");
+            
+            if (result.Succeeded)
+            {
+                ApplyTurnEffects(vehicle, effect.onSuccess);
+            }
+            else
+            {
+                ApplyTurnEffects(vehicle, effect.onFailure);
+            }
+            
+            this.LogLaneTurnEffectWithSave(vehicle, lane, effect, result);
         }
-        
-        CombatEventBus.EmitSavingThrow(
-            result, null, vehicle.chassis, this,
-            result.Succeeded, "Vehicle");
-        
-        if (result.Succeeded)
-        {
-            ApplyTurnEffects(vehicle, effect.onSuccess);
-        }
-        else
-        {
-            ApplyTurnEffects(vehicle, effect.onFailure);
-        }
-        
-        this.LogLaneTurnEffectWithSave(vehicle, lane, effect, result);
-    }
     
     /// <summary>
     /// Apply a list of effects to a vehicle.

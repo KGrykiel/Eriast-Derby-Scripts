@@ -25,6 +25,9 @@ namespace Assets.Scripts.Combat.SkillChecks
         [Tooltip("Character skill to check (when domain = Character)")]
         public CharacterSkill characterSkill;
         
+        [Tooltip("Component required to attempt this check (None = character-only, any character can attempt)")]
+        public ComponentType? requiredComponentType;
+        
         /// <summary>Display-friendly name for logs and tooltips.</summary>
         public readonly string DisplayName => domain == CheckDomain.Character
             ? characterSkill.ToString()
@@ -32,6 +35,7 @@ namespace Assets.Scripts.Combat.SkillChecks
         
         public readonly bool IsCharacterCheck => domain == CheckDomain.Character;
         public readonly bool IsVehicleCheck => domain == CheckDomain.Vehicle;
+        public readonly bool RequiresComponent => requiredComponentType.HasValue;
         
         // ==================== FACTORIES ====================
         
@@ -40,16 +44,18 @@ namespace Assets.Scripts.Combat.SkillChecks
             return new CheckSpec
             {
                 domain = CheckDomain.Vehicle,
-                vehicleAttribute = attribute
+                vehicleAttribute = attribute,
+                requiredComponentType = null
             };
         }
         
-        public static CheckSpec ForCharacter(CharacterSkill skill)
+        public static CheckSpec ForCharacter(CharacterSkill skill, ComponentType? requiredComponent = null)
         {
             return new CheckSpec
             {
                 domain = CheckDomain.Character,
-                characterSkill = skill
+                characterSkill = skill,
+                requiredComponentType = requiredComponent
             };
         }
         

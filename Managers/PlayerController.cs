@@ -279,7 +279,7 @@ public class PlayerController : MonoBehaviour
 
         Vehicle target = selectedTarget != null ? selectedTarget : vehicle;
         Entity targetEntity = selectedTargetComponent != null ? selectedTargetComponent : target.chassis;
-        PlayerCharacter character = currentSeat != null ? currentSeat.assignedCharacter : null;
+        Character character = currentSeat != null ? currentSeat.assignedCharacter : null;
 
         var ctx = new SkillContext
         {

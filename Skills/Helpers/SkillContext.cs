@@ -43,7 +43,7 @@
         /// Character providing bonuses (attack bonus, skill bonuses).
         /// Null for component-only skills or environmental effects.
         /// </summary>
-        public PlayerCharacter SourceCharacter;
+        public Character SourceCharacter;
         
         // ===== COMBAT STATE (populated by resolvers) =====
         

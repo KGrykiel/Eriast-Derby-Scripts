@@ -148,7 +148,6 @@ namespace Assets.Scripts.Skills
                     skill.skillRollType = SkillRollType.SavingThrow;
                     skill.saveSpec = SaveSpec.ForVehicle(VehicleCheckAttribute.Mobility);
                     skill.saveDCBase = 15;
-                    skill.savePreferredRole = RoleType.None;
                     skill.checkSpec = CheckSpec.None;
                     skill.checkDC = 0;
                     skill.targetingMode = TargetingMode.Enemy;

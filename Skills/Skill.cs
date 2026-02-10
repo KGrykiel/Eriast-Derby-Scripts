@@ -44,9 +44,6 @@ public class Skill : ScriptableObject
     [Tooltip("Base difficulty class for saving throw (before user bonuses)")]
     public int saveDCBase = 15;
     
-    [Tooltip("Which role should handle this save? (None = auto-pick based on context)")]
-    public RoleType savePreferredRole = RoleType.None;
-    
     [Header("Skill Check Configuration")]
     [Tooltip("If skillRollType = SkillCheck, what check must the user make?")]
     public CheckSpec checkSpec;

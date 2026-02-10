@@ -15,13 +15,12 @@ namespace Assets.Scripts.Combat.Attacks
         public static AttackResult PerformAttack(
             Entity attacker,
             Entity target,
-            VehicleComponent sourceComponent = null,
             Skill skill = null,
-            PlayerCharacter character = null,
+            Character character = null,
             int additionalPenalty = 0)
         {
             int baseRoll = RollUtility.RollD20();
-            var bonuses = GatherBonuses(attacker, sourceComponent, skill, character);
+            var bonuses = GatherBonuses(attacker, skill, character);
             
             if (additionalPenalty != 0)
             {
@@ -42,16 +41,18 @@ namespace Assets.Scripts.Combat.Attacks
         /// <summary>
         /// Gather all bonuses for an attack roll as RollBonus entries.
         /// </summary>
+        /// <param name="attacker">Entity making the attack (for weapon bonuses and applied modifiers)</param>
+        /// <param name="skill">Skill being used (reserved for future use)</param>
+        /// <param name="character">Character making the attack (for base attack bonus)</param>
         public static List<RollBonus> GatherBonuses(
             Entity attacker,
-            VehicleComponent sourceComponent = null,
             Skill skill = null,
-            PlayerCharacter character = null)
+            Character character = null)
         {
             var bonuses = new List<RollBonus>();
             
-            // Weapon enhancement bonus
-            if (sourceComponent is WeaponComponent weapon)
+            // Weapon enhancement bonus (if attacker is a weapon)
+            if (attacker is WeaponComponent weapon)
             {
                 int attackBonus = weapon.GetAttackBonus();
                 if (attackBonus != 0)
@@ -60,23 +61,17 @@ namespace Assets.Scripts.Combat.Attacks
                 }
             }
             
-            // Character attack bonus (explicit or derived from seat)
-            PlayerCharacter resolvedCharacter = character;
-            if (resolvedCharacter == null && sourceComponent != null && sourceComponent.ParentVehicle != null)
+            // Character attack bonus (must be provided by caller)
+            if (character != null)
             {
-                var seat = sourceComponent.ParentVehicle.GetSeatForComponent(sourceComponent);
-                resolvedCharacter = seat?.assignedCharacter;
-            }
-            if (resolvedCharacter != null)
-            {
-                int charBonus = resolvedCharacter.baseAttackBonus;
+                int charBonus = character.baseAttackBonus;
                 if (charBonus != 0)
                 {
-                    bonuses.Add(new RollBonus(resolvedCharacter.characterName, charBonus));
+                    bonuses.Add(new RollBonus(character.characterName, charBonus));
                 }
             }
             
-            // Applied: status effects and equipment on attacker
+            // Applied modifiers: status effects and equipment on attacker
             if (attacker != null)
             {
                 bonuses.AddRange(D20RollHelpers.GatherAppliedBonuses(attacker, Attribute.AttackBonus));

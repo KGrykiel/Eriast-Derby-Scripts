@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using EventType = Assets.Scripts.Logging.EventType;
 using Assets.Scripts.Logging;
+using Assets.Scripts.Characters;
 using Assets.Scripts.StatusEffects;
 using Assets.Scripts.Combat.Damage;
 using Assets.Scripts.Core;
@@ -752,11 +753,10 @@ namespace Assets.Scripts.Combat
         
         private static void LogSingleAttackRoll(AttackRollEvent evt, CombatAction action = null)
         {
-            Vehicle attackerVehicle = EntityHelpers.GetParentVehicle(evt.Source);
+            Vehicle attackerVehicle = EntityHelpers.GetParentVehicle(evt.Source) ?? action?.ActorVehicle;
             Vehicle targetVehicle = EntityHelpers.GetParentVehicle(evt.Target);
             
-            // Format source and target with component names and vehicle context
-            string sourceName = FormatEntityWithVehicle(evt.Source, attackerVehicle);
+            string sourceName = FormatSource(evt.Character, evt.Source, attackerVehicle);
             string targetName = FormatEntityWithVehicle(evt.Target, targetVehicle);
             string skillName = action?.SourceName ?? (evt.CausalSource != null ? evt.CausalSource.name : "attack");
             
@@ -813,13 +813,15 @@ namespace Assets.Scripts.Combat
             Vehicle sourceVehicle = EntityHelpers.GetParentVehicle(evt.Source);
             Vehicle targetVehicle = EntityHelpers.GetParentVehicle(evt.Target);
             
-            string targetName = FormatEntityWithVehicle(evt.Target, targetVehicle);
+            string targetName = FormatDefensiveSource(evt.Character, evt.Target, targetVehicle);
             string skillName = action?.SourceName ?? (evt.CausalSource != null ? evt.CausalSource.name : "effect");
             string saveTypeName = evt.Result?.saveSpec.DisplayName ?? "Mobility";
             
             string resultText = evt.Succeeded 
                 ? $"<color={Colors.Success}>Saved</color>" 
-                : $"<color={Colors.Failure}>Failed</color>";
+                : (evt.Result?.IsAutoFail == true 
+                    ? $"<color={Colors.Failure}>Auto-Failed</color>" 
+                    : $"<color={Colors.Failure}>Failed</color>");
             
             // Pattern: "{Target} attempts {Type} save vs {Skill}. {Result}"
             string message = $"{targetName} attempts {saveTypeName} save vs {skillName}. {resultText}";
@@ -867,13 +869,15 @@ namespace Assets.Scripts.Combat
         {
             Vehicle sourceVehicle = EntityHelpers.GetParentVehicle(evt.Source);
             
-            string sourceName = FormatEntityWithVehicle(evt.Source, sourceVehicle);
+            string sourceName = FormatSource(evt.Character, evt.Source, sourceVehicle);
             string skillName = action?.SourceName ?? (evt.CausalSource != null ? evt.CausalSource.name : "task");
             string checkTypeName = evt.Result?.checkSpec.DisplayName ?? "Mobility";
             
             string resultText = evt.Succeeded 
                 ? $"<color={Colors.Success}>Success</color>" 
-                : $"<color={Colors.Failure}>Failure</color>";
+                : (evt.Result?.IsAutoFail == true 
+                    ? $"<color={Colors.Failure}>Auto-Failed</color>" 
+                    : $"<color={Colors.Failure}>Failure</color>");
             
             // Pattern: "{Source} attempts {Type} check for {Skill}. {Result}"
             string message = $"{sourceName} attempts {checkTypeName} check for {skillName}. {resultText}";
@@ -920,14 +924,13 @@ namespace Assets.Scripts.Combat
         
         private static void LogCombinedDamage(List<DamageEvent> damages, CombatAction action, Entity target)
         {
-            Entity sourceEntity = action.Actor;
             Vehicle attackerVehicle = action.ActorVehicle;
             Vehicle targetVehicle = EntityHelpers.GetParentVehicle(target);
             
-            string sourceName = FormatEntityWithVehicle(sourceEntity, attackerVehicle);
+            string sourceName = FormatActionSource(action);
             string targetName = FormatEntityWithVehicle(target, targetVehicle);
             
-            bool isSelfDamage = IsSelfDamage(sourceEntity, target, attackerVehicle, targetVehicle);
+            bool isSelfDamage = IsSelfDamage(action.Actor, target, attackerVehicle, targetVehicle);
             
             string damageText = BuildCombinedDamageText(damages);
             int totalDamage = damages.Sum(d => d.Result.finalDamage);
@@ -954,7 +957,7 @@ namespace Assets.Scripts.Combat
                   .WithMetadata("isSelfDamage", isSelfDamage)
                   .WithMetadata("damageBreakdown", breakdown);
             
-            if (sourceEntity is VehicleComponent sourceComp)
+            if (action.Actor is VehicleComponent sourceComp)
             {
                 logEvt.WithMetadata("sourceComponent", sourceComp.name);
             }
@@ -1117,13 +1120,12 @@ namespace Assets.Scripts.Combat
         
         private static void LogCombinedRestoration(List<RestorationEvent> restorations, CombatAction action, Entity target)
         {
-            Entity sourceEntity = action.Actor;
             Vehicle sourceVehicle = action.ActorVehicle;
             Vehicle targetVehicle = EntityHelpers.GetParentVehicle(target);
             
-            string sourceName = FormatEntityWithVehicle(sourceEntity, sourceVehicle);
+            string sourceName = FormatActionSource(action);
             string targetName = FormatEntityWithVehicle(target, targetVehicle);
-            bool isSelfTarget = IsSelfDamage(sourceEntity, target, sourceVehicle, targetVehicle);
+            bool isSelfTarget = IsSelfDamage(action.Actor, target, sourceVehicle, targetVehicle);
             
             var healthRestorations = restorations.Where(r => r.Breakdown.resourceType == ResourceRestorationEffect.ResourceType.Health).ToList();
             var energyRestorations = restorations.Where(r => r.Breakdown.resourceType == ResourceRestorationEffect.ResourceType.Energy).ToList();
@@ -1155,7 +1157,7 @@ namespace Assets.Scripts.Combat
             string restorationText = string.Join(" and ", parts);
             
             // Pattern: Self-target uses passive voice, otherwise active voice
-            string message = (isSelfTarget || sourceEntity == null)
+            string message = (isSelfTarget || action.Actor == null)
                 ? $"{targetName} {restorationText}"
                 : $"{sourceName} {restorationText} to {targetName}";
             
@@ -1207,20 +1209,160 @@ namespace Assets.Scripts.Combat
         
         /// <summary>
         /// Format an entity with its parent vehicle in brackets.
-        /// Components: "ComponentName [VehicleName]"
-        /// Vehicles: "VehicleName"
+        /// VehicleComponents: "ComponentName [VehicleName]"
+        /// Standalone entities (golems, props): "EntityName"
+        /// Null entity with vehicle: "VehicleName"
+        /// Null entity, no vehicle: "Unknown"
         /// </summary>
         private static string FormatEntityWithVehicle(Entity entity, Vehicle parentVehicle = null)
         {
-            parentVehicle ??= EntityHelpers.GetParentVehicle(entity);
-            string vehicleName = parentVehicle != null ? parentVehicle.vehicleName : null ?? "Unknown";
-            
-            if (entity is VehicleComponent component)
+            if (entity == null)
             {
-                return $"{component.name} [{vehicleName}]";
+                return parentVehicle != null ? parentVehicle.vehicleName : "Unknown";
             }
             
-            return vehicleName;
+            parentVehicle ??= EntityHelpers.GetParentVehicle(entity);
+            
+            if (entity is VehicleComponent component && parentVehicle != null)
+            {
+                return $"{component.name} [{parentVehicle.vehicleName}]";
+            }
+            
+            // Standalone entity (golem, prop, NPC) — no vehicle context
+            return entity.GetDisplayName();
+        }
+        
+        /// <summary>
+        /// Format a combat source showing all non-null participants.
+        /// Character + Component + Vehicle: "Ada via Laser Cannon [Ironclad]"
+        /// Character + Vehicle (personal skill): "Ada [Ironclad]"
+        /// Component + Vehicle (automated):     "Laser Cannon [Ironclad]"
+        /// Standalone entity (golem):            "Stone Golem"
+        /// Character only:                       "Ada"
+        /// Nothing:                              "Unknown"
+        /// </summary>
+        private static string FormatSource(Character character, Entity entity, Vehicle vehicle)
+        {
+            vehicle ??= EntityHelpers.GetParentVehicle(entity);
+            
+            // Get component name (only for VehicleComponents, not standalone entities)
+            string componentName = (entity is VehicleComponent comp) ? comp.name : null;
+            string vehicleName = vehicle?.vehicleName;
+            
+            if (character != null)
+            {
+                // Character is the primary actor
+                string suffix = BuildContextSuffix(componentName, vehicleName);
+                return $"{character.characterName}{suffix}";
+            }
+            
+            if (entity != null)
+            {
+                if (componentName != null && vehicleName != null)
+                {
+                    return $"{componentName} [{vehicleName}]";
+                }
+                
+                // Standalone entity (golem, prop, NPC)
+                return entity.GetDisplayName();
+            }
+            
+            if (vehicleName != null)
+            {
+                return vehicleName;
+            }
+            
+            return "Unknown";
+        }
+        
+        /// <summary>
+        /// Format a defensive source (for saves) showing all non-null participants.
+        /// Uses "at" instead of "via" for component location.
+        /// Character + Component + Vehicle: "Ada at Chassis [Ironclad]"
+        /// Character + Vehicle (no component): "Ada [Ironclad]"
+        /// Component + Vehicle (no character): "Chassis [Ironclad]"
+        /// </summary>
+        private static string FormatDefensiveSource(Character character, Entity entity, Vehicle vehicle)
+        {
+            vehicle ??= EntityHelpers.GetParentVehicle(entity);
+            
+            string componentName = (entity is VehicleComponent comp) ? comp.name : null;
+            string vehicleName = vehicle?.vehicleName;
+            
+            if (character != null)
+            {
+                string suffix = BuildDefensiveContextSuffix(componentName, vehicleName);
+                return $"{character.characterName}{suffix}";
+            }
+            
+            if (entity != null)
+            {
+                if (componentName != null && vehicleName != null)
+                {
+                    return $"{componentName} [{vehicleName}]";
+                }
+                
+                return entity.GetDisplayName();
+            }
+            
+            if (vehicleName != null)
+            {
+                return vehicleName;
+            }
+            
+            return "Unknown";
+        }
+        
+        /// <summary>
+        /// Build the bracketed suffix for a character-led action.
+        /// Both component and vehicle: " via ComponentName [VehicleName]"
+        /// Vehicle only:               " [VehicleName]"
+        /// Neither:                     ""
+        /// </summary>
+        private static string BuildContextSuffix(string componentName, string vehicleName)
+        {
+            if (componentName != null && vehicleName != null)
+            {
+                return $" via {componentName} [{vehicleName}]";
+            }
+            
+            if (vehicleName != null)
+            {
+                return $" [{vehicleName}]";
+            }
+            
+            return "";
+        }
+        
+        /// <summary>
+        /// Build the bracketed suffix for a defensive action (save).
+        /// Component is being defended, not used as a tool, so no "via".
+        /// Both component and vehicle: " at ComponentName [VehicleName]"
+        /// Vehicle only:               " [VehicleName]"
+        /// Neither:                     ""
+        /// </summary>
+        private static string BuildDefensiveContextSuffix(string componentName, string vehicleName)
+        {
+            if (componentName != null && vehicleName != null)
+            {
+                return $" at {componentName} [{vehicleName}]";
+            }
+            
+            if (vehicleName != null)
+            {
+                return $" [{vehicleName}]";
+            }
+            
+            return "";
+        }
+        
+        /// <summary>
+        /// Format the source of a combat action for display.
+        /// Uses all available context from the action.
+        /// </summary>
+        private static string FormatActionSource(CombatAction action)
+        {
+            return FormatSource(action.SourceCharacter, action.Actor, action.ActorVehicle);
         }
         
         /// <summary>

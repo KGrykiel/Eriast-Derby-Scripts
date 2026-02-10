@@ -31,13 +31,20 @@ namespace Assets.Scripts.Combat
         /// Begin a new combat action scope.
         /// All events emitted until EndAction() are grouped together.
         /// </summary>
-        /// <param name="actor">Entity performing the action</param>
+        /// <param name="actor">Entity performing the action (null for character-only skills)</param>
         /// <param name="source">What triggered this (Skill, EventCard, etc.)</param>
         /// <param name="primaryTarget">Primary target vehicle (optional)</param>
+        /// <param name="sourceVehicle">Vehicle that owns the action (null for standalone entities)</param>
+        /// <param name="sourceCharacter">Character performing the action (null for component-only or standalone)</param>
         /// <returns>The created action (for reference, usually not needed)</returns>
-        public static CombatAction BeginAction(Entity actor, Object source, Vehicle primaryTarget = null)
+        public static CombatAction BeginAction(
+            Entity actor,
+            Object source,
+            Vehicle primaryTarget = null,
+            Vehicle sourceVehicle = null,
+            Character sourceCharacter = null)
         {
-            var action = new CombatAction(actor, source, primaryTarget);
+            var action = new CombatAction(actor, source, primaryTarget, sourceVehicle, sourceCharacter);
             actionStack.Push(action);
             return action;
         }
@@ -149,6 +156,7 @@ namespace Assets.Scripts.Combat
         /// <summary>
         /// Emit an attack roll event.
         /// </summary>
+        /// <param name="character">Character who made the attack (null for component-only or standalone)</param>
         public static void EmitAttackRoll(
             AttackResult result,
             Entity source,
@@ -156,35 +164,40 @@ namespace Assets.Scripts.Combat
             Object causalSource,
             bool isHit,
             string targetComponentName = null,
-            bool isChassisFallback = false)
+            bool isChassisFallback = false,
+            Character character = null)
         {
-            Emit(new AttackRollEvent(result, source, target, causalSource, isHit, targetComponentName, isChassisFallback));
+            Emit(new AttackRollEvent(result, source, target, causalSource, isHit, targetComponentName, isChassisFallback, character));
         }
         
         /// <summary>
         /// Emit a saving throw event.
         /// </summary>
+        /// <param name="character">Character who made the save (null for vehicle-only saves)</param>
         public static void EmitSavingThrow(
             SaveResult result,
             Entity source,
             Entity target,
             Object causalSource,
             bool succeeded,
-            string targetComponentName = null)
+            string targetComponentName = null,
+            Character character = null)
         {
-            Emit(new SavingThrowEvent(result, source, target, causalSource, succeeded, targetComponentName));
+            Emit(new SavingThrowEvent(result, source, target, causalSource, succeeded, targetComponentName, character));
         }
         
         /// <summary>
         /// Emit a skill check event.
         /// </summary>
+        /// <param name="character">Character who made the check (null for vehicle-only checks)</param>
         public static void EmitSkillCheck(
             SkillCheckResult result,
             Entity source,
             Object causalSource,
-            bool succeeded)
+            bool succeeded,
+            Character character = null)
         {
-            Emit(new SkillCheckEvent(result, source, causalSource, succeeded));
+            Emit(new SkillCheckEvent(result, source, causalSource, succeeded, character));
         }
         
         // ==================== UTILITY ====================

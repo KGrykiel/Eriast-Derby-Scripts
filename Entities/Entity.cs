@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Assets.Scripts.StatusEffects;
 using Assets.Scripts.Entities;
+using Assets.Scripts.Entities.Vehicle;
 using Assets.Scripts.Combat;
 using Assets.Scripts.Core;
 
@@ -349,6 +350,7 @@ public abstract class Entity : MonoBehaviour
         return false;
     }
     
+    
     // ==================== TARGETING ====================
     
     /// <summary>
@@ -368,5 +370,28 @@ public abstract class Entity : MonoBehaviour
     public virtual string GetDisplayName()
     {
         return name; // Unity's built-in Object.name property
+    }
+    
+    // ==================== D20 ROLL BASE VALUES ====================
+    
+    /// <summary>
+    /// Get the base value this component provides for a d20 check or save.
+    /// 
+    /// This is used by D20RollHelpers to gather component bonuses for checks and saves.
+    /// Components override this to provide their base check values (e.g., Chassis provides Mobility).
+    /// 
+    /// Uses VehicleCheckAttribute (constrained subset) instead of full Attribute enum for type safety.
+    /// Only valid check attributes (Mobility, Stability) can be rolled - prevents rolling MaxHealth or DamageDice.
+    /// 
+    /// Returns 0 by default (most entities don't contribute to d20 rolls).
+    /// 
+    /// NOTE: This is the BASE value only, not including applied modifiers (status effects, equipment).
+    /// Applied modifiers are gathered separately via StatCalculator.
+    /// </summary>
+    /// <param name="checkAttribute">The check attribute being rolled (Mobility, Stability, etc.)</param>
+    /// <returns>Base value contribution, or 0 if this component doesn't provide this check attribute</returns>
+    public virtual int GetBaseCheckValue(VehicleCheckAttribute checkAttribute)
+    {
+        return 0;
     }
 }

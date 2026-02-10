@@ -30,7 +30,6 @@ namespace Assets.Scripts.Skills.Helpers.Resolvers
                     targetVehicle, 
                     skill.saveSpec, 
                     dc,
-                    skill.savePreferredRole,
                     ctx.TargetComponent);
                 
                 if (saveRoll == null)
@@ -76,7 +75,8 @@ namespace Assets.Scripts.Skills.Helpers.Resolvers
                 savingEntity,
                 skill,
                 succeeded: saveRoll.Succeeded,
-                targetComponentName: targetComponentName);
+                targetComponentName: targetComponentName,
+                character: saveRoll.Character);  // Pass character from result
         }
     }
 }

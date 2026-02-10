@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
+using Assets.Scripts.Characters;
 
 namespace Assets.Scripts.Combat
 {
@@ -24,6 +25,19 @@ namespace Assets.Scripts.Combat
         /// <summary>Primary target of the action (for vehicle-level targeting)</summary>
         public Vehicle PrimaryTarget { get; set; }
         
+        /// <summary>
+        /// Source vehicle (stored, not derived from Actor).
+        /// Null for standalone entities (golems, turrets, traps).
+        /// Required because Actor can be null (character-only skills) or non-vehicle (standalone entities).
+        /// </summary>
+        public Vehicle SourceVehicle { get; set; }
+        
+        /// <summary>
+        /// Character performing the action (null for component-only or standalone entity actions).
+        /// Enables logging "CharacterName uses Skill" instead of "Unknown".
+        /// </summary>
+        public Character SourceCharacter { get; set; }
+        
         /// <summary>All events that occurred during this action</summary>
         public List<CombatEvent> Events { get; } = new List<CombatEvent>();
         
@@ -33,11 +47,18 @@ namespace Assets.Scripts.Combat
         /// <summary>When this action ended</summary>
         public float EndTime { get; set; }
         
-        public CombatAction(Entity actor, UnityEngine.Object source, Vehicle primaryTarget = null)
+        public CombatAction(
+            Entity actor,
+            UnityEngine.Object source,
+            Vehicle primaryTarget = null,
+            Vehicle sourceVehicle = null,
+            Character sourceCharacter = null)
         {
             Actor = actor;
             Source = source;
             PrimaryTarget = primaryTarget;
+            SourceVehicle = sourceVehicle;
+            SourceCharacter = sourceCharacter;
             StartTime = Time.time;
         }
         
@@ -119,7 +140,7 @@ namespace Assets.Scripts.Combat
         /// <summary>Get the source name for logging</summary>
         public string SourceName => Source != null ? Source.name : null ?? "Unknown";
         
-        /// <summary>Get the actor's vehicle (if applicable)</summary>
-        public Vehicle ActorVehicle => EntityHelpers.GetParentVehicle(Actor);
+        /// <summary>Get the actor's vehicle. Prefers stored SourceVehicle, falls back to entity derivation.</summary>
+        public Vehicle ActorVehicle => SourceVehicle ?? EntityHelpers.GetParentVehicle(Actor);
     }
 }

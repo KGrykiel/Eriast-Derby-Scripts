@@ -43,9 +43,6 @@ namespace Assets.Scripts.Stages.Lanes
         [Range(5, 30)]
         public int dc = 15;
         
-        [Tooltip("Which role should handle this check/save? (None = auto-pick)")]
-        public RoleType preferredRole = RoleType.None;
-        
         [Header("Effects")]
         [Tooltip("Effects applied on successful check (or always if no check)")]
         public List<EffectInvocation> onSuccess = new();

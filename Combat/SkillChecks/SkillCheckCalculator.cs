@@ -23,7 +23,10 @@ namespace Assets.Scripts.Combat.SkillChecks
         {
             var resolution = CheckResolver.ResolveSkillCheck(vehicle, checkSpec);
             if (!resolution.CanAttempt)
-                return null;
+            {
+                // Component required but unavailable - automatic failure
+                return SkillCheckResult.AutoFail(checkSpec, dc);
+            }
             
             return PerformSkillCheck(checkSpec, dc, resolution.Component, resolution.Character);
         }
@@ -36,14 +39,14 @@ namespace Assets.Scripts.Combat.SkillChecks
             CheckSpec checkSpec,
             int dc,
             Entity component = null,
-            PlayerCharacter character = null)
+            Character character = null)
         {
             int baseRoll = RollUtility.RollD20();
             var bonuses = GatherBonuses(checkSpec, component, character);
             int total = baseRoll + D20RollHelpers.SumBonuses(bonuses);
             bool success = total >= dc;
             
-            return new SkillCheckResult(baseRoll, checkSpec, bonuses, dc, success);
+            return new SkillCheckResult(baseRoll, checkSpec, bonuses, dc, success, character);
         }
         
         /// <summary>
@@ -54,7 +57,7 @@ namespace Assets.Scripts.Combat.SkillChecks
         public static List<RollBonus> GatherBonuses(
             CheckSpec checkSpec,
             Entity component = null,
-            PlayerCharacter character = null)
+            Character character = null)
         {
             var bonuses = new List<RollBonus>();
             
@@ -62,7 +65,7 @@ namespace Assets.Scripts.Combat.SkillChecks
             if (component != null && checkSpec.IsVehicleCheck)
             {
                 string label = component.name ?? checkSpec.DisplayName;
-                D20RollHelpers.GatherComponentBonuses(component, checkSpec.vehicleAttribute.ToAttribute(), label, bonuses);
+                D20RollHelpers.GatherComponentBonuses(component, checkSpec.vehicleAttribute, label, bonuses);
             }
             
             // Character bonuses (attribute modifier + proficiency)
@@ -77,7 +80,7 @@ namespace Assets.Scripts.Combat.SkillChecks
         // ==================== CHARACTER BONUSES ====================
         
         private static void GatherCharacterBonuses(
-            PlayerCharacter character,
+            Character character,
             CharacterSkill skill,
             List<RollBonus> bonuses)
         {

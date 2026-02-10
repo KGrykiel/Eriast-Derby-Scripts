@@ -34,7 +34,7 @@ namespace Assets.Scripts.Entities.Vehicle
         [Header("Character Assignment")]
         [Tooltip("Character currently occupying this seat. Drag PlayerCharacter ScriptableObject here. " +
                  "Leave empty for uncrewed/AI-controlled seats.")]
-        public PlayerCharacter assignedCharacter;
+        public Character assignedCharacter;
 
         // ==================== TURN STATE ====================
         

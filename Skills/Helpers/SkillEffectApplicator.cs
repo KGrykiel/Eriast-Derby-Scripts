@@ -26,7 +26,7 @@ namespace Assets.Scripts.Skills.Helpers
             Skill skill = ctx.Skill;
             
             // Begin action scope - all events will be aggregated
-            CombatEventBus.BeginAction(ctx.SourceEntity, skill, targetVehicle);
+            CombatEventBus.BeginAction(ctx.SourceEntity, skill, targetVehicle, ctx.SourceVehicle, ctx.SourceCharacter);
             
             // Build effect context from SkillContext (translation point)
             var effectContext = EffectContext.FromSkillContext(ctx);

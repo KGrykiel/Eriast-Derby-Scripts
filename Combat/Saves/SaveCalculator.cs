@@ -19,12 +19,14 @@ namespace Assets.Scripts.Combat.Saves
             Vehicle vehicle,
             SaveSpec saveSpec,
             int dc,
-            RoleType preferredRole = RoleType.None,
             VehicleComponent targetComponent = null)
         {
-            var resolution = CheckResolver.ResolveSave(vehicle, saveSpec, preferredRole, targetComponent);
+            var resolution = CheckResolver.ResolveSave(vehicle, saveSpec, targetComponent);
             if (!resolution.CanAttempt)
-                return null;
+            {
+                // Component required but unavailable - automatic failure
+                return SaveResult.AutoFail(saveSpec, dc);
+            }
             
             return PerformSavingThrow(saveSpec, dc, resolution.Component, resolution.Character);
         }
@@ -36,14 +38,14 @@ namespace Assets.Scripts.Combat.Saves
             SaveSpec saveSpec,
             int dc,
             Entity component = null,
-            PlayerCharacter character = null)
+            Character character = null)
         {
             int baseRoll = RollUtility.RollD20();
             var bonuses = GatherBonuses(saveSpec, component, character);
             int total = baseRoll + D20RollHelpers.SumBonuses(bonuses);
             bool success = total >= dc;
             
-            return new SaveResult(baseRoll, saveSpec, bonuses, dc, success);
+            return new SaveResult(baseRoll, saveSpec, bonuses, dc, success, character);
         }
         
         /// <summary>
@@ -54,7 +56,7 @@ namespace Assets.Scripts.Combat.Saves
         public static List<RollBonus> GatherBonuses(
             SaveSpec saveSpec,
             Entity component = null,
-            PlayerCharacter character = null)
+            Character character = null)
         {
             var bonuses = new List<RollBonus>();
             
@@ -62,7 +64,7 @@ namespace Assets.Scripts.Combat.Saves
             if (component != null && saveSpec.IsVehicleSave)
             {
                 string label = component.name ?? saveSpec.DisplayName;
-                D20RollHelpers.GatherComponentBonuses(component, saveSpec.vehicleAttribute.ToAttribute(), label, bonuses);
+                D20RollHelpers.GatherComponentBonuses(component, saveSpec.vehicleAttribute, label, bonuses);
             }
             
             // Character bonuses (character saves)
@@ -80,7 +82,7 @@ namespace Assets.Scripts.Combat.Saves
         /// Character save bonus: attribute modifier + half level (rounded down).
         /// </summary>
         private static void GatherCharacterSaveBonuses(
-            PlayerCharacter character,
+            Character character,
             CharacterAttribute attribute,
             List<RollBonus> bonuses)
         {

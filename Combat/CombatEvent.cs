@@ -1,4 +1,5 @@
 ﻿using UnityEngine;
+using Assets.Scripts.Characters;
 using Assets.Scripts.Combat.SkillChecks;
 using Assets.Scripts.Combat.Saves;
 using Assets.Scripts.Combat.Damage;
@@ -162,6 +163,12 @@ namespace Assets.Scripts.Combat
         /// <summary>Whether this was a fallback to chassis after missing component</summary>
         public bool IsChassisFallback { get; set; }
         
+        /// <summary>
+        /// Character who made the attack (null for component-only or standalone entity attacks).
+        /// Used for logging "Ada attacks" vs "Weapon attacks".
+        /// </summary>
+        public Character Character { get; set; }
+        
         public AttackRollEvent(
             AttackResult result,
             Entity source,
@@ -169,7 +176,8 @@ namespace Assets.Scripts.Combat
             UnityEngine.Object causalSource,
             bool isHit,
             string targetComponentName = null,
-            bool isChassisFallback = false)
+            bool isChassisFallback = false,
+            Character character = null)
         {
             Result = result;
             Source = source;
@@ -178,6 +186,7 @@ namespace Assets.Scripts.Combat
             IsHit = isHit;
             TargetComponentName = targetComponentName;
             IsChassisFallback = isChassisFallback;
+            Character = character;
         }
     }
     
@@ -196,13 +205,21 @@ namespace Assets.Scripts.Combat
         /// <summary>Name of targeted component (if component targeting)</summary>
         public string TargetComponentName { get; set; }
         
+        /// <summary>
+        /// Character who made the save (null for vehicle-only saves).
+        /// Used for logging "Technician saves vs EMP" vs "Vehicle saves vs Fireball".
+        /// Enables character-specific save breakdowns in tooltips.
+        /// </summary>
+        public Character Character { get; set; }
+        
         public SavingThrowEvent(
             SaveResult result,
             Entity source,
             Entity target,
             UnityEngine.Object causalSource,
             bool succeeded,
-            string targetComponentName = null)
+            string targetComponentName = null,
+            Character character = null)
         {
             Result = result;
             Source = source;
@@ -210,6 +227,7 @@ namespace Assets.Scripts.Combat
             CausalSource = causalSource;
             Succeeded = succeeded;
             TargetComponentName = targetComponentName;
+            Character = character;
         }
     }
     
@@ -225,17 +243,26 @@ namespace Assets.Scripts.Combat
         /// <summary>Whether the check succeeded</summary>
         public bool Succeeded { get; set; }
         
+        /// <summary>
+        /// Character who made the check (null for vehicle-only checks).
+        /// Used for logging "Pilot makes Piloting check" vs "Vehicle makes Stability check".
+        /// Enables character-specific skill breakdowns in tooltips.
+        /// </summary>
+        public Character Character { get; set; }
+        
         public SkillCheckEvent(
             SkillCheckResult result,
             Entity source,
             UnityEngine.Object causalSource,
-            bool succeeded)
+            bool succeeded,
+            Character character = null)
         {
             Result = result;
             Source = source;
             Target = null; // Skill checks don't have a target
             CausalSource = causalSource;
             Succeeded = succeeded;
+            Character = character;
         }
     }
 }

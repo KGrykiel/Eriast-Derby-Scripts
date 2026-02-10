@@ -114,14 +114,9 @@ namespace Assets.Scripts.Events.EventCard.EventCardTypes
             var checkResult = SkillCheckCalculator.PerformSkillCheck(
                 vehicle, choice.checkSpec, choice.dc);
             
-            if (checkResult == null)
-            {
-                ApplyEffects(choice.failureEffects, vehicle);
-                return new CardResolutionResult(false, "Unable to attempt check");
-            }
-            
             CombatEventBus.EmitSkillCheck(
-                checkResult, vehicle.chassis, this, checkResult.Succeeded);
+                checkResult, vehicle.chassis, this, checkResult.Succeeded,
+                character: checkResult.Character);
             
             if (checkResult.Succeeded)
             {
@@ -141,17 +136,12 @@ namespace Assets.Scripts.Events.EventCard.EventCardTypes
         private CardResolutionResult ResolveSavingThrow(CardChoice choice, Vehicle vehicle)
         {
             var saveResult = SaveCalculator.PerformSavingThrow(
-                vehicle, choice.saveSpec, choice.dc, choice.preferredRole);
-            
-            if (saveResult == null)
-            {
-                ApplyEffects(choice.failureEffects, vehicle);
-                return new CardResolutionResult(false, "Unable to attempt save");
-            }
+                vehicle, choice.saveSpec, choice.dc);
             
             CombatEventBus.EmitSavingThrow(
                 saveResult, null, vehicle.chassis, this,
-                saveResult.Succeeded, "Vehicle");
+                saveResult.Succeeded, "Vehicle",
+                character: saveResult.Character);
             
             if (saveResult.Succeeded)
             {
@@ -202,9 +192,6 @@ namespace Assets.Scripts.Events.EventCard.EventCardTypes
         
         [Tooltip("Difficulty class for the check/save")]
         public int dc = 15;
-        
-        [Tooltip("Which role should handle this check/save? (None = auto-pick)")]
-        public RoleType preferredRole = RoleType.None;
         
         [Header("Effects")]
         [Tooltip("Effects applied if choice succeeds (or no check required)")]
