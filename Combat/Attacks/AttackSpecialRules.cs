@@ -21,7 +21,7 @@
         public static AttackResult TryComponentFallback(AttackSpec spec, AttackResult missResult)
         {
             // Determine if fallback applies
-            if (!(spec.Target is VehicleComponent targetComponent))
+            if (spec.Target is not VehicleComponent targetComponent)
                 return null;
 
             // Find the chassis (fallback target)

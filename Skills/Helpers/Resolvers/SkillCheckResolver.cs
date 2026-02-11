@@ -1,5 +1,4 @@
 ﻿using Assets.Scripts.Combat.SkillChecks;
-using Assets.Scripts.Combat;
 
 namespace Assets.Scripts.Skills.Helpers.Resolvers
 {

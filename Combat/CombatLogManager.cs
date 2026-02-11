@@ -953,9 +953,9 @@ namespace Assets.Scripts.Combat
         {
             Vehicle attackerVehicle = EntityHelpers.GetParentVehicle(evt.Source);
             Vehicle targetVehicle = EntityHelpers.GetParentVehicle(evt.Target);
-            
+
             string targetName = FormatEntityWithVehicle(evt.Target, targetVehicle);
-            string causalSourceName = evt.CausalSource != null ? evt.CausalSource.name : null ?? "Unknown";
+            string causalSourceName = evt.CausalSource != null ? evt.CausalSource.name : "Unknown";
             
             int damage = evt.Result.FinalDamage;
             string damageType = evt.Result.DamageType.ToString();

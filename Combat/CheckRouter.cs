@@ -6,14 +6,20 @@ using Assets.Scripts.Entities.Vehicle;
 namespace Assets.Scripts.Combat
 {
     /// <summary>
-    /// Routes who and what is involved in a check or save.
+    /// VEHICLE-ONLY routing for checks and saves.
+    /// Resolves which component and/or character should make a check when the target is a Vehicle.
     /// 
-    /// Given a vehicle and a spec, determines:
-    /// - Which component is needed (and whether it's functional)
-    /// - Which character operates it (from seat assignment)
-    /// - Whether the attempt is even possible
+    /// SCOPE: This class exists ONLY because vehicles have internal complexity (components + crew).
+    /// - Standalone entities (NPCs, props) bypass this entirely - they call Calculator directly.
+    /// - Performers handle the decision: Vehicle → CheckRouter → Calculator, Entity → Calculator.
     /// 
-    /// The calculator receives the routed data — it never routes.
+    /// RESPONSIBILITIES:
+    /// - Find the correct component for vehicle attribute checks/saves
+    /// - Find the best character for character checks/saves (considering proficiency/attributes)
+    /// - Validate component existence and operational state
+    /// - Validate character availability (seat assignments)
+    /// 
+    /// DOES NOT: Calculate bonuses, roll dice, emit events (that's Calculator/Performer territory).
     /// </summary>
     public static class CheckRouter
     {
@@ -114,25 +120,10 @@ namespace Assets.Scripts.Combat
 
         private static RoutingResult RouteCharacterSkillCheck(Vehicle vehicle, SkillCheckSpec spec, Character initiatingCharacter)
         {
-            // If check requires a specific component type, find it and its operator
+            // If check requires a specific component type, validate it and find operator
             if (spec.RequiresComponent)
             {
-                VehicleComponent component = GetComponentByType(vehicle, spec.requiredComponentType);
-                if (component == null)
-                    return RoutingResult.Failure($"No {spec.requiredComponentType} component on vehicle");
-
-                if (!component.IsOperational)
-                    return RoutingResult.Failure($"{component.name} is not operational");
-
-                var seat = vehicle.GetSeatForComponent(component);
-                if (seat == null)
-                    return RoutingResult.Failure($"No seat controls {component.name}");
-
-                Character character = seat.assignedCharacter;
-                if (character == null)
-                    return RoutingResult.Failure($"{seat.seatName} has no assigned character");
-
-                return RoutingResult.Success(component, character);
+                return ValidateRequiredComponent(vehicle, spec.requiredComponentType);
             }
 
             // Priority 1: Specific character initiated this skill (character-initiated skills)
@@ -143,10 +134,10 @@ namespace Assets.Scripts.Combat
 
             // Priority 2: No specific character - use character with best modifier (event cards, lane effects)
             Character bestCharacter = GetCharacterWithBestSkillModifier(vehicle, spec.characterSkill);
-            if (bestCharacter == null)
-                return RoutingResult.Failure($"No character available for {spec.DisplayName}");
+            if (bestCharacter != null)
+                return RoutingResult.Success(null, bestCharacter);
 
-            return RoutingResult.Success(null, bestCharacter);
+            return RoutingResult.Failure($"No character available for {spec.DisplayName}");
         }
 
         private static RoutingResult RouteCharacterSave(
@@ -154,50 +145,34 @@ namespace Assets.Scripts.Combat
             SaveSpec spec,
             VehicleComponent targetComponent)
         {
-            // If save requires a specific component type, find it and its operator
+            // If save requires a specific component type, validate it and find operator
             if (spec.RequiresComponent)
             {
-                VehicleComponent component = GetComponentByType(vehicle, spec.requiredComponentType);
-                if (component == null)
-                    return RoutingResult.Failure($"No {spec.requiredComponentType} component on vehicle");
-
-                if (!component.IsOperational)
-                    return RoutingResult.Failure($"{component.name} is not operational");
-
-                var seat = vehicle.GetSeatForComponent(component);
-                if (seat == null)
-                    return RoutingResult.Failure($"No seat controls {component.name}");
-
-                Character character = seat.assignedCharacter;
-                if (character == null)
-                    return RoutingResult.Failure($"{seat.seatName} has no assigned character");
-
-                return RoutingResult.Success(component, character);
+                return ValidateRequiredComponent(vehicle, spec.requiredComponentType);
             }
 
             // No component required - route based on context
-            Character resolvedCharacter = null;
 
             // Priority 1: Target component specified (attacked location)
             if (targetComponent != null && targetComponent.IsOperational)
             {
                 var seat = vehicle.GetSeatForComponent(targetComponent);
-                resolvedCharacter = seat?.assignedCharacter;
-                if (resolvedCharacter != null)
-                    return RoutingResult.Success(targetComponent, resolvedCharacter);
+                Character character = seat?.assignedCharacter;
+                if (character != null)
+                    return RoutingResult.Success(targetComponent, character);
             }
 
             // Priority 2: Best modifier for the save attribute
-            resolvedCharacter = GetCharacterWithBestSaveModifier(vehicle, spec.characterAttribute);
-            if (resolvedCharacter != null)
-                return RoutingResult.Success(null, resolvedCharacter);
+            Character bestCharacter = GetCharacterWithBestSaveModifier(vehicle, spec.characterAttribute);
+            if (bestCharacter != null)
+                return RoutingResult.Success(null, bestCharacter);
 
             // Priority 3: First assigned character (fallback)
-            resolvedCharacter = GetFirstAssignedCharacter(vehicle);
-            if (resolvedCharacter == null)
-                return RoutingResult.Failure("No character available for save");
+            Character fallbackCharacter = GetFirstAssignedCharacter(vehicle);
+            if (fallbackCharacter != null)
+                return RoutingResult.Success(null, fallbackCharacter);
 
-            return RoutingResult.Success(null, resolvedCharacter);
+            return RoutingResult.Failure("No character available for save");
         }
         
         // ==================== COMPONENT ROUTING ====================
@@ -227,28 +202,20 @@ namespace Assets.Scripts.Combat
         {
             Character best = null;
             int bestModifier = int.MinValue;
-            
-            CharacterAttribute attribute = CharacterSkillHelper.GetPrimaryAttribute(skill);
-            
+
             foreach (var seat in vehicle.seats)
             {
                 var character = seat?.assignedCharacter;
                 if (character == null) continue;
 
-                int attributeScore = character.GetAttributeScore(attribute);
-                int attrMod = CharacterFormulas.CalculateAttributeModifier(attributeScore);
-                int proficiency = character.IsProficient(skill) 
-                    ? CharacterFormulas.CalculateProficiencyBonus(character.level) 
-                    : 0;
-                int modifier = attrMod + proficiency;
-
+                int modifier = CharacterFormulas.CalculateSkillCheckModifier(character, skill);
                 if (modifier > bestModifier)
                 {
                     best = character;
                     bestModifier = modifier;
                 }
             }
-            
+
             return best;
         }
         
@@ -272,25 +239,20 @@ namespace Assets.Scripts.Combat
         {
             Character best = null;
             int bestModifier = int.MinValue;
-            
+
             foreach (var seat in vehicle.seats)
             {
                 var character = seat?.assignedCharacter;
                 if (character == null) continue;
 
-                int attributeScore = character.GetAttributeScore(attribute);
-                int attrMod = CharacterFormulas.CalculateAttributeModifier(attributeScore);
-                int halfLevel = CharacterFormulas.CalculateHalfLevelBonus(character.level);
-                int modifier = attrMod + halfLevel;
-
+                int modifier = CharacterFormulas.CalculateSaveModifier(character, attribute);
                 if (modifier > bestModifier)
                 {
                     best = character;
                     bestModifier = modifier;
                 }
             }
-            
-            
+
             return best;
         }
         
@@ -306,6 +268,31 @@ namespace Assets.Scripts.Combat
                     return component;
             }
             return null;
+        }
+
+        /// <summary>
+        /// Validate that a required component exists, is operational, has a controlling seat, and has an assigned character.
+        /// Extracted common logic used by both character skill checks and character saves.
+        /// Returns Success with component+character if valid, otherwise returns Failure with reason.
+        /// </summary>
+        private static RoutingResult ValidateRequiredComponent(Vehicle vehicle, ComponentType requiredType)
+        {
+            VehicleComponent component = GetComponentByType(vehicle, requiredType);
+            if (component == null)
+                return RoutingResult.Failure($"No {requiredType} component on vehicle");
+
+            if (!component.IsOperational)
+                return RoutingResult.Failure($"{component.name} is not operational");
+
+            var seat = vehicle.GetSeatForComponent(component);
+            if (seat == null)
+                return RoutingResult.Failure($"No seat controls {component.name}");
+
+            Character character = seat.assignedCharacter;
+            if (character == null)
+                return RoutingResult.Failure($"{seat.seatName} has no assigned character");
+
+            return RoutingResult.Success(component, character);
         }
     }
 }

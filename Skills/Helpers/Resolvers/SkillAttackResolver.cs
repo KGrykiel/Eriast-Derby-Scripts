@@ -1,5 +1,4 @@
-﻿using Assets.Scripts.Combat;
-using Assets.Scripts.Combat.Attacks;
+﻿using Assets.Scripts.Combat.Attacks;
 
 namespace Assets.Scripts.Skills.Helpers.Resolvers
 {

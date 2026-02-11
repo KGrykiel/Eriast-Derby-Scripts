@@ -83,7 +83,7 @@ namespace Assets.Scripts.Combat.Saves
 
         // ==================== HELPERS ====================
 
-        public static int CalculateSaveDC(Skill skill, Entity user)
+        public static int CalculateSaveDC(Skill skill)
         {
             return skill.saveDCBase;
         }

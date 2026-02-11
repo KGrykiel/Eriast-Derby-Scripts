@@ -14,7 +14,7 @@ namespace Assets.Scripts.Combat
         /// Gather applied modifiers (status effects, equipment) from an entity
         /// and convert them to RollBonus entries for a d20 roll result.
         /// </summary>
-        public static List<RollBonus> GatherAppliedBonuses(Entity entity, Attribute attribute)
+        private static List<RollBonus> GatherAppliedBonuses(Entity entity, Attribute attribute)
         {
             var bonuses = new List<RollBonus>();
             if (entity == null) return bonuses;
@@ -62,10 +62,30 @@ namespace Assets.Scripts.Combat
             {
                 bonuses.Add(new RollBonus(displayLabel, baseValue));
             }
-            
+
             // Convert to full Attribute only for StatCalculator lookup
             Attribute attribute = checkAttribute.ToAttribute();
             bonuses.AddRange(GatherAppliedBonuses(component, attribute));
+        }
+
+        /// <summary>
+        /// Gather weapon bonuses for an attack roll.
+        /// Gets the base attack bonus from the weapon and any applied modifiers.
+        /// Parallel to GatherComponentBonuses but for weapon attacks.
+        /// </summary>
+        public static void GatherWeaponBonuses(
+            WeaponComponent weapon,
+            List<RollBonus> bonuses)
+        {
+            if (weapon == null) return;
+
+            int baseAttackBonus = weapon.GetAttackBonus();
+            if (baseAttackBonus != 0)
+            {
+                bonuses.Add(new RollBonus(weapon.name ?? "Weapon", baseAttackBonus));
+            }
+
+            bonuses.AddRange(GatherAppliedBonuses(weapon, Attribute.AttackBonus));
         }
         
         /// <summary>

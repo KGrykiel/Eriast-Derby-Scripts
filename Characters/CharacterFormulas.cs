@@ -36,5 +36,43 @@
         {
             return level / 2;
         }
+
+        // ==================== COMPOSITE MODIFIERS ====================
+        // These combine the atomic formulas above for common use cases.
+        // Single source of truth for CheckRouter and Calculators.
+
+        /// <summary>
+        /// Calculate total skill check modifier for a character.
+        /// Formula: attribute modifier + proficiency (if proficient).
+        /// </summary>
+        public static int CalculateSkillCheckModifier(Character character, CharacterSkill skill)
+        {
+            CharacterAttribute attribute = CharacterSkillHelper.GetPrimaryAttribute(skill);
+            int attributeScore = character.GetAttributeScore(attribute);
+            int attrMod = CalculateAttributeModifier(attributeScore);
+            int proficiency = character.IsProficient(skill) ? CalculateProficiencyBonus(character.level) : 0;
+            return attrMod + proficiency;
+        }
+
+        /// <summary>
+        /// Calculate total saving throw modifier for a character.
+        /// Formula: attribute modifier + half level.
+        /// </summary>
+        public static int CalculateSaveModifier(Character character, CharacterAttribute attribute)
+        {
+            int attributeScore = character.GetAttributeScore(attribute);
+            int attrMod = CalculateAttributeModifier(attributeScore);
+            int halfLevel = CalculateHalfLevelBonus(character.level);
+            return attrMod + halfLevel;
+        }
+
+        /// <summary>
+        /// Get the character's base attack bonus.
+        /// Currently a direct value on the character, but routed through here for consistency.
+        /// </summary>
+        public static int CalculateAttackBonus(Character character)
+        {
+            return character.baseAttackBonus;
+        }
     }
 }

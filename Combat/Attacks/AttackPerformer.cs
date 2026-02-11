@@ -1,6 +1,4 @@
-﻿using UnityEngine;
-
-namespace Assets.Scripts.Combat.Attacks
+﻿namespace Assets.Scripts.Combat.Attacks
 {
     /// <summary>
     /// Universal entry point for attack rolls.

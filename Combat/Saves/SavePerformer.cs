@@ -1,5 +1,4 @@
-﻿using Assets.Scripts.Characters;
-using UnityEngine;
+﻿using UnityEngine;
 
 namespace Assets.Scripts.Combat.Saves
 {

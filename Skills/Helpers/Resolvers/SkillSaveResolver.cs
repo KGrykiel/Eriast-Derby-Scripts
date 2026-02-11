@@ -1,5 +1,4 @@
 ﻿using Assets.Scripts.Combat.Saves;
-using Assets.Scripts.Combat;
 
 namespace Assets.Scripts.Skills.Helpers.Resolvers
 {
@@ -15,8 +14,7 @@ namespace Assets.Scripts.Skills.Helpers.Resolvers
         public static bool Execute(SkillContext ctx)
         {
             Skill skill = ctx.Skill;
-            Entity dcSource = ctx.SourceComponent;
-            int dc = SaveCalculator.CalculateSaveDC(skill, dcSource);
+            int dc = SaveCalculator.CalculateSaveDC(skill);
 
             SaveResult saveRoll;
 

@@ -4,7 +4,6 @@ using Assets.Scripts.Stages.Lanes;
 using Assets.Scripts.StatusEffects;
 using Assets.Scripts.Combat.SkillChecks;
 using Assets.Scripts.Combat.Saves;
-using Assets.Scripts.Combat;
 using Assets.Scripts.Effects;
 using EventCard = Assets.Scripts.Events.EventCard.EventCard;
 
