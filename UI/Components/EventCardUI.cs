@@ -6,6 +6,7 @@ using UnityEngine.EventSystems;
 using TMPro;
 using Assets.Scripts.Events.EventCard.EventCardTypes;
 using Assets.Scripts.Events.EventCard;
+using Assets.Scripts.Combat.Damage;
 
 namespace Assets.Scripts.UI.Components
 {
@@ -349,11 +350,16 @@ namespace Assets.Scripts.UI.Components
             // Try to get a description from the effect if it has one
             // Most effects don't have description properties, so we'll use type name
             string description = effectType.Replace("Effect", "");
-            
-            // For damage effects, try to get damage formula if available
-            if (invocation.effect is DamageEffect damageEffect && damageEffect.formula != null)
+
+            // For damage effects, show formula if it's static (can't introspect weapon at design time)
+            if (invocation.effect is DamageEffect damageEffect && damageEffect.formulaProvider is StaticFormulaProvider staticProvider)
             {
-                description = $"Damage ({damageEffect.formula.baseDice}d{damageEffect.formula.dieSize}+{damageEffect.formula.bonus})";
+                var formula = staticProvider.formula;
+                description = $"Damage ({formula.baseDice}d{formula.dieSize}+{formula.bonus})";
+            }
+            else if (invocation.effect is DamageEffect weaponDamage && weaponDamage.formulaProvider is WeaponFormulaProvider)
+            {
+                description = "Damage (Weapon)";
             }
             else if (invocation.effect is ApplyStatusEffect statusEffect && statusEffect.statusEffect != null)
             {

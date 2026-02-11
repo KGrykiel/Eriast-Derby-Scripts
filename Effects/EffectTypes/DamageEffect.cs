@@ -1,57 +1,46 @@
 using UnityEngine;
 using Assets.Scripts.Combat.Damage;
 using Assets.Scripts.Effects;
+using SerializeReferenceEditor;
 
 /// <summary>
 /// Damage effect for skills and event cards.
-/// Uses DamageFormula to calculate damage, then DamageApplicator to apply it.
+/// Uses DamageCalculator to compute damage, then DamageApplicator to apply it.
 /// 
-/// This effect is STATELESS - DamageApplicator handles logging automatically.
+/// Formula resolution is delegated to IFormulaProvider (Strategy Pattern).
+/// This keeps DamageEffect general-purpose - weapon integration is handled by WeaponFormulaProvider.
 /// 
-/// Damage Flow:
-/// 1. DamageEffect.Apply() is called by SkillEffectApplicator
-/// 2. DamageFormula computes damage (ComputeSkillOnly or ComputeWithWeapon)
-/// 3. DamageApplicator.Apply() applies damage AND logs it
+/// Composite damage (weapon + extra): use two DamageEffects on the same skill.
+/// CombatEventBus aggregates them naturally.
 /// </summary>
 [System.Serializable]
 public class DamageEffect : EffectBase
 {
-    [Header("Damage Formula")]
-    [Tooltip("Defines how damage is calculated (skill dice, weapon scaling, etc.)")]
-    public DamageFormula formula = new();
+    [SerializeReference, SR]
+    [Tooltip("Strategy for resolving damage formula. StaticFormulaProvider for fixed damage, WeaponFormulaProvider for weapon-based attacks.")]
+    public IFormulaProvider formulaProvider = new StaticFormulaProvider();
 
-    /// <summary>
-    /// Applies this damage effect to the target entity.
-    /// Logging is handled automatically by DamageApplicator.
-    /// 
-    /// Parameter convention:
-    /// - user: The Entity dealing damage (attacker) - may be a WeaponComponent
-    /// - target: The Entity receiving damage
-    /// - context: EffectContext with situational data (crits, etc.)
-    /// - source: Skill/EventCard that triggered this (for logging "Destroyed by X")
-    /// </summary>
     public override void Apply(Entity user, Entity target, EffectContext context, Object source = null)
     {
-        // Extract weapon from user (if it's a weapon component)
-        WeaponComponent weapon = user as WeaponComponent;
-        
-        // Calculate damage - formula handles all modes automatically
-        DamageResult result = formula.Compute(weapon, context.IsCriticalHit);
-        
-        if (result.RawTotal <= 0)
-        {
-            return;
-        }
-        
+        // Build context and resolve formula
+        var formulaContext = new FormulaContext(user);
+        DamageFormula formula = formulaProvider.GetFormula(formulaContext);
+
+        // Resolve resistance from target
+        ResistanceLevel resistance = target.GetResistance(formula.damageType);
+
+        // Calculate damage
+        DamageResult result = DamageCalculator.Compute(formula, resistance, context.IsCriticalHit);
+
         // Determine source type
-        DamageSource sourceType = weapon != null ? DamageSource.Weapon : DamageSource.Ability;
-        
-        // Apply damage - DamageApplicator handles logging automatically
+        DamageSource sourceType = user is WeaponComponent ? DamageSource.Weapon : DamageSource.Ability;
+
+        // Apply damage
         DamageApplicator.Apply(
             result: result,
             target: target,
             attacker: user,
-            causalSource: source != null ? source : weapon,
+            causalSource: source != null ? source : user,
             sourceType: sourceType
         );
     }

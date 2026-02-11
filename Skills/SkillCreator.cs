@@ -1,6 +1,7 @@
 ﻿#if UNITY_EDITOR
 using UnityEngine;
 using UnityEditor;
+using Assets.Scripts.Combat.Damage;
 using System.Collections.Generic;
 using Assets.Scripts.Entities.Vehicle;
 using Assets.Scripts.Combat.SkillChecks;
@@ -186,13 +187,15 @@ namespace Assets.Scripts.Skills
                 new() {
                     effect = new DamageEffect
                     {
-                        formula = new DamageFormula
+                        formulaProvider = new StaticFormulaProvider
                         {
-                            mode = DamageMode.BaseOnly,
-                            baseDice = 1,
-                            dieSize = 6,
-                            bonus = 0,
-                            damageType = DamageType.Physical
+                            formula = new DamageFormula
+                            {
+                                baseDice = 1,
+                                dieSize = 6,
+                                bonus = 0,
+                                damageType = DamageType.Physical
+                            }
                         }
                     },
                     target = EffectTarget.SelectedTarget

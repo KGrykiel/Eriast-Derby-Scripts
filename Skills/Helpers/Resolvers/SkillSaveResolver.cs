@@ -40,9 +40,9 @@ namespace Assets.Scripts.Skills.Helpers.Resolvers
             }
             else
             {
-                // Non-vehicle target: save with target entity as component
-                saveRoll = SaveCalculator.PerformSavingThrow(
-                    skill.saveSpec, dc, component: ctx.TargetEntity);
+                // Non-vehicle target: direct save without routing
+                saveRoll = SaveCalculator.PerformSavingThrowForEntity(
+                    skill.saveSpec, dc, ctx.TargetEntity);
             }
             
             EmitSaveEvent(saveRoll, ctx.SourceComponent, saveRoll != null ? ctx.TargetEntity : null, ctx.TargetComponent, skill);

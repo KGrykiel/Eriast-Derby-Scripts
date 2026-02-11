@@ -179,32 +179,25 @@ namespace Assets.Scripts.StatusEffects
         
         private void ApplyPeriodicDamage(PeriodicEffectData periodicEffect)
         {
-            // Use the proper damage pipeline with dice notation
-            // This handles rolling, resistance, HP reduction, and event emission
-            if (periodicEffect.diceCount > 0)
+            // Use provider pattern for consistency with DamageEffect
+            var provider = new StaticFormulaProvider
             {
-                // Dice-based damage (e.g., 2d6+3)
-                DamageApplicator.ApplyEnvironmentalDice(
-                    diceCount: periodicEffect.diceCount,
-                    dieSize: periodicEffect.dieSize,
-                    bonus: periodicEffect.bonus,
-                    damageType: periodicEffect.damageType,
-                    target: target,
-                    causalSource: template,
-                    sourceType: DamageSource.Effect
-                );
-            }
-            else
-            {
-                // Flat damage (0d0+5)
-                DamageApplicator.ApplyEnvironmentalFlat(
-                    damage: periodicEffect.bonus,
-                    damageType: periodicEffect.damageType,
-                    target: target,
-                    causalSource: template,
-                    sourceType: DamageSource.Effect
-                );
-            }
+                formula = new DamageFormula
+                {
+                    baseDice = periodicEffect.diceCount,
+                    dieSize = periodicEffect.dieSize,
+                    bonus = periodicEffect.bonus,
+                    damageType = periodicEffect.damageType
+                }
+            };
+
+            // Periodic damage has no user entity
+            var context = new FormulaContext(user: null);
+            DamageFormula formula = provider.GetFormula(context);
+
+            ResistanceLevel resistance = target.GetResistance(formula.damageType);
+            DamageResult result = DamageCalculator.Compute(formula, resistance);
+            DamageApplicator.Apply(result, target, attacker: null, template, DamageSource.Effect);
         }
         
         private void ApplyPeriodicHealing(int healing)

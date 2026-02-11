@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 using Assets.Scripts.Entities;
+using Assets.Scripts.Combat.Damage;
 
 namespace Assets.Scripts.StatusEffects
 {

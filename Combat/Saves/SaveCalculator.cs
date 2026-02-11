@@ -11,8 +11,8 @@ namespace Assets.Scripts.Combat.Saves
     public static class SaveCalculator
     {
         /// <summary>
-        /// Perform a saving throw for a vehicle. Resolves who/what saves internally.
-        /// Returns null if the save can't be attempted.
+        /// Perform a saving throw for a vehicle. Resolves who/what saves internally via CheckRouter.
+        /// Use this for vehicle targets where component/character resolution is needed.
         /// </summary>
         public static SaveResult PerformSavingThrow(
             Vehicle vehicle,
@@ -27,13 +27,28 @@ namespace Assets.Scripts.Combat.Saves
                 return SaveResult.AutoFail(saveSpec, dc);
             }
 
-            return PerformSavingThrow(saveSpec, dc, routing.Component, routing.Character);
+            return PerformSavingThrowInternal(saveSpec, dc, routing.Component, routing.Character);
         }
 
         /// <summary>
-        /// Perform a saving throw with explicit DC and resolved component/character.
+        /// Perform a saving throw for a standalone entity (non-vehicle target).
+        /// Use this for entities that don't require CheckRouter resolution (golems, turrets, etc.).
+        /// For vehicle targets, use the Vehicle overload instead.
         /// </summary>
-        public static SaveResult PerformSavingThrow(
+        public static SaveResult PerformSavingThrowForEntity(
+            SaveSpec saveSpec,
+            int dc,
+            Entity entity,
+            Character character = null)
+        {
+            return PerformSavingThrowInternal(saveSpec, dc, entity, character);
+        }
+
+        /// <summary>
+        /// Internal implementation - performs the actual save calculation.
+        /// Callers should use the appropriate public entry point.
+        /// </summary>
+        private static SaveResult PerformSavingThrowInternal(
             SaveSpec saveSpec,
             int dc,
             Entity component = null,

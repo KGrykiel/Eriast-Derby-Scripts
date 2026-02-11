@@ -1,64 +1,56 @@
 ﻿namespace Assets.Scripts.Combat.Damage
 {
     /// <summary>
-    /// Handles all damage calculation logic.
-    /// Pure logic - operates on DamageResult data.
+    /// Calculator for damage rolls.
+    /// Takes a DamageFormula (pure data) and computes an immutable DamageResult.
+    /// Follows the same pattern as AttackCalculator, SaveCalculator, and SkillCheckCalculator.
     /// 
-    /// Responsibilities:
-    /// - Creating DamageResult from various sources (weapon, dice, flat)
-    /// - Adding damage sources to results
-    /// - Applying resistance and recalculating final damage
-    /// - Resistance lookup from entities
+    /// Weapon-agnostic: weapon resolution happens upstream in DamageEffect.
+    /// All dice rolling and damage calculation happens here.
     /// </summary>
     public static class DamageCalculator
     {
-        // ==================== RESULT MODIFICATION ====================
-        
         /// <summary>
-        /// Add a damage source to a result and recalculate totals.
+        /// Compute damage from a formula with resistance.
+        /// Critical hits double dice count, not flat bonuses.
         /// </summary>
-        public static void AddSource(DamageResult result, string name, int diceCount, int dieSize, int bonus, int rolled, string sourceName = null)
+        /// <param name="formula">Damage formula configuration (pure data)</param>
+        /// <param name="resistance">Target's resistance level to this damage type</param>
+        /// <param name="isCriticalHit">If true, doubles dice count</param>
+        public static DamageResult Compute(
+            DamageFormula formula,
+            ResistanceLevel resistance,
+            bool isCriticalHit = false)
         {
-            result.sources.Add(new DamageSourceEntry(name, diceCount, dieSize, bonus, rolled, sourceName));
-            RecalculateFinal(result);
-        }
-        
-        /// <summary>
-        /// Add a flat damage amount (no dice) to a result.
-        /// </summary>
-        public static void AddFlat(DamageResult result, string name, int value, string sourceName = null)
-        {
-            if (value != 0)
+            int diceCount = formula.baseDice;
+            bool isCritical = false;
+
+            if (isCriticalHit && diceCount > 0)
             {
-                result.sources.Add(new DamageSourceEntry(name, 0, 0, value, 0, sourceName));
-                RecalculateFinal(result);
+                diceCount *= 2;
+                isCritical = true;
             }
+
+            int rolled = (diceCount > 0 && formula.dieSize > 0) 
+                ? RollUtility.RollDice(diceCount, formula.dieSize) 
+                : 0;
+
+            int rawTotal = rolled + formula.bonus;
+            int finalDamage = ApplyResistance(rawTotal, resistance);
+
+            return new DamageResult(
+                formula.damageType,
+                diceCount,
+                formula.dieSize,
+                formula.bonus,
+                rolled,
+                isCritical,
+                rawTotal,
+                resistance,
+                finalDamage);
         }
-        
-        // ==================== RESISTANCE ====================
-        
-        /// <summary>
-        /// Apply resistance level and recalculate final damage.
-        /// </summary>
-        public static void ApplyResistance(DamageResult result, ResistanceLevel level)
-        {
-            result.resistanceLevel = level;
-            RecalculateFinal(result);
-        }
-        
-        /// <summary>
-        /// Get an entity's resistance level to a damage type.
-        /// </summary>
-        public static ResistanceLevel GetResistance(Entity target, DamageType type)
-        {
-            if (target == null) return ResistanceLevel.Normal;
-            return target.GetResistance(type);
-        }
-        
-        /// <summary>
-        /// Apply resistance multiplier to a raw damage amount.
-        /// </summary>
-        public static int ApplyResistanceMultiplier(int damage, ResistanceLevel resistance)
+
+        private static int ApplyResistance(int damage, ResistanceLevel resistance)
         {
             return resistance switch
             {
@@ -67,59 +59,6 @@
                 ResistanceLevel.Immune => 0,
                 _ => damage
             };
-        }
-        
-        /// <summary>
-        /// Recalculate final damage based on raw total and resistance.
-        /// </summary>
-        public static void RecalculateFinal(DamageResult result)
-        {
-            result.finalDamage = ApplyResistanceMultiplier(result.RawTotal, result.resistanceLevel);
-        }
-        
-        // ==================== FACTORY METHODS ====================
-        
-        /// <summary>
-        /// Create a damage result from a weapon component.
-        /// </summary>
-        public static DamageResult FromWeapon(WeaponComponent weapon)
-        {
-            int dice = weapon.GetDamageDice();
-            int dieSize = weapon.GetDamageDieSize();
-            int bonus = weapon.GetDamageBonus();
-            
-            int rolled = RollUtility.RollDice(dice, dieSize);
-            
-            var result = DamageResult.Create(weapon.damageType);
-            AddSource(result, "Weapon", dice, dieSize, bonus, rolled, weapon.name);
-            
-            return result;
-        }
-        
-        /// <summary>
-        /// Create a flat damage result (for environmental/DoT).
-        /// </summary>
-        public static DamageResult FromFlat(int damage, DamageType damageType, string sourceName)
-        {
-            var result = DamageResult.Create(damageType);
-            if (damage != 0)
-            {
-                AddFlat(result, sourceName, damage, sourceName);
-            }
-            return result;
-        }
-        
-        /// <summary>
-        /// Create a dice-based damage result (for skill damage, environmental effects).
-        /// </summary>
-        public static DamageResult FromDice(int diceCount, int dieSize, int bonus, DamageType damageType, string sourceName)
-        {
-            int rolled = RollUtility.RollDice(diceCount, dieSize);
-            
-            var result = DamageResult.Create(damageType);
-            AddSource(result, sourceName, diceCount, dieSize, bonus, rolled, sourceName);
-            
-            return result;
         }
     }
 }

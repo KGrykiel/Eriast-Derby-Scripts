@@ -308,10 +308,10 @@ namespace Assets.Scripts.Combat
         {
             if (result == null) return "0 damage";
             
-            string resistStr = result.resistanceLevel != ResistanceLevel.Normal 
-                ? $" ({result.resistanceLevel})" 
+            string resistStr = result.ResistanceLevel != ResistanceLevel.Normal 
+                ? $" ({result.ResistanceLevel})" 
                 : "";
-            return $"{result.finalDamage} {result.damageType}{resistStr}";
+            return $"{result.FinalDamage} {result.DamageType}{resistStr}";
         }
         
         /// <summary>
@@ -320,34 +320,23 @@ namespace Assets.Scripts.Combat
         public static string FormatDamageDetailed(DamageResult result, string sourceName = null)
         {
             if (result == null) return "No damage";
-            
+
             var sb = new StringBuilder();
-            sb.AppendLine($"Damage Breakdown ({result.damageType}):");
-            
-            foreach (var source in result.sources)
-            {
-                if (source.diceCount > 0 && source.dieSize > 0)
-                {
-                    string resistMod = GetResistanceModifier(result.resistanceLevel);
-                    sb.AppendLine($"  {source.name}: ({source.ToDiceString()}){resistMod} = {source.Total} ({source.sourceName})");
-                }
-                else if (source.bonus != 0)
-                {
-                    string sign = source.bonus >= 0 ? "+" : "";
-                    sb.AppendLine($"  {source.name}: {sign}{source.bonus} ({source.sourceName})");
-                }
-            }
-            
+            sb.AppendLine($"Damage Breakdown ({result.DamageType}):");
+
+            string diceNotation = BuildDiceNotation(result);
+            string resistMod = GetResistanceModifier(result.ResistanceLevel);
+            sb.AppendLine($"  Roll: {diceNotation}{resistMod} = {result.RawTotal}");
+
             sb.AppendLine("  ─────────────");
-            sb.AppendLine($"  Subtotal: {result.RawTotal}");
-            
-            if (result.resistanceLevel != ResistanceLevel.Normal)
+
+            if (result.ResistanceLevel != ResistanceLevel.Normal)
             {
-                sb.AppendLine($"  {result.resistanceLevel}: {GetResistanceModifier(result.resistanceLevel)}");
+                sb.AppendLine($"  {result.ResistanceLevel}: {GetResistanceModifier(result.ResistanceLevel)}");
             }
-            
-            sb.AppendLine($"  Final: {result.finalDamage} {result.damageType}");
-            
+
+            sb.AppendLine($"  Final: {result.FinalDamage} {result.DamageType}");
+
             return sb.ToString();
         }
         
@@ -367,7 +356,7 @@ namespace Assets.Scripts.Combat
             var sb = new StringBuilder();
             
             // Calculate total
-            int totalDamage = results.Sum(r => r.finalDamage);
+            int totalDamage = results.Sum(r => r.FinalDamage);
             sb.AppendLine($"Damage Total: {totalDamage}");
             
             if (!string.IsNullOrEmpty(sourceName))
@@ -379,14 +368,11 @@ namespace Assets.Scripts.Combat
             // Each damage result
             foreach (var result in results)
             {
-                foreach (var source in result.sources)
-                {
-                    string diceNotation = BuildDiceNotation(source);
-                    string resistMod = GetResistanceModifier(result.resistanceLevel);
-                    string damageTypeLabel = BuildDamageTypeLabel(result);
-                    
-                    sb.AppendLine($"{diceNotation}{resistMod} = {result.finalDamage} {damageTypeLabel}");
-                }
+                string diceNotation = BuildDiceNotation(result);
+                string resistMod = GetResistanceModifier(result.ResistanceLevel);
+                string damageTypeLabel = BuildDamageTypeLabel(result);
+
+                sb.AppendLine($"{diceNotation}{resistMod} = {result.FinalDamage} {damageTypeLabel}");
             }
             
             return sb.ToString().Trim();
@@ -932,7 +918,7 @@ namespace Assets.Scripts.Combat
             bool isSelfDamage = IsSelfDamage(action.Actor, target, attackerVehicle, targetVehicle);
             
             string damageText = BuildCombinedDamageText(damages);
-            int totalDamage = damages.Sum(d => d.Result.finalDamage);
+            int totalDamage = damages.Sum(d => d.Result.FinalDamage);
             
             // Pattern: Self-damage uses passive voice, otherwise active voice
             string message = isSelfDamage
@@ -974,8 +960,8 @@ namespace Assets.Scripts.Combat
             string targetName = FormatEntityWithVehicle(evt.Target, targetVehicle);
             string causalSourceName = evt.CausalSource != null ? evt.CausalSource.name : null ?? "Unknown";
             
-            int damage = evt.Result.finalDamage;
-            string damageType = evt.Result.damageType.ToString();
+            int damage = evt.Result.FinalDamage;
+            string damageType = evt.Result.DamageType.ToString();
             
             string message;
             if (evt.Source == null)
@@ -1413,33 +1399,33 @@ namespace Assets.Scripts.Combat
             if (damages.Count == 1)
             {
                 var d = damages[0].Result;
-                return $"<color={Colors.Damage}>{d.finalDamage}</color> {d.damageType} damage";
+                return $"<color={Colors.Damage}>{d.FinalDamage}</color> {d.DamageType} damage";
             }
             
             var parts = damages.Select(d => 
-                $"<color={Colors.Damage}>{d.Result.finalDamage}</color> {d.Result.damageType}");
+                $"<color={Colors.Damage}>{d.Result.FinalDamage}</color> {d.Result.DamageType}");
             
-            int total = damages.Sum(d => d.Result.finalDamage);
+            int total = damages.Sum(d => d.Result.FinalDamage);
             
             return $"{string.Join(" + ", parts)} (<color={Colors.Damage}>{total} total</color>) damage";
         }
         
-        private static string BuildDiceNotation(DamageSourceEntry source)
+        private static string BuildDiceNotation(DamageResult result)
         {
-            if (source.diceCount > 0 && source.dieSize > 0)
+            if (result.DiceCount > 0 && result.DieSize > 0)
             {
-                string notation = $"({source.diceCount}d{source.dieSize})";
-                if (source.bonus != 0)
+                string notation = $"({result.DiceCount}d{result.DieSize})";
+                if (result.Bonus != 0)
                 {
-                    string sign = source.bonus > 0 ? "+" : "";
-                    notation += $"{sign}{source.bonus}";
+                    string sign = result.Bonus > 0 ? "+" : "";
+                    notation += $"{sign}{result.Bonus}";
                 }
                 return notation;
             }
-            else if (source.bonus != 0)
+            else if (result.Bonus != 0)
             {
-                string sign = source.bonus > 0 ? "+" : "";
-                return $"{sign}{source.bonus}";
+                string sign = result.Bonus > 0 ? "+" : "";
+                return $"{sign}{result.Bonus}";
             }
             return "0";
         }
@@ -1457,11 +1443,11 @@ namespace Assets.Scripts.Combat
         
         private static string BuildDamageTypeLabel(DamageResult result)
         {
-            if (result.resistanceLevel != ResistanceLevel.Normal)
+            if (result.ResistanceLevel != ResistanceLevel.Normal)
             {
-                return $"({result.damageType}, {result.resistanceLevel})";
+                return $"({result.DamageType}, {result.ResistanceLevel})";
             }
-            return $"({result.damageType})";
+            return $"({result.DamageType})";
         }
         
         private static bool DetermineIfBuff(StatusEffect statusEffect)

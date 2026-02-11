@@ -292,7 +292,7 @@ namespace Assets.Scripts.Combat
         {
             foreach (var component in vehicle.AllComponents)
             {
-                if (component != null && component.componentType == type)
+                if (component != null && component.componentType == type && component.IsOperational)
                     return component;
             }
             return null;

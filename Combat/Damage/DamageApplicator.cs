@@ -27,13 +27,16 @@ namespace Assets.Scripts.Combat.Damage
         /// This is the CORE method - all other methods funnel through here.
         /// Emits DamageEvent for logging (aggregated by CombatEventBus).
         /// Always logs damage even if 0 (important for showing IMMUNE feedback).
+        /// 
+        /// CALLER RESPONSIBILITY: Both result and target must be non-null.
+        /// Resistance has already been resolved by DamageCalculator.
         /// </summary>
-        /// <param name="result">Pre-calculated damage with dice info</param>
-        /// <param name="target">Entity receiving damage</param>
+        /// <param name="result">Pre-calculated damage result with resistance applied (must not be null)</param>
+        /// <param name="target">Entity receiving damage (must not be null)</param>
         /// <param name="attacker">Entity dealing damage (null for environmental)</param>
         /// <param name="causalSource">What caused this (for logging "Destroyed by X")</param>
         /// <param name="sourceType">Category of damage source</param>
-        /// <returns>Updated result with resistance and final damage</returns>
+        /// <returns>The same result (for chaining/inspection)</returns>
         public static DamageResult Apply(
             DamageResult result,
             Entity target,
@@ -41,97 +44,16 @@ namespace Assets.Scripts.Combat.Damage
             Object causalSource = null,
             DamageSource sourceType = DamageSource.Ability)
         {
-            // Validate inputs
-            if (target == null)
-            {
-                Debug.LogWarning("[DamageApplicator] Target is null, cannot apply damage");
-                return result ?? CreateEmptyResult(DamageType.Physical);
-            }
-            
-            if (result == null)
-            {
-                result = CreateEmptyResult(DamageType.Physical);
-            }
-            
-            // Get resistance level from target and apply it
-            ResistanceLevel resistance = DamageCalculator.GetResistance(target, result.damageType);
-            DamageCalculator.ApplyResistance(result, resistance);
-
             // ALWAYS emit event for logging, even if damage is 0
             // This is critical for showing IMMUNE/RESISTANT feedback to players
             CombatEventBus.EmitDamage(result, attacker, target, causalSource, sourceType);
 
-            // Apply damage to target (even if 0 - entity tracks this)
-            if (result.finalDamage > 0)
+            // Apply damage to target
+            if (result.FinalDamage > 0)
             {
-                target.TakeDamage(result.finalDamage);
+                target.TakeDamage(result.FinalDamage);
             }
-            
-            return result;
-        }
-        
-        // ==================== CONVENIENCE METHODS (Create Result + Apply) ====================
-        
-        /// <summary>
-        /// Apply flat damage from an attacker.
-        /// Creates a result with no dice (0d0 + flat bonus).
-        /// </summary>
-        public static DamageResult ApplyFlat(
-            int damage,
-            DamageType damageType,
-            Entity target,
-            Entity attacker,
-            Object causalSource,
-            DamageSource sourceType = DamageSource.Ability)
-        {
-            string sourceName = causalSource != null ? causalSource.name : "Unknown";
-            var result = DamageCalculator.FromFlat(damage, damageType, sourceName);
-            return Apply(result, target, attacker, causalSource, sourceType);
-        }
-        
-        /// <summary>
-        /// Apply flat environmental damage (no attacker).
-        /// Creates a result with no dice (0d0 + flat bonus).
-        /// </summary>
-        public static DamageResult ApplyEnvironmentalFlat(
-            int damage,
-            DamageType damageType,
-            Entity target,
-            Object causalSource,
-            DamageSource sourceType = DamageSource.Effect)
-        {
-            string sourceName = causalSource != null ? causalSource.name : "Environmental";
-            var result = DamageCalculator.FromFlat(damage, damageType, sourceName);
-            return Apply(result, target, null, causalSource, sourceType);
-        }
-        
-        /// <summary>
-        /// Apply dice-based environmental damage (e.g., DoT with 1d6 fire per turn).
-        /// Creates a result with dice information.
-        /// </summary>
-        public static DamageResult ApplyEnvironmentalDice(
-            int diceCount,
-            int dieSize,
-            int bonus,
-            DamageType damageType,
-            Entity target,
-            Object causalSource,
-            DamageSource sourceType = DamageSource.Effect)
-        {
-            string sourceName = causalSource != null ? causalSource.name : "Environmental";
-            var result = DamageCalculator.FromDice(diceCount, dieSize, bonus, damageType, sourceName);
-            return Apply(result, target, null, causalSource, sourceType);
-        }
-        
-        // ==================== RESULT CREATION HELPERS ====================
-        
-        /// <summary>
-        /// Create an empty result for zero damage cases.
-        /// </summary>
-        private static DamageResult CreateEmptyResult(DamageType damageType)
-        {
-            var result = DamageResult.Create(damageType);
-            DamageCalculator.ApplyResistance(result, ResistanceLevel.Normal);
+
             return result;
         }
     }
