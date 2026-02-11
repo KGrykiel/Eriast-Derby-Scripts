@@ -15,67 +15,38 @@ namespace Assets.Scripts.Skills.Helpers.Resolvers
         public static bool Execute(SkillContext ctx)
         {
             Skill skill = ctx.Skill;
-            Vehicle targetVehicle = ctx.TargetVehicle;
-
             Entity dcSource = ctx.SourceComponent;
             int dc = SaveCalculator.CalculateSaveDC(skill, dcSource);
-            
+
             SaveResult saveRoll;
-            
-            if (targetVehicle != null)
+
+            if (ctx.TargetVehicle != null)
             {
-                // Vehicle target: use vehicle-level overload (handles resolution)
-                saveRoll = SaveCalculator.PerformSavingThrow(
-                    targetVehicle, 
-                    skill.saveSpec, 
+                // Vehicle target: use performer (handles routing + computation + event)
+                saveRoll = SavePerformer.Execute(
+                    ctx.TargetVehicle,
+                    skill.saveSpec,
                     dc,
-                    ctx.TargetComponent);
-                
-                if (saveRoll == null)
-                {
-                    // Can't attempt save — auto-fail, apply effects
-                    SkillEffectApplicator.ApplyAllEffects(ctx);
-                    return true;
-                }
+                    causalSource: skill,
+                    ctx.TargetComponent,
+                    ctx.SourceComponent);
             }
             else
             {
-                // Non-vehicle target: direct save without routing
-                saveRoll = SaveCalculator.PerformSavingThrowForEntity(
-                    skill.saveSpec, dc, ctx.TargetEntity);
+                // Non-vehicle target: direct computation without routing
+                saveRoll = SavePerformer.ExecuteForEntity(
+                    ctx.TargetEntity,
+                    skill.saveSpec,
+                    dc,
+                    causalSource: skill,
+                    attackerEntity: ctx.SourceComponent);
             }
-            
-            EmitSaveEvent(saveRoll, ctx.SourceComponent, saveRoll != null ? ctx.TargetEntity : null, ctx.TargetComponent, skill);
-            
-            if (saveRoll.Succeeded)
+
+            if (saveRoll.Roll.Success)
                 return false;
-            
+
             SkillEffectApplicator.ApplyAllEffects(ctx);
             return true;
-        }
-        
-        // ==================== INTERNAL METHODS ====================
-        
-        /// <summary>
-        /// Emit the appropriate combat event.
-        /// </summary>
-        private static void EmitSaveEvent(
-            SaveResult saveRoll,
-            VehicleComponent sourceComponent,
-            Entity savingEntity,
-            VehicleComponent targetComponent,
-            Skill skill)
-        {
-            string targetComponentName = targetComponent != null ? targetComponent.name : null;
-            
-            CombatEventBus.EmitSavingThrow(
-                saveRoll,
-                sourceComponent,
-                savingEntity,
-                skill,
-                succeeded: saveRoll.Succeeded,
-                targetComponentName: targetComponentName,
-                character: saveRoll.Character);  // Pass character from result
         }
     }
 }

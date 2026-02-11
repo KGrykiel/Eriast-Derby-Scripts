@@ -234,8 +234,14 @@ namespace Assets.Scripts.Combat
             {
                 var character = seat?.assignedCharacter;
                 if (character == null) continue;
-                
-                int modifier = character.GetAttributeModifier(attribute) + character.GetProficiencyBonus(skill);
+
+                int attributeScore = character.GetAttributeScore(attribute);
+                int attrMod = CharacterFormulas.CalculateAttributeModifier(attributeScore);
+                int proficiency = character.IsProficient(skill) 
+                    ? CharacterFormulas.CalculateProficiencyBonus(character.level) 
+                    : 0;
+                int modifier = attrMod + proficiency;
+
                 if (modifier > bestModifier)
                 {
                     best = character;
@@ -271,8 +277,12 @@ namespace Assets.Scripts.Combat
             {
                 var character = seat?.assignedCharacter;
                 if (character == null) continue;
-                
-                int modifier = character.GetAttributeModifier(attribute) + (character.level / 2);
+
+                int attributeScore = character.GetAttributeScore(attribute);
+                int attrMod = CharacterFormulas.CalculateAttributeModifier(attributeScore);
+                int halfLevel = CharacterFormulas.CalculateHalfLevelBonus(character.level);
+                int modifier = attrMod + halfLevel;
+
                 if (modifier > bestModifier)
                 {
                     best = character;

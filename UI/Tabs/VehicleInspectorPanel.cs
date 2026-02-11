@@ -844,7 +844,7 @@ public class VehicleInspectorPanel : MonoBehaviour
             }
             if (seat.assignedCharacter != null)
             {
-                totalSkills += seat.assignedCharacter.GetPersonalSkills().Count;
+                totalSkills += seat.assignedCharacter.GetPersonalAbilities().Count;
             }
         }
         
@@ -904,7 +904,7 @@ public class VehicleInspectorPanel : MonoBehaviour
                 }
                 if (seat.assignedCharacter != null)
                 {
-                    seatSkills.AddRange(seat.assignedCharacter.GetPersonalSkills());
+                    seatSkills.AddRange(seat.assignedCharacter.GetPersonalAbilities());
                 }
                 
                 if (seatSkills.Count > 0)

@@ -1,40 +1,30 @@
-﻿using System.Collections.Generic;
-using System.Linq;
-
-namespace Assets.Scripts.Combat.Attacks
+﻿namespace Assets.Scripts.Combat.Attacks
 {
     /// <summary>
-    /// Result of an attack roll (d20 + bonuses vs AC).
-    /// Built once with complete data by AttackCalculator.
+    /// Attack result = universal roll outcome + attack-specific context.
+    /// Pure data bag - no logic or factories.
+    /// Access roll data through the Roll property.
+    /// 
+    /// Follows same pattern as SaveResult/SkillCheckResult:
+    /// D20RollOutcome (mechanics) + domain context (what happened).
     /// </summary>
     [System.Serializable]
-    public class AttackResult : ID20RollResult
+    public class AttackResult
     {
-        public int BaseRoll { get; }
-        public List<RollBonus> Bonuses { get; }
-        public int TargetValue { get; }
-        public bool? Success { get; }
-        
-        public bool IsCriticalHit { get; }
-        public bool IsCriticalMiss { get; }
-        
-        public int Total => BaseRoll + TotalModifier;
-        public int TotalModifier => Bonuses?.Sum(b => b.Value) ?? 0;
-        
-        public AttackResult(
-            int baseRoll,
-            List<RollBonus> bonuses,
-            int targetValue,
-            bool success,
-            bool isCriticalHit = false,
-            bool isCriticalMiss = false)
+        /// <summary>Universal roll outcome (the decisive roll)</summary>
+        public D20RollOutcome Roll { get; }
+
+        /// <summary>Entity that was actually hit. Null if complete miss.</summary>
+        public Entity HitTarget { get; }
+
+        /// <summary>Whether this hit used the fallback target instead of the primary.</summary>
+        public bool WasFallback { get; }
+
+        public AttackResult(D20RollOutcome roll, Entity hitTarget = null, bool wasFallback = false)
         {
-            BaseRoll = baseRoll;
-            Bonuses = bonuses ?? new List<RollBonus>();
-            TargetValue = targetValue;
-            Success = success;
-            IsCriticalHit = isCriticalHit;
-            IsCriticalMiss = isCriticalMiss;
+            Roll = roll;
+            HitTarget = hitTarget;
+            WasFallback = wasFallback;
         }
     }
 }

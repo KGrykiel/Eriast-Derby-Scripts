@@ -4,100 +4,98 @@ using Assets.Scripts.Characters;
 namespace Assets.Scripts.Combat.SkillChecks
 {
     /// <summary>
-    /// Calculator for skill checks (d20 + bonuses vs DC).
-    /// Primary entry point takes a vehicle — resolution is handled internally.
-    /// Returns null if the check can't be attempted (destroyed component, no character, etc.).
+    /// Rules engine for skill checks.
+    /// Gathers bonuses according to game rules, rolls via D20Calculator, wraps in result.
+    /// 
+    /// UNIVERSAL: No vehicle, component, or routing knowledge.
+    /// Takes pre-resolved participants (entity for vehicle checks, character for character checks).
+    /// 
+    /// Vehicle routing happens EXTERNALLY via CheckRouter before calling this.
+    /// Non-vehicle entities call this directly.
     /// </summary>
     public static class SkillCheckCalculator
     {
         /// <summary>
-        /// Perform a skill check for a vehicle. Resolves which component and character
-        /// are involved, gathers bonuses, rolls, returns complete result.
+        /// Compute a skill check with pre-resolved participants.
+        /// Gathers bonuses from the given entity/character based on spec, rolls, returns result.
+        /// 
+        /// For vehicle checks: pass the resolved component as entity.
+        /// For character checks: pass the resolved character.
+        /// For standalone entities: pass the entity directly.
         /// </summary>
-        /// <param name="initiatingCharacter">Character who initiated this check (for character-initiated skills). 
-        /// Null for vehicle-wide checks like event cards, which route to best character.</param>
-        public static SkillCheckResult PerformSkillCheck(
-            Vehicle vehicle,
+        public static SkillCheckResult Compute(
             SkillCheckSpec checkSpec,
             int dc,
-            Character initiatingCharacter = null)
-        {
-            var routing = CheckRouter.RouteSkillCheck(vehicle, checkSpec, initiatingCharacter);
-            if (!routing.CanAttempt)
-            {
-                // Component required but unavailable - automatic failure
-                return SkillCheckResult.AutoFail(checkSpec, dc);
-            }
-
-            return PerformSkillCheck(checkSpec, dc, routing.Component, routing.Character);
-        }
-
-        /// <summary>
-        /// Perform a skill check with already-routed component and character.
-        /// Internal helper - use the vehicle-level overload instead.
-        /// </summary>
-        private static SkillCheckResult PerformSkillCheck(
-            SkillCheckSpec checkSpec,
-            int dc,
-            Entity component = null,
+            Entity entity = null,
             Character character = null)
         {
-            int baseRoll = RollUtility.RollD20();
-            var bonuses = GatherBonuses(checkSpec, component, character);
-            int total = baseRoll + D20RollHelpers.SumBonuses(bonuses);
-            bool success = total >= dc;
-            
-            return new SkillCheckResult(baseRoll, checkSpec, bonuses, dc, success, character);
+            var bonuses = GatherBonuses(checkSpec, entity, character);
+            var roll = D20Calculator.Roll(bonuses, dc);
+            return new SkillCheckResult(roll, checkSpec, character);
         }
-        
+
         /// <summary>
-        /// Gather all bonuses for a skill check.
-        /// Component provides: base value + applied modifiers (status effects, equipment).
+        /// Gather all bonuses for a skill check based on game rules.
+        /// Entity provides: base value + applied modifiers (status effects, equipment).
         /// Character provides: attribute modifier + proficiency bonus.
         /// </summary>
         public static List<RollBonus> GatherBonuses(
             SkillCheckSpec checkSpec,
-            Entity component = null,
+            Entity entity = null,
             Character character = null)
         {
             var bonuses = new List<RollBonus>();
-            
-            // Component bonuses (vehicle attribute checks)
-            if (component != null && checkSpec.IsVehicleCheck)
+
+            if (entity != null && checkSpec.IsVehicleCheck)
             {
-                string label = component.name ?? checkSpec.DisplayName;
-                D20RollHelpers.GatherComponentBonuses(component, checkSpec.vehicleAttribute, label, bonuses);
+                string label = entity.name ?? checkSpec.DisplayName;
+                D20RollHelpers.GatherComponentBonuses(entity, checkSpec.vehicleAttribute, label, bonuses);
             }
-            
-            // Character bonuses (attribute modifier + proficiency)
+
             if (character != null && checkSpec.IsCharacterCheck)
             {
                 GatherCharacterBonuses(character, checkSpec.characterSkill, bonuses);
             }
-            
+
             return bonuses;
         }
-        
+
         // ==================== CHARACTER BONUSES ====================
-        
+
         private static void GatherCharacterBonuses(
             Character character,
             CharacterSkill skill,
             List<RollBonus> bonuses)
         {
             CharacterAttribute attribute = CharacterSkillHelper.GetPrimaryAttribute(skill);
-            
-            int attrMod = character.GetAttributeModifier(attribute);
+
+            int attributeScore = character.GetAttributeScore(attribute);
+            int attrMod = CharacterFormulas.CalculateAttributeModifier(attributeScore);
             if (attrMod != 0)
             {
                 bonuses.Add(new RollBonus($"{attribute} Modifier", attrMod));
             }
-            
-            int proficiency = character.GetProficiencyBonus(skill);
-            if (proficiency != 0)
+
+            if (character.IsProficient(skill))
             {
-                bonuses.Add(new RollBonus("Proficiency", proficiency));
+                int proficiency = CharacterFormulas.CalculateProficiencyBonus(character.level);
+                if (proficiency != 0)
+                {
+                    bonuses.Add(new RollBonus("Proficiency", proficiency));
+                }
             }
+        }
+
+        /// <summary>
+        /// Create an automatic failure result (routing failed - no roll occurred).
+        /// </summary>
+        public static SkillCheckResult AutoFail(SkillCheckSpec spec, int dc)
+        {
+            return new SkillCheckResult(
+                D20Calculator.AutoFail(dc),
+                spec,
+                character: null,
+                isAutoFail: true);
         }
     }
 }

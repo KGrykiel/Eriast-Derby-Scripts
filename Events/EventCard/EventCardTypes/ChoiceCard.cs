@@ -111,14 +111,10 @@ namespace Assets.Scripts.Events.EventCard.EventCardTypes
         /// </summary>
         private CardResolutionResult ResolveSkillCheck(CardChoice choice, Vehicle vehicle)
         {
-            var checkResult = SkillCheckCalculator.PerformSkillCheck(
-                vehicle, choice.checkSpec, choice.dc);
-            
-            CombatEventBus.EmitSkillCheck(
-                checkResult, vehicle.chassis, this, checkResult.Succeeded,
-                character: checkResult.Character);
-            
-            if (checkResult.Succeeded)
+            var checkResult = SkillCheckPerformer.Execute(
+                vehicle, choice.checkSpec, choice.dc, causalSource: this);
+
+            if (checkResult.Roll.Success)
             {
                 ApplyEffects(choice.effects, vehicle);
                 return new CardResolutionResult(true, choice.outcomeNarrative);
@@ -135,15 +131,10 @@ namespace Assets.Scripts.Events.EventCard.EventCardTypes
         /// </summary>
         private CardResolutionResult ResolveSavingThrow(CardChoice choice, Vehicle vehicle)
         {
-            var saveResult = SaveCalculator.PerformSavingThrow(
-                vehicle, choice.saveSpec, choice.dc);
-            
-            CombatEventBus.EmitSavingThrow(
-                saveResult, null, vehicle.chassis, this,
-                saveResult.Succeeded, "Vehicle",
-                character: saveResult.Character);
-            
-            if (saveResult.Succeeded)
+            var saveResult = SavePerformer.Execute(
+                vehicle, choice.saveSpec, choice.dc, causalSource: this);
+
+            if (saveResult.Roll.Success)
             {
                 ApplyEffects(choice.effects, vehicle);
                 return new CardResolutionResult(true, choice.outcomeNarrative);

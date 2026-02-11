@@ -51,18 +51,19 @@ namespace Assets.Scripts.Combat
         public static string FormatAttackShort(AttackResult result)
         {
             if (result == null) return "No roll";
-            
-            string modStr = result.TotalModifier >= 0 
-                ? $"+{result.TotalModifier}" 
-                : $"{result.TotalModifier}";
-            string output = $"{result.Total} (d20: {result.BaseRoll}{modStr})";
-            
-            if (result.TargetValue > 0 && result.Success.HasValue)
+
+            var roll = result.Roll;
+            string modStr = roll.TotalModifier >= 0 
+                ? $"+{roll.TotalModifier}" 
+                : $"{roll.TotalModifier}";
+            string output = $"{roll.Total} (d20: {roll.BaseRoll}{modStr})";
+
+            if (roll.TargetValue > 0)
             {
-                output += $" vs AC {result.TargetValue}";
-                output += result.Success.Value ? " - HIT" : " - MISS";
+                output += $" vs AC {roll.TargetValue}";
+                output += roll.Success ? " - HIT" : " - MISS";
             }
-            
+
             return output;
         }
         
@@ -72,29 +73,27 @@ namespace Assets.Scripts.Combat
         public static string FormatAttackDetailed(AttackResult result)
         {
             if (result == null) return "No roll data";
-            
+
+            var roll = result.Roll;
             var sb = new StringBuilder();
             sb.AppendLine("Attack Roll Breakdown:");
-            sb.AppendLine($"  d20: {result.BaseRoll}");
-            
-            foreach (var bonus in result.Bonuses)
+            sb.AppendLine($"  d20: {roll.BaseRoll}");
+
+            foreach (var bonus in roll.Bonuses)
             {
                 string sign = bonus.Value >= 0 ? "+" : "";
                 sb.AppendLine($"  {bonus.Label}: {sign}{bonus.Value}");
             }
-            
+
             sb.AppendLine("  ─────────────");
-            sb.AppendLine($"  Total: {result.Total}");
-            
-            if (result.TargetValue > 0)
+            sb.AppendLine($"  Total: {roll.Total}");
+
+            if (roll.TargetValue > 0)
             {
-                sb.AppendLine($"  vs AC: {result.TargetValue}");
-                if (result.Success.HasValue)
-                {
-                    sb.AppendLine($"  Result: {(result.Success.Value ? "HIT" : "MISS")}");
-                }
+                sb.AppendLine($"  vs AC: {roll.TargetValue}");
+                sb.AppendLine($"  Result: {(roll.Success ? "HIT" : "MISS")}");
             }
-            
+
             return sb.ToString();
         }
         
@@ -105,18 +104,19 @@ namespace Assets.Scripts.Combat
         public static string FormatSaveShort(SaveResult result)
         {
             if (result == null) return "No roll";
-            
-            string modStr = result.TotalModifier >= 0 
-                ? $"+{result.TotalModifier}" 
-                : $"{result.TotalModifier}";
-            string output = $"{result.Total} (d20: {result.BaseRoll}{modStr})";
-            
-            if (result.TargetValue > 0 && result.Success.HasValue)
+
+            var roll = result.Roll;
+            string modStr = roll.TotalModifier >= 0 
+                ? $"+{roll.TotalModifier}" 
+                : $"{roll.TotalModifier}";
+            string output = $"{roll.Total} (d20: {roll.BaseRoll}{modStr})";
+
+            if (roll.TargetValue > 0)
             {
-                output += $" vs DC {result.TargetValue}";
-                output += result.Succeeded ? " - SAVED" : " - FAILED";
+                output += $" vs DC {roll.TargetValue}";
+                output += roll.Success ? " - SAVED" : " - FAILED";
             }
-            
+
             return output;
         }
         
@@ -126,30 +126,28 @@ namespace Assets.Scripts.Combat
         public static string FormatSaveDetailed(SaveResult result)
         {
             if (result == null) return "No roll data";
-            
+
+            var roll = result.Roll;
             var sb = new StringBuilder();
-            sb.AppendLine($"{result.saveSpec.DisplayName} Save:");
-            sb.AppendLine($"  d20: {result.BaseRoll}");
-            
-            foreach (var bonus in result.Bonuses)
+            sb.AppendLine($"{result.Spec.DisplayName} Save:");
+            sb.AppendLine($"  d20: {roll.BaseRoll}");
+
+            foreach (var bonus in roll.Bonuses)
             {
                 string sign = bonus.Value >= 0 ? "+" : "";
                 sb.AppendLine($"  {bonus.Label}: {sign}{bonus.Value}");
             }
-            
+
             sb.AppendLine("  ─────────────");
-            sb.AppendLine($"  Total: {result.Total}");
-            
-            if (result.TargetValue > 0)
+            sb.AppendLine($"  Total: {roll.Total}");
+
+            if (roll.TargetValue > 0)
             {
-                sb.AppendLine($"  vs DC: {result.TargetValue}");
-                if (result.Success.HasValue)
-                {
-                    string resultText = result.Succeeded ? "SAVED" : "FAILED";
-                    sb.AppendLine($"  Result: {resultText}");
-                }
+                sb.AppendLine($"  vs DC: {roll.TargetValue}");
+                string resultText = roll.Success ? "SAVED" : "FAILED";
+                sb.AppendLine($"  Result: {resultText}");
             }
-            
+
             return sb.ToString();
         }
         
@@ -160,18 +158,19 @@ namespace Assets.Scripts.Combat
         public static string FormatSkillCheckShort(SkillCheckResult result)
         {
             if (result == null) return "No roll";
-            
-            string modStr = result.TotalModifier >= 0 
-                ? $"+{result.TotalModifier}" 
-                : $"{result.TotalModifier}";
-            string output = $"{result.Total} (d20: {result.BaseRoll}{modStr})";
-            
-            if (result.TargetValue > 0 && result.Success.HasValue)
+
+            var roll = result.Roll;
+            string modStr = roll.TotalModifier >= 0 
+                ? $"+{roll.TotalModifier}" 
+                : $"{roll.TotalModifier}";
+            string output = $"{roll.Total} (d20: {roll.BaseRoll}{modStr})";
+
+            if (roll.TargetValue > 0)
             {
-                output += $" vs DC {result.TargetValue}";
-                output += result.Succeeded ? " - SUCCESS" : " - FAILURE";
+                output += $" vs DC {roll.TargetValue}";
+                output += roll.Success ? " - SUCCESS" : " - FAILURE";
             }
-            
+
             return output;
         }
         
@@ -181,30 +180,28 @@ namespace Assets.Scripts.Combat
         public static string FormatSkillCheckDetailed(SkillCheckResult result)
         {
             if (result == null) return "No roll data";
-            
+
+            var roll = result.Roll;
             var sb = new StringBuilder();
-            sb.AppendLine($"{result.checkSpec.DisplayName} Check:");
-            sb.AppendLine($"  d20: {result.BaseRoll}");
-            
-            foreach (var bonus in result.Bonuses)
+            sb.AppendLine($"{result.Spec.DisplayName} Check:");
+            sb.AppendLine($"  d20: {roll.BaseRoll}");
+
+            foreach (var bonus in roll.Bonuses)
             {
                 string sign = bonus.Value >= 0 ? "+" : "";
                 sb.AppendLine($"  {bonus.Label}: {sign}{bonus.Value}");
             }
-            
+
             sb.AppendLine("  ─────────────");
-            sb.AppendLine($"  Total: {result.Total}");
-            
-            if (result.TargetValue > 0)
+            sb.AppendLine($"  Total: {roll.Total}");
+
+            if (roll.TargetValue > 0)
             {
-                sb.AppendLine($"  vs DC: {result.TargetValue}");
-                if (result.Success.HasValue)
-                {
-                    string resultText = result.Succeeded ? "SUCCESS" : "FAILURE";
-                    sb.AppendLine($"  Result: {resultText}");
-                }
+                sb.AppendLine($"  vs DC: {roll.TargetValue}");
+                string resultText = roll.Success ? "SUCCESS" : "FAILURE";
+                sb.AppendLine($"  Result: {resultText}");
             }
-            
+
             return sb.ToString();
         }
         
@@ -238,7 +235,7 @@ namespace Assets.Scripts.Combat
                 return $"{saveSpec.DisplayName} Save: +0";
             }
             
-            var bonuses = SaveCalculator.GatherBonuses(saveSpec, component: target);
+            var bonuses = SaveCalculator.GatherBonuses(saveSpec, entity: target);
             int total = 0;
             foreach (var b in bonuses) total += b.Value;
             
@@ -800,7 +797,7 @@ namespace Assets.Scripts.Combat
             
             string targetName = FormatDefensiveSource(evt.Character, evt.Target, targetVehicle);
             string skillName = action?.SourceName ?? (evt.CausalSource != null ? evt.CausalSource.name : "effect");
-            string saveTypeName = evt.Result?.saveSpec.DisplayName ?? "Mobility";
+            string saveTypeName = evt.Result?.Spec.DisplayName ?? "Mobility";
             
             string resultText = evt.Succeeded 
                 ? $"<color={Colors.Success}>Saved</color>" 
@@ -830,7 +827,7 @@ namespace Assets.Scripts.Combat
             // Add DC breakdown for tooltip
             if (evt.Result != null && evt.CausalSource is Skill skill)
             {
-                logEvt.WithMetadata("dcBreakdown", FormatDCDetailed(evt.Result.TargetValue, skill.name, evt.Result.saveSpec));
+                logEvt.WithMetadata("dcBreakdown", FormatDCDetailed(evt.Result.Roll.TargetValue, skill.name, evt.Result.Spec));
             }
             
             //// Add target's save modifier breakdown
@@ -856,7 +853,7 @@ namespace Assets.Scripts.Combat
             
             string sourceName = FormatSource(evt.Character, evt.Source, sourceVehicle);
             string skillName = action?.SourceName ?? (evt.CausalSource != null ? evt.CausalSource.name : "task");
-            string checkTypeName = evt.Result?.checkSpec.DisplayName ?? "Mobility";
+            string checkTypeName = evt.Result?.Spec.DisplayName ?? "Mobility";
             
             string resultText = evt.Succeeded 
                 ? $"<color={Colors.Success}>Success</color>" 
@@ -886,7 +883,7 @@ namespace Assets.Scripts.Combat
             // Add DC breakdown for tooltip
             if (evt.Result != null && evt.CausalSource is Skill skill)
             {
-                logEvt.WithMetadata("dcBreakdown", $"{checkTypeName} Check DC: {evt.Result.TargetValue} ({skill.name})");
+                logEvt.WithMetadata("dcBreakdown", $"{checkTypeName} Check DC: {evt.Result.Roll.TargetValue} ({skill.name})");
             }
         }
         

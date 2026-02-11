@@ -507,13 +507,10 @@ namespace Assets.Scripts.Stages
     /// </summary>
         private void ResolveSkillCheckTurnEffect(Vehicle vehicle, StageLane lane, LaneTurnEffect effect)
         {
-            var result = SkillCheckCalculator.PerformSkillCheck(
-                vehicle, effect.checkSpec, effect.dc);
-            
-            CombatEventBus.Emit(new SkillCheckEvent(
-                result, vehicle.chassis, this, result.Succeeded));
-            
-            if (result.Succeeded)
+            var result = SkillCheckPerformer.Execute(
+                vehicle, effect.checkSpec, effect.dc, causalSource: this);
+
+            if (result.Roll.Success)
             {
                 ApplyTurnEffects(vehicle, effect.onSuccess);
             }
@@ -521,7 +518,7 @@ namespace Assets.Scripts.Stages
             {
                 ApplyTurnEffects(vehicle, effect.onFailure);
             }
-            
+
             this.LogLaneTurnEffectWithCheck(vehicle, lane, effect, result);
         }
     
@@ -530,14 +527,10 @@ namespace Assets.Scripts.Stages
     /// </summary>
         private void ResolveSavingThrowTurnEffect(Vehicle vehicle, StageLane lane, LaneTurnEffect effect)
         {
-            var result = SaveCalculator.PerformSavingThrow(
-                vehicle, effect.saveSpec, effect.dc);
-            
-            CombatEventBus.EmitSavingThrow(
-                result, null, vehicle.chassis, this,
-                result.Succeeded, "Vehicle");
-            
-            if (result.Succeeded)
+            var result = SavePerformer.Execute(
+                vehicle, effect.saveSpec, effect.dc, causalSource: this);
+
+            if (result.Roll.Success)
             {
                 ApplyTurnEffects(vehicle, effect.onSuccess);
             }
@@ -545,7 +538,7 @@ namespace Assets.Scripts.Stages
             {
                 ApplyTurnEffects(vehicle, effect.onFailure);
             }
-            
+
             this.LogLaneTurnEffectWithSave(vehicle, lane, effect, result);
         }
     

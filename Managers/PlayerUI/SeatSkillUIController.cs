@@ -105,7 +105,7 @@ namespace Assets.Scripts.Managers.PlayerUI
             // Add character's personal skills
             if (currentSeat.assignedCharacter != null)
             {
-                var personalSkills = currentSeat.assignedCharacter.GetPersonalSkills();
+                var personalSkills = currentSeat.assignedCharacter.GetPersonalAbilities();
                 if (personalSkills != null)
                 {
                     availableSkills.AddRange(personalSkills);
@@ -180,10 +180,10 @@ namespace Assets.Scripts.Managers.PlayerUI
             {
                 availableSkills.AddRange(component.GetAllSkills());
             }
-            
+
             if (currentSeat.assignedCharacter != null)
             {
-                var personalSkills = currentSeat.assignedCharacter.GetPersonalSkills();
+                var personalSkills = currentSeat.assignedCharacter.GetPersonalAbilities();
                 if (personalSkills != null)
                 {
                     availableSkills.AddRange(personalSkills);

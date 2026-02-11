@@ -1,69 +1,31 @@
-﻿using System.Collections.Generic;
-using System.Linq;
-
-namespace Assets.Scripts.Combat.SkillChecks
+﻿namespace Assets.Scripts.Combat.SkillChecks
 {
     /// <summary>
-    /// Result of a skill check (d20 + bonuses vs DC).
-    /// Built once with complete data by SkillCheckCalculator.
+    /// Skill check result = universal roll outcome + check-specific context.
+    /// Pure data bag - no logic or factories.
+    /// Access roll data through the Roll property.
     /// </summary>
     [System.Serializable]
-    public class SkillCheckResult : ID20RollResult
+    public class SkillCheckResult
     {
-        public SkillCheckSpec checkSpec;
-        
-        /// <summary>
-        /// Character who made the check (null for vehicle-only checks).
-        /// Stored here so event emission can log "Pilot makes Piloting check" vs "Vehicle makes Stability check".
-        /// </summary>
-        public Character Character;
-        
-        /// <summary>
-        /// True if this was an automatic failure (required component missing).
-        /// Auto-fails have baseRoll = 0 and no bonuses.
-        /// </summary>
+        /// <summary>Universal roll outcome (mechanics)</summary>
+        public D20RollOutcome Roll { get; }
+
+        /// <summary>What was tested (vehicle attribute or character skill)</summary>
+        public SkillCheckSpec Spec { get; }
+
+        /// <summary>Character who made the check (null for vehicle-only checks)</summary>
+        public Character Character { get; }
+
+        /// <summary>True if required component was missing (no roll occurred)</summary>
         public bool IsAutoFail { get; }
-        
-        public int BaseRoll { get; }
-        public List<RollBonus> Bonuses { get; }
-        public int TargetValue { get; }
-        public bool? Success { get; }
-        
-        public int Total => BaseRoll + TotalModifier;
-        public int TotalModifier => Bonuses?.Sum(b => b.Value) ?? 0;
-        public bool Succeeded => Success == true;
-        
-        public SkillCheckResult(
-            int baseRoll,
-            SkillCheckSpec checkSpec,
-            List<RollBonus> bonuses,
-            int targetValue,
-            bool success,
-            Character character = null,
-            bool isAutoFail = false)
+
+        public SkillCheckResult(D20RollOutcome roll, SkillCheckSpec spec, Character character = null, bool isAutoFail = false)
         {
-            BaseRoll = baseRoll;
-            this.checkSpec = checkSpec;
-            Bonuses = bonuses ?? new List<RollBonus>();
-            TargetValue = targetValue;
-            Success = success;
+            Roll = roll;
+            Spec = spec;
             Character = character;
             IsAutoFail = isAutoFail;
-        }
-        
-        /// <summary>
-        /// Create an automatic failure result (required component missing/broken).
-        /// </summary>
-        public static SkillCheckResult AutoFail(SkillCheckSpec checkSpec, int dc)
-        {
-            return new SkillCheckResult(
-                baseRoll: 0,
-                checkSpec: checkSpec,
-                bonuses: new List<RollBonus>(),
-                targetValue: dc,
-                success: false,
-                character: null,
-                isAutoFail: true);
         }
     }
 }

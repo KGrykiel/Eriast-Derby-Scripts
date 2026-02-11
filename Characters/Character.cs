@@ -61,19 +61,20 @@ public class Character : ScriptableObject
     private List<CharacterSkill> proficientSkills = new();
 
     // ==================== COMBAT STATS ====================
-    
+
     [Header("Combat Stats")]
     [Tooltip("Base attack bonus for weapon attacks.")]
     public int baseAttackBonus = 0;
-    
-    [Header("Legacy Skills")]
-    [Tooltip("Personal skills this character brings (independent of component). Existing skill system.")]
-    public List<Skill> personalSkills = new();
+
+    [Header("Personal Abilities")]
+    [Tooltip("Character-specific abilities available regardless of component operated (e.g., Evasive Maneuver, Quick Scan). These are Skill ScriptableObject assets, not proficiency categories.")]
+    public List<Skill> personalAbilities = new();
 
     // ==================== ATTRIBUTE METHODS ====================
-    
+
     /// <summary>
     /// Get the raw score for a character attribute.
+    /// Pure data access - formulas live in CharacterFormulas.
     /// </summary>
     public int GetAttributeScore(CharacterAttribute attribute)
     {
@@ -88,48 +89,27 @@ public class Character : ScriptableObject
             _ => 10
         };
     }
-    
-    /// <summary>
-    /// Get the modifier for a character attribute.
-    /// Standard D&D formula: (score - 10) / 2, rounded down.
-    /// </summary>
-    public int GetAttributeModifier(CharacterAttribute attribute)
-    {
-        int score = GetAttributeScore(attribute);
-        return (score - 10) / 2;
-    }
-    
+
     // ==================== PROFICIENCY METHODS ====================
-    
+
     /// <summary>
     /// Check if this character is proficient in a skill.
+    /// Pure data access - formulas live in CharacterFormulas.
     /// </summary>
     public bool IsProficient(CharacterSkill skill)
     {
         return proficientSkills != null && proficientSkills.Contains(skill);
     }
     
+    // ==================== PERSONAL ABILITIES ====================
+
     /// <summary>
-    /// Get the proficiency bonus for a skill.
-    /// D&D 5e progression: +2 (lvl 1-4), +3 (5-8), +4 (9-12), +5 (13-16), +6 (17-20)
-    /// Formula: (level - 1) / 4 + 2
+    /// Get personal abilities this character can use.
+    /// These are usable regardless of which component they're assigned to.
+    /// Returns: List of Skill ScriptableObject assets (abilities like Evasive Maneuver, Quick Scan).
     /// </summary>
-    public int GetProficiencyBonus(CharacterSkill skill)
+    public List<Skill> GetPersonalAbilities()
     {
-        if (!IsProficient(skill))
-            return 0;
-        
-        return (level - 1) / 4 + 2;
-    }
-    
-    // ==================== LEGACY METHODS ====================
-    
-    /// <summary>
-    /// Get personal skills this character contributes to their component.
-    /// These skills are available regardless of which component they're assigned to.
-    /// </summary>
-    public List<Skill> GetPersonalSkills()
-    {
-        return personalSkills != null ? new List<Skill>(personalSkills) : new List<Skill>();
+        return personalAbilities != null ? new List<Skill>(personalAbilities) : new List<Skill>();
     }
 }

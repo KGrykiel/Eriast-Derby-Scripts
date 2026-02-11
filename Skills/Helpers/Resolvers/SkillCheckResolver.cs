@@ -1,6 +1,5 @@
 ﻿using Assets.Scripts.Combat.SkillChecks;
 using Assets.Scripts.Combat;
-using UnityEngine;
 
 namespace Assets.Scripts.Skills.Helpers.Resolvers
 {
@@ -17,43 +16,19 @@ namespace Assets.Scripts.Skills.Helpers.Resolvers
         {
             Skill skill = ctx.Skill;
 
-            var checkResult = SkillCheckCalculator.PerformSkillCheck(
+            // Execute: routing + computation + event emission in one call
+            var checkResult = SkillCheckPerformer.Execute(
                 ctx.SourceVehicle,
                 skill.checkSpec,
                 skill.checkDC,
-                ctx.SourceCharacter);  // Pass initiating character
+                causalSource: skill,
+                ctx.SourceCharacter);
 
-            if (checkResult == null)
-            {
-                Debug.LogWarning($"[SkillCheckResolver] {skill.name}: Check cannot be attempted");
+            if (!checkResult.Roll.Success)
                 return false;
-            }
 
-            EmitCheckEvent(checkResult, ctx.SourceComponent, skill);
-            
-            if (!checkResult.Succeeded)
-                return false;
-            
             SkillEffectApplicator.ApplyAllEffects(ctx);
             return true;
-        }
-        
-        // ==================== INTERNAL METHODS ====================
-        
-        /// <summary>
-        /// Emit the appropriate combat event.
-        /// </summary>
-        private static void EmitCheckEvent(
-            SkillCheckResult checkResult,
-            VehicleComponent sourceComponent,
-            Skill skill)
-        {
-            CombatEventBus.EmitSkillCheck(
-                checkResult,
-                sourceComponent,
-                skill,
-                succeeded: checkResult.Succeeded,
-                character: checkResult.Character);  // Pass character from result
         }
     }
 }

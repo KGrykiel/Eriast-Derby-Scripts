@@ -98,14 +98,14 @@ namespace Assets.Scripts.Stages
         {
             if (vehicle == null || lane == null || effect == null || checkResult == null) return;
             
-            string narrative = checkResult.Succeeded ? effect.successNarrative : effect.failureNarrative;
-            
+            string narrative = checkResult.Roll.Success ? effect.successNarrative : effect.failureNarrative;
+
             if (string.IsNullOrEmpty(narrative))
             {
-                narrative = $"{vehicle.vehicleName} {(checkResult.Succeeded ? "passed" : "failed")} {effect.effectName} " +
-                           $"({checkResult.checkSpec.DisplayName} DC {checkResult.TargetValue}: rolled {checkResult.Total})";
+                narrative = $"{vehicle.vehicleName} {(checkResult.Roll.Success ? "passed" : "failed")} {effect.effectName} " +
+                           $"({checkResult.Spec.DisplayName} DC {checkResult.Roll.TargetValue}: rolled {checkResult.Roll.Total})";
             }
-            
+
             RaceHistory.Log(
                 EventType.StageHazard,
                 EventImportance.Medium,
@@ -114,10 +114,10 @@ namespace Assets.Scripts.Stages
                 vehicle
             ).WithMetadata("laneName", lane.laneName)
              .WithMetadata("effectName", effect.effectName)
-             .WithMetadata("success", checkResult.Succeeded)
-             .WithMetadata("checkType", checkResult.checkSpec.DisplayName)
-             .WithMetadata("dc", checkResult.TargetValue)
-             .WithMetadata("roll", checkResult.Total);
+             .WithMetadata("success", checkResult.Roll.Success)
+             .WithMetadata("checkType", checkResult.Spec.DisplayName)
+             .WithMetadata("dc", checkResult.Roll.TargetValue)
+             .WithMetadata("roll", checkResult.Roll.Total);
         }
         
         /// <summary>
@@ -132,14 +132,14 @@ namespace Assets.Scripts.Stages
         {
             if (vehicle == null || lane == null || effect == null || saveResult == null) return;
             
-            string narrative = saveResult.Succeeded ? effect.successNarrative : effect.failureNarrative;
-            
+            string narrative = saveResult.Roll.Success ? effect.successNarrative : effect.failureNarrative;
+
             if (string.IsNullOrEmpty(narrative))
             {
-                narrative = $"{vehicle.vehicleName} {(saveResult.Succeeded ? "passed" : "failed")} {effect.effectName} " +
-                           $"({saveResult.saveSpec.DisplayName} DC {saveResult.TargetValue}: rolled {saveResult.Total})";
+                narrative = $"{vehicle.vehicleName} {(saveResult.Roll.Success ? "passed" : "failed")} {effect.effectName} " +
+                           $"({saveResult.Spec.DisplayName} DC {saveResult.Roll.TargetValue}: rolled {saveResult.Roll.Total})";
             }
-            
+
             RaceHistory.Log(
                 EventType.StageHazard,
                 EventImportance.Medium,
@@ -148,10 +148,10 @@ namespace Assets.Scripts.Stages
                 vehicle
             ).WithMetadata("laneName", lane.laneName)
              .WithMetadata("effectName", effect.effectName)
-             .WithMetadata("success", saveResult.Succeeded)
-             .WithMetadata("saveType", saveResult.saveSpec.DisplayName)
-             .WithMetadata("dc", saveResult.TargetValue)
-             .WithMetadata("roll", saveResult.Total);
+             .WithMetadata("success", saveResult.Roll.Success)
+             .WithMetadata("saveType", saveResult.Spec.DisplayName)
+             .WithMetadata("dc", saveResult.Roll.TargetValue)
+             .WithMetadata("roll", saveResult.Roll.Total);
         }
     }
 }

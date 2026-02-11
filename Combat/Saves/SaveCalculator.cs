@@ -4,120 +4,100 @@ using Assets.Scripts.Characters;
 namespace Assets.Scripts.Combat.Saves
 {
     /// <summary>
-    /// Calculator for saving throws (d20 + bonuses vs DC).
-    /// Primary entry point takes a vehicle — resolution is handled internally.
-    /// Returns null if the save can't be attempted.
+    /// Rules engine for saving throws.
+    /// Gathers bonuses according to game rules, rolls via D20Calculator, wraps in result.
+    /// 
+    /// UNIVERSAL: No vehicle, component, or routing knowledge.
+    /// Takes pre-resolved participants (entity for vehicle saves, character for character saves).
+    /// 
+    /// Vehicle routing happens EXTERNALLY via CheckRouter before calling this.
+    /// Non-vehicle entities call this directly.
     /// </summary>
     public static class SaveCalculator
     {
         /// <summary>
-        /// Perform a saving throw for a vehicle. Resolves who/what saves internally via CheckRouter.
-        /// Use this for vehicle targets where component/character resolution is needed.
+        /// Compute a saving throw with pre-resolved participants.
+        /// Gathers bonuses from the given entity/character based on spec, rolls, returns result.
+        /// 
+        /// For vehicle saves: pass the resolved component as entity.
+        /// For character saves: pass the resolved character.
+        /// For standalone entities: pass the entity directly.
         /// </summary>
-        public static SaveResult PerformSavingThrow(
-            Vehicle vehicle,
+        public static SaveResult Compute(
             SaveSpec saveSpec,
             int dc,
-            VehicleComponent targetComponent = null)
-        {
-            var routing = CheckRouter.RouteSave(vehicle, saveSpec, targetComponent);
-            if (!routing.CanAttempt)
-            {
-                // Component required but unavailable - automatic failure
-                return SaveResult.AutoFail(saveSpec, dc);
-            }
-
-            return PerformSavingThrowInternal(saveSpec, dc, routing.Component, routing.Character);
-        }
-
-        /// <summary>
-        /// Perform a saving throw for a standalone entity (non-vehicle target).
-        /// Use this for entities that don't require CheckRouter resolution (golems, turrets, etc.).
-        /// For vehicle targets, use the Vehicle overload instead.
-        /// </summary>
-        public static SaveResult PerformSavingThrowForEntity(
-            SaveSpec saveSpec,
-            int dc,
-            Entity entity,
+            Entity entity = null,
             Character character = null)
         {
-            return PerformSavingThrowInternal(saveSpec, dc, entity, character);
+            var bonuses = GatherBonuses(saveSpec, entity, character);
+            var roll = D20Calculator.Roll(bonuses, dc);
+            return new SaveResult(roll, saveSpec, character);
         }
 
         /// <summary>
-        /// Internal implementation - performs the actual save calculation.
-        /// Callers should use the appropriate public entry point.
-        /// </summary>
-        private static SaveResult PerformSavingThrowInternal(
-            SaveSpec saveSpec,
-            int dc,
-            Entity component = null,
-            Character character = null)
-        {
-            int baseRoll = RollUtility.RollD20();
-            var bonuses = GatherBonuses(saveSpec, component, character);
-            int total = baseRoll + D20RollHelpers.SumBonuses(bonuses);
-            bool success = total >= dc;
-            
-            return new SaveResult(baseRoll, saveSpec, bonuses, dc, success, character);
-        }
-        
-        /// <summary>
-        /// Gather all bonuses for a saving throw.
-        /// Vehicle saves: component base value + applied modifiers.
+        /// Gather all bonuses for a saving throw based on game rules.
+        /// Vehicle saves: entity base value + applied modifiers.
         /// Character saves: attribute modifier + half level.
         /// </summary>
         public static List<RollBonus> GatherBonuses(
             SaveSpec saveSpec,
-            Entity component = null,
+            Entity entity = null,
             Character character = null)
         {
             var bonuses = new List<RollBonus>();
-            
-            // Component bonuses (vehicle saves)
-            if (component != null && saveSpec.IsVehicleSave)
+
+            if (entity != null && saveSpec.IsVehicleSave)
             {
-                string label = component.name ?? saveSpec.DisplayName;
-                D20RollHelpers.GatherComponentBonuses(component, saveSpec.vehicleAttribute, label, bonuses);
+                string label = entity.name ?? saveSpec.DisplayName;
+                D20RollHelpers.GatherComponentBonuses(entity, saveSpec.vehicleAttribute, label, bonuses);
             }
-            
-            // Character bonuses (character saves)
+
             if (character != null && saveSpec.IsCharacterSave)
             {
                 GatherCharacterSaveBonuses(character, saveSpec.characterAttribute, bonuses);
             }
-            
+
             return bonuses;
         }
-        
+
         // ==================== CHARACTER BONUSES ====================
-        
-        /// <summary>
-        /// Character save bonus: attribute modifier + half level (rounded down).
-        /// </summary>
+
         private static void GatherCharacterSaveBonuses(
             Character character,
             CharacterAttribute attribute,
             List<RollBonus> bonuses)
         {
-            int attrMod = character.GetAttributeModifier(attribute);
+            int attributeScore = character.GetAttributeScore(attribute);
+            int attrMod = CharacterFormulas.CalculateAttributeModifier(attributeScore);
             if (attrMod != 0)
             {
                 bonuses.Add(new RollBonus($"{attribute} Modifier", attrMod));
             }
-            
-            int halfLevel = character.level / 2;
+
+            int halfLevel = CharacterFormulas.CalculateHalfLevelBonus(character.level);
             if (halfLevel != 0)
             {
                 bonuses.Add(new RollBonus("Half Level", halfLevel));
             }
         }
-        
+
         // ==================== HELPERS ====================
-        
+
         public static int CalculateSaveDC(Skill skill, Entity user)
         {
             return skill.saveDCBase;
+        }
+
+        /// <summary>
+        /// Create an automatic failure result (routing failed - no roll occurred).
+        /// </summary>
+        public static SaveResult AutoFail(SaveSpec spec, int dc)
+        {
+            return new SaveResult(
+                D20Calculator.AutoFail(dc),
+                spec,
+                character: null,
+                isAutoFail: true);
         }
     }
 }
