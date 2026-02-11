@@ -3,8 +3,8 @@ using UnityEngine.UI;
 using TMPro;
 using UnityEngine.InputSystem;
 using Assets.Scripts.Combat.Damage;
-using Assets.Scripts.Combat;
 using Assets.Scripts.Combat.Attacks;
+using Assets.Scripts.Combat.Logging;
 
 /// <summary>
 /// Tooltip panel that displays detailed roll/damage breakdowns on hover.
@@ -281,29 +281,4 @@ public class RollTooltip : MonoBehaviour
         }
     }
 
-    /// <summary>
-    /// Shows an attack result tooltip.
-    /// </summary>
-    public static void ShowAttackResult(AttackResult result, RectTransform target = null)
-    {
-        if (result == null) return;
-        Show(CombatLogManager.FormatAttackDetailed(result), target);
     }
-
-    /// <summary>
-    /// Shows a damage result tooltip.
-    /// </summary>
-    public static void ShowDamageResult(DamageResult result, RectTransform target = null)
-    {
-        if (result == null) return;
-        Show(CombatLogManager.FormatDamageDetailed(result), target);
-    }
-
-    /// <summary>
-    /// Shows combined attack and damage result.
-    /// </summary>
-    public static void ShowCombinedResult(AttackResult attack, DamageResult damage, RectTransform target = null)
-    {
-        Show(CombatLogManager.FormatCombinedAttackAndDamage(attack, damage), target);
-    }
-}

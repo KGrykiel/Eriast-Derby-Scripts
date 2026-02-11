@@ -3,7 +3,7 @@ using UnityEngine.UI;
 using UnityEngine.EventSystems;
 using TMPro;
 using Assets.Scripts.StatusEffects;
-using Assets.Scripts.Combat;
+using Assets.Scripts.Combat.Logging;
 
 namespace Assets.Scripts.UI.Components
 {

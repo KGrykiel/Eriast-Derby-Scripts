@@ -5,6 +5,7 @@ using Assets.Scripts.Combat.Saves;
 using Assets.Scripts.Combat.Damage;
 using Assets.Scripts.StatusEffects;
 using Assets.Scripts.Combat.Attacks;
+using Assets.Scripts.Combat.Logging;
 
 namespace Assets.Scripts.Combat
 {
