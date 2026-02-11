@@ -10,7 +10,7 @@ namespace Assets.Scripts.Combat.SkillChecks
     [System.Serializable]
     public class SkillCheckResult : ID20RollResult
     {
-        public CheckSpec checkSpec;
+        public SkillCheckSpec checkSpec;
         
         /// <summary>
         /// Character who made the check (null for vehicle-only checks).
@@ -35,7 +35,7 @@ namespace Assets.Scripts.Combat.SkillChecks
         
         public SkillCheckResult(
             int baseRoll,
-            CheckSpec checkSpec,
+            SkillCheckSpec checkSpec,
             List<RollBonus> bonuses,
             int targetValue,
             bool success,
@@ -54,7 +54,7 @@ namespace Assets.Scripts.Combat.SkillChecks
         /// <summary>
         /// Create an automatic failure result (required component missing/broken).
         /// </summary>
-        public static SkillCheckResult AutoFail(CheckSpec checkSpec, int dc)
+        public static SkillCheckResult AutoFail(SkillCheckSpec checkSpec, int dc)
         {
             return new SkillCheckResult(
                 baseRoll: 0,

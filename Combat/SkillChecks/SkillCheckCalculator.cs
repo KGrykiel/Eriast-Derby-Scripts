@@ -18,7 +18,7 @@ namespace Assets.Scripts.Combat.SkillChecks
         /// Null for vehicle-wide checks like event cards, which route to best character.</param>
         public static SkillCheckResult PerformSkillCheck(
             Vehicle vehicle,
-            CheckSpec checkSpec,
+            SkillCheckSpec checkSpec,
             int dc,
             Character initiatingCharacter = null)
         {
@@ -37,7 +37,7 @@ namespace Assets.Scripts.Combat.SkillChecks
         /// Internal helper - use the vehicle-level overload instead.
         /// </summary>
         private static SkillCheckResult PerformSkillCheck(
-            CheckSpec checkSpec,
+            SkillCheckSpec checkSpec,
             int dc,
             Entity component = null,
             Character character = null)
@@ -56,7 +56,7 @@ namespace Assets.Scripts.Combat.SkillChecks
         /// Character provides: attribute modifier + proficiency bonus.
         /// </summary>
         public static List<RollBonus> GatherBonuses(
-            CheckSpec checkSpec,
+            SkillCheckSpec checkSpec,
             Entity component = null,
             Character character = null)
         {

@@ -185,7 +185,7 @@ namespace Assets.Scripts.Events.EventCard.EventCardTypes
         public ChoiceCheckType checkType = ChoiceCheckType.None;
         
         [Tooltip("Skill check spec (if checkType = SkillCheck)")]
-        public CheckSpec checkSpec;
+        public SkillCheckSpec checkSpec;
         
         [Tooltip("Save spec (if checkType = SavingThrow)")]
         public SaveSpec saveSpec;

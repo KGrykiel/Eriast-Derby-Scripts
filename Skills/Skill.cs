@@ -46,7 +46,7 @@ public class Skill : ScriptableObject
     
     [Header("Skill Check Configuration")]
     [Tooltip("If skillRollType = SkillCheck, what check must the user make?")]
-    public CheckSpec checkSpec;
+    public SkillCheckSpec checkSpec;
     
     [Tooltip("Difficulty class for skill check")]
     public int checkDC = 15;

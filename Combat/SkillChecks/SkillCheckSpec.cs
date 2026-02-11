@@ -14,7 +14,7 @@ namespace Assets.Scripts.Combat.SkillChecks
     /// Serializable for use on Skill ScriptableObjects.
     /// </summary>
     [System.Serializable]
-    public struct CheckSpec
+    public struct SkillCheckSpec
     {
         [Tooltip("Does this check test the vehicle or a character?")]
         public CheckDomain domain;
@@ -42,9 +42,9 @@ namespace Assets.Scripts.Combat.SkillChecks
         
         // ==================== FACTORIES ====================
         
-        public static CheckSpec ForVehicle(VehicleCheckAttribute attribute)
+        public static SkillCheckSpec ForVehicle(VehicleCheckAttribute attribute)
         {
-            return new CheckSpec
+            return new SkillCheckSpec
             {
                 domain = CheckDomain.Vehicle,
                 vehicleAttribute = attribute,
@@ -52,9 +52,9 @@ namespace Assets.Scripts.Combat.SkillChecks
             };
         }
         
-        public static CheckSpec ForCharacter(CharacterSkill skill, ComponentType? requiredComponent = null)
+        public static SkillCheckSpec ForCharacter(CharacterSkill skill, ComponentType? requiredComponent = null)
         {
-            return new CheckSpec
+            return new SkillCheckSpec
             {
                 domain = CheckDomain.Character,
                 characterSkill = skill,
@@ -63,6 +63,6 @@ namespace Assets.Scripts.Combat.SkillChecks
             };
         }
         
-        public static CheckSpec None => ForVehicle(default);
+        public static SkillCheckSpec None => ForVehicle(default);
     }
 }

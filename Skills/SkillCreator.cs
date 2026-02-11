@@ -122,7 +122,7 @@ namespace Assets.Scripts.Skills
                     skill.skillRollType = SkillRollType.AttackRoll;
                     skill.saveSpec = SaveSpec.None;
                     skill.saveDCBase = 0;
-                    skill.checkSpec = CheckSpec.None;
+                    skill.checkSpec = SkillCheckSpec.None;
                     skill.checkDC = 0;
                     skill.targetingMode = TargetingMode.Enemy;
                     break;
@@ -131,7 +131,7 @@ namespace Assets.Scripts.Skills
                     skill.skillRollType = SkillRollType.None;
                     skill.saveSpec = SaveSpec.None;
                     skill.saveDCBase = 0;
-                    skill.checkSpec = CheckSpec.None;
+                    skill.checkSpec = SkillCheckSpec.None;
                     skill.checkDC = 0;
                     skill.targetingMode = TargetingMode.SourceComponent;
                     break;
@@ -140,7 +140,7 @@ namespace Assets.Scripts.Skills
                     skill.skillRollType = SkillRollType.SkillCheck;
                     skill.saveSpec = SaveSpec.None;
                     skill.saveDCBase = 0;
-                    skill.checkSpec = CheckSpec.ForVehicle(VehicleCheckAttribute.Mobility);
+                    skill.checkSpec = SkillCheckSpec.ForVehicle(VehicleCheckAttribute.Mobility);
                     skill.checkDC = 15;
                     skill.targetingMode = TargetingMode.Self;
                     break;
@@ -149,7 +149,7 @@ namespace Assets.Scripts.Skills
                     skill.skillRollType = SkillRollType.SavingThrow;
                     skill.saveSpec = SaveSpec.ForVehicle(VehicleCheckAttribute.Mobility);
                     skill.saveDCBase = 15;
-                    skill.checkSpec = CheckSpec.None;
+                    skill.checkSpec = SkillCheckSpec.None;
                     skill.checkDC = 0;
                     skill.targetingMode = TargetingMode.Enemy;
                     break;
@@ -158,7 +158,7 @@ namespace Assets.Scripts.Skills
                     skill.skillRollType = SkillRollType.None;
                     skill.saveSpec = SaveSpec.None;
                     skill.saveDCBase = 0;
-                    skill.checkSpec = CheckSpec.None;
+                    skill.checkSpec = SkillCheckSpec.None;
                     skill.checkDC = 0;
                     skill.targetingMode = TargetingMode.Self;
                     break;
@@ -167,7 +167,7 @@ namespace Assets.Scripts.Skills
                     skill.skillRollType = SkillRollType.None;
                     skill.saveSpec = SaveSpec.None;
                     skill.saveDCBase = 0;
-                    skill.checkSpec = CheckSpec.None;
+                    skill.checkSpec = SkillCheckSpec.None;
                     skill.checkDC = 0;
                     skill.targetingMode = TargetingMode.Enemy;
                     break;

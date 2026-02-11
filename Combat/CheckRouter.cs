@@ -62,7 +62,7 @@ namespace Assets.Scripts.Combat
         /// <param name="vehicle">Vehicle attempting the check</param>
         /// <param name="spec">What type of check is being made</param>
         /// <param name="initiatingCharacter">Character who initiated this check (for character-initiated skills). Null for vehicle-wide checks like event cards.</param>
-        public static RoutingResult RouteSkillCheck(Vehicle vehicle, CheckSpec spec, Character initiatingCharacter = null)
+        public static RoutingResult RouteSkillCheck(Vehicle vehicle, SkillCheckSpec spec, Character initiatingCharacter = null)
         {
             if (vehicle == null)
                 return RoutingResult.Failure("No vehicle");
@@ -92,7 +92,7 @@ namespace Assets.Scripts.Combat
 
         // ==================== VEHICLE CHECK ROUTING ====================
 
-        private static RoutingResult RouteVehicleCheck(Vehicle vehicle, CheckSpec spec)
+        private static RoutingResult RouteVehicleCheck(Vehicle vehicle, SkillCheckSpec spec)
         {
             Entity component = GetComponentForVehicleAttribute(vehicle, spec.vehicleAttribute);
             if (component == null)
@@ -112,7 +112,7 @@ namespace Assets.Scripts.Combat
 
         // ==================== CHARACTER CHECK ROUTING ====================
 
-        private static RoutingResult RouteCharacterSkillCheck(Vehicle vehicle, CheckSpec spec, Character initiatingCharacter)
+        private static RoutingResult RouteCharacterSkillCheck(Vehicle vehicle, SkillCheckSpec spec, Character initiatingCharacter)
         {
             // If check requires a specific component type, find it and its operator
             if (spec.RequiresComponent)

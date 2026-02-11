@@ -34,7 +34,7 @@ namespace Assets.Scripts.Stages.Lanes
         public LaneCheckType checkType = LaneCheckType.None;
         
         [Tooltip("Skill check spec (if checkType = SkillCheck)")]
-        public CheckSpec checkSpec;
+        public SkillCheckSpec checkSpec;
         
         [Tooltip("Save spec (if checkType = SavingThrow)")]
         public SaveSpec saveSpec;
