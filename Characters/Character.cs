@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using UnityEngine;
 using Assets.Scripts.Characters;
+using System;
 
 /// <summary>
 /// Represents a character that can operate vehicle components.

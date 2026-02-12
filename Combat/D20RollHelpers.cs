@@ -79,7 +79,7 @@ namespace Assets.Scripts.Combat
         {
             if (weapon == null) return;
 
-            int baseAttackBonus = weapon.GetAttackBonus();
+            int baseAttackBonus = weapon.GetBaseAttackBonus();
             if (baseAttackBonus != 0)
             {
                 bonuses.Add(new RollBonus(weapon.name ?? "Weapon", baseAttackBonus));
