@@ -90,20 +90,6 @@ namespace Assets.Scripts.Combat
             WasReplacement = wasReplacement;
             WasBlocked = applied == null;
         }
-        
-        /// <summary>Create a blocked event (failed to apply)</summary>
-        public static StatusEffectEvent Blocked(
-            Entity source,
-            Entity target,
-            UnityEngine.Object causalSource,
-            string reason)
-        {
-            return new StatusEffectEvent(null, source, target, causalSource)
-            {
-                WasBlocked = true,
-                BlockReason = reason
-            };
-        }
     }
     
     /// <summary>

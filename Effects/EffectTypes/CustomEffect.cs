@@ -24,12 +24,6 @@ public class CustomEffect : EffectBase
         {
             // Pass CustomEffect as source so command can read floatParameter
             command.Execute(user, target, context, this);
-
-            // Log command execution
-            Vehicle vehicle = EntityHelpers.GetParentVehicle(target);
-            string targetName = EntityHelpers.GetEntityDisplayName(target);
-            string userName = EntityHelpers.GetEntityDisplayName(user);
-            string sourceText = source != null ? source.name : "unknown source";
         }
     }
 }

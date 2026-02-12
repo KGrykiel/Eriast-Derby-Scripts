@@ -17,23 +17,4 @@ public static class EntityHelpers
         }
         return null;
     }
-
-    /// <summary>
-    /// Get a display name for any entity.
-    /// For VehicleComponents, includes the parent vehicle name.
-    /// For other entities, returns their display name.
-    /// </summary>
-    public static string GetEntityDisplayName(Entity entity)
-    {
-        if (entity == null)
-            return "Unknown";
-
-        if (entity is VehicleComponent component)
-        {
-            return component.ParentVehicle != null
-                ? $"{component.ParentVehicle.vehicleName}'s {component.name}"
-                : component.name;
-        }
-        return entity.GetDisplayName();
-    }
 }

@@ -389,17 +389,7 @@ public abstract class VehicleComponent : Entity
         
         return allSkills;
     }
-    
-    /// <summary>
-    /// Can this component currently provide skills?
-    /// Checks if component is operational (not destroyed, not manually disabled, not incapacitated).
-    /// Note: Character assignment is now checked via VehicleSeat.
-    /// </summary>
-    public virtual bool CanProvideSkills()
-    {
-        return IsOperational;
-    }
-    
+
     // ==================== UI HELPERS ====================
     
     /// <summary>

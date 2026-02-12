@@ -89,32 +89,6 @@ namespace Assets.Scripts.Entities
         // ==================== DAMAGE/HEALTH LOGGING ====================
         
         /// <summary>
-        /// Log health change for any entity.
-        /// Automatically determines if healing or damage based on direction.
-        /// </summary>
-        public static void LogHealthChange(this Entity entity, int oldHealth, int newHealth, string reason)
-        {
-            if (oldHealth == newHealth) return;
-            
-            global::Vehicle vehicle = EntityHelpers.GetParentVehicle(entity);
-            string entityName = EntityHelpers.GetEntityDisplayName(entity);
-            
-            string message = newHealth > oldHealth
-                ? $"{entityName} healed: {oldHealth} → {newHealth} HP ({reason})"
-                : $"{entityName} damaged: {oldHealth} → {newHealth} HP ({reason})";
-            
-            RaceHistory.Log(
-                EventType.Combat,
-                newHealth <= 0 ? EventImportance.High : EventImportance.Low,
-                message,
-                vehicle?.currentStage,
-                vehicle
-            ).WithMetadata("oldHealth", oldHealth)
-             .WithMetadata("newHealth", newHealth)
-             .WithMetadata("reason", reason);
-        }
-        
-        /// <summary>
         /// Log chassis destruction (structural collapse - vehicle destroyed).
         /// </summary>
         public static void LogChassisDestroyed(this ChassisComponent chassis)
@@ -225,29 +199,6 @@ namespace Assets.Scripts.Entities
         }
 
         // ==================== RESOURCE LOGGING ====================
-        
-        /// <summary>
-        /// Log energy change for power core.
-        /// Automatically formats as +/- change.
-        /// </summary>
-        public static void LogEnergyChange(this PowerCoreComponent powerCore, int oldEnergy, int newEnergy, string reason)
-        {
-            if (oldEnergy == newEnergy || powerCore.ParentVehicle == null) return;
-            
-            int change = newEnergy - oldEnergy;
-            string changeStr = change > 0 ? $"+{change}" : change.ToString();
-            
-            RaceHistory.Log(
-                EventType.Resource,
-                EventImportance.Debug,
-                $"{powerCore.ParentVehicle.vehicleName} energy {changeStr}: {oldEnergy} → {newEnergy} ({reason})",
-                powerCore.ParentVehicle.currentStage,
-                powerCore.ParentVehicle
-            ).WithMetadata("oldEnergy", oldEnergy)
-             .WithMetadata("newEnergy", newEnergy)
-             .WithMetadata("change", change)
-             .WithMetadata("reason", reason);
-        }
         
         /// <summary>
         /// Log energy regeneration at start of turn.

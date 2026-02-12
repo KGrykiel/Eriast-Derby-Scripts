@@ -70,22 +70,6 @@ public class WeaponComponent : VehicleComponent
     public int GetMaxAmmo() => StatCalculator.GatherAttributeValue(this, Attribute.Ammo, baseMaxAmmo);
     
     /// <summary>
-    /// Get damage string for display (e.g., "1d8+2 Physical")
-    /// Uses modified values (with bonuses applied).
-    /// </summary>
-    public string DamageString
-    {
-        get
-        {
-            int dice = GetDamageDice();
-            int dieSize = GetDamageDieSize();
-            int bonus = GetDamageBonus();
-            string bonusStr = bonus != 0 ? $"{bonus:+0;-0}" : "";
-            return $"{dice}d{dieSize}{bonusStr} {damageType}";
-        }
-    }
-    
-    /// <summary>
     /// Called when component is first added or reset in Editor.
     /// Sets default values that appear immediately in Inspector.
     /// </summary>

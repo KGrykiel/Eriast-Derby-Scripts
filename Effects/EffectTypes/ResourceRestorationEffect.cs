@@ -117,16 +117,6 @@ public class ResourceRestorationEffect : EffectBase
         Debug.LogWarning($"[ResourceRestorationEffect] Energy restoration requires PowerCoreComponent target. Got: {target.GetType().Name}");
         return new RestorationBreakdown();
     }
-    
-    /// <summary>
-    /// Get a description of this restoration for UI/logging.
-    /// </summary>
-    public string GetRestorationDescription()
-    {
-        string action = amount > 0 ? "restore" : "drain";
-        string resource = resourceType.ToString();
-        return $"{action} {Mathf.Abs(amount)} {resource}";
-    }
 }
 
 /// <summary>
@@ -142,20 +132,6 @@ public class RestorationBreakdown
     public int requestedChange;
     public int actualChange;
     public string source;
-    
-    public float NewPercentage => maxValue > 0 ? (float)newValue / maxValue : 0f;
-    public bool WasClamped => requestedChange != actualChange;
-    
-    public string ToFormattedString()
-    {
-        if (actualChange == 0)
-            return $"No change ({newValue}/{maxValue})";
-        
-        string action = actualChange > 0 ? "restored" : "drained";
-        string clampedText = WasClamped ? " (clamped)" : "";
-        
-        return $"{action} {Mathf.Abs(actualChange)} {resourceType} ({newValue}/{maxValue}){clampedText}";
-    }
 }
 
 

@@ -120,37 +120,4 @@ public static class VehicleComponentUI
             };
         }
     }
-    
-    /// <summary>
-    /// Get component status summary for debugging/UI.
-    /// Utility method for generating debug strings.
-    /// </summary>
-    public static string GetStatusSummary(VehicleComponent component)
-    {
-        if (component == null) return "[NULL COMPONENT]";
-        
-        
-        string status = $"<b>{component.name}</b> ({component.componentType})\n";
-        status += $"HP: {component.health}/{component.GetMaxHealth()} | AC: {component.GetArmorClass()}\n";
-        
-        if (component.isDestroyed)
-            status += "<color=red>[DESTROYED]</color>\n";
-        else if (component.isManuallyDisabled)
-            status += "<color=yellow>[MANUALLY DISABLED]</color>\n";
-        else if (!component.IsOperational)
-            status += "<color=orange>[INCAPACITATED]</color>\n";
-        
-        if (component.roleType != RoleType.None)
-            status += $"Enables: {component.roleType}\n";
-        
-        // Get character from seat that controls this component
-        var seat = component.ParentVehicle != null ? component.ParentVehicle.GetSeatForComponent(component) : null;
-        if (seat != null && seat.assignedCharacter != null)
-            status += $"Operated by: {seat.assignedCharacter.characterName}\n";
-        
-        if (component.componentSkills != null && component.componentSkills.Count > 0)
-            status += $"Skills: {component.componentSkills.Count}\n";
-        
-        return status;
-    }
 }

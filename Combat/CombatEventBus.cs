@@ -69,16 +69,6 @@ namespace Assets.Scripts.Combat
             CombatLogManager.LogAction(action);
         }
         
-        /// <summary>
-        /// Check if there's an active action scope.
-        /// </summary>
-        public static bool HasActiveAction => actionStack.Count > 0;
-        
-        /// <summary>
-        /// Get the current action (if any).
-        /// </summary>
-        public static CombatAction CurrentAction => actionStack.Count > 0 ? actionStack.Peek() : null;
-        
         // ==================== EVENT EMISSION ====================
         
         /// <summary>

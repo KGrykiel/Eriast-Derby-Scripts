@@ -31,28 +31,31 @@ public class TurnService
     }
 
     // ==================== POWER MANAGEMENT ====================
-    
+
     /// <summary>
     /// Draw continuous power for all components.
-    /// Components pay based on CURRENT state (drive pays for current speed).
+    /// Delegates to each component's DrawTurnPower() method (consistent with damage/status pattern).
     /// Emits OnComponentPowerShutdown via TurnEventBus for any components that shut down.
     /// </summary>
     public void DrawContinuousPowerForAllComponents(Vehicle vehicle)
     {
         if (vehicle == null || vehicle.powerCore == null) return;
-        
+
         foreach (var component in vehicle.AllComponents)
         {
-            if (component == null || !component.IsOperational) continue;
-            
-            int powerCost = component.GetActualPowerDraw();
-            if (powerCost <= 0) continue;
-            
-            bool success = vehicle.powerCore.DrawPower(powerCost, component, "Continuous operation");
-            
+            if (component == null) continue;
+
+            // Delegate to component - let it handle its own power draw logic
+            bool success = component.DrawTurnPower();
+
             if (!success)
             {
-                TurnEventBus.EmitComponentPowerShutdown(vehicle, component, powerCost, vehicle.powerCore.currentEnergy);
+                // Orchestration-level concern: emit system event and disable component
+                TurnEventBus.EmitComponentPowerShutdown(
+                    vehicle, 
+                    component, 
+                    component.GetActualPowerDraw(), 
+                    vehicle.powerCore.currentEnergy);
                 component.SetManuallyDisabled(true);
             }
         }
