@@ -65,7 +65,7 @@ namespace Assets.Scripts.Entities.Vehicle
             }
 
             // Apply cross-component modifiers after all components are discovered
-            vehicle.InitializeComponentModifiers();
+            InitializeComponentModifiers();
 
             // Log component discovery
             Debug.Log($"[Vehicle] {vehicle.vehicleName} initialized with {GetAllComponents().Count} component(s)");
@@ -180,6 +180,56 @@ namespace Assets.Scripts.Entities.Vehicle
                 }
             }
             return total;
+        }
+
+        // ==================== CROSS-COMPONENT MODIFIER SYSTEM ====================
+
+        /// <summary>
+        /// Initialize all component-provided modifiers.
+        /// Called once during vehicle initialization after all components are discovered.
+        /// Components provide modifiers to OTHER components (e.g., Armor Plating → Chassis +2 AC).
+        /// For runtime changes (destroy/disable), components handle their own modifier cleanup.
+        /// </summary>
+        public void InitializeComponentModifiers()
+        {
+            // Apply modifiers from all active (non-destroyed, non-disabled) providers
+            foreach (var provider in GetAllComponents())
+            {
+                if (provider.IsOperational)
+                {
+                    provider.ApplyProvidedModifiers(vehicle);
+                }
+            }
+        }
+
+        /// <summary>
+        /// Apply size-based modifiers to all components.
+        /// Called during vehicle initialization.
+        /// Size modifiers automatically route to correct components (AC→Chassis, Speed→Drive, etc.).
+        /// Requires VehicleEffectRouter for attribute-to-component resolution.
+        /// </summary>
+        public void ApplySizeModifiers(VehicleEffectRouter effectRouter)
+        {
+            if (vehicle.chassis == null)
+            {
+                Debug.LogWarning($"[Vehicle] {vehicle.vehicleName} has no chassis - cannot apply size modifiers");
+                return;
+            }
+
+            // Get size modifiers from chassis's size category
+            var sizeModifiers = VehicleSizeModifiers.GetModifiers(vehicle.chassis.sizeCategory, vehicle);
+
+            // Apply each modifier to the appropriate component
+            foreach (var modifier in sizeModifiers)
+            {
+                // Route modifier to correct component based on attribute
+                VehicleComponent targetComponent = effectRouter.ResolveModifierTarget(modifier.Attribute);
+
+                if (targetComponent != null && !targetComponent.isDestroyed)
+                {
+                    targetComponent.AddModifier(modifier);
+                }
+            }
         }
     }
 }

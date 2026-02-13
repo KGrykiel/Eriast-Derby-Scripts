@@ -56,8 +56,9 @@ public class Vehicle : MonoBehaviour
     [Tooltip("Optional components (Drive, Weapons, Utilities, etc.)")]
     public List<VehicleComponent> optionalComponents = new();
 
-    // Component coordinator (handles component management)
+    // Coordinators (handle distinct concerns)
     private VehicleComponentCoordinator componentCoordinator;
+    private VehicleEffectRouter effectRouter;
     
     public VehicleStatus Status { get; private set; } = VehicleStatus.Active;
 
@@ -66,12 +67,15 @@ public class Vehicle : MonoBehaviour
 
     void Awake()
     {
-        // Initialize component coordinator
+        // Initialize coordinators
         componentCoordinator = new VehicleComponentCoordinator(this);
+        effectRouter = new VehicleEffectRouter(this);
+
+        // Initialize components
         componentCoordinator.InitializeComponents();
-        
-        // Apply size-based modifiers
-        ApplySizeModifiers();
+
+        // Apply size-based modifiers (after components are initialized)
+        componentCoordinator.ApplySizeModifiers(effectRouter);
     }
     
     void OnValidate()
@@ -137,55 +141,8 @@ public class Vehicle : MonoBehaviour
         return seats.Where(s => s != null && s.CanAct()).ToList();
     }
 
-    // ==================== CROSS-COMPONENT MODIFIER SYSTEM ====================
+    // ==================== EFFECT ROUTING ====================
 
-    /// <summary>
-    /// Apply size-based modifiers to all components.
-    /// Called during vehicle initialization.
-    /// Size modifiers automatically route to correct components (AC→Chassis, Speed→Drive, etc.)
-    /// </summary>
-    private void ApplySizeModifiers()
-    {
-        if (chassis == null)
-        {
-            Debug.LogWarning($"[Vehicle] {vehicleName} has no chassis - cannot apply size modifiers");
-            return;
-        }
-        
-        // Get size modifiers from chassis's size category
-        var sizeModifiers = VehicleSizeModifiers.GetModifiers(chassis.sizeCategory, this);
-        
-        // Apply each modifier to the appropriate component
-        foreach (var modifier in sizeModifiers)
-        {
-            // Route modifier to correct component based on attribute
-            VehicleComponent targetComponent = ResolveModifierTarget(modifier.Attribute);
-            
-            if (targetComponent != null && !targetComponent.isDestroyed)
-            {
-                targetComponent.AddModifier(modifier);
-            }
-        }
-    }
-
-    /// <summary>
-    /// Initialize all component-provided modifiers.
-    /// Called once during vehicle initialization after all components are discovered.
-    /// Components provide modifiers to OTHER components (e.g., Armor Plating → Chassis +2 AC).
-    /// For runtime changes (destroy/disable), components handle their own modifier cleanup.
-    /// </summary>
-    public void InitializeComponentModifiers()
-    {
-        // Apply modifiers from all active (non-destroyed, non-disabled) providers
-        foreach (var provider in AllComponents)
-        {
-            if (provider.IsOperational)
-            {
-                provider.ApplyProvidedModifiers(this);
-            }
-        }
-    }
-    
     /// <summary>
     /// Update status effects on all components (tick durations, periodic effects, remove expired).
     /// Called at the end of each turn.
@@ -197,88 +154,17 @@ public class Vehicle : MonoBehaviour
             component.UpdateStatusEffects();
         }
     }
-    
-    /// <summary>
-    /// Resolve which component should receive a modifier based on the attribute being modified.
-    /// Used by cross-component modifiers and effect routing.
-    /// </summary>
-    public VehicleComponent ResolveModifierTarget(Attribute attribute)
-    {
-        return attribute switch
-        {
-            Attribute.MaxHealth => chassis,
-            Attribute.ArmorClass => chassis,
-            Attribute.MagicResistance => chassis,
-            Attribute.Mobility => chassis,
-            Attribute.DragCoefficient => chassis,
-            Attribute.MaxEnergy => powerCore,
-            Attribute.EnergyRegen => powerCore,
-            Attribute.MaxSpeed => optionalComponents.OfType<DriveComponent>().FirstOrDefault(),
-            Attribute.Acceleration => optionalComponents.OfType<DriveComponent>().FirstOrDefault(),
-            Attribute.Stability => optionalComponents.OfType<DriveComponent>().FirstOrDefault(),
-            Attribute.BaseFriction => optionalComponents.OfType<DriveComponent>().FirstOrDefault(),
-            _ => chassis
-        };
-    }
-    
+
     /// <summary>
     /// Route an effect to the appropriate component.
     /// If playerSelectedComponent provided, uses it. Otherwise auto-routes based on effect type.
+    /// Delegates to VehicleEffectRouter.
     /// </summary>
     /// <param name="effect">The effect being applied</param>
     /// <param name="playerSelectedComponent">Component selected by player (null for auto-routing)</param>
     /// <returns>The entity that should receive the effect</returns>
     public Entity RouteEffectTarget(IEffect effect, VehicleComponent playerSelectedComponent = null)
-    {
-        // Use player selection if provided
-        if (playerSelectedComponent != null)
-            return playerSelectedComponent;
-        
-        // Otherwise auto-route based on effect type and attributes
-        return RouteEffectByAttribute(effect);
-    }
-    
-    /// <summary>
-    /// Route effect to appropriate component by analyzing its attributes.
-    /// Used for auto-routing (non-precise targeting).
-    /// </summary>
-    private Entity RouteEffectByAttribute(IEffect effect)
-    {
-        if (effect == null)
-            return chassis;
-        
-        // Direct damage always goes to chassis
-        if (effect is DamageEffect)
-            return chassis;
-
-        // Healing/restoration goes to chassis
-        // TODO: Consider energy restoration routing to power core?
-        if (effect is ResourceRestorationEffect)
-            return chassis;
-        
-        // Attribute modifiers route by attribute
-        if (effect is AttributeModifierEffect modifierEffect)
-        {
-            VehicleComponent component = ResolveModifierTarget(modifierEffect.attribute);
-            return component != null ? component : chassis;
-        }
-        
-        // Status effects route by their first modifier's attribute
-        if (effect is ApplyStatusEffect statusEffect)
-        {
-            if (statusEffect.statusEffect != null && statusEffect.statusEffect.modifiers != null && statusEffect.statusEffect.modifiers.Count > 0)
-            {
-                var firstModifier = statusEffect.statusEffect.modifiers[0];
-                VehicleComponent component = ResolveModifierTarget(firstModifier.attribute);
-                return component != null ? component : chassis;
-            }
-            // No modifiers - default to chassis for behavioral effects (stun, etc.)
-            return chassis;
-        }
-        
-        // Unknown effect type - default to chassis
-        return chassis;
-    }
+        => effectRouter.RouteEffectTarget(effect, playerSelectedComponent);
 
     // ==================== VEHICLE STATUS ====================
     

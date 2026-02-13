@@ -152,47 +152,5 @@ namespace Assets.Scripts.Tests.PlayMode
             Assert.AreEqual(vehicle.chassis, result,
                 "StatusEffect with AC modifier should route to chassis (first modifier's attribute)");
         }
-
-        // ==================== ResolveModifierTarget ====================
-
-        [UnityTest]
-        public IEnumerator ResolveModifier_MobilityAttribute_RoutesToChassis()
-        {
-            vehicle = new TestVehicleBuilder()
-                .WithChassis()
-                .Build();
-
-            var target = vehicle.ResolveModifierTarget(Attribute.Mobility);
-            yield return null;
-
-            Assert.AreEqual(vehicle.chassis, target, "Mobility should route to chassis");
-        }
-
-        [UnityTest]
-        public IEnumerator ResolveModifier_MaxHealthAttribute_RoutesToChassis()
-        {
-            vehicle = new TestVehicleBuilder()
-                .WithChassis()
-                .Build();
-
-            var target = vehicle.ResolveModifierTarget(Attribute.MaxHealth);
-            yield return null;
-
-            Assert.AreEqual(vehicle.chassis, target, "MaxHealth should route to chassis");
-        }
-
-        [UnityTest]
-        public IEnumerator ResolveModifier_MaxEnergyAttribute_RoutesToPowerCore()
-        {
-            vehicle = new TestVehicleBuilder()
-                .WithChassis()
-                .WithPowerCore()
-                .Build();
-
-            var target = vehicle.ResolveModifierTarget(Attribute.MaxEnergy);
-            yield return null;
-
-            Assert.AreEqual(vehicle.powerCore, target, "MaxEnergy should route to PowerCore");
-        }
     }
 }

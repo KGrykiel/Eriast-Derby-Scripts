@@ -6,10 +6,13 @@ namespace Assets.Scripts.Skills.Helpers
 {
     /// <summary>
     /// Applies effects to targets with action scoping for aggregated logging.
-    /// Handles target resolution and effect routing with component-aware targeting.
+    /// 
+    /// TARGET RESOLUTION:
+    /// Most effect targets use the already-selected entity from SkillContext (ctx.TargetEntity).
+    /// Routing only occurs for abstract vehicle targets (SourceVehicle, TargetVehicle) where
+    /// the effect type determines which component receives it (damage→chassis, energy→powercore, etc).
     /// 
     /// ARCHITECTURE: Uses SkillContext for all execution data.
-    /// Vehicles are derived from context when needed for routing/filtering.
     /// 
     /// LOGGING: Effects emit events to CombatEventBus. This class manages the action scope
     /// so all events from a skill are aggregated and logged together.
@@ -60,114 +63,42 @@ namespace Assets.Scripts.Skills.Helpers
 
         /// <summary>
         /// Resolves effect target(s) based on EffectTarget enum.
-        /// Returns list because some targets (Both, AllEnemies) resolve to multiple entities.
-        /// EffectTarget determines whether to respect player selection or auto-route.
+        /// Returns list for potential future multi-target support.
+        /// 
+        /// SIMPLIFIED: Most cases just use the already-selected entity from context.
+        /// Routing only happens when targeting "the vehicle" abstractly (TargetVehicle, SourceVehicle).
         /// </summary>
         private static List<Entity> ResolveTargets(
             SkillContext ctx,
             EffectTarget target,
             IEffect effect)
         {
+            //Made as a list for future potential AOE or multi-target effects, even though currently most cases are single-target
             var targets = new List<Entity>();
-            
-            Vehicle sourceVehicle = ctx.SourceVehicle;
-            Vehicle targetVehicle = ctx.TargetVehicle;
-            VehicleComponent sourceComponent = ctx.SourceComponent;
-            VehicleComponent targetComponent = ctx.TargetComponent;
-            
+
             switch (target)
             {
                 case EffectTarget.SourceComponent:
-                    if (sourceComponent != null)
-                        targets.Add(sourceComponent);
-                    else if (sourceVehicle != null)
-                        targets.Add(sourceVehicle.chassis); // Fallback for character skills
+                    // The component that executed the skill
+                    targets.Add(ctx.SourceComponent);
                     break;
-                    
+
                 case EffectTarget.SourceVehicle:
-                    // Always auto-route (no player selection for source)
-                    if (sourceVehicle != null)
-                        targets.Add(sourceVehicle.RouteEffectTarget(effect));
+                    // Route to appropriate component on source vehicle (abstract target)
+                    targets.Add(ctx.SourceVehicle.RouteEffectTarget(effect));
                     break;
-                    
+
                 case EffectTarget.SourceComponentSelection:
-                    // Player-selected component on source vehicle (for self-targeting skills)
-                    if (sourceVehicle == targetVehicle && targetComponent != null)
-                    {
-                        // Self-targeting: targetComponent is the selected source component
-                        targets.Add(targetComponent);
-                    }
-                    else if (sourceVehicle != null)
-                    {
-                        // Fallback to auto-routing
-                        targets.Add(sourceVehicle.RouteEffectTarget(effect));
-                    }
-                    break;
-                    
                 case EffectTarget.SelectedTarget:
-                    // Respects player-selected component (if any)
-                    if (targetVehicle == null)
-                    {
-                        targets.Add(ctx.TargetEntity);
-                    }
-                    else
-                    {
-                        targets.Add(targetVehicle.RouteEffectTarget(effect, targetComponent));
-                    }
+                    // Player already selected a specific entity - use it directly
+                    targets.Add(ctx.TargetEntity);
                     break;
-                    
+
                 case EffectTarget.TargetVehicle:
-                    // Always auto-routes (ignores player component selection)
-                    if (targetVehicle == null)
-                    {
-                        targets.Add(ctx.TargetEntity);
-                    }
-                    else
-                    {
-                        targets.Add(targetVehicle.RouteEffectTarget(effect));
-                    }
-                    break;
-                    
-                case EffectTarget.Both:
-                    // Both source and target
-                    if (sourceVehicle != null)
-                        targets.Add(sourceVehicle.RouteEffectTarget(effect));
-                    if (targetVehicle != null)
-                        targets.Add(targetVehicle.RouteEffectTarget(effect, targetComponent));
-                    else
-                        targets.Add(ctx.TargetEntity);
-                    break;
-                    
-                case EffectTarget.AllEnemiesInStage:
-                    // All enemy vehicles in stage (always auto-route)
-                    if (sourceVehicle?.currentStage?.vehiclesInStage != null)
-                    {
-                        foreach (var vehicle in sourceVehicle.currentStage.vehiclesInStage)
-                        {
-                            if (vehicle != sourceVehicle && vehicle.Status == VehicleStatus.Active)
-                            {
-                                targets.Add(vehicle.RouteEffectTarget(effect));
-                            }
-                        }
-                    }
-                    break;
-                    
-                case EffectTarget.AllAlliesInStage:
-                    // All allied vehicles in stage (always auto-route)
-                    if (sourceVehicle?.currentStage?.vehiclesInStage != null)
-                    {
-                        foreach (var vehicle in sourceVehicle.currentStage.vehiclesInStage)
-                        {
-                            if (vehicle.Status == VehicleStatus.Active)
-                            {
-                                // TODO: Add faction/team check when implemented
-                                targets.Add(vehicle.RouteEffectTarget(effect));
-                            }
-                        }
-                    }
+                    targets.Add(ctx.TargetVehicle.RouteEffectTarget(effect));
                     break;
             }
-            
+
             return targets;
         }
     }

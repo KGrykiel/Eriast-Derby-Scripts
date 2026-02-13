@@ -45,14 +45,7 @@ public class AttributeModifierEffect : EffectBase
 
     /// <summary>
     /// Applies a PERMANENT modifier to the target entity.
-    /// 
-    /// NOTE: Target routing is handled by Skill.Use() before this is called.
-    /// The target will already be the correct component (Drive for Speed, PowerCore for Energy, etc.)
-    /// 
-    /// Parameter convention:
-    /// - target: Already-routed component (correct target after Vehicle.RouteEffectTarget)
-    /// - context: Combat state (unused for modifiers)
-    /// - source: Skill/EventCard that triggered this (for modifier source tracking)
+    /// Target routing should already be handled by SkillEffectApplicator before calling this.
     /// </summary>
     public override void Apply(Entity user, Entity target, EffectContext context, UnityEngine.Object source = null)
     {
@@ -61,33 +54,8 @@ public class AttributeModifierEffect : EffectBase
             Debug.LogWarning("[AttributeModifierEffect] Target is null!");
             return;
         }
-        
-        // Source should be the skill/eventcard that applied this effect
-        UnityEngine.Object actualSource = source;
-        
-        // Target should already be routed to the correct component by Skill.Use()
-        // Just apply the modifier directly
-        if (target is VehicleComponent targetComponent)
-        {
-            targetComponent.AddModifier(ToRuntimeModifier(actualSource));
-            return;
-        }
-        
-        // Fallback: If target is not a component, try routing through vehicle
-        // (This shouldn't happen with new routing, but kept for safety)
-        Vehicle vehicle = EntityHelpers.GetParentVehicle(target);
-        if (vehicle != null)
-        {
-            VehicleComponent component = vehicle.ResolveModifierTarget(attribute);
-            if (component != null)
-            {
-                component.AddModifier(ToRuntimeModifier(actualSource));
-            }
-        }
-        else
-        {
-            // Direct entity (not a vehicle component) - apply directly
-            target.AddModifier(ToRuntimeModifier(actualSource));
-        }
+
+        // Apply modifier directly - target should already be correctly routed
+        target.AddModifier(ToRuntimeModifier(source));
     }
 }

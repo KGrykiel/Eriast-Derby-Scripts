@@ -222,12 +222,12 @@ public class PlayerController : MonoBehaviour
 
     /// <summary>
     /// Called when player clicks a skill button.
-    /// Initiates skill targeting flow or executes immediately if self-targeted.
+    /// Initiates skill targeting flow based on skill's targetingMode.
     /// </summary>
     private void OnSkillSelected(int skillIndex)
     {
         if (currentSeat == null) return;
-        
+
         var vehicle = CurrentPlayerVehicle;
         if (vehicle == null) return;
 
@@ -235,28 +235,37 @@ public class PlayerController : MonoBehaviour
         if (skillIndex < 0 || skillIndex >= availableSkills.Count) return;
 
         selectedSkill = availableSkills[skillIndex];
-        
+
         // Determine source: component that provides this skill, or null if it's a character personal skill
         selectedSkillSourceComponent = currentSeat.GetComponentForSkill(selectedSkill);
 
-        // Source component selection first (self-targeting skills)
-        if (SkillNeedsSourceComponentSelection(selectedSkill))
+        // Route based on targeting mode
+        switch (selectedSkill.targetingMode)
         {
-            uiCoordinator.TargetSelection.ShowSourceComponentSelection(vehicle, OnSourceComponentSelected);
-            return;
-        }
+            case TargetingMode.Self:
+                // Self-targeted - execute immediately
+                selectedTarget = vehicle;
+                selectedTargetComponent = null;
+                ExecuteSkill();
+                break;
 
-        // Self-targeted or AoE - execute immediately
-        if (!SkillNeedsTarget(selectedSkill))
-        {
-            selectedTarget = vehicle;
-            ExecuteSkill();
-            return;
-        }
+            case TargetingMode.SourceComponent:
+                // Player selects component on own vehicle
+                uiCoordinator.TargetSelection.ShowSourceComponentSelection(vehicle, OnSourceComponentSelected);
+                break;
 
-        // Needs target selection
-        List<Vehicle> validTargets = turnController.GetValidTargets(vehicle);
-        uiCoordinator.TargetSelection.ShowTargetSelection(validTargets, OnTargetSelected, OnTargetCancelClicked);
+            case TargetingMode.Enemy:
+                // Player selects enemy vehicle - auto-routes to appropriate component
+                List<Vehicle> validTargets = turnController.GetValidTargets(vehicle);
+                uiCoordinator.TargetSelection.ShowTargetSelection(validTargets, OnTargetSelected, OnTargetCancelClicked);
+                break;
+
+            case TargetingMode.EnemyComponent:
+                // Player selects enemy vehicle, then specific component (handled in OnTargetSelected)
+                validTargets = turnController.GetValidTargets(vehicle);
+                uiCoordinator.TargetSelection.ShowTargetSelection(validTargets, OnTargetSelected, OnTargetCancelClicked);
+                break;
+        }
     }
 
     #endregion
@@ -347,26 +356,14 @@ public class PlayerController : MonoBehaviour
     private void OnSourceComponentSelected(VehicleComponent component)
     {
         var vehicle = CurrentPlayerVehicle;
-        
+
         // For source component selection, we're self-targeting
         selectedTarget = vehicle;
         selectedTargetComponent = component;
         uiCoordinator.TargetSelection.Hide();
 
-        // After selecting source component, check if skill also needs enemy target selection
-        bool needsEnemyTarget = SkillNeedsTarget(selectedSkill);
-        
-        if (needsEnemyTarget && vehicle != null)
-        {
-            // Skill needs to target an enemy vehicle - show normal target selection
-            List<Vehicle> validTargets = turnController.GetValidTargets(vehicle);
-            uiCoordinator.TargetSelection.ShowTargetSelection(validTargets, OnTargetSelected, OnTargetCancelClicked);
-        }
-        else
-        {
-            // Pure self-targeted skill - execute immediately
-            ExecuteSkill();
-        }
+        // Execute immediately - SourceComponent targeting mode is always self-targeted
+        ExecuteSkill();
     }
 
     /// <summary>
@@ -381,41 +378,6 @@ public class PlayerController : MonoBehaviour
     #endregion
 
     #region Helpers & Utilities
-
-    /// <summary>
-    /// Checks if a skill requires target selection based on its effect invocations.
-    /// </summary>
-    private bool SkillNeedsTarget(Skill skill)
-    {
-        if (skill.effectInvocations == null) return false;
-
-        foreach (var invocation in skill.effectInvocations)
-        {
-            // Check if any effect targets something other than the user
-            if (invocation.target == EffectTarget.SelectedTarget ||
-                invocation.target == EffectTarget.TargetVehicle ||
-                invocation.target == EffectTarget.Both ||
-                invocation.target == EffectTarget.AllEnemiesInStage ||
-                invocation.target == EffectTarget.AllAlliesInStage)
-                return true;
-        }
-        return false;
-    }
-
-    /// <summary>
-    /// Checks if a skill requires source component selection (player picks which component to affect on their own vehicle).
-    /// </summary>
-    private bool SkillNeedsSourceComponentSelection(Skill skill)
-    {
-        if (skill.effectInvocations == null) return false;
-
-        foreach (var invocation in skill.effectInvocations)
-        {
-            if (invocation.target == EffectTarget.SourceComponentSelection)
-                return true;
-        }
-        return false;
-    }
 
     /// <summary>
     /// Clears all player selections (role, skill, target, component).

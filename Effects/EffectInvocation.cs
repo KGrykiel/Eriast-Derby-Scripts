@@ -41,14 +41,4 @@ public enum EffectTarget
     
     [Tooltip("Target vehicle (routes based on effect type, ignores manual component selection)")]
     TargetVehicle,
-    
-    // Multi-targets
-    [Tooltip("Both source and target vehicles (each routed based on effect type)")]
-    Both,
-    
-    [Tooltip("All enemy vehicles in stage (each routed based on effect type)")]
-    AllEnemiesInStage,
-    
-    [Tooltip("All allied vehicles in stage including self (each routed based on effect type)")]
-    AllAlliesInStage
 }
