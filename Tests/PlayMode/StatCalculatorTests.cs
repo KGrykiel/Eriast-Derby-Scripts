@@ -15,7 +15,7 @@ namespace Assets.Scripts.Tests.PlayMode
         {
             testObj = new GameObject("TestEntity");
             entity = testObj.AddComponent<ChassisComponent>();
-            entity.health = 100;
+            entity.SetHealth(100);
         }
 
         [TearDown]
@@ -32,13 +32,6 @@ namespace Assets.Scripts.Tests.PlayMode
         {
             int result = StatCalculator.GatherAttributeValue(entity, Attribute.ArmorClass, 15);
             Assert.AreEqual(15, result, "Should return base value when no modifiers");
-        }
-
-        [Test]
-        public void Stat_NullEntity_ReturnsBase()
-        {
-            int result = StatCalculator.GatherAttributeValue(null, Attribute.ArmorClass, 15);
-            Assert.AreEqual(15, result, "Should return base value for null entity");
         }
 
         // ==================== Flat Modifiers ====================

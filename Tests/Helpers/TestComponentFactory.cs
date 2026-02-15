@@ -14,8 +14,8 @@ namespace Assets.Scripts.Tests.Helpers
             obj.transform.SetParent(parent.transform);
             var chassis = obj.AddComponent<ChassisComponent>();
             chassis.componentType = ComponentType.Chassis;
-            chassis.health = maxHealth;
             SetBaseField(chassis, "baseMaxHealth", maxHealth);
+            chassis.SetHealth(maxHealth);
             SetBaseField(chassis, "baseArmorClass", armorClass);
             return chassis;
         }
@@ -31,8 +31,8 @@ namespace Assets.Scripts.Tests.Helpers
             var weapon = obj.AddComponent<WeaponComponent>();
             weapon.componentType = ComponentType.Weapon;
             weapon.roleType = RoleType.Gunner;
-            weapon.health = maxHealth;
             SetBaseField(weapon, "baseMaxHealth", maxHealth);
+            weapon.SetHealth(maxHealth);
             SetBaseField(weapon, "baseAttackBonus", attackBonus);
             return weapon;
         }
@@ -45,8 +45,8 @@ namespace Assets.Scripts.Tests.Helpers
             obj.transform.SetParent(parent.transform);
             var utility = obj.AddComponent<CustomComponent>();
             utility.componentType = ComponentType.Utility;
-            utility.health = maxHealth;
             SetBaseField(utility, "baseMaxHealth", maxHealth);
+            utility.SetHealth(maxHealth);
             return utility;
         }
 
@@ -58,8 +58,8 @@ namespace Assets.Scripts.Tests.Helpers
             obj.transform.SetParent(parent.transform);
             var powerCore = obj.AddComponent<PowerCoreComponent>();
             powerCore.componentType = ComponentType.PowerCore;
-            powerCore.health = maxHealth;
             SetBaseField(powerCore, "baseMaxHealth", maxHealth);
+            powerCore.SetHealth(maxHealth);
             return powerCore;
         }
 

@@ -17,7 +17,7 @@ namespace Assets.Scripts.Tests.PlayMode
         {
             testObj = new GameObject("TestEntity");
             entity = testObj.AddComponent<ChassisComponent>();
-            entity.health = 100;
+            entity.SetHealth(100);
         }
 
         [TearDown]

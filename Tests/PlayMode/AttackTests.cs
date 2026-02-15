@@ -49,7 +49,7 @@ namespace Assets.Scripts.Tests.PlayMode
             // Create a dummy target
             var targetObj = new GameObject("Target");
             var target = targetObj.AddComponent<ChassisComponent>();
-            target.health = 100;
+            target.SetHealth(100);
 
             var bonuses = AttackCalculator.GatherBonuses(weapon, bob);
             yield return null;

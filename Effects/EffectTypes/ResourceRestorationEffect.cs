@@ -43,19 +43,19 @@ public class ResourceRestorationEffect : EffectBase
 
     private RestorationBreakdown ApplyHealthRestoration(Entity target)
     {
-        int oldValue = target.health;
+        int oldValue = target.GetCurrentHealth();
         int maxValue = target.GetMaxHealth();
         int requestedChange = amount;
-        
-        // Clamp to valid range
-        target.health = Mathf.Clamp(target.health + amount, 0, maxValue);
-        
-        int actualChange = target.health - oldValue;
-        
+
+        if (amount >= 0)
+            target.Heal(amount);
+
+        int actualChange = target.GetCurrentHealth() - oldValue;
+
         return new RestorationBreakdown
         {
             oldValue = oldValue,
-            newValue = target.health,
+            newValue = target.GetCurrentHealth(),
             maxValue = maxValue,
             requestedChange = requestedChange,
             actualChange = actualChange

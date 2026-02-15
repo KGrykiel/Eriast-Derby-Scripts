@@ -16,7 +16,8 @@ public abstract class Entity : MonoBehaviour
 {
     [Header("Entity Stats")]
     [Tooltip("Current health points")]
-    public int health = 100;
+    [SerializeField]
+    protected int health = 100;
     
     [SerializeField]
     [Tooltip("Maximum health points (base value before modifiers)")]
@@ -115,8 +116,14 @@ public abstract class Entity : MonoBehaviour
     public virtual void Heal(int amount)
     {
         if (isDestroyed) return;
-        
+
         health = Mathf.Min(health + amount, GetMaxHealth());
+    }
+
+    /// <summary>Sets health directly. Bypasses isDestroyed check — use for initialization and test setup.</summary>
+    public void SetHealth(int value)
+    {
+        health = Mathf.Clamp(value, 0, GetMaxHealth());
     }
 
     // ==================== MODIFIER SYSTEM ====================

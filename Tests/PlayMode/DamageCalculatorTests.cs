@@ -144,7 +144,7 @@ namespace Assets.Scripts.Tests.PlayMode
         {
             var targetObj = new GameObject("Target");
             var target = targetObj.AddComponent<ChassisComponent>();
-            target.health = 100;
+            target.SetHealth(100);
 
             var formula = new DamageFormula { baseDice = 0, dieSize = 0, bonus = 25, damageType = DamageType.Physical };
             var result = DamageCalculator.Compute(formula, ResistanceLevel.Normal);
@@ -163,7 +163,7 @@ namespace Assets.Scripts.Tests.PlayMode
         {
             var targetObj = new GameObject("Target");
             var target = targetObj.AddComponent<ChassisComponent>();
-            target.health = 20;
+            target.SetHealth(20);
 
             var formula = new DamageFormula { baseDice = 0, dieSize = 0, bonus = 30, damageType = DamageType.Physical };
             var result = DamageCalculator.Compute(formula, ResistanceLevel.Normal);

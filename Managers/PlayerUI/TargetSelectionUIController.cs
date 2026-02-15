@@ -125,7 +125,7 @@ namespace Assets.Scripts.Managers.PlayerUI
             var (modifiedAC, _, _) = StatCalculator.GatherDefenseValueWithBreakdown(component);
             int modifiedMaxHP = component.GetMaxHealth();
 
-            string text = $"{component.name} (HP: {component.health}/{modifiedMaxHP}, AC: {modifiedAC})";
+            string text = $"{component.name} (HP: {component.GetCurrentHealth()}/{modifiedMaxHP}, AC: {modifiedAC})";
 
             if (component.isDestroyed)
                 text = $"[X] {text} - DESTROYED";

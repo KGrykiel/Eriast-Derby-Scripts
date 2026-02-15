@@ -531,7 +531,7 @@ namespace Assets.Scripts.Tests.PlayMode
 
             // Phase 3: Restore component
             utility.isDestroyed = false;
-            utility.Heal(utility.GetMaxHealth());
+            utility.SetHealth(utility.GetMaxHealth());
             Assert.IsTrue(utility.IsOperational, "Component should be operational after restoration");
 
             var result3 = SkillCheckPerformer.Execute(playerVehicle, spec, dc: 10, causalSource: null, initiatingCharacter: engineer);

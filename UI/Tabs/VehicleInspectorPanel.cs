@@ -548,12 +548,12 @@ public class VehicleInspectorPanel : MonoBehaviour
                     Attribute.MaxHealth,
                     component.GetBaseMaxHealth(),
                     component.GetMaxHealth(),
-                    $"{component.health}/{component.GetMaxHealth()}"
+                    $"{component.GetCurrentHealth()}/{component.GetMaxHealth()}"
                 );
             }
             else
             {
-                hpValueText.text = $"{component.health}/{component.GetMaxHealth()}";
+                hpValueText.text = $"{component.GetCurrentHealth()}/{component.GetMaxHealth()}";
             }
         }
         
@@ -561,7 +561,7 @@ public class VehicleInspectorPanel : MonoBehaviour
         {
             int maxHP = component.GetMaxHealth();
             float percent = maxHP > 0 
-                ? (float)component.health / (float)maxHP 
+                ? (float)component.GetCurrentHealth() / (float)maxHP 
                 : 0f;
             hpBar.minValue = 0f;
             hpBar.maxValue = 1f;

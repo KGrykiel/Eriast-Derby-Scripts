@@ -78,7 +78,7 @@ namespace Assets.Scripts.Tests.PlayMode
 
             // Restore - reset destroyed state and heal
             utility.isDestroyed = false;
-            utility.Heal(utility.GetMaxHealth());
+            utility.SetHealth(utility.GetMaxHealth());
 
             bool isOperational = utility.IsOperational;
             Assert.IsTrue(isOperational, "Should be operational after restoration");
