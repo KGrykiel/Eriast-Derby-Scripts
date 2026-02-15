@@ -19,9 +19,6 @@ public enum Attribute
     DragCoefficient,  // Aerodynamic drag (on chassis, modified by components)
     
     // Weapon stats
-    DamageDice,
-    DamageDieSize,
-    DamageBonus,
     Ammo,
     
     // Component stats

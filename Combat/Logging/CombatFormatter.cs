@@ -334,19 +334,29 @@ namespace Assets.Scripts.Combat.Logging
 
             foreach (var periodic in effect.periodicEffects)
             {
-                string notation = periodic.GetNotation();
                 string effectText = periodic.type switch
                 {
-                    PeriodicEffectType.Damage => $"  • <color=#FF4444>{notation} {periodic.damageType} damage per turn</color>",
-                    PeriodicEffectType.Healing => $"  • <color=#44FF44>{notation} healing per turn</color>",
-                    PeriodicEffectType.EnergyDrain => $"  • <color=#FF4444>-{notation} energy per turn</color>",
-                    PeriodicEffectType.EnergyRestore => $"  • <color=#88DDFF>+{notation} energy per turn</color>",
+                    PeriodicEffectType.Damage => $"  • <color=#FF4444>{FormatFormulaNotation(periodic.damageFormula)} {periodic.damageFormula.damageType} damage per turn</color>",
+                    PeriodicEffectType.Healing => $"  • <color=#44FF44>{periodic.amount} healing per turn</color>",
+                    PeriodicEffectType.EnergyDrain => $"  • <color=#FF4444>-{periodic.amount} energy per turn</color>",
+                    PeriodicEffectType.EnergyRestore => $"  • <color=#88DDFF>+{periodic.amount} energy per turn</color>",
                     _ => null
                 };
                 if (effectText != null)
                     sb.AppendLine(effectText);
             }
             sb.AppendLine();
+        }
+
+        public static string FormatFormulaNotation(DamageFormula formula)
+        {
+            if (formula.baseDice <= 0)
+                return formula.bonus.ToString();
+
+            string notation = $"{formula.baseDice}d{formula.dieSize}";
+            if (formula.bonus != 0)
+                notation += $"{formula.bonus:+0;-0}";
+            return notation;
         }
 
         private static void AppendBehavioralEffects(StringBuilder sb, StatusEffect effect)

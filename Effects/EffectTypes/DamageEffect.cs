@@ -14,14 +14,24 @@ public class DamageEffect : EffectBase
     [Tooltip("Strategy for resolving damage formula. StaticFormulaProvider for fixed damage, WeaponFormulaProvider for weapon-based attacks.")]
     public IFormulaProvider formulaProvider = new StaticFormulaProvider();
 
-    public override void Apply(Entity user, Entity target, EffectContext context, Object source = null)
+    public override void Apply(Entity target, EffectContext context, Object source = null)
     {
+        Entity user = context.SourceEntity;
         var formulaContext = new FormulaContext(user);
         DamageFormula formula = formulaProvider.GetFormula(formulaContext);
 
         ResistanceLevel resistance = target.GetResistance(formula.damageType);
         DamageResult result = DamageCalculator.Compute(formula, resistance, context.IsCriticalHit);
-        DamageSource sourceType = user is WeaponComponent ? DamageSource.Weapon : DamageSource.Ability;
+
+        DamageSource sourceType;
+        if (context.DamageSourceOverride.HasValue)
+            sourceType = context.DamageSourceOverride.Value;
+        else if (user is WeaponComponent)
+            sourceType = DamageSource.Weapon;
+        else if (user == null)
+            sourceType = DamageSource.Environment;
+        else
+            sourceType = DamageSource.Ability;
 
         DamageApplicator.Apply(
             result: result,

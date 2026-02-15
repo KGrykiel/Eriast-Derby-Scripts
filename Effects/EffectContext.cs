@@ -1,4 +1,5 @@
-﻿using Assets.Scripts.Skills.Helpers;
+﻿using Assets.Scripts.Combat.Damage;
+using Assets.Scripts.Skills.Helpers;
 
 namespace Assets.Scripts.Effects
 {
@@ -9,17 +10,17 @@ namespace Assets.Scripts.Effects
     public struct EffectContext
     {
         public bool IsCriticalHit;
+        public Entity SourceEntity;
+        public DamageSource? DamageSourceOverride;
 
         public static EffectContext Default => new();
 
-        /// <summary>
-        /// Provides a quick way to convert a skillContext to an effect context.
-        /// </summary>
         public static EffectContext FromSkillContext(SkillContext ctx)
         {
             return new EffectContext
             {
-                IsCriticalHit = ctx.IsCriticalHit
+                IsCriticalHit = ctx.IsCriticalHit,
+                SourceEntity = ctx.SourceEntity
             };
         }
     }

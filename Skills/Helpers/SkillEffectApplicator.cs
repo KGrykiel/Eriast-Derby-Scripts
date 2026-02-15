@@ -29,7 +29,6 @@ namespace Assets.Scripts.Skills.Helpers
                     foreach (var targetEntity in targetEntities)
                     {
                         invocation.effect.Apply(
-                            ctx.SourceEntity,
                             targetEntity,
                             effectContext,
                             skill);

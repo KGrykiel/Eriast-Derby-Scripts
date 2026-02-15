@@ -63,9 +63,13 @@ namespace Assets.Scripts.Tests.Helpers
                 new PeriodicEffectData
                 {
                     type = PeriodicEffectType.Damage,
-                    diceCount = 0,
-                    bonus = damage,
-                    damageType = damageType
+                    damageFormula = new DamageFormula
+                    {
+                        baseDice = 0,
+                        dieSize = 0,
+                        bonus = damage,
+                        damageType = damageType
+                    }
                 }
             };
             template.behavioralEffects = new BehavioralEffectData();

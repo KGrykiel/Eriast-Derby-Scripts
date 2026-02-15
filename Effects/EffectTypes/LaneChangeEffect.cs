@@ -17,7 +17,7 @@ public class LaneChangeEffect : EffectBase
     [Range(-2, 2)]
     public int relativeOffset = 1;
 
-    public override void Apply(Entity user, Entity target, EffectContext context, Object source = null)
+    public override void Apply(Entity target, EffectContext context, Object source = null)
     {
         // Get vehicle (from target or parent)
         Vehicle vehicle = EntityHelpers.GetParentVehicle(target);

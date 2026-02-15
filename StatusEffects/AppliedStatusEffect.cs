@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using Assets.Scripts.Combat.Damage;
+using Assets.Scripts.Effects;
 
 namespace Assets.Scripts.StatusEffects
 {
@@ -67,58 +68,41 @@ namespace Assets.Scripts.StatusEffects
                 case PeriodicEffectType.Damage:
                     ApplyPeriodicDamage(periodicEffect);
                     break;
-                
+
                 case PeriodicEffectType.Healing:
-                    int healing = periodicEffect.RollValue();
-                    ApplyPeriodicHealing(healing);
+                    ApplyPeriodicRestoration(periodicEffect, ResourceRestorationEffect.ResourceType.Health, periodicEffect.amount);
                     break;
-                
+
                 case PeriodicEffectType.EnergyDrain:
-                    int drainAmount = periodicEffect.RollValue();
-                    ApplyPeriodicEnergyDrain(drainAmount);
+                    ApplyPeriodicRestoration(periodicEffect, ResourceRestorationEffect.ResourceType.Energy, -periodicEffect.amount);
                     break;
-                
+
                 case PeriodicEffectType.EnergyRestore:
-                    int restoreAmount = periodicEffect.RollValue();
-                    ApplyPeriodicEnergyRestore(restoreAmount);
+                    ApplyPeriodicRestoration(periodicEffect, ResourceRestorationEffect.ResourceType.Energy, periodicEffect.amount);
                     break;
             }
         }
-        
+
         private void ApplyPeriodicDamage(PeriodicEffectData periodicEffect)
         {
-            var provider = new StaticFormulaProvider
+            var effect = new DamageEffect
             {
-                formula = new DamageFormula
-                {
-                    baseDice = periodicEffect.diceCount,
-                    dieSize = periodicEffect.dieSize,
-                    bonus = periodicEffect.bonus,
-                    damageType = periodicEffect.damageType
-                }
+                formulaProvider = new StaticFormulaProvider { formula = periodicEffect.damageFormula }
             };
 
-            var context = new FormulaContext(user: null);
-            DamageFormula formula = provider.GetFormula(context);
+            var context = new EffectContext { DamageSourceOverride = DamageSource.Effect };
+            effect.Apply(target, context, template);
+        }
 
-            ResistanceLevel resistance = target.GetResistance(formula.damageType);
-            DamageResult result = DamageCalculator.Compute(formula, resistance);
-            DamageApplicator.Apply(result, target, attacker: null, template, DamageSource.Effect);
-        }
-        
-        private void ApplyPeriodicHealing(int healing)
+        private void ApplyPeriodicRestoration(PeriodicEffectData periodicEffect, ResourceRestorationEffect.ResourceType resourceType, int amount)
         {
-            target.Heal(healing);
-        }
-        
-        private void ApplyPeriodicEnergyDrain(int amount)
-        {
-            // TODO: Needs Vehicle/PowerCore integration
-        }
-        
-        private void ApplyPeriodicEnergyRestore(int amount)
-        {
-            // TODO: Needs Vehicle/PowerCore integration
+            var effect = new ResourceRestorationEffect
+            {
+                resourceType = resourceType,
+                amount = amount
+            };
+
+            effect.Apply(target, EffectContext.Default, template);
         }
         
         public bool PreventsActions => template.behavioralEffects?.preventsActions ?? false;

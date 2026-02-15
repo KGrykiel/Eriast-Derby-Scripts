@@ -67,45 +67,19 @@ namespace Assets.Scripts.StatusEffects
         public float value;
     }
 
-    /// <summary>TODO: this should NOT roll dice.</summary>
     [Serializable]
     public class PeriodicEffectData
     {
         [Tooltip("Type of periodic effect")]
         public PeriodicEffectType type;
-        
-        [Header("Value (Dice Notation)")]
-        [Tooltip("Number of dice (0 for flat value only)")]
-        public int diceCount = 0;
-        
-        [Tooltip("Die size (4, 6, 8, 10, 12, 20)")]
-        public int dieSize = 6;
-        
-        [Tooltip("Flat bonus (for 0d0+5 or 2d6+3)")]
-        public int bonus = 5;
-        
-        [Header("Damage Type")]
-        [Tooltip("Damage type (only used if type is Damage)")]
-        public DamageType damageType = DamageType.Fire;
-        
-        public int RollValue()
-        {
-            if (diceCount <= 0)
-                return bonus; // Flat value only (0d0+5)
-            
-            return RollUtility.RollDice(diceCount, dieSize) + bonus;
-        }
-        
-        public string GetNotation()
-        {
-            if (diceCount <= 0)
-                return bonus.ToString();
-            
-            string notation = $"{diceCount}d{dieSize}";
-            if (bonus != 0)
-                notation += $"{bonus:+0;-0}";
-            return notation;
-        }
+
+        [Header("Damage (used when type = Damage)")]
+        [Tooltip("Damage formula and type (only used for Damage periodic effects)")]
+        public DamageFormula damageFormula = new() { baseDice = 0, dieSize = 6, bonus = 5, damageType = DamageType.Fire };
+
+        [Header("Restoration (used for Healing / Energy types)")]
+        [Tooltip("Flat amount to restore (positive) or drain (negative) per turn")]
+        public int amount = 5;
     }
 
     public enum PeriodicEffectType
@@ -130,6 +104,9 @@ namespace Assets.Scripts.StatusEffects
         public float damageAmplification = 1f;
     }
 
+    /// <summary>
+    /// Catch-all for complex or unique behaviours.
+    /// </summary>
     public abstract class StatusEffectBehavior : ScriptableObject
     {
         public abstract void OnApply(Entity target, UnityEngine.Object applier);

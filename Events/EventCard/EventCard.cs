@@ -75,7 +75,6 @@ namespace Assets.Scripts.Events.EventCard
                 }
 
                 invocation.effect.Apply(
-                    user: null,
                     target: targetEntity,
                     context: EffectContext.Default,
                     source: this);

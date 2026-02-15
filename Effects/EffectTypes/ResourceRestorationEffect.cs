@@ -23,7 +23,7 @@ public class ResourceRestorationEffect : EffectBase
     [Tooltip("Amount to restore (positive) or drain (negative)")]
     public int amount = 0;
 
-    public override void Apply(Entity user, Entity target, EffectContext context, UnityEngine.Object source = null)
+    public override void Apply(Entity target, EffectContext context, UnityEngine.Object source = null)
     {
         var breakdown = resourceType switch
         {
@@ -37,7 +37,7 @@ public class ResourceRestorationEffect : EffectBase
 
         if (breakdown.actualChange != 0)
         {
-            CombatEventBus.EmitRestoration(breakdown, user, target, source);
+            CombatEventBus.EmitRestoration(breakdown, context.SourceEntity, target, source);
         }
     }
 

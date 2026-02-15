@@ -13,7 +13,7 @@ public class ApplyStatusEffect : EffectBase
     [Tooltip("The StatusEffect asset to apply (create via Racing/Status Effect menu)")]
     public StatusEffectTemplate statusEffect;
 
-    public override void Apply(Entity user, Entity target, EffectContext context, Object source = null)
+    public override void Apply(Entity target, EffectContext context, Object source = null)
     {
         if (statusEffect == null)
         {
@@ -21,7 +21,7 @@ public class ApplyStatusEffect : EffectBase
             return;
         }
 
-        target.ApplyStatusEffect(statusEffect, source != null ? source : user);
+        target.ApplyStatusEffect(statusEffect, source != null ? source : context.SourceEntity);
     }
 }
 

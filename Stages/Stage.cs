@@ -388,7 +388,6 @@ namespace Assets.Scripts.Stages
                 {
                     effectInvocation.effect.Apply(
                         vehicle.chassis,
-                        vehicle.chassis,
                         new EffectContext(),
                         this
                     );

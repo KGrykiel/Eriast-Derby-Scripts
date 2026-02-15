@@ -8,5 +8,5 @@ using Assets.Scripts.Effects;
 [System.Serializable]
 public abstract class EffectBase : IEffect
 {
-    public abstract void Apply(Entity user, Entity target, EffectContext context, Object source = null);
+    public abstract void Apply(Entity target, EffectContext context, Object source = null);
 }

@@ -10,7 +10,7 @@ namespace Assets.Scripts.Effects.EffectTypes.CustomEffectCommands
         [Range(0, 100)]
         public int defaultTargetSpeedPercent = 100;
 
-        public override void Execute(Entity user, Entity target, EffectContext context, object source)
+        public override void Execute(Entity target, EffectContext context, object source)
         {
             // Target entity should be the DriveComponent (self-targeting skill)
             DriveComponent drive = target as DriveComponent;

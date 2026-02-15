@@ -20,13 +20,7 @@ namespace Assets.Scripts.Combat.Damage
                 return new DamageFormula { damageType = DamageType.Physical };
             }
 
-            return new DamageFormula
-            {
-                baseDice = context.Weapon.GetDamageDice(),
-                dieSize = context.Weapon.GetDamageDieSize(),
-                bonus = context.Weapon.GetDamageBonus(),
-                damageType = context.Weapon.damageType
-            };
+            return context.Weapon.GetDamageFormula();
         }
     }
 }

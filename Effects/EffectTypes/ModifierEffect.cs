@@ -27,7 +27,7 @@ public class AttributeModifierEffect : EffectBase
         );
     }
 
-    public override void Apply(Entity user, Entity target, EffectContext context, UnityEngine.Object source = null)
+    public override void Apply(Entity target, EffectContext context, UnityEngine.Object source = null)
     {
         target.AddModifier(ToRuntimeModifier(source));
     }

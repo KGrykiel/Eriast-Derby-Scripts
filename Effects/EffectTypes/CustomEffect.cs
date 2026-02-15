@@ -22,13 +22,13 @@ public class CustomEffect : EffectBase
     [Range(-1, 100)]
     public int intParameter = -1;
 
-    public override void Apply(Entity user, Entity target, EffectContext context, UnityEngine.Object source = null)
+    public override void Apply(Entity target, EffectContext context, UnityEngine.Object source = null)
     {
         // Prefer command pattern (works with prefabs)
         if (command != null)
         {
             // Pass CustomEffect as source so command can read floatParameter
-            command.Execute(user, target, context, this);
+            command.Execute(target, context, this);
         }
     }
 }
