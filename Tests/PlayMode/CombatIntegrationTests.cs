@@ -577,7 +577,7 @@ namespace Assets.Scripts.Tests.PlayMode
 
             // Verify breakdown shows all sources
             var (total, bv, modifiers) = Assets.Scripts.Core.StatCalculator.GatherAttributeValueWithBreakdown(
-                playerVehicle.chassis, Attribute.ArmorClass, playerVehicle.chassis.GetBaseArmorClass());
+                playerVehicle.chassis, Attribute.ArmorClass);
             Assert.IsTrue(modifiers.Any(m => m.DisplayNameOverride == "Armor Plating"), "Should show Armor Plating");
             Assert.IsTrue(modifiers.Any(m => m.DisplayNameOverride == "Lucky Break"), "Should show Lucky Break");
 

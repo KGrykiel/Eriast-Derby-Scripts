@@ -30,8 +30,18 @@ public class WeaponComponent : VehicleComponent
     public int GetBaseMaxAmmo() => baseMaxAmmo;
 
     public DamageFormula GetDamageFormula() => baseDamageFormula;
-    public int GetAttackBonus() => StatCalculator.GatherAttributeValue(this, Attribute.AttackBonus, baseAttackBonus);
-    public int GetMaxAmmo() => StatCalculator.GatherAttributeValue(this, Attribute.Ammo, baseMaxAmmo);
+    public int GetAttackBonus() => StatCalculator.GatherAttributeValue(this, Attribute.AttackBonus);
+    public int GetMaxAmmo() => StatCalculator.GatherAttributeValue(this, Attribute.Ammo);
+
+    public override int GetBaseValue(Attribute attribute)
+    {
+        return attribute switch
+        {
+            Attribute.AttackBonus => baseAttackBonus,
+            Attribute.Ammo => baseMaxAmmo,
+            _ => base.GetBaseValue(attribute)
+        };
+    }
 
     /// <summary>
     /// Default values for convenience, to be edited manually.

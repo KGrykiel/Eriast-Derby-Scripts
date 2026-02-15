@@ -176,7 +176,7 @@ namespace Assets.Scripts.Combat.Logging
                 return $"{attribute}: {finalValue}";
 
             var (calculatedTotal, returnedBase, modifiers) = StatCalculator.GatherAttributeValueWithBreakdown(
-                entity, attribute, baseValue);
+                entity, attribute);
 
             if (modifiers.Count == 0)
                 return $"{attribute}: {baseValue}\n═══════════════════════════════\nBase value only (no modifiers)";

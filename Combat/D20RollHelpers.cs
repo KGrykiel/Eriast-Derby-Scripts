@@ -11,10 +11,10 @@ namespace Assets.Scripts.Combat
         {
             var bonuses = new List<RollBonus>();
             if (entity == null) return bonuses;
-            
+
             var (_, _, appliedMods) = StatCalculator.GatherAttributeValueWithBreakdown(
-                entity, attribute, 0);
-            
+                entity, attribute);
+
             foreach (var mod in appliedMods)
             {
                 if (mod.Value != 0)
@@ -22,31 +22,31 @@ namespace Assets.Scripts.Combat
                     bonuses.Add(new RollBonus(mod.SourceDisplayName, (int)mod.Value));
                 }
             }
-            
+
             return bonuses;
         }
-        
+
         public static int SumBonuses(List<RollBonus> bonuses)
         {
             int sum = 0;
             foreach (var b in bonuses) sum += b.Value;
             return sum;
         }
-        
+
         public static void GatherComponentBonuses(
             Entity component,
             VehicleCheckAttribute checkAttribute,
             string displayLabel,
             List<RollBonus> bonuses)
         {
-            int baseValue = GetComponentBaseValue(component, checkAttribute);
+            Attribute attribute = checkAttribute.ToAttribute();
+
+            int baseValue = component?.GetBaseValue(attribute) ?? 0;
             if (baseValue != 0)
             {
                 bonuses.Add(new RollBonus(displayLabel, baseValue));
             }
 
-            // Convert to full Attribute only for StatCalculator lookup
-            Attribute attribute = checkAttribute.ToAttribute();
             bonuses.AddRange(GatherAppliedBonuses(component, attribute));
         }
 
@@ -63,16 +63,6 @@ namespace Assets.Scripts.Combat
             }
 
             bonuses.AddRange(GatherAppliedBonuses(weapon, Attribute.AttackBonus));
-        }
-        
-        private static int GetComponentBaseValue(Entity component, VehicleCheckAttribute checkAttribute)
-        {
-            if (component == null)
-            {
-                return 0;
-            }
-            
-            return component.GetBaseCheckValue(checkAttribute);
         }
     }
 }

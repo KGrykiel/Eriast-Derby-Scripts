@@ -74,13 +74,26 @@ public class DriveComponent : VehicleComponent
     public int GetBaseStability() => baseStability;
     public int GetBaseFriction() => baseFriction;
 
-    public int GetMaxSpeed() => StatCalculator.GatherAttributeValue(this, Attribute.MaxSpeed, baseMaxSpeed);
-    public int GetAcceleration() => StatCalculator.GatherAttributeValue(this, Attribute.Acceleration, baseAcceleration);
-    public int GetDeceleration() => StatCalculator.GatherAttributeValue(this, Attribute.Deceleration, baseDeceleration);
-    public int GetStability() => StatCalculator.GatherAttributeValue(this, Attribute.Stability, baseStability);
-    public int GetFriction() => StatCalculator.GatherAttributeValue(this, Attribute.BaseFriction, baseFriction);
+    public int GetMaxSpeed() => StatCalculator.GatherAttributeValue(this, Attribute.MaxSpeed);
+    public int GetAcceleration() => StatCalculator.GatherAttributeValue(this, Attribute.Acceleration);
+    public int GetDeceleration() => StatCalculator.GatherAttributeValue(this, Attribute.Deceleration);
+    public int GetStability() => StatCalculator.GatherAttributeValue(this, Attribute.Stability);
+    public int GetFriction() => StatCalculator.GatherAttributeValue(this, Attribute.BaseFriction);
 
     public int GetCurrentSpeed() => currentSpeed;
+
+    public override int GetBaseValue(Attribute attribute)
+    {
+        return attribute switch
+        {
+            Attribute.MaxSpeed => baseMaxSpeed,
+            Attribute.Acceleration => baseAcceleration,
+            Attribute.Deceleration => baseDeceleration,
+            Attribute.Stability => baseStability,
+            Attribute.BaseFriction => baseFriction,
+            _ => base.GetBaseValue(attribute)
+        };
+    }
     
     
     

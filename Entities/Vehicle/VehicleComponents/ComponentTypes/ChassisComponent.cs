@@ -50,17 +50,16 @@ public class ChassisComponent : VehicleComponent
     public int GetBaseMobility() => baseMobility;
     public int GetBaseDragCoefficientPercent() => baseDragCoefficientPercent;
 
-    public int GetMobility() => StatCalculator.GatherAttributeValue(this, Attribute.Mobility, baseMobility);
-    public int GetDragCoefficientPercent() => StatCalculator.GatherAttributeValue(this, Attribute.DragCoefficient, baseDragCoefficientPercent);
+    public int GetMobility() => StatCalculator.GatherAttributeValue(this, Attribute.Mobility);
+    public int GetDragCoefficientPercent() => StatCalculator.GatherAttributeValue(this, Attribute.DragCoefficient);
 
-    // ==================== D20 ROLL BASE VALUES ====================
-
-    public override int GetBaseCheckValue(VehicleCheckAttribute checkAttribute)
+    public override int GetBaseValue(Attribute attribute)
     {
-        return checkAttribute switch
+        return attribute switch
         {
-            VehicleCheckAttribute.Mobility => baseMobility,
-            _ => base.GetBaseCheckValue(checkAttribute)
+            Attribute.Mobility => baseMobility,
+            Attribute.DragCoefficient => baseDragCoefficientPercent,
+            _ => base.GetBaseValue(attribute)
         };
     }
 

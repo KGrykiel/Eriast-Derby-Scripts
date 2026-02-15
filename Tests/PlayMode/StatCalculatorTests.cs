@@ -30,7 +30,8 @@ namespace Assets.Scripts.Tests.PlayMode
         [Test]
         public void Stat_NoModifiers_ReturnsBase()
         {
-            int result = StatCalculator.GatherAttributeValue(entity, Attribute.ArmorClass, 15);
+            SetBaseField(entity, "baseArmorClass", 15);
+            int result = StatCalculator.GatherAttributeValue(entity, Attribute.ArmorClass);
             Assert.AreEqual(15, result, "Should return base value when no modifiers");
         }
 
@@ -41,7 +42,7 @@ namespace Assets.Scripts.Tests.PlayMode
         {
             entity.AddModifier(new AttributeModifier(Attribute.ArmorClass, ModifierType.Flat, 5f, source: entity));
 
-            int result = StatCalculator.GatherAttributeValue(entity, Attribute.ArmorClass, 10);
+            int result = StatCalculator.GatherAttributeValue(entity, Attribute.ArmorClass);
             Assert.AreEqual(15, result, "Base 10 + Flat 5 = 15");
         }
 
@@ -52,7 +53,7 @@ namespace Assets.Scripts.Tests.PlayMode
             entity.AddModifier(new AttributeModifier(Attribute.ArmorClass, ModifierType.Flat, 3f, source: entity));
             entity.AddModifier(new AttributeModifier(Attribute.ArmorClass, ModifierType.Flat, -1f, source: entity));
 
-            int result = StatCalculator.GatherAttributeValue(entity, Attribute.ArmorClass, 10);
+            int result = StatCalculator.GatherAttributeValue(entity, Attribute.ArmorClass);
             Assert.AreEqual(14, result, "Base 10 + 2 + 3 + (-1) = 14");
         }
 
@@ -61,7 +62,7 @@ namespace Assets.Scripts.Tests.PlayMode
         {
             entity.AddModifier(new AttributeModifier(Attribute.MaxHealth, ModifierType.Flat, 99f, source: entity));
 
-            int result = StatCalculator.GatherAttributeValue(entity, Attribute.ArmorClass, 10);
+            int result = StatCalculator.GatherAttributeValue(entity, Attribute.ArmorClass);
             Assert.AreEqual(10, result, "MaxHealth modifier should not affect ArmorClass");
         }
 
@@ -72,7 +73,7 @@ namespace Assets.Scripts.Tests.PlayMode
         {
             entity.AddModifier(new AttributeModifier(Attribute.ArmorClass, ModifierType.Multiplier, 1.5f, source: entity));
 
-            int result = StatCalculator.GatherAttributeValue(entity, Attribute.ArmorClass, 10);
+            int result = StatCalculator.GatherAttributeValue(entity, Attribute.ArmorClass);
             Assert.AreEqual(15, result, "Base 10 * 1.5 = 15");
         }
 
@@ -84,7 +85,7 @@ namespace Assets.Scripts.Tests.PlayMode
             entity.AddModifier(new AttributeModifier(Attribute.ArmorClass, ModifierType.Flat, 10f, source: entity));
             entity.AddModifier(new AttributeModifier(Attribute.ArmorClass, ModifierType.Multiplier, 1.5f, source: entity));
 
-            int result = StatCalculator.GatherAttributeValue(entity, Attribute.ArmorClass, 10);
+            int result = StatCalculator.GatherAttributeValue(entity, Attribute.ArmorClass);
             // Order: base(10) + flat(10) = 20, then * 1.5 = 30
             Assert.AreEqual(30, result, "Base 10 + Flat 10 = 20, then * 1.5 = 30");
         }
@@ -100,7 +101,7 @@ namespace Assets.Scripts.Tests.PlayMode
                 displayNameOverride: "Blessing"));
 
             var (total, baseValue, modifiers) = StatCalculator.GatherAttributeValueWithBreakdown(
-                entity, Attribute.ArmorClass, 10);
+                entity, Attribute.ArmorClass);
 
             Assert.AreEqual(10, baseValue, "Base value should be 10");
             Assert.AreEqual(15, total, "Total should be 15");
@@ -116,10 +117,17 @@ namespace Assets.Scripts.Tests.PlayMode
             entity.AddModifier(new AttributeModifier(Attribute.ArmorClass, ModifierType.Flat, 0f, source: entity));
 
             var (total, _, modifiers) = StatCalculator.GatherAttributeValueWithBreakdown(
-                entity, Attribute.ArmorClass, 10);
+                entity, Attribute.ArmorClass);
 
             Assert.AreEqual(10, total, "Zero modifier should not change total");
             Assert.AreEqual(0, modifiers.Count, "Zero-value modifier should be excluded from breakdown");
+        }
+
+        private static void SetBaseField(Entity entity, string fieldName, int value)
+        {
+            var field = typeof(Entity).GetField(fieldName,
+                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+            field?.SetValue(entity, value);
         }
     }
 }

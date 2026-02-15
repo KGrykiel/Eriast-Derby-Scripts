@@ -62,9 +62,19 @@ namespace Assets.Scripts.Entities.Vehicle.VehicleComponents.ComponentTypes
         public int GetBaseEnergyRegen() => baseEnergyRegen;
         public int GetBaseMaxPowerDrawPerTurn() => baseMaxPowerDrawPerTurn;
 
-        public int GetMaxEnergy() => StatCalculator.GatherAttributeValue(this, Attribute.MaxEnergy, baseMaxEnergy);
-        public int GetEnergyRegen() => StatCalculator.GatherAttributeValue(this, Attribute.EnergyRegen, baseEnergyRegen);
+        public int GetMaxEnergy() => StatCalculator.GatherAttributeValue(this, Attribute.MaxEnergy);
+        public int GetEnergyRegen() => StatCalculator.GatherAttributeValue(this, Attribute.EnergyRegen);
         public int GetMaxPowerDrawPerTurn() => baseMaxPowerDrawPerTurn;
+
+        public override int GetBaseValue(Attribute attribute)
+        {
+            return attribute switch
+            {
+                Attribute.MaxEnergy => baseMaxEnergy,
+                Attribute.EnergyRegen => baseEnergyRegen,
+                _ => base.GetBaseValue(attribute)
+            };
+        }
 
         public void RegenerateEnergy()
         {

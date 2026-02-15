@@ -76,8 +76,18 @@ public abstract class VehicleComponent : Entity
     public int GetBaseComponentSpace() => baseComponentSpace;
     public int GetBasePowerDrawPerTurn() => basePowerDrawPerTurn;
 
-    public virtual int GetComponentSpace() => StatCalculator.GatherAttributeValue(this, Attribute.ComponentSpace, baseComponentSpace);
-    public virtual int GetPowerDrawPerTurn() => StatCalculator.GatherAttributeValue(this, Attribute.PowerDraw, basePowerDrawPerTurn);
+    public virtual int GetComponentSpace() => StatCalculator.GatherAttributeValue(this, Attribute.ComponentSpace);
+    public virtual int GetPowerDrawPerTurn() => StatCalculator.GatherAttributeValue(this, Attribute.PowerDraw);
+
+    public override int GetBaseValue(Attribute attribute)
+    {
+        return attribute switch
+        {
+            Attribute.ComponentSpace => baseComponentSpace,
+            Attribute.PowerDraw => basePowerDrawPerTurn,
+            _ => base.GetBaseValue(attribute)
+        };
+    }
     
     // ==================== CROSS-COMPONENT MODIFIER SYSTEM ====================
     

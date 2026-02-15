@@ -14,36 +14,33 @@ namespace Assets.Scripts.Core
         /// <summary>Returns (final, base, modifiers) — the breakdown variant is used for tooltips.</summary>
         public static (int total, int baseValue, List<AttributeModifier> modifiers) GatherAttributeValueWithBreakdown(
             Entity entity,
-            Attribute attribute,
-            int baseValue)
+            Attribute attribute)
         {
+            int baseValue = entity.GetBaseValue(attribute);
             var entityModifiers = GatherEntityModifiers(entity, attribute);
             var dynamicModifiers = DynamicModifierEvaluator.EvaluateAll(entity, attribute);
-            
+
             var allModifiers = new List<AttributeModifier>(entityModifiers.Count + dynamicModifiers.Count);
             allModifiers.AddRange(entityModifiers);
             allModifiers.AddRange(dynamicModifiers);
-            
+
             int total = CalculateTotal(baseValue, allModifiers);
-            
+
             return (total, baseValue, allModifiers);
         }
-        
+
         /// <summary>Convenience overload when you don't need the breakdown.</summary>
-        public static int GatherAttributeValue(Entity entity, Attribute attribute, int baseValue)
+        public static int GatherAttributeValue(Entity entity, Attribute attribute)
         {
-            var (total, _, _) = GatherAttributeValueWithBreakdown(entity, attribute, baseValue);
+            var (total, _, _) = GatherAttributeValueWithBreakdown(entity, attribute);
             return total;
         }
-        
+
         /// <summary>Convenience method to get AC</summary>
         public static (int total, int baseValue, List<AttributeModifier> modifiers) GatherDefenseValueWithBreakdown(
             Entity target)
         {
-            return GatherAttributeValueWithBreakdown(
-                target, 
-                Attribute.ArmorClass, 
-                target.GetBaseArmorClass());
+            return GatherAttributeValueWithBreakdown(target, Attribute.ArmorClass);
         }
         
         // ==================== PRIVATE ====================

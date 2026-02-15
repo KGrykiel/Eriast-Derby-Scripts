@@ -4,7 +4,6 @@ using Assets.Scripts.Combat.Damage;
 using System.Linq;
 using Assets.Scripts.StatusEffects;
 using Assets.Scripts.Entities;
-using Assets.Scripts.Entities.Vehicle;
 using Assets.Scripts.Combat;
 using Assets.Scripts.Core;
 
@@ -61,8 +60,8 @@ public abstract class Entity : MonoBehaviour
     public int GetBaseArmorClass() => baseArmorClass;
     
     // Modified value accessors (return values with all modifiers applied via StatCalculator)
-    public virtual int GetMaxHealth() => StatCalculator.GatherAttributeValue(this, Attribute.MaxHealth, baseMaxHealth);
-    public virtual int GetArmorClass() => StatCalculator.GatherAttributeValue(this, Attribute.ArmorClass, baseArmorClass);
+    public virtual int GetMaxHealth() => StatCalculator.GatherAttributeValue(this, Attribute.MaxHealth);
+    public virtual int GetArmorClass() => StatCalculator.GatherAttributeValue(this, Attribute.ArmorClass);
     
     // ==================== ENTITY FEATURES ====================
     
@@ -293,11 +292,16 @@ public abstract class Entity : MonoBehaviour
         return name; // GameObject name from unity editor.
     }
     
-    // ==================== D20 ROLL BASE VALUES ====================
-    
-    /// <summary>Base value for d20 checks/saves. Override in components (e.g. Chassis provides Mobility).</summary>
-    public virtual int GetBaseCheckValue(VehicleCheckAttribute checkAttribute)
+    // ==================== BASE VALUE RESOLUTION ====================
+
+    /// <summary>Returns the raw base value for an attribute before modifiers. Override in subclasses to add attributes.</summary>
+    public virtual int GetBaseValue(Attribute attribute)
     {
-        return 0;
+        return attribute switch
+        {
+            Attribute.MaxHealth => baseMaxHealth,
+            Attribute.ArmorClass => baseArmorClass,
+            _ => 0
+        };
     }
 }
