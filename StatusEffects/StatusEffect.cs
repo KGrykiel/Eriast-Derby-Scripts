@@ -79,6 +79,7 @@ namespace Assets.Scripts.StatusEffects
 
         [Header("Restoration (used for Healing / Energy types)")]
         [Tooltip("Flat amount to restore (positive) or drain (negative) per turn")]
+        //TODO: Change this to a dice formula for more interesting variability, like damage has. It's the DnD way.
         public int amount = 5;
     }
 
@@ -105,7 +106,7 @@ namespace Assets.Scripts.StatusEffects
     }
 
     /// <summary>
-    /// Catch-all for complex or unique behaviours.
+    /// Catch-all for complex or unique behaviours. Unused for now.
     /// </summary>
     public abstract class StatusEffectBehavior : ScriptableObject
     {
