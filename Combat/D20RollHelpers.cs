@@ -39,9 +39,10 @@ namespace Assets.Scripts.Combat
             string displayLabel,
             List<RollBonus> bonuses)
         {
+            // Convert to full Attribute only for StatCalculator lookup
             Attribute attribute = checkAttribute.ToAttribute();
 
-            int baseValue = component?.GetBaseValue(attribute) ?? 0;
+            int baseValue = component.GetBaseValue(attribute);
             if (baseValue != 0)
             {
                 bonuses.Add(new RollBonus(displayLabel, baseValue));

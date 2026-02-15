@@ -146,7 +146,7 @@ namespace Assets.Scripts.Entities.Vehicle
 
         // ==================== CROSS-COMPONENT MODIFIER SYSTEM ====================
 
-        /// <summary>Apply cross-component modifiers (e.g. Armor Plating → Chassis +2 AC). Called once at init.</summary>
+        /// <summary>Apply cross-component modifiers (e.g. Armor Plating -> Chassis +2 AC). Called once at init.</summary>
         public void InitializeComponentModifiers()
         {
             foreach (var provider in GetAllComponents())

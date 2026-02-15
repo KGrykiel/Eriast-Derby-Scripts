@@ -22,13 +22,12 @@ namespace Assets.Scripts.Skills.Helpers.Resolvers
             if (result.HitTarget == null)
                 return false;
 
-            // Retarget if component fallback triggered
-            // TODO: Probably not the right place for this, should consider a more robust way to handle this
-            var effectCtx = result.WasFallback
-                ? ctx.WithTarget(result.HitTarget)
-                : ctx;
+            // Handles potential retargetting via special attack rules.
+            var SkillCtx = ctx
+                .WithTarget(result.HitTarget)
+                .WithCriticalHit(result.Roll.IsCriticalHit);
 
-            SkillEffectApplicator.ApplyAllEffects(effectCtx.WithCriticalHit(result.Roll.IsCriticalHit));
+            SkillEffectApplicator.ApplyAllEffects(SkillCtx);
             return true;
         }
     }
