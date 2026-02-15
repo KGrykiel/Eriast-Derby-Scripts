@@ -31,17 +31,13 @@
             // 4. Draw continuous power for all components (emits shutdown events via TurnEventBus)
             context.TurnController.DrawContinuousPowerForAllComponents(vehicle);
 
-            // 5. Reset movement flag
-            vehicle.hasMovedThisTurn = false;
-            vehicle.hasLoggedMovementWarningThisTurn = false;
-            
-            // 6. Reset seat turn states
+            // 5. Reset movement and seat turn states
             vehicle.ResetComponentsForNewTurn();
-            
-            // 7. Update status effects at turn start
+
+            // 6. Update status effects at turn start
             vehicle.UpdateStatusEffects();
 
-            // 8. Process lane turn effects (hazards, environmental checks)
+            // 7. Process lane turn effects (hazards, environmental checks)
             if (vehicle.currentStage != null)
                 vehicle.currentStage.ProcessLaneTurnEffects(vehicle);
 

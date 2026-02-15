@@ -64,13 +64,13 @@ public class TurnService
     public bool ExecuteMovement(Vehicle vehicle)
     {
         if (vehicle == null) return false;
-        
+
         if (vehicle.hasMovedThisTurn)
         {
             Debug.LogWarning($"[TurnController] {vehicle.vehicleName} has already moved this turn");
             return false;
         }
-        
+
         if (!vehicle.CanMove())
         {
             if (!vehicle.hasLoggedMovementWarningThisTurn)
@@ -79,22 +79,25 @@ public class TurnService
                 TurnEventBus.EmitMovementBlocked(vehicle, reason);
                 vehicle.hasLoggedMovementWarningThisTurn = true;
             }
-            
-            vehicle.hasMovedThisTurn = true;
+
+            vehicle.ApplyMovement(0);
             return false;
         }
-        
+
         var drive = vehicle.GetDriveComponent();
         int distance = drive != null ? drive.GetCurrentSpeed() : 0;
-        
-        if (vehicle.currentStage != null && distance > 0)
+
+        if (distance > 0)
         {
             int oldProgress = vehicle.progress;
-            vehicle.progress += distance;
+            vehicle.ApplyMovement(distance);
             TurnEventBus.EmitMovementExecuted(vehicle, distance, drive.GetCurrentSpeed(), oldProgress, vehicle.progress);
         }
-        
-        vehicle.hasMovedThisTurn = true;
+        else
+        {
+            vehicle.ApplyMovement(0);
+        }
+
         return true;
     }
     
@@ -107,11 +110,7 @@ public class TurnService
         if (previousStage != null)
             previousStage.TriggerLeave(vehicle);
 
-        vehicle.progress -= previousStage != null ? previousStage.length : 0;
-        vehicle.currentStage = stage;
-
-        Vector3 stagePos = stage.transform.position;
-        vehicle.transform.position = new Vector3(stagePos.x, stagePos.y, vehicle.transform.position.z);
+        vehicle.TransitionToStage(stage);
 
         stage.TriggerEnter(vehicle);
 

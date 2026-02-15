@@ -19,14 +19,12 @@ public class Vehicle : MonoBehaviour
     public string vehicleName;
 
     public ControlType controlType = ControlType.Player;
-    
+
     [HideInInspector] public Stage currentStage;
-    [HideInInspector] public Stage previousStage; // For smart lane positioning
-    [HideInInspector] public int progress = 0;  // INTEGER: D&D-style discrete position
+    [HideInInspector] public Stage previousStage;
+    [HideInInspector] public int progress = 0;
+    [HideInInspector] public bool hasMovedThisTurn = false;
     [HideInInspector] public bool hasLoggedMovementWarningThisTurn = false;
-    
-    [Header("Lane System")]
-    [Tooltip("Current lane this vehicle is in (null if stage has no lanes)")]
     [HideInInspector] public StageLane currentLane;
 
     [Header("Crew & Seats")]
@@ -49,9 +47,6 @@ public class Vehicle : MonoBehaviour
     private VehicleEffectRouter effectRouter;
     
     public VehicleStatus Status { get; private set; } = VehicleStatus.Active;
-
-    [HideInInspector]
-    public bool hasMovedThisTurn = false;
 
     void Awake()
     {
@@ -91,13 +86,37 @@ public class Vehicle : MonoBehaviour
 
     public void ResetComponentsForNewTurn()
     {
+        hasMovedThisTurn = false;
         hasLoggedMovementWarningThisTurn = false;
-        
+
         // Reset seat turn state (seats track action usage now)
         foreach (var seat in seats)
         {
             seat?.ResetTurnState();
         }
+    }
+
+    /// <summary>Applies movement distance to progress and marks the vehicle as having moved.</summary>
+    public void ApplyMovement(int distance)
+    {
+        if (distance > 0 && currentStage != null)
+        {
+            progress += distance;
+        }
+
+        hasMovedThisTurn = true;
+    }
+
+    /// <summary>Transitions vehicle to a new stage. Carries over excess progress.</summary>
+    public void TransitionToStage(Stage newStage)
+    {
+        Stage oldStage = currentStage;
+
+        progress -= oldStage != null ? oldStage.length : 0;
+        currentStage = newStage;
+
+        Vector3 stagePos = newStage.transform.position;
+        transform.position = new Vector3(stagePos.x, stagePos.y, transform.position.z);
     }
 
     // ==================== SEAT ACCESS ====================
