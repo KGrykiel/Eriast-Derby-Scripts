@@ -1,8 +1,5 @@
 ﻿namespace Assets.Scripts.Events.EventCard
 {
-    /// <summary>
-    /// Defines which vehicle(s) are affected by an event card.
-    /// </summary>
     public enum CardTargetMode
     {
         /// <summary>

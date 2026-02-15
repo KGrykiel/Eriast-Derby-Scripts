@@ -9,21 +9,9 @@ using Assets.Scripts.Stages.Lanes;
 using SkillContext = Assets.Scripts.Skills.Helpers.SkillContext;
 
 /// <summary>
-/// Vehicle is a CONTAINER/COORDINATOR for Entity components.
-/// Vehicle itself is NOT an Entity - its components (chassis, weapons, etc.) ARE entities.
-/// 
-/// The vehicle aggregates stats from components and provides convenience properties.
-/// Damage to "the vehicle" is actually damage to its chassis component.
-/// 
-/// MODIFIER SYSTEM:
-/// - Components provide cross-component modifiers (e.g., Armor Plating → Chassis +2 AC)
-/// - Skills/Stages apply StatusEffects to components (StatusEffects create AttributeModifiers)
-/// - All modifiers are stored on individual components, not the vehicle
-/// - StatCalculator is the single source of truth for calculating modified values
-/// 
-/// For targeting:
-/// - Target Vehicle → actually targets chassis (the "body" of the vehicle)
-/// - Target Component → targets specific component directly
+/// Container/coordinator for Entity components. NOT an Entity itself.
+/// Damage to "the vehicle" is actually damage to its chassis.
+/// Vehicle can be targetted directly, which results in routing the effect to the appropriate component (see RouteEffectTarget).
 /// </summary>
 public class Vehicle : MonoBehaviour
 {
@@ -67,14 +55,11 @@ public class Vehicle : MonoBehaviour
 
     void Awake()
     {
-        // Initialize coordinators
         componentCoordinator = new VehicleComponentCoordinator(this);
         effectRouter = new VehicleEffectRouter(this);
 
-        // Initialize components
         componentCoordinator.InitializeComponents();
 
-        // Apply size-based modifiers (after components are initialized)
         componentCoordinator.ApplySizeModifiers(effectRouter);
     }
     
@@ -101,10 +86,7 @@ public class Vehicle : MonoBehaviour
     
     public string GetInaccessibilityReason(VehicleComponent target) => componentCoordinator?.GetInaccessibilityReason(target);
     
-    /// <summary>
-    /// Get the drive component of this vehicle (if it exists).
-    /// </summary>
-    public DriveComponent GetDriveComponent() 
+    public DriveComponent GetDriveComponent()
         => optionalComponents.OfType<DriveComponent>().FirstOrDefault();
 
     public void ResetComponentsForNewTurn()
@@ -114,28 +96,18 @@ public class Vehicle : MonoBehaviour
         // Reset seat turn state (seats track action usage now)
         foreach (var seat in seats)
         {
-            if (seat != null)
-            {
-                seat.ResetTurnState();
-            }
+            seat?.ResetTurnState();
         }
     }
 
     // ==================== SEAT ACCESS ====================
     
-    /// <summary>
-    /// Get the seat that controls a specific component.
-    /// Returns null if component is not controlled by any seat.
-    /// </summary>
     public VehicleSeat GetSeatForComponent(VehicleComponent component)
     {
         if (component == null) return null;
         return seats.FirstOrDefault(s => s.controlledComponents.Contains(component));
     }
     
-    /// <summary>
-    /// Get all seats that can currently act (have character and operational components).
-    /// </summary>
     public List<VehicleSeat> GetActiveSeats()
     {
         return seats.Where(s => s != null && s.CanAct()).ToList();
@@ -143,10 +115,6 @@ public class Vehicle : MonoBehaviour
 
     // ==================== EFFECT ROUTING ====================
 
-    /// <summary>
-    /// Update status effects on all components (tick durations, periodic effects, remove expired).
-    /// Called at the end of each turn.
-    /// </summary>
     public void UpdateStatusEffects()
     {
         foreach (var component in AllComponents)
@@ -155,23 +123,11 @@ public class Vehicle : MonoBehaviour
         }
     }
 
-    /// <summary>
-    /// Route an effect to the appropriate component.
-    /// If playerSelectedComponent provided, uses it. Otherwise auto-routes based on effect type.
-    /// Delegates to VehicleEffectRouter.
-    /// </summary>
-    /// <param name="effect">The effect being applied</param>
-    /// <param name="playerSelectedComponent">Component selected by player (null for auto-routing)</param>
-    /// <returns>The entity that should receive the effect</returns>
-    public Entity RouteEffectTarget(IEffect effect, VehicleComponent playerSelectedComponent = null)
-        => effectRouter.RouteEffectTarget(effect, playerSelectedComponent);
+    public Entity RouteEffectTarget(IEffect effect)
+        => effectRouter.RouteEffectTarget(effect);
 
     // ==================== VEHICLE STATUS ====================
     
-    /// <summary>
-    /// Mark vehicle as destroyed. Called immediately when chassis is destroyed.
-    /// Emits destruction event via TurnEventBus - subscribers handle the rest.
-    /// </summary>
     public void MarkAsDestroyed()
     {
         if (Status == VehicleStatus.Destroyed) return; // Already handled
@@ -184,10 +140,7 @@ public class Vehicle : MonoBehaviour
     
     // ==================== OPERATIONAL STATUS ====================
 
-    /// <summary>
-    /// Get reason why vehicle cannot operate, or null if operational.
-    /// Checks chassis and power core - the minimum requirements for any vehicle operation.
-    /// </summary>
+    /// <summary>Null if operational.</summary>
     public string GetNonOperationalReason()
     {
         if (chassis == null) return "No chassis installed";
@@ -197,15 +150,9 @@ public class Vehicle : MonoBehaviour
         return null;
     }
 
-    /// <summary>
-    /// Check if vehicle is operational (has chassis and power core).
-    /// </summary>
     public bool IsOperational() => GetNonOperationalReason() == null;
 
-    /// <summary>
-    /// Get reason why vehicle cannot move, or null if it can move.
-    /// Checks operational status first, then drive system availability and state.
-    /// </summary>
+    /// <summary>Null if can move.</summary>
     public string GetCannotMoveReason()
     {
         // Check operational status first
@@ -222,19 +169,10 @@ public class Vehicle : MonoBehaviour
         return null;
     }
 
-    /// <summary>
-    /// Check if vehicle can move (operational + has functional drive system).
-    /// </summary>
     public bool CanMove() => GetCannotMoveReason() == null;
     
     // ==================== SKILL EXECUTION ====================
     
-    /// <summary>
-    /// Execute a skill with resource management.
-    /// Context is built by the caller (PlayerController, AI, etc.) who has full knowledge.
-    /// Vehicle handles resource validation, consumption, then delegates to SkillExecutor.
-    /// </summary>
-    /// <param name="ctx">Pre-built skill context with all execution data</param>
     public bool ExecuteSkill(SkillContext ctx)
     {
         Skill skill = ctx.Skill;
@@ -264,18 +202,12 @@ public class Vehicle : MonoBehaviour
         return Assets.Scripts.Skills.Helpers.SkillExecutor.Execute(ctx);
     }
 
-    /// <summary>
-    /// Check if vehicle can afford to use a skill.
-    /// </summary>
     private bool CanAffordSkill(Skill skill)
     {
         if (powerCore == null || skill == null) return false;
         return powerCore.CanDrawPower(skill.energyCost, null);
     }
-    
-    /// <summary>
-    /// Consume the energy cost of a skill.
-    /// </summary>
+
     private bool ConsumeSkillCost(Skill skill, VehicleComponent sourceComponent)
     {
         if (powerCore == null || skill == null) return false;

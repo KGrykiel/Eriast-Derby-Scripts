@@ -7,10 +7,6 @@ using Assets.Scripts.Logging;
 using Assets.Scripts.Managers;
 using Assets.Scripts.Stages;
 
-/// <summary>
-/// Overview panel showing race leaderboard and event summary.
-/// Provides high-level view of race state.
-/// </summary>
 public class OverviewPanel : MonoBehaviour
 {
     [Header("UI References")]
@@ -65,7 +61,6 @@ public class OverviewPanel : MonoBehaviour
     {
         if (leaderboardText == null || stateMachine == null) return;
 
-        // Build custom leaderboard
         string display = "<b><size=18>=== RACE STANDINGS ===</size></b>\n";
         display += $"<color=#888888>Round {stateMachine.CurrentRound} | Phase: {stateMachine.CurrentPhase}</color>\n\n";
 
@@ -90,16 +85,14 @@ public class OverviewPanel : MonoBehaviour
 
             display += $"{posIcon} {name}\n";
 
-            // Location
             string stageName = vehicle.currentStage != null ? vehicle.currentStage.stageName : "Unknown";
             float stageLength = vehicle.currentStage != null ? vehicle.currentStage.length : 0;
             display += $"   {stageName} ({vehicle.progress:F1}/{stageLength:F0}m)";
 
-            // Distance to finish
             if (showDistanceToFinish)
             {
-                float distToFinish = -CalculateTotalProgress(vehicle); // Negate to get positive distance
-                
+                float distToFinish = -CalculateTotalProgress(vehicle);
+
                 if (vehicle.currentStage != null && vehicle.currentStage.isFinishLine)
                 {
                     float remaining = vehicle.currentStage.length - vehicle.progress;
@@ -111,7 +104,6 @@ public class OverviewPanel : MonoBehaviour
                 }
             }
 
-            // Energy (inline)
             if (showEnergy)
             {
                 int energy = vehicle.powerCore?.GetCurrentEnergy() ?? 0;
@@ -119,14 +111,12 @@ public class OverviewPanel : MonoBehaviour
                 display += $" Energy:{energy}/{maxEnergy}";
             }
 
-            // Speed (inline)
             if (showSpeed)
             {
                 float speed = vehicle.GetDriveComponent()?.GetMaxSpeed() ?? 0f;
                 display += $" Speed:{speed:F1}";
             }
 
-            // Status effect count (inline)
             if (showModifiers)
             {
                 int statusCount = vehicle.AllComponents.Sum(c => c.GetActiveStatusEffects().Count);
@@ -137,7 +127,6 @@ public class OverviewPanel : MonoBehaviour
 
             display += "\n";
 
-            // Health bar (compact)
             int health = vehicle.chassis != null ? vehicle.chassis.GetCurrentHealth() : 0;
             int maxHealth = vehicle.chassis != null ? vehicle.chassis.GetMaxHealth() : 1;
             float healthPercent = (float)health / maxHealth;
@@ -146,7 +135,6 @@ public class OverviewPanel : MonoBehaviour
             display += $"   <color={healthColor}>{healthBar}</color> <color=#AAAAAA>{health}/{maxHealth}HP</color>\n\n";
         }
 
-        // Destroyed vehicles
         var destroyedVehicles = stateMachine.AllVehicles
             .Where(v => v.Status == VehicleStatus.Destroyed)
             .ToList();
@@ -170,7 +158,6 @@ public class OverviewPanel : MonoBehaviour
         string display = "<b><size=18>=== CRITICAL EVENTS ===</size></b>\n";
         display += "<color=#888888>------------------------</color>\n\n";
 
-        // Get critical and high importance events
         var criticalEvents = RaceHistory.Instance.AllEvents
             .Where(e => e.importance <= EventImportance.High)
             .TakeLast(criticalEventCount)
@@ -188,7 +175,6 @@ public class OverviewPanel : MonoBehaviour
             }
         }
 
-        // Add statistics
         display += "\n<b>RACE STATISTICS:</b>\n";
         display += $"  Total Events: {RaceHistory.Instance.AllEvents.Count}\n";
         display += $"  Critical: {RaceHistory.Instance.AllEvents.Count(e => e.importance == EventImportance.Critical)}\n";
@@ -198,59 +184,30 @@ public class OverviewPanel : MonoBehaviour
         eventSummaryText.text = display;
     }
 
-    // Helper methods
-
-    /// <summary>
-    /// Calculates how close a vehicle is to finishing the race.
-    /// Lower values = closer to finish = higher rank.
-    /// Handles branching paths and circuit races where start = finish.
-    /// Uses same logic as RaceLeaderboard for consistency.
-    /// </summary>
     private float CalculateTotalProgress(Vehicle vehicle)
     {
         if (vehicle.currentStage == null)
-            return float.MinValue; // No stage = furthest back
+            return float.MinValue;
 
-        // Check if vehicle is AT the finish line
         if (vehicle.currentStage.isFinishLine)
         {
-            // Vehicle at finish: distance remaining = (stage length - progress)
-            // Multiply by -1 so more progress = higher rank
             return -(vehicle.currentStage.length - vehicle.progress);
         }
 
-        // Calculate shortest distance to ANY finish line using BFS
         float shortestDistanceToFinish = FindShortestDistanceToFinish(vehicle.currentStage, vehicle.progress);
-
-        // Negate so LOWER distance = HIGHER rank value (for descending sort)
         return -shortestDistanceToFinish;
     }
 
-    /// <summary>
-    /// Uses Breadth-First Search to find shortest path to any finish line.
-    /// Returns total distance from vehicle's current position to nearest finish.
-    /// Handles circuit races where finish line is ahead via nextStages traversal.
-    /// Special case: If on finish line at race start, calculates full lap distance.
-    /// </summary>
     private float FindShortestDistanceToFinish(Stage currentStage, float currentProgress)
     {
-        // Special case: If we're on a finish line stage with very little progress,
-        // we're likely at the START of the race, not about to finish
-        // Calculate the full lap distance by traversing forward
         if (currentStage.isFinishLine && currentProgress < 1f)
-        {
-            // At race start on finish line - need to complete full lap
             return CalculateFullLapDistance(currentStage);
-        }
 
-        // BFS to find shortest path to finish
         Queue<(Stage stage, float distance)> queue = new();
         HashSet<Stage> visited = new();
 
-        // Start BFS from NEXT stages (not current stage)
-        // This prevents immediately detecting the start/finish line we're already on
         float remainingInCurrentStage = currentStage.length - currentProgress;
-        
+
         if (currentStage.nextStages != null && currentStage.nextStages.Count > 0)
         {
             foreach (var nextStage in currentStage.nextStages)
@@ -264,7 +221,6 @@ public class OverviewPanel : MonoBehaviour
         }
         else
         {
-            // Dead end - no next stages
             return 999999f;
         }
 
@@ -274,18 +230,13 @@ public class OverviewPanel : MonoBehaviour
         {
             var (stage, distanceSoFar) = queue.Dequeue();
 
-            // Check if this stage is a finish line
             if (stage.isFinishLine)
             {
-                // Found a finish line! Update shortest distance
                 if (distanceSoFar < shortestDistance)
-                {
                     shortestDistance = distanceSoFar;
-                }
-                continue; // Don't explore beyond finish line
+                continue;
             }
 
-            // Explore next stages
             if (stage.nextStages != null)
             {
                 foreach (var nextStage in stage.nextStages)
@@ -300,21 +251,14 @@ public class OverviewPanel : MonoBehaviour
             }
         }
 
-        // If no finish line found, return a very large number
         return shortestDistance == float.MaxValue ? 999999f : shortestDistance;
     }
 
-    /// <summary>
-    /// Calculates the full lap distance by traversing from start/finish line
-    /// all the way around back to the start/finish line.
-    /// Used when vehicles are at race start.
-    /// </summary>
     private float CalculateFullLapDistance(Stage startFinishStage)
     {
         Queue<(Stage stage, float distance)> queue = new();
         HashSet<Stage> visited = new();
 
-        // Start from the finish line stage itself
         visited.Add(startFinishStage);
         queue.Enqueue((startFinishStage, startFinishStage.length));
 
@@ -324,18 +268,14 @@ public class OverviewPanel : MonoBehaviour
         {
             var (stage, distanceSoFar) = queue.Dequeue();
 
-            // Check if we've looped back to the start/finish
             if (stage.nextStages != null)
             {
                 foreach (var nextStage in stage.nextStages)
                 {
                     if (nextStage == startFinishStage)
                     {
-                        // Found the loop back to start! This is the lap distance
                         if (distanceSoFar < lapDistance)
-                        {
                             lapDistance = distanceSoFar;
-                        }
                     }
                     else if (nextStage != null && !visited.Contains(nextStage))
                     {

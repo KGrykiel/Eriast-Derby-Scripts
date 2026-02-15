@@ -4,24 +4,14 @@ using Assets.Scripts.Characters;
 namespace Assets.Scripts.Combat.Saves
 {
     /// <summary>
-    /// Rules engine for saving throws.
-    /// Gathers bonuses according to game rules, rolls via D20Calculator, wraps in result.
-    /// 
-    /// UNIVERSAL: No vehicle, component, or routing knowledge.
-    /// Takes pre-resolved participants (entity for vehicle saves, character for character saves).
-    /// 
-    /// Vehicle routing happens EXTERNALLY via CheckRouter before calling this.
-    /// Non-vehicle entities call this directly.
+    /// Rules engine for saving throws — gathers bonuses, rolls via D20Calculator.
+    /// Has no vehicle/routing knowledge. Takes pre-resolved participants from CheckRouter.
     /// </summary>
     public static class SaveCalculator
     {
         /// <summary>
-        /// Compute a saving throw with pre-resolved participants.
-        /// Gathers bonuses from the given entity/character based on spec, rolls, returns result.
-        /// 
-        /// For vehicle saves: pass the resolved component as entity.
-        /// For character saves: pass the resolved character.
-        /// For standalone entities: pass the entity directly.
+        /// pass entity if this is a vehicle save or non-vehicle entity save
+        /// pass character if it's a character save
         /// </summary>
         public static SaveResult Compute(
             SaveSpec saveSpec,
@@ -34,11 +24,6 @@ namespace Assets.Scripts.Combat.Saves
             return new SaveResult(roll, saveSpec, character);
         }
 
-        /// <summary>
-        /// Gather all bonuses for a saving throw based on game rules.
-        /// Vehicle saves: entity base value + applied modifiers.
-        /// Character saves: attribute modifier + half level.
-        /// </summary>
         public static List<RollBonus> GatherBonuses(
             SaveSpec saveSpec,
             Entity entity = null,
@@ -88,9 +73,7 @@ namespace Assets.Scripts.Combat.Saves
             return skill.saveDCBase;
         }
 
-        /// <summary>
-        /// Create an automatic failure result (routing failed - no roll occurred).
-        /// </summary>
+        /// <summary>Factory for making auto-failed results if no suitablke component/character found</summary>
         public static SaveResult AutoFail(SaveSpec spec, int dc)
         {
             return new SaveResult(

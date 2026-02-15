@@ -11,9 +11,7 @@ using Assets.Scripts.StatusEffects;
 namespace Assets.Scripts.Combat.Logging
 {
     /// <summary>
-    /// Pure formatting methods for combat data → display strings.
-    /// No side effects, no logging, no state. Just string building.
-    /// 
+    /// Pure formatting methods for combat data display strings.
     /// Used by CombatLogManager for log formatting and by UI for tooltips.
     /// </summary>
     public static class CombatFormatter
@@ -30,31 +28,6 @@ namespace Assets.Scripts.Combat.Logging
         }
 
         // ==================== D20 ROLL FORMATTING ====================
-
-        /// <summary>
-        /// Format any d20 roll result for short display.
-        /// "15 (d20: 12+3) vs AC 14 - HIT"
-        /// </summary>
-        public static string FormatD20RollShort(
-            D20RollOutcome roll,
-            string targetLabel,
-            string successText,
-            string failText)
-        {
-            string modStr = roll.TotalModifier >= 0 
-                ? $"+{roll.TotalModifier}" 
-                : $"{roll.TotalModifier}";
-            string output = $"{roll.Total} (d20: {roll.BaseRoll}{modStr})";
-
-            if (roll.TargetValue > 0)
-            {
-                output += $" vs {targetLabel} {roll.TargetValue}";
-                output += roll.Success ? $" - {successText}" : $" - {failText}";
-            }
-
-            return output;
-        }
-
         /// <summary>
         /// Format any d20 roll result with full breakdown for tooltips.
         /// </summary>
@@ -191,28 +164,8 @@ namespace Assets.Scripts.Combat.Logging
             return sb.ToString().Trim();
         }
 
-        public static string FormatCombinedAttackAndDamage(AttackResult attack, DamageResult damage)
-        {
-            var sb = new StringBuilder();
-
-            if (attack != null)
-                sb.Append(FormatAttackDetailed(attack));
-
-            if (damage != null)
-            {
-                if (sb.Length > 0) sb.AppendLine();
-                sb.Append(FormatDamageDetailed(damage));
-            }
-
-            return sb.ToString();
-        }
-
         // ==================== STAT BREAKDOWN ====================
 
-        /// <summary>
-        /// Format a stat breakdown with modifiers for tooltips.
-        /// Used by StatValueDisplay for hover tooltips.
-        /// </summary>
         public static string FormatStatBreakdown(
             Entity entity,
             Attribute attribute,
@@ -247,10 +200,6 @@ namespace Assets.Scripts.Combat.Logging
 
         // ==================== STATUS EFFECT FORMATTING ====================
 
-        /// <summary>
-        /// Format a status effect tooltip with full details.
-        /// Used by StatusEffectIcon for hover tooltips.
-        /// </summary>
         public static string FormatStatusEffectTooltip(AppliedStatusEffect appliedEffect)
         {
             if (appliedEffect == null || appliedEffect.template == null)

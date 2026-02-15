@@ -5,10 +5,6 @@ using System.Linq;
 using Assets.Scripts.Logging;
 using Assets.Scripts.StatusEffects;
 
-/// <summary>
-/// Focus panel showing player status and same-stage vehicles.
-/// Updates in real-time to show combat-relevant information.
-/// </summary>
 public class FocusPanel : MonoBehaviour
 {
     [Header("UI References")]
@@ -27,8 +23,7 @@ public class FocusPanel : MonoBehaviour
     void Start()
     {
         gameManager = FindFirstObjectByType<GameManager>();
-        
-        // Get first player vehicle (or current one if multiple exist)
+
         if (gameManager != null)
         {
             var playerVehicles = gameManager.GetPlayerVehicles();
@@ -48,19 +43,16 @@ public class FocusPanel : MonoBehaviour
     
     public void RefreshPanel()
     {
-        // Update player vehicle reference in case it changed (e.g., current turn vehicle)
         if (gameManager != null)
         {
             var stateMachine = gameManager.GetStateMachine();
             if (stateMachine != null && stateMachine.CurrentVehicle != null 
                 && stateMachine.CurrentVehicle.controlType == ControlType.Player)
             {
-                // Show the currently active player vehicle
                 playerVehicle = stateMachine.CurrentVehicle;
             }
             else if (playerVehicle == null || playerVehicle.Status == VehicleStatus.Destroyed)
             {
-                // Fallback to first alive player vehicle
                 var playerVehicles = gameManager.GetPlayerVehicles();
                 playerVehicle = playerVehicles.Find(v => v.Status != VehicleStatus.Destroyed);
             }
@@ -82,37 +74,32 @@ public class FocusPanel : MonoBehaviour
         string status = $"<b><size=18><color=#FFD700>PLAYER VEHICLE</color></size></b>\n\n";
         status += $"<b>Name:</b> {playerVehicle.vehicleName}\n";
         status += $"<b>Status:</b> {GetStatusColor(playerVehicle.Status)}\n\n";
-        
-        // Current Stage
+
         if (playerVehicle.currentStage != null)
         {
             status += $"<b>Stage:</b> {playerVehicle.currentStage.stageName}\n";
             status += $"<b>Progress:</b> {playerVehicle.progress:F1}/{playerVehicle.currentStage.length:F0}m\n\n";
         }
         
-        // Health (from chassis)
         int health = playerVehicle.chassis?.GetCurrentHealth() ?? 0;
         int maxHealth = playerVehicle.chassis?.GetMaxHealth() ?? 0;
         float healthPercent = maxHealth > 0 ? (float)health / maxHealth : 0f;
         string healthBar = GenerateBar(healthPercent, 15);
         string healthColor = GetHealthColor(healthPercent);
         status += $"<b>Health:</b> <color={healthColor}>{healthBar} {health}/{maxHealth}</color>\n";
-        
-        // Energy (from power core)
+
         int energy = playerVehicle.powerCore?.GetCurrentEnergy() ?? 0;
         int maxEnergy = playerVehicle.powerCore?.GetMaxEnergy() ?? 0;
         float energyPercent = maxEnergy > 0 ? (float)energy / maxEnergy : 0f;
         string energyBar = GenerateBar(energyPercent, 15);
         status += $"<b>Energy:</b> <color=#88DDFF>{energyBar} {energy}/{maxEnergy}</color>\n\n";
-        
-        // Attributes (from components)
+
         float speed = playerVehicle.GetDriveComponent()?.GetMaxSpeed() ?? 0f;
         int armorClass = playerVehicle.chassis?.GetArmorClass() ?? 10;
         status += $"<b>Speed:</b> {speed:F1}\n";
         status += $"<b>Armor Class:</b> {armorClass}\n";
         status += $"<b>Magic Resistance:</b> 10 \n\n"; // TODO: Replace with actual MR attribute
 
-        // Active Status Effects across all components
         var allStatusEffects = new List<AppliedStatusEffect>();
         foreach (var component in playerVehicle.AllComponents)
         {
@@ -145,7 +132,6 @@ public class FocusPanel : MonoBehaviour
             return;
         }
         
-        // Get all vehicles via GameManager
         if (gameManager == null)
         {
             sameStageVehiclesText.text = "<color=#888888>GameManager not found</color>";
@@ -159,7 +145,6 @@ public class FocusPanel : MonoBehaviour
             return;
         }
         
-        // Get all active vehicles in the same stage (excluding player)
         var sameStageVehicles = turnController.AllVehicles
             .Where(v => v != null && 
                         v != playerVehicle && 
@@ -179,8 +164,7 @@ public class FocusPanel : MonoBehaviour
         foreach (var vehicle in sameStageVehicles)
         {
             display += $"<b>{vehicle.vehicleName}</b> ({vehicle.controlType})\n";
-            
-            // Health (from chassis)
+
             int health = vehicle.chassis?.GetCurrentHealth() ?? 0;
             int maxHealth = vehicle.chassis?.GetMaxHealth() ?? 0;
             float healthPercent = maxHealth > 0 ? (float)health / maxHealth : 0f;
@@ -188,31 +172,27 @@ public class FocusPanel : MonoBehaviour
             string healthColor = GetHealthColor(healthPercent);
             display += $"  HP: <color={healthColor}>{healthBar} {health}/{maxHealth}</color>\n";
 
-            // Energy (from power core)
             int energy = vehicle.powerCore?.GetCurrentEnergy() ?? 0;
             int maxEnergy = vehicle.powerCore?.GetMaxEnergy() ?? 0;
             display += $"  Energy: {energy}/{maxEnergy}\n";
-            
-            // Key stats (from components)
+
             int armorClass = vehicle.chassis?.GetArmorClass() ?? 10;
             float speed = vehicle.GetDriveComponent()?.GetMaxSpeed() ?? 0f;
             display += $"  AC: {armorClass} | ";
             display += $"Speed: {speed:F1}\n";
             
-            // Progress
             display += $"  Progress: {vehicle.progress:F1}/{vehicle.currentStage.length:F0}m\n";
-            
+
             display += "\n";
         }
-        
+
         sameStageVehiclesText.text = display;
     }
-    
+
     private void UpdateRecentEvents()
     {
         if (recentEventsText == null) return;
-        
-        // Get recent high-importance events
+
         var recentEvents = RaceHistory.Instance.AllEvents
             .Where(e => e.importance <= EventImportance.High)
             .TakeLast(recentEventCount)
@@ -233,8 +213,6 @@ public class FocusPanel : MonoBehaviour
         
         recentEventsText.text = display;
     }
-    
-    // Helper methods
     
     private string GetStatusColor(VehicleStatus status)
     {

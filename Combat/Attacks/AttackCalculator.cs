@@ -4,18 +4,11 @@ using Assets.Scripts.Characters;
 namespace Assets.Scripts.Combat.Attacks
 {
     /// <summary>
-    /// Rules engine for attack rolls.
-    /// Gathers bonuses according to game rules, rolls via D20Calculator, wraps in result.
-    /// 
-    /// UNIVERSAL: No attack flow knowledge (single vs two-stage).
-    /// AttackPerformer handles flow orchestration and event emission.
+    /// Calculates the total bonuses to attack power and to AC.
+    /// rolls with D20Calculator and return a structured result struct.
     /// </summary>
     public static class AttackCalculator
     {
-        /// <summary>
-        /// Compute an attack roll against a target.
-        /// Gathers bonuses from attacker/character, rolls vs target AC, returns result.
-        /// </summary>
         public static AttackResult Compute(
             Entity target,
             Entity attacker = null,
@@ -35,11 +28,6 @@ namespace Assets.Scripts.Combat.Attacks
             return new AttackResult(roll);
         }
 
-        /// <summary>
-        /// Gather all bonuses for an attack roll based on game rules.
-        /// Weapon provides: attack bonus + applied modifiers.
-        /// Character provides: base attack bonus.
-        /// </summary>
         public static List<RollBonus> GatherBonuses(
             Entity attacker = null,
             Character character = null)

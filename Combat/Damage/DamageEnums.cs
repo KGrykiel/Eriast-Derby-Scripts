@@ -1,28 +1,22 @@
 ﻿namespace Assets.Scripts.Combat.Damage
 {
-    /// <summary>
-    /// Damage types for the D&D-style combat system.
-    /// Used for resistance/vulnerability calculations.
-    /// </summary>
+    /// <summary>Standard D&D damage type spread.</summary>
     public enum DamageType
     {
-        // Physical damage types
-        Physical,       // Default, generic physical damage
-        Bludgeoning,    // Hammers, rams, collisions (can split from Physical later)
-        Piercing,       // Crossbows, spears, ballistas
-        Slashing,       // Blades, saw weapons
+        Physical, //might remove that one, I think the subtypes cover all bases already
+        Bludgeoning,
+        Piercing,
+        Slashing,
 
-        // Elemental damage types
-        Fire,           // Flamethrowers, explosions
-        Cold,           // Cryo weapons, ice magic
-        Lightning,      // Tesla coils, shock weapons
-        Acid,           // Chemical sprayers
+        Fire,
+        Cold,
+        Lightning,
+        Acid,
 
-        // Special damage types
-        Force,          // Pure magical/mechanical force
-        Psychic,        // Mind attacks (rare)
-        Necrotic,       // Life-draining
-        Radiant,        // Holy/light damage
+        Force,
+        Psychic,
+        Necrotic,
+        Radiant,
     }
 
     /// <summary>
@@ -31,7 +25,7 @@
     public enum DamageSource
     {
         Weapon,         // From a weapon component attack
-        Ability,        // From a skill/spell (non-weapon)
+        Ability,        // From a character skill/spell (non-weapon)
         Environment,    // Stage hazards, traps
         Effect,         // Damage over time, ongoing status effects
         Collision       // Vehicle collisions

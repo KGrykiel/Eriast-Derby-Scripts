@@ -4,11 +4,7 @@ using UnityEngine;
 
 namespace Assets.Scripts.Entities.Vehicle.VehicleComponents.ComponentTypes
 {
-    /// <summary>
-    /// Power Core component - the energy source of a vehicle.
-    /// MANDATORY: Every vehicle must have exactly one power core.
-    /// Stores and manages the vehicle's energy system.
-    /// </summary>
+    /// <summary>Main energy source. Every vehicle needs one or else it's just a static lump of metal</summary>
     public class PowerCoreComponent : VehicleComponent
     {
         [Header("Energy System")]
@@ -31,174 +27,110 @@ namespace Assets.Scripts.Entities.Vehicle.VehicleComponents.ComponentTypes
         [Header("Runtime State")]
         [Tooltip("Total power drawn this turn (resets at start of turn)")]
         public int currentTurnPowerDraw = 0;
-        
+
         /// <summary>
-        /// Called when component is first added or reset in Editor.
-        /// Sets default values that appear immediately in Inspector.
+        /// Default values for convenience, to be edited manually.
         /// </summary>
         void Reset()
         {
-            // Set GameObject name (shows in hierarchy)
             gameObject.name = "Power Core";
-            
-            // Set component identity
             componentType = ComponentType.PowerCore;
-            
-            // Set component base stats using Entity fields
-            baseMaxHealth = 75;      // Moderately durable
-            health = 75;         // Start at full HP
-            baseArmorClass = 20;     // Well-protected critical component
-            baseComponentSpace = 0;  // Power cores don't consume space
-            basePowerDrawPerTurn = 0;  // Generates power, doesn't consume it
-            
-            // Set energy system defaults
+
+            baseMaxHealth = 75;
+            health = 75;
+            baseArmorClass = 20;
+            baseComponentSpace = 0;
+            basePowerDrawPerTurn = 0;
+
             currentEnergy = 50;
             baseMaxEnergy = 50;
             baseEnergyRegen = 5;
-            
-            // Power core does NOT enable a role
             roleType = RoleType.None;
         }
-        
+
         void Awake()
         {
-            // Set component type (in case Reset wasn't called)
             componentType = ComponentType.PowerCore;
-            
-            // Initialize energy to max
             currentEnergy = GetMaxEnergy();
-            
-            // Ensure role settings
             roleType = RoleType.None;
         }
         
-        // ==================== STAT ACCESSORS ====================
-        // These methods provide the single source of truth for stat values with modifiers.
-        // UI and game logic should use these instead of accessing fields directly.
-        
-        // Runtime state accessors (not stats, just current values)
         public int GetCurrentEnergy() => currentEnergy;
         public int GetCurrentTurnPowerDraw() => currentTurnPowerDraw;
-        
-        // Base value accessors (return raw field values without modifiers)
+
         public int GetBaseMaxEnergy() => baseMaxEnergy;
         public int GetBaseEnergyRegen() => baseEnergyRegen;
         public int GetBaseMaxPowerDrawPerTurn() => baseMaxPowerDrawPerTurn;
-        
-        // Modified value accessors (return values with all modifiers applied via StatCalculator)
-        // INTEGER-FIRST: All stats are integers
+
         public int GetMaxEnergy() => StatCalculator.GatherAttributeValue(this, Attribute.MaxEnergy, baseMaxEnergy);
         public int GetEnergyRegen() => StatCalculator.GatherAttributeValue(this, Attribute.EnergyRegen, baseEnergyRegen);
-        
-        // MaxPowerDrawPerTurn is a configuration setting, not a modified stat
         public int GetMaxPowerDrawPerTurn() => baseMaxPowerDrawPerTurn;
-        
-        /// <summary>
-        /// Regenerates energy at the start of turn.
-        /// Cannot regenerate if power core is destroyed.
-        /// Uses StatCalculator for modifier-adjusted values.
-        /// INTEGER-FIRST: All values are integers.
-        /// </summary>
+
         public void RegenerateEnergy()
         {
-            if (isDestroyed)
-            {
-                // Cannot regenerate when destroyed
-                return;
-            }
-            
-            // Use accessor methods for modified values (all integers now)
+            if (isDestroyed) return;
+
             int regenRate = GetEnergyRegen();
             int maxCap = GetMaxEnergy();
-            
+
             int oldEnergy = currentEnergy;
             currentEnergy = Mathf.Min(currentEnergy + regenRate, maxCap);
-            
             int regenAmount = currentEnergy - oldEnergy;
-            
+
             this.LogEnergyRegeneration(regenAmount, currentEnergy, maxCap);
         }
-        
-        /// <summary>
-        /// Get the stats to display in the UI for this power core.
-        /// Uses StatCalculator for modified values.
-        /// INTEGER-FIRST: All stats are integers.
-        /// </summary>
+
         public override List<VehicleComponentUI.DisplayStat> GetDisplayStats()
         {
             var stats = new List<VehicleComponentUI.DisplayStat>();
-            
-            // Get modified values using accessor methods (all integers)
+
             int modifiedMaxEnergy = GetMaxEnergy();
             int modifiedRegen = GetEnergyRegen();
-            
-            // Energy bar with tooltip for max energy modifiers
+
             stats.Add(VehicleComponentUI.DisplayStat.BarWithTooltip("Energy", "EN", Attribute.MaxEnergy, currentEnergy, baseMaxEnergy, modifiedMaxEnergy));
-            
-            // Regen with tooltip for regen modifiers
             stats.Add(VehicleComponentUI.DisplayStat.WithTooltip("Regen", "REGEN", Attribute.EnergyRegen, baseEnergyRegen, modifiedRegen, "/turn"));
-            
-            // Don't add base class stats - power core generates power, doesn't consume it
-            
+
             return stats;
         }
         
-        /// <summary>
-        /// Called when power core is destroyed.
-        /// This is catastrophic - without power, the vehicle cannot function.
-        /// Vehicle loses all energy and cannot regenerate it.
-        /// </summary>
+        /// <summary>Power core destruction = vehicle loses all energy.</summary>
         protected override void OnComponentDestroyed()
         {
             base.OnComponentDestroyed();
-            
+
             if (parentVehicle == null) return;
-            
-            // Drain all energy immediately
+
             currentEnergy = 0;
-            
+
             this.LogPowerCoreDestroyed();
         }
-        
+
         // ==================== POWER MANAGEMENT METHODS ====================
-        
-        /// <summary>
-        /// Check if there's enough energy available for a draw request.
-        /// Validates both total energy and optional per-turn limit.
-        /// </summary>
+
         public bool CanDrawPower(int amount, VehicleComponent requester = null)
         {
-            // Primary constraint: Total energy available
             if (currentEnergy < amount) return false;
-            
-            // Optional constraint: Per-turn limit (usually 0 for unlimited)
+
             int maxPerTurn = GetMaxPowerDrawPerTurn();
             if (maxPerTurn > 0 && currentTurnPowerDraw + amount > maxPerTurn)
                 return false;
-            
+
             return true;
         }
-        
-        /// <summary>
-        /// Consume power. Returns true if successful.
-        /// Automatically logs power draw for debugging.
-        /// </summary>
+
+        /// <summary>Returns false if insufficient energy.</summary>
         public bool DrawPower(int amount, VehicleComponent requester, string reason)
         {
             if (!CanDrawPower(amount, requester)) return false;
-            
+
             currentEnergy -= amount;
             currentTurnPowerDraw += amount;
-            
-            // Log power draw (debug level)
+
             this.LogPowerDraw(amount, requester, reason, currentEnergy, currentTurnPowerDraw);
-            
+
             return true;
         }
-        
-        /// <summary>
-        /// Reset per-turn tracking. Called at start of vehicle's turn.
-        /// </summary>
+
         public void ResetTurnPowerTracking()
         {
             currentTurnPowerDraw = 0;

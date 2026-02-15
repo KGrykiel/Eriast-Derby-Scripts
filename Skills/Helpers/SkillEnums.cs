@@ -1,8 +1,4 @@
-﻿/// <summary>
-/// Defines the type of roll required for a skill to succeed.
-/// Determines both the mechanics and target number calculation.
-/// </summary>
-public enum SkillRollType
+﻿public enum SkillRollType
 {
     /// <summary>
     /// No roll required - skill automatically succeeds (buffs, heals, etc.)
@@ -10,20 +6,20 @@ public enum SkillRollType
     None,
     
     /// <summary>
-    /// Attack roll - d20 + attack bonus vs target's AC
-    /// Used for weapon attacks and offensive spells
+    /// Attack roll - d20 + bonuses vs target's AC
+    /// Used for weapon attacks and offensive skills/spells
     /// </summary>
     AttackRoll,
     
     /// <summary>
-    /// Saving throw - target rolls d20 + save bonus vs skill's DC
+    /// Saving throw - TARGET rolls d20 + save bonus vs skill's DC
     /// Used for effects that target can actively resist (poison, stunning, etc.)
     /// </summary>
     SavingThrow,
-    
+
     /// <summary>
     /// Skill check - d20 + skill bonus vs DC
-    /// Used for non-combat actions (lockpicking, hacking, stealth, etc.)
+    /// Used for event cards or skills that require an active check (piloting through hazards, performing stunts, etc.)
     /// </summary>
     SkillCheck,
     
@@ -35,8 +31,7 @@ public enum SkillRollType
 }
 
 /// <summary>
-/// Defines what targeting UI flow is required for a skill.
-/// Determines which selection screens to show and how to route the target.
+/// Determines the UI necessary to select targets for a skill, and how the skill's effects are applied to those targets.
 /// </summary>
 public enum TargetingMode
 {

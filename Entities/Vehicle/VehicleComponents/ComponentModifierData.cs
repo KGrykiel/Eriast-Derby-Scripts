@@ -4,16 +4,8 @@ using UnityEngine;
 namespace Assets.Scripts.Entities.Vehicle.VehicleComponents
 {
     /// <summary>
-    /// Defines a modifier that one component provides to another component.
-    /// Used for cross-component bonuses (e.g., Advanced Armor gives +2 AC to Chassis).
-    /// 
-    /// This is SEPARATE from ModifierData (used by StatusEffects) to keep concerns distinct.
-    /// Components should NOT use this to modify themselves - just set base values directly.
-    /// 
-    /// Example usage:
-    /// - Advanced Armor Component provides +2 AC to Chassis
-    /// - Nitro Booster provides +10 Speed to Drive
-    /// - Targeting Computer provides +2 AttackBonus to AllWeapons
+    /// Cross-component modifier data (e.g. Advanced Armor gives +2 AC to Chassis).
+    /// Not to be confused with AttributeModifier that is used for game-time modifiers.
     /// </summary>
     [Serializable]
     public class ComponentModifierData
@@ -35,9 +27,6 @@ namespace Assets.Scripts.Entities.Vehicle.VehicleComponents
         public VehicleComponent specificTarget;
     }
 
-    /// <summary>
-    /// Specifies which component(s) a modifier targets.
-    /// </summary>
     public enum ComponentTargetMode
     {
         [Tooltip("Targets the chassis component")]

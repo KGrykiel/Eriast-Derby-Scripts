@@ -5,13 +5,6 @@ using Assets.Scripts.Combat.Logging;
 
 namespace Assets.Scripts.UI.Components
 {
-    /// <summary>
-    /// UI component for displaying a stat value with color coding and tooltip.
-    /// Green = buffed, Red = debuffed, White = base value.
-    /// Hover shows modifier breakdown tooltip (uses StatCalculator for data).
-    /// 
-    /// Usage: Attach to a TextMeshProUGUI component.
-    /// </summary>
     [RequireComponent(typeof(TextMeshProUGUI))]
     public class StatValueDisplay : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
     {
@@ -25,11 +18,9 @@ namespace Assets.Scripts.UI.Components
         [Tooltip("Color when stat is at base value (no modifiers)")]
         public Color normalColor = Color.white;
         
-        // Private state
         private TextMeshProUGUI textComponent;
         private RectTransform rectTransform;
-        
-        // Tooltip data - INTEGER-FIRST DESIGN
+
         private Entity tooltipEntity;
         private Attribute tooltipAttribute;
         private int tooltipBaseValue;
@@ -41,16 +32,6 @@ namespace Assets.Scripts.UI.Components
             rectTransform = GetComponent<RectTransform>();
         }
         
-        /// <summary>
-        /// Update the displayed stat value with color coding.
-        /// Uses StatCalculator to determine if stat is modified.
-        /// INTEGER-FIRST DESIGN: All stat values are integers (D&D discrete stats).
-        /// </summary>
-        /// <param name="entity">Entity for tooltip breakdown (can be null if no tooltip)</param>
-        /// <param name="attribute">Attribute for tooltip breakdown</param>
-        /// <param name="baseValue">Base value (unmodified) - INTEGER</param>
-        /// <param name="finalValue">Final value (with modifiers) - INTEGER</param>
-        /// <param name="displayText">Custom display text (if null, uses finalValue)</param>
         public void UpdateDisplay(
             Entity entity,
             Attribute attribute,
@@ -59,17 +40,14 @@ namespace Assets.Scripts.UI.Components
             string displayText = null)
         {
             if (textComponent == null) return;
-            
-            // Store tooltip data
+
             tooltipEntity = entity;
             tooltipAttribute = attribute;
             tooltipBaseValue = baseValue;
             tooltipFinalValue = finalValue;
-            
-            // Set display text (integer, no decimal places)
+
             textComponent.text = displayText ?? finalValue.ToString();
-            
-            // Set color based on modifiers
+
             int totalModifiers = finalValue - baseValue;
             
             if (totalModifiers == 0)
@@ -86,31 +64,20 @@ namespace Assets.Scripts.UI.Components
             }
         }
         
-        /// <summary>
-        /// Update display with just final value (no tooltip, always white).
-        /// </summary>
         public void UpdateDisplay(float value, string displayText = null)
         {
             if (textComponent == null) return;
-            
+
             textComponent.text = displayText ?? value.ToString("F1");
             textComponent.color = normalColor;
-            
-            // Clear tooltip data
             ClearTooltipData();
         }
-        
-        /// <summary>
-        /// Clear tooltip data so hovering won't show outdated info.
-        /// </summary>
+
         public void ClearTooltipData()
         {
             tooltipEntity = null;
         }
-        
-        /// <summary>
-        /// Update display with color but no tooltip.
-        /// </summary>
+
         public void UpdateDisplaySimple(float baseValue, float finalValue, string displayText = null)
         {
             if (textComponent == null) return;
@@ -132,40 +99,31 @@ namespace Assets.Scripts.UI.Components
                 textComponent.color = debuffedColor;
             }
             
-            // Clear tooltip data
             tooltipEntity = null;
         }
-        
-        // ==================== HOVER TOOLTIP ====================
-        
+
         public void OnPointerEnter(PointerEventData eventData)
         {
             if (tooltipEntity == null) return;
-            
-            // Get tooltip content from CombatLogManager (single source of truth for formatting)
-            // CombatLogManager uses StatCalculator internally for data gathering
-            string tooltipContent = CombatLogManager.FormatStatBreakdown(
+
+            string tooltipContent = CombatFormatter.FormatStatBreakdown(
                 tooltipEntity,
                 tooltipAttribute,
                 tooltipBaseValue,
                 tooltipFinalValue);
-            
-            // Show tooltip positioned near this text
+
             RollTooltip.ShowNow(tooltipContent, rectTransform);
         }
-        
+
         public void OnPointerExit(PointerEventData eventData)
         {
             RollTooltip.Hide();
         }
-        
+
         void OnDisable()
         {
-            // Hide tooltip if this stat display is being disabled
             if (RollTooltip.Instance != null)
-            {
                 RollTooltip.Hide();
-            }
         }
     }
 }

@@ -3,35 +3,17 @@
 namespace Assets.Scripts.Effects
 {
     /// <summary>
-    /// Combat/situational state passed to effects during execution.
-    /// Kept separate from SkillContext because effects can come from non-skill sources
-    /// (environmental damage, status effect ticks, event cards, etc.)
-    /// 
-    /// Design: Narrow interface for IEffect - only contains state effects actually need.
+    /// Context for applying an effect, for example to determine if the attack was a critical hit to double the damage effect.
+    /// Can be extended with more fields as needed, but should be kept separate from SkillContext to avoid coupling effects to skills.
     /// </summary>
     public struct EffectContext
     {
-        // ===== COMBAT STATE =====
-        
-        /// <summary>
-        /// Natural 20 on attack roll - doubles damage dice (not flat bonuses).
-        /// </summary>
         public bool IsCriticalHit;
-        
-        // Future fields:
-        // public int LanePosition;      // For movement effects
-        // public float WeatherModifier; // Environmental bonuses
-        // public int ComboCount;        // Combo system multipliers
-        
-        // ===== FACTORY METHODS =====
-        
-        /// <summary>
-        /// Default context with no special state. Use for non-combat effects.
-        /// </summary>
+
         public static EffectContext Default => new();
-        
+
         /// <summary>
-        /// Create EffectContext from SkillContext (translation point).
+        /// Provides a quick way to convert a skillContext to an effect context.
         /// </summary>
         public static EffectContext FromSkillContext(SkillContext ctx)
         {

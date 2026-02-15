@@ -6,18 +6,8 @@ using EventType = Assets.Scripts.Logging.EventType;
 
 namespace Assets.Scripts.Stages
 {
-    /// <summary>
-    /// Extension methods for clean, reusable stage logging.
-    /// Centralizes stage-related logging patterns with minimal boilerplate.
-    /// Follows same pattern as EntityLogManager.
-    /// </summary>
     public static class StageLogManager
     {
-        // ==================== EVENT CARD LOGGING ====================
-        
-        /// <summary>
-        /// Log event card trigger for a vehicle.
-        /// </summary>
         public static void LogEventCardTrigger(this Stage stage, Vehicle vehicle, string cardName)
         {
             if (vehicle == null || string.IsNullOrEmpty(cardName)) return;
@@ -25,7 +15,7 @@ namespace Assets.Scripts.Stages
             EventImportance importance = vehicle.controlType == ControlType.Player 
                 ? EventImportance.High 
                 : EventImportance.Medium;
-            
+
             RaceHistory.Log(
                 EventType.EventCard,
                 importance,
@@ -33,15 +23,9 @@ namespace Assets.Scripts.Stages
                 stage,
                 vehicle
             ).WithMetadata("eventCardName", cardName)
-             .WithMetadata("stageName", stage.stageName)
-             .WithShortDescription($"{vehicle.vehicleName}: {cardName}");
+             .WithMetadata("stageName", stage.stageName);
         }
-        
-        // ==================== STAGE ENTRY/EXIT LOGGING ====================
-        
-        /// <summary>
-        /// Log vehicle leaving stage.
-        /// </summary>
+
         public static void LogStageExit(this Stage stage, Vehicle vehicle, int vehicleCount)
         {
             if (vehicle == null) return;
@@ -56,11 +40,6 @@ namespace Assets.Scripts.Stages
              .WithMetadata("vehicleCount", vehicleCount);
         }
 
-        // ==================== LANE TURN EFFECTS LOGGING ====================
-        
-        /// <summary>
-        /// Log lane turn effect result (success or failure).
-        /// </summary>
         public static void LogLaneTurnEffect(
             this Stage stage, 
             Vehicle vehicle, 
@@ -86,9 +65,6 @@ namespace Assets.Scripts.Stages
              .WithMetadata("success", success);
         }
         
-        /// <summary>
-        /// Log lane turn effect with skill check result.
-        /// </summary>
         public static void LogLaneTurnEffectWithCheck(
             this Stage stage,
             Vehicle vehicle,
@@ -120,9 +96,6 @@ namespace Assets.Scripts.Stages
              .WithMetadata("roll", checkResult.Roll.Total);
         }
         
-        /// <summary>
-        /// Log lane turn effect with saving throw result.
-        /// </summary>
         public static void LogLaneTurnEffectWithSave(
             this Stage stage,
             Vehicle vehicle,

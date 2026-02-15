@@ -4,25 +4,11 @@ using Assets.Scripts.Characters;
 namespace Assets.Scripts.Combat.SkillChecks
 {
     /// <summary>
-    /// Rules engine for skill checks.
-    /// Gathers bonuses according to game rules, rolls via D20Calculator, wraps in result.
-    /// 
-    /// UNIVERSAL: No vehicle, component, or routing knowledge.
-    /// Takes pre-resolved participants (entity for vehicle checks, character for character checks).
-    /// 
-    /// Vehicle routing happens EXTERNALLY via CheckRouter before calling this.
-    /// Non-vehicle entities call this directly.
+    /// Rules engine for skill checks — gathers bonuses, rolls via D20Calculator.
+    /// Has no vehicle/routing knowledge. Takes pre-resolved participants from CheckRouter.
     /// </summary>
     public static class SkillCheckCalculator
     {
-        /// <summary>
-        /// Compute a skill check with pre-resolved participants.
-        /// Gathers bonuses from the given entity/character based on spec, rolls, returns result.
-        /// 
-        /// For vehicle checks: pass the resolved component as entity.
-        /// For character checks: pass the resolved character.
-        /// For standalone entities: pass the entity directly.
-        /// </summary>
         public static SkillCheckResult Compute(
             SkillCheckSpec checkSpec,
             int dc,
@@ -34,11 +20,6 @@ namespace Assets.Scripts.Combat.SkillChecks
             return new SkillCheckResult(roll, checkSpec, character);
         }
 
-        /// <summary>
-        /// Gather all bonuses for a skill check based on game rules.
-        /// Entity provides: base value + applied modifiers (status effects, equipment).
-        /// Character provides: attribute modifier + proficiency bonus.
-        /// </summary>
         public static List<RollBonus> GatherBonuses(
             SkillCheckSpec checkSpec,
             Entity entity = null,
@@ -86,9 +67,7 @@ namespace Assets.Scripts.Combat.SkillChecks
             }
         }
 
-        /// <summary>
-        /// Create an automatic failure result (routing failed - no roll occurred).
-        /// </summary>
+        /// <summary>For generating auto-failed skill checks when e.g. no suitable character found</summary>
         public static SkillCheckResult AutoFail(SkillCheckSpec spec, int dc)
         {
             return new SkillCheckResult(

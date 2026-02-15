@@ -3,18 +3,7 @@ using Assets.Scripts.Stages;
 
 namespace Assets.Scripts.Managers
 {
-    /// <summary>
-    /// Centralized event bus for ALL turn-related events.
-    /// Single source of truth for turn lifecycle, operations, and player actions.
-    /// 
-    /// Event Categories:
-    /// - Lifecycle: Phase changes, round/turn start/end, game over
-    /// - Operations: Movement, power, stage transitions
-    /// - Player: Player-specific actions and state changes
-    /// 
-    /// All turn-related systems emit here; TurnEventLogger subscribes.
-    /// Matches CombatEventBus pattern for consistency.
-    /// </summary>
+    /// <summary>Event bus for turn lifecycle, operations, and player actions. Used for logging</summary>
     public static class TurnEventBus
     {
         // ==================== LIFECYCLE EVENTS ====================
@@ -149,7 +138,6 @@ namespace Assets.Scripts.Managers
         
         // ==================== CLEANUP ====================
         
-        /// <summary>Clear all subscribers (for testing or scene unload)</summary>
         public static void ClearAllSubscribers()
         {
             // Lifecycle

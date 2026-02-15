@@ -7,17 +7,7 @@ using Assets.Scripts.Combat.Damage;
 namespace Assets.Scripts.StatusEffects
 {
     /// <summary>
-    /// ScriptableObject template defining a named status effect (buff, debuff, condition).
-    /// Examples: Haste, Burning, Blessed, Stunned, etc.
-    /// 
-    /// Uses COMPOSITIONAL design - combines multiple effect types:
-    /// - Stat modifiers (buffs/debuffs)
-    /// - Periodic effects (DoT, HoT, energy drain/restore)
-    /// - Behavioral effects (prevents actions, movement)
-    /// - Custom behaviors (extensibility for unusual effects)
-    /// 
-    /// This is the TEMPLATE (asset) - actual instances on entities use AppliedStatusEffect.
-    /// Duration tracking happens at the AppliedStatusEffect level, not on individual modifiers.
+    /// Template asset for the flyweight pattern. Runtime instances use AppliedStatusEffect.
     /// </summary>
     [CreateAssetMenu(menuName = "Racing/Status Effect", fileName = "New Status Effect")]
     public class StatusEffect : ScriptableObject
@@ -64,11 +54,6 @@ namespace Assets.Scripts.StatusEffects
         public EntityFeature excludedFeatures = EntityFeature.None;
     }
 
-    // ==================== COMPOSITIONAL DATA CLASSES ====================
-
-    /// <summary>
-    /// Defines a single stat modification as part of a StatusEffect.
-    /// </summary>
     [Serializable]
     public class ModifierData
     {
@@ -82,11 +67,7 @@ namespace Assets.Scripts.StatusEffects
         public float value;
     }
 
-    /// <summary>
-    /// Defines a periodic effect (DoT, HoT, energy drain, etc.).
-    /// Triggered at the start of each turn while the status effect is active.
-    /// Uses dice notation: 1d6+2 for variable, 0d0+5 for flat values.
-    /// </summary>
+    /// <summary>TODO: this should NOT roll dice.</summary>
     [Serializable]
     public class PeriodicEffectData
     {
@@ -107,9 +88,6 @@ namespace Assets.Scripts.StatusEffects
         [Tooltip("Damage type (only used if type is Damage)")]
         public DamageType damageType = DamageType.Fire;
         
-        /// <summary>
-        /// Get the total value for this periodic effect by rolling dice.
-        /// </summary>
         public int RollValue()
         {
             if (diceCount <= 0)
@@ -118,9 +96,6 @@ namespace Assets.Scripts.StatusEffects
             return RollUtility.RollDice(diceCount, dieSize) + bonus;
         }
         
-        /// <summary>
-        /// Get dice notation string for display (e.g., "2d6+3" or "5" for flat).
-        /// </summary>
         public string GetNotation()
         {
             if (diceCount <= 0)
@@ -133,9 +108,6 @@ namespace Assets.Scripts.StatusEffects
         }
     }
 
-    /// <summary>
-    /// Types of periodic effects that can trigger each turn.
-    /// </summary>
     public enum PeriodicEffectType
     {
         Damage,         // Deal damage (Burning, Poison, Bleeding)
@@ -144,9 +116,6 @@ namespace Assets.Scripts.StatusEffects
         EnergyRestore,  // Restore energy
     }
 
-    /// <summary>
-    /// Defines behavioral restrictions and modifications.
-    /// </summary>
     [Serializable]
     public class BehavioralEffectData
     {
@@ -161,29 +130,10 @@ namespace Assets.Scripts.StatusEffects
         public float damageAmplification = 1f;
     }
 
-    // ==================== EXTENSIBILITY: CUSTOM BEHAVIORS ====================
-
-    /// <summary>
-    /// Base class for custom status effect behaviors.
-    /// Create subclasses of this for unusual/complex effects that don't fit the standard categories.
-    /// 
-    /// Examples: Teleportation, spawning entities, spreading to nearby targets, etc.
-    /// </summary>
     public abstract class StatusEffectBehavior : ScriptableObject
     {
-        /// <summary>
-        /// Called when the status effect is first applied to an entity.
-        /// </summary>
         public abstract void OnApply(Entity target, UnityEngine.Object applier);
-        
-        /// <summary>
-        /// Called at the start of each turn while the effect is active.
-        /// </summary>
         public abstract void OnTick(Entity target, UnityEngine.Object applier);
-        
-        /// <summary>
-        /// Called when the status effect is removed (expired, dispelled, or entity destroyed).
-        /// </summary>
         public abstract void OnRemove(Entity target, UnityEngine.Object applier);
     }
 }

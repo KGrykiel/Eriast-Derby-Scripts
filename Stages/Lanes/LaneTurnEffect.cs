@@ -7,16 +7,7 @@ using Assets.Scripts.Combat.Saves;
 namespace Assets.Scripts.Stages.Lanes
 {
     /// <summary>
-    /// Defines an effect that triggers every turn for vehicles in a lane.
-    /// 
-    /// Examples:
-    /// - "Cliff Edge": Mobility check DC 16 or take 2d10 falling damage
-    /// - "Healing Spring": No check, restore 1d6 HP each turn
-    /// - "Burning Road": Reflex save DC 14, success = half fire damage
-    /// - "Rough Terrain": No check, always applies -2 speed modifier
-    /// 
-    /// Design: Similar to CardChoice from ChoiceCard, but automatic (no player choice).
-    /// Can have optional check, and effects for success/failure/always.
+    /// Effect that triggers every turn for vehicles in a lane.
     /// </summary>
     [Serializable]
     public class LaneTurnEffect
@@ -58,9 +49,6 @@ namespace Assets.Scripts.Stages.Lanes
         public string failureNarrative = "";
     }
     
-    /// <summary>
-    /// Type of check a lane turn effect can require.
-    /// </summary>
     public enum LaneCheckType
     {
         /// <summary>No check - effects always apply (e.g., healing spring, rough terrain)</summary>

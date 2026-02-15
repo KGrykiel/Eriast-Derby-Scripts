@@ -3,18 +3,8 @@ using StatusEffectTemplate = Assets.Scripts.StatusEffects.StatusEffect;
 using Assets.Scripts.Effects;
 
 /// <summary>
-/// Effect that applies a StatusEffect to an entity.
-/// This is the PRIMARY way skills apply buffs, debuffs, and conditions.
-/// 
-/// This effect is STATELESS - Entity.ApplyStatusEffect handles logging automatically.
-/// 
-/// Usage:
-/// - Skills: Haste, Bless, Curse, etc.
-/// - EventCards: Random boons/banes
-/// - Stages: Environmental hazards (Burning, Frozen, etc.)
-/// 
-/// StatusEffects are VISIBLE (show icon, tooltip) and have DURATION.
-/// For PERMANENT stat changes without visual status, use AttributeModifierEffect.
+/// All kinds of status effects. Used in conjunction with the status effect system 
+/// (StatusEffectTemplate, StatusEffectInstance, and Entity.ApplyStatusEffect) to apply buffs, debuffs, DoTs, HoTs, etc. to entities.
 /// </summary>
 [System.Serializable]
 public class ApplyStatusEffect : EffectBase
@@ -22,38 +12,15 @@ public class ApplyStatusEffect : EffectBase
     [Header("Status Effect")]
     [Tooltip("The StatusEffect asset to apply (create via Racing/Status Effect menu)")]
     public StatusEffectTemplate statusEffect;
-    
-    /// <summary>
-    /// Applies the status effect to the target entity.
-    /// Logging is handled automatically by Entity.ApplyStatusEffect().
-    /// 
-    /// Parameter convention:
-    /// - user: The Entity applying the status (for tracking)
-    /// - target: The Entity receiving the status effect
-    /// - context: Combat state (unused for status effects)
-    /// - source: Skill/EventCard/Stage that triggered this (for logging)
-    /// </summary>
-    public override void Apply(Entity user, Entity target, EffectContext context, UnityEngine.Object source = null)
+
+    public override void Apply(Entity user, Entity target, EffectContext context, Object source = null)
     {
         if (statusEffect == null)
         {
             Debug.LogWarning("[ApplyStatusEffect] No status effect assigned!");
             return;
         }
-        
-        if (target == null)
-        {
-            Debug.LogWarning("[ApplyStatusEffect] Target is null!");
-            return;
-        }
-        
-        // Apply status effect through Entity system
-        // Entity.ApplyStatusEffect handles:
-        // - Feature validation (requiredFeatures, excludedFeatures)
-        // - Stacking rules (better effect/longer duration wins)
-        // - Creating AppliedStatusEffect instance
-        // - Adding modifiers to target
-        // - LOGGING (automatic)
+
         target.ApplyStatusEffect(statusEffect, source != null ? source : user);
     }
 }

@@ -1,54 +1,37 @@
-﻿using Assets.Scripts.Entities.Vehicle;
-using System.Collections.Generic;
-using UnityEngine;
+﻿using System.Collections.Generic;
 
 /// <summary>
-/// Navigator component - strategic support and information gathering system.
-/// OPTIONAL: Provides pathfinding, hazard detection, and crew coordination.
-/// ENABLES ROLE: "Navigator" - allows a character to perform navigation actions.
+/// Strategic support. Enables Navigator role.
+/// TODO: refine navigator role and abilities..
 /// </summary>
 public class NavigatorComponent : VehicleComponent
 {
     /// <summary>
-    /// Called when component is first added or reset in Editor.
-    /// Sets default values that appear immediately in Inspector.
+    /// Default values for convenience, to be edited manually.
     /// </summary>
     void Reset()
     {
-        // Set GameObject name (shows in hierarchy)
         gameObject.name = "Navigator";
-
-        // Set component identity
         componentType = ComponentType.Sensors;
 
-        // Set component base stats using Entity fields
-        baseMaxHealth = 50;      // Moderately fragile
-        health = 50;         // Start at full HP
-        baseArmorClass = 15;     // Somewhat exposed
-        baseComponentSpace = 150;  // Consumes component space
-        basePowerDrawPerTurn = 5;  // Light power draw
-
-        // Navigator ENABLES the "Navigator" role
+        baseMaxHealth = 50;
+        health = 50;
+        baseArmorClass = 15;
+        baseComponentSpace = 150;
+        basePowerDrawPerTurn = 5;
         roleType = RoleType.Navigator;
     }
 
     void Awake()
     {
-        // Set component type (in case Reset wasn't called)
         componentType = ComponentType.Sensors;
-
-        // Navigator ENABLES the "Navigator" role
         roleType = RoleType.Navigator;
     }
 
-    /// <summary>
-    /// Get the stats to display in the UI for this navigator component.
-    /// </summary>
     public override List<VehicleComponentUI.DisplayStat> GetDisplayStats()
     {
         var stats = new List<VehicleComponentUI.DisplayStat>();
 
-        // Add base class stats (power draw)
         stats.AddRange(base.GetDisplayStats());
 
         return stats;

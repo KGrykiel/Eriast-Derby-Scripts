@@ -3,11 +3,7 @@
 namespace Assets.Scripts.Skills.Helpers.Resolvers
 {
     /// <summary>
-    /// Resolver for skills that use skill checks.
-    /// 
-    /// Flow: User rolls d20 + skill bonus vs DC
-    /// - Success = effects apply
-    /// - Failure = effects don't apply
+    /// Handler for skill checks
     /// </summary>
     public static class SkillCheckResolver
     {
@@ -15,7 +11,6 @@ namespace Assets.Scripts.Skills.Helpers.Resolvers
         {
             Skill skill = ctx.Skill;
 
-            // Execute: routing + computation + event emission in one call
             var checkResult = SkillCheckPerformer.Execute(
                 ctx.SourceVehicle,
                 skill.checkSpec,

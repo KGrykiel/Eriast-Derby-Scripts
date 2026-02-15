@@ -3,18 +3,10 @@ using UnityEngine;
 using Assets.Scripts.Effects;
 
 /// <summary>
-/// Applies a PERMANENT stat modifier with no duration or visual status.
-/// 
-/// Use Cases:
-/// - EventCards applying permanent changes ("Chassis scarred: -5 max HP", "Engine upgraded: +2 Speed")
-/// - Direct stat modifications that should NOT show as status effects
-/// 
-/// For TEMPORARY buffs/debuffs with icons and duration, use ApplyStatusEffect instead.
-/// For EQUIPMENT bonuses, use Component.AddModifier() directly (no effect needed).
-/// 
-/// IMPORTANT: Skills should generally use ApplyStatusEffect, not this.
-/// Per ModifierSystem.md Rule 1: "Skills Apply Status Effects ONLY"
-/// This effect exists for edge cases where permanent, invisible modifiers are needed.
+/// Permanent invisible stat modifier — no duration, no status icon.
+/// For temporary buffs/debuffs, use ApplyStatusEffect.
+/// Per ModifierSystem.md: skills should generally use StatusEffects, not this.
+/// Probably deprecated in favor of the status effect system but I'm keeping it just in case.
 /// </summary>
 [Serializable]
 public class AttributeModifierEffect : EffectBase
@@ -23,15 +15,7 @@ public class AttributeModifierEffect : EffectBase
     public Attribute attribute;
     public ModifierType type;
     public float value;
-    
-    [Header("Usage Note")]
-    [Tooltip("This creates a PERMANENT modifier with no duration or status icon. For temporary buffs, use ApplyStatusEffect instead.")]
-    [SerializeField, TextArea(2, 3)]
-    private string usageNote = "Creates PERMANENT modifier. For temporary buffs/debuffs, use ApplyStatusEffect instead.";
 
-    /// <summary>
-    /// Converts to a runtime AttributeModifier, tagging it with the source that applied it.
-    /// </summary>
     public AttributeModifier ToRuntimeModifier(UnityEngine.Object source)
     {
         return new AttributeModifier(
@@ -39,23 +23,12 @@ public class AttributeModifierEffect : EffectBase
             type,
             value,
             source,
-            ModifierCategory.Other  // Permanent modifiers from effects are "Other" category
+            ModifierCategory.Other
         );
     }
 
-    /// <summary>
-    /// Applies a PERMANENT modifier to the target entity.
-    /// Target routing should already be handled by SkillEffectApplicator before calling this.
-    /// </summary>
     public override void Apply(Entity user, Entity target, EffectContext context, UnityEngine.Object source = null)
     {
-        if (target == null)
-        {
-            Debug.LogWarning("[AttributeModifierEffect] Target is null!");
-            return;
-        }
-
-        // Apply modifier directly - target should already be correctly routed
         target.AddModifier(ToRuntimeModifier(source));
     }
 }

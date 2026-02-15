@@ -2,9 +2,8 @@ using UnityEngine;
 using Assets.Scripts.Effects;
 
 /// <summary>
-/// Abstract base class for all effects.
-/// Subclasses implement Apply() to define specific effect behavior.
-/// Use EntityHelpers for common entity operations (GetParentVehicle, GetEntityDisplayName, etc.)
+/// Used as a representation of any effect that can be applied to an entity like damage, status effects, resource restoration etc.
+/// Ideal for no-code usage in the editor.
 /// </summary>
 [System.Serializable]
 public abstract class EffectBase : IEffect

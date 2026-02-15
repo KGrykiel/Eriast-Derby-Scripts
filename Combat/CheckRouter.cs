@@ -6,20 +6,10 @@ using Assets.Scripts.Entities.Vehicle;
 namespace Assets.Scripts.Combat
 {
     /// <summary>
-    /// VEHICLE-ONLY routing for checks and saves.
-    /// Resolves which component and/or character should make a check when the target is a Vehicle.
-    /// 
-    /// SCOPE: This class exists ONLY because vehicles have internal complexity (components + crew).
-    /// - Standalone entities (NPCs, props) bypass this entirely - they call Calculator directly.
-    /// - Performers handle the decision: Vehicle → CheckRouter → Calculator, Entity → Calculator.
-    /// 
-    /// RESPONSIBILITIES:
-    /// - Find the correct component for vehicle attribute checks/saves
-    /// - Find the best character for character checks/saves (considering proficiency/attributes)
-    /// - Validate component existence and operational state
-    /// - Validate character availability (seat assignments)
-    /// 
-    /// DOES NOT: Calculate bonuses, roll dice, emit events (that's Calculator/Performer territory).
+    /// Vehicle-only routing: resolves which component and/or character makes a check.
+    /// Exists because vehicles have internal complexity (components + crew).
+    /// Standalone entities bypass this entirely — they call Calculator directly.
+    /// Does NOT calculate bonuses, roll dice, or emit events.
     /// </summary>
     public static class CheckRouter
     {
@@ -62,12 +52,7 @@ namespace Assets.Scripts.Combat
         
         // ==================== SKILL CHECK ROUTING ====================
 
-        /// <summary>
-        /// Route a skill check: which component and character are involved?
-        /// </summary>
-        /// <param name="vehicle">Vehicle attempting the check</param>
-        /// <param name="spec">What type of check is being made</param>
-        /// <param name="initiatingCharacter">Character who initiated this check (for character-initiated skills). Null for vehicle-wide checks like event cards.</param>
+        /// <param name="initiatingCharacter">Null for vehicle-wide checks (event cards, lane effects).</param>
         public static RoutingResult RouteSkillCheck(Vehicle vehicle, SkillCheckSpec spec, Character initiatingCharacter = null)
         {
             if (vehicle == null)
@@ -79,9 +64,6 @@ namespace Assets.Scripts.Combat
             return RouteVehicleCheck(vehicle, spec);
         }
 
-        /// <summary>
-        /// Route a saving throw: which component and character are involved?
-        /// </summary>
         public static RoutingResult RouteSave(
             Vehicle vehicle, 
             SaveSpec spec,
@@ -177,9 +159,6 @@ namespace Assets.Scripts.Combat
         
         // ==================== COMPONENT ROUTING ====================
         
-        /// <summary>
-        /// Get the component responsible for a vehicle attribute (shared by checks and saves).
-        /// </summary>
         private static Entity GetComponentForVehicleAttribute(Vehicle vehicle, VehicleCheckAttribute checkAttr)
         {
             Attribute attribute = checkAttr.ToAttribute();
@@ -192,10 +171,6 @@ namespace Assets.Scripts.Combat
         
         // ==================== CHARACTER HELPERS ====================
         
-        /// <summary>
-        /// Get the character with the best modifier for a given skill.
-        /// Used for component-optional checks where any character can attempt.
-        /// </summary>
         private static Character GetCharacterWithBestSkillModifier(
             Vehicle vehicle,
             CharacterSkill skill)
@@ -229,10 +204,6 @@ namespace Assets.Scripts.Combat
             return null;
         }
         
-        /// <summary>
-        /// Get the character with the best modifier for a given attribute.
-        /// Useful for vehicle-wide saves where no specific role or target exists.
-        /// </summary>
         private static Character GetCharacterWithBestSaveModifier(
             Vehicle vehicle,
             CharacterAttribute attribute)
@@ -256,10 +227,6 @@ namespace Assets.Scripts.Combat
             return best;
         }
         
-        /// <summary>
-        /// Get a component of a specific type from the vehicle.
-        /// Returns the first operational component of that type found.
-        /// </summary>
         private static VehicleComponent GetComponentByType(Vehicle vehicle, ComponentType type)
         {
             foreach (var component in vehicle.AllComponents)
@@ -270,11 +237,7 @@ namespace Assets.Scripts.Combat
             return null;
         }
 
-        /// <summary>
-        /// Validate that a required component exists, is operational, has a controlling seat, and has an assigned character.
-        /// Extracted common logic used by both character skill checks and character saves.
-        /// Returns Success with component+character if valid, otherwise returns Failure with reason.
-        /// </summary>
+        /// <summary>Validates component exists, is operational, has a seat, and has a character.</summary>
         private static RoutingResult ValidateRequiredComponent(Vehicle vehicle, ComponentType requiredType)
         {
             VehicleComponent component = GetComponentByType(vehicle, requiredType);

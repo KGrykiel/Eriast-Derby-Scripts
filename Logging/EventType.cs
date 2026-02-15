@@ -1,9 +1,5 @@
 namespace Assets.Scripts.Logging
 {
-    /// <summary>
-    /// Categorizes events by type for filtering and visualization.
-    /// Each type can have different icons, colors, and display rules.
-    /// </summary>
     public enum EventType
     {
         /// <summary>

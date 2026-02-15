@@ -1,79 +1,24 @@
 ﻿namespace Assets.Scripts.Skills.Helpers
 {
     /// <summary>
-    /// Minimal context for skill execution.
-    /// Bundles all data needed for skill resolution, effect application, and logging.
-    /// 
-    /// Design principles:
-    /// - Store only what can't be derived
-    /// - SourceVehicle explicit (needed for power consumption, can't derive from null SourceEntity)
-    /// - TargetVehicle derived (target is always an Entity, may not be vehicle-related)
-    /// - Character optional (some skills come from components alone)
-    /// 
-    /// Replaces: (Skill, VehicleComponent, VehicleComponent) parameter pattern
+    /// Context struct to hold any relevant information about the skill.
+    /// Most fields optional.
     /// </summary>
     public struct SkillContext
     {
-        // ===== REQUIRED (can't be derived) =====
-        
-        /// <summary>
-        /// The skill being executed.
-        /// </summary>
         public Skill Skill;
-        
-        /// <summary>
-        /// Vehicle that pays power cost and owns the action.
-        /// Required because SourceEntity can be null for character-only skills.
-        /// </summary>
         public Vehicle SourceVehicle;
-        
-        /// <summary>
-        /// Entity receiving the effects. Can be any Entity (VehicleComponent, Prop, NPC).
-        /// </summary>
         public Entity TargetEntity;
-        
-        // ===== OPTIONAL (nullable) =====
-        
-        /// <summary>
-        /// Component using the skill. Null for character-only personal skills.
-        /// </summary>
         public Entity SourceEntity;
-        
-        /// <summary>
-        /// Character providing bonuses (attack bonus, skill bonuses).
-        /// Null for component-only skills or environmental effects.
-        /// </summary>
         public Character SourceCharacter;
-        
-        // ===== COMBAT STATE (populated by resolvers) =====
-        
-        /// <summary>
-        /// Natural 20 on attack roll - doubles damage dice.
-        /// Set by attack resolver before effects are applied.
-        /// </summary>
         public bool IsCriticalHit;
-        
-        // ===== DERIVED HELPERS (computed, not stored) =====
-        
-        /// <summary>
-        /// Target's parent vehicle, if target is a VehicleComponent. Null for Props/NPCs.
-        /// </summary>
+
         public readonly Vehicle TargetVehicle => (TargetEntity as VehicleComponent)?.ParentVehicle;
-        
-        /// <summary>
-        /// Source as VehicleComponent, if applicable. Null for character-only skills.
-        /// </summary>
         public readonly VehicleComponent SourceComponent => SourceEntity as VehicleComponent;
-        
-        /// <summary>
-        /// Target as VehicleComponent, if applicable. Null for Props/NPCs.
-        /// </summary>
         public readonly VehicleComponent TargetComponent => TargetEntity as VehicleComponent;
-        
-        // ===== IMMUTABLE COPY METHODS =====
 
         /// <summary>
-        /// Create a copy with a different target. Used for chassis fallback in two-stage attacks.
+        /// Helper to retarget. Used to handle component attack fallback.
         /// </summary>
         public readonly SkillContext WithTarget(Entity newTarget)
         {
@@ -83,7 +28,7 @@
         }
 
         /// <summary>
-        /// Create a copy with IsCriticalHit set. Used by resolvers after roll.
+        /// Information about critical hits only available after resolution, so this is a helper to create a new context with the critical hit information.
         /// </summary>
         public readonly SkillContext WithCriticalHit(bool isCrit)
         {

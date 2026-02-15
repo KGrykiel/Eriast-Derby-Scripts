@@ -10,34 +10,15 @@ using Assets.Scripts.Combat.Logging;
 namespace Assets.Scripts.Combat
 {
     /// <summary>
-    /// Central event bus for combat events.
-    /// Manages action scoping for aggregated logging.
-    /// 
-    /// USAGE:
-    /// 1. Skills/abilities call BeginAction() before applying effects
-    /// 2. Effects emit events via Emit() 
-    /// 3. Events are collected in the current action scope
-    /// 4. EndAction() triggers CombatLogManager to aggregate and log
-    /// 
-    /// If no action scope is active, events are logged immediately (DoT, environmental, etc.)
+    /// Central event bus with action scoping for aggregated logging - particularly for samage with multiple damage types.
+    /// Events emitted during a BeginAction/EndAction scope are grouped and logged together.
+    /// Events outside a scope are logged immediately (DoT, environmental, etc).
     /// </summary>
     public static class CombatEventBus
     {
-        // Stack supports nested actions (rare but possible)
+        // Stack supports nested actions (just in case)
         private static readonly Stack<CombatAction> actionStack = new();
-        
-        // ==================== ACTION SCOPING ====================
-        
-        /// <summary>
-        /// Begin a new combat action scope.
-        /// All events emitted until EndAction() are grouped together.
-        /// </summary>
-        /// <param name="actor">Entity performing the action (null for character-only skills)</param>
-        /// <param name="source">What triggered this (Skill, EventCard, etc.)</param>
-        /// <param name="primaryTarget">Primary target vehicle (optional)</param>
-        /// <param name="sourceVehicle">Vehicle that owns the action (null for standalone entities)</param>
-        /// <param name="sourceCharacter">Character performing the action (null for component-only or standalone)</param>
-        /// <returns>The created action (for reference, usually not needed)</returns>
+
         public static CombatAction BeginAction(
             Entity actor,
             Object source,
@@ -50,10 +31,6 @@ namespace Assets.Scripts.Combat
             return action;
         }
         
-        /// <summary>
-        /// End the current combat action scope.
-        /// Triggers CombatLogManager to aggregate and log all events.
-        /// </summary>
         public static void EndAction()
         {
             if (actionStack.Count == 0)
@@ -63,19 +40,14 @@ namespace Assets.Scripts.Combat
             }
             
             var action = actionStack.Pop();
-            action.Complete();
-            
+
             // Log the completed action
             CombatLogManager.LogAction(action);
         }
         
         // ==================== EVENT EMISSION ====================
-        
-        /// <summary>
-        /// Emit a combat event.
-        /// If an action scope is active, the event is added to it.
-        /// Otherwise, the event is logged immediately.
-        /// </summary>
+
+        /// <summary>Scoped = collect in action, unscoped = log immediately.</summary>
         public static void Emit(CombatEvent evt)
         {
             if (evt == null)
@@ -97,10 +69,7 @@ namespace Assets.Scripts.Combat
         }
         
         // ==================== CONVENIENCE METHODS ====================
-        
-        /// <summary>
-        /// Emit a damage event.
-        /// </summary>
+
         public static void EmitDamage(
             DamageResult result,
             Entity source,
@@ -111,9 +80,6 @@ namespace Assets.Scripts.Combat
             Emit(new DamageEvent(result, source, target, causalSource, sourceType));
         }
         
-        /// <summary>
-        /// Emit a status effect applied event.
-        /// </summary>
         public static void EmitStatusEffect(
             AppliedStatusEffect applied,
             Entity source,
@@ -124,17 +90,11 @@ namespace Assets.Scripts.Combat
             Emit(new StatusEffectEvent(applied, source, target, causalSource, wasReplacement));
         }
         
-        /// <summary>
-        /// Emit a status effect expired event.
-        /// </summary>
         public static void EmitStatusExpired(AppliedStatusEffect expired, Entity target)
         {
             Emit(new StatusEffectExpiredEvent(expired, target));
         }
         
-        /// <summary>
-        /// Emit a restoration event.
-        /// </summary>
         public static void EmitRestoration(
             RestorationBreakdown breakdown,
             Entity source,
@@ -144,10 +104,6 @@ namespace Assets.Scripts.Combat
             Emit(new RestorationEvent(breakdown, source, target, causalSource));
         }
         
-        /// <summary>
-        /// Emit an attack roll event.
-        /// </summary>
-        /// <param name="character">Character who made the attack (null for component-only or standalone)</param>
         public static void EmitAttackRoll(
             AttackResult result,
             Entity source,
@@ -161,10 +117,6 @@ namespace Assets.Scripts.Combat
             Emit(new AttackRollEvent(result, source, target, causalSource, isHit, targetComponentName, isChassisFallback, character));
         }
         
-        /// <summary>
-        /// Emit a saving throw event.
-        /// </summary>
-        /// <param name="character">Character who made the save (null for vehicle-only saves)</param>
         public static void EmitSavingThrow(
             SaveResult result,
             Entity source,
@@ -177,10 +129,6 @@ namespace Assets.Scripts.Combat
             Emit(new SavingThrowEvent(result, source, target, causalSource, succeeded, targetComponentName, character));
         }
         
-        /// <summary>
-        /// Emit a skill check event.
-        /// </summary>
-        /// <param name="character">Character who made the check (null for vehicle-only checks)</param>
         public static void EmitSkillCheck(
             SkillCheckResult result,
             Entity source,
@@ -190,12 +138,10 @@ namespace Assets.Scripts.Combat
         {
             Emit(new SkillCheckEvent(result, source, causalSource, succeeded, character));
         }
-        
+
         // ==================== UTILITY ====================
-        
-        /// <summary>
-        /// Clear all active actions (use for cleanup, scene transitions, etc.)
-        /// </summary>
+
+        //unused but might be helpful for testing or future features
         public static void Clear()
         {
             actionStack.Clear();

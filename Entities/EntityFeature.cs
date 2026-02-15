@@ -3,13 +3,9 @@
 namespace Assets.Scripts.Entities
 {
     /// <summary>
-    /// Feature flags for entity capabilities and properties.
-    /// Used for capability-based targeting validation for status effects.
-    /// Multiple flags can be combined using bitwise OR operations.
-    /// 
-    /// Example usage:
-    ///   EntityFeature chassisFeatures = EntityFeature.HasHealth | EntityFeature.HasArmor | EntityFeature.IsMechanical;
-    ///   bool canBurn = (entity.features &amp; EntityFeature.CanBurn) != 0;
+    /// Capability flags for status effect targeting validation. Combinable via bitwise OR.
+    /// e.g. only flammabe entities can gain the "burning" effect.
+    /// WIP - mostly stubs now, I need to think more about this design.
     /// </summary>
     [Flags]
     public enum EntityFeature
@@ -17,23 +13,23 @@ namespace Assets.Scripts.Entities
         None = 0,
 
         // Core Capabilities
-        HasHealth = 1 << 0,        // Entity has HP that can be damaged
-        HasArmor = 1 << 1,         // Entity has AC for defense
-        HasEnergy = 1 << 2,        // Entity has energy/mana/power
+        HasHealth = 1 << 0,
+        HasArmor = 1 << 1,
+        HasEnergy = 1 << 2,
 
-        // Material Properties (determines vulnerability)
-        IsFlammable = 1 << 3,      // Can catch fire (wood, fuel, fabric, some metals)
-        IsElectronic = 1 << 4,     // Contains electronics (vulnerable to EMP)
-        IsMechanical = 1 << 5,     // Mechanical parts (vulnerable to rust, corrosion)
-        IsOrganic = 1 << 6,        // Organic material (vulnerable to poison, disease)
+        // Material Properties
+        IsFlammable = 1 << 3,
+        IsElectronic = 1 << 4,
+        IsMechanical = 1 << 5,
+        IsOrganic = 1 << 6,
 
         // Entity Type (exclusive categories)
-        IsLiving = 1 << 7,         // Living creature (can be stunned, frightened, etc.)
-        IsMachine = 1 << 8,        // Machine/construct (immune to organic effects)
+        IsLiving = 1 << 7,
+        IsMachine = 1 << 8,
 
         // Optional: Specific immunities (if needed)
-        ImmuneToFire = 1 << 9,     // Cannot burn (even if flammable material)
-        ImmuneToCold = 1 << 10,    // Cannot be frozen
-        ImmuneToStun = 1 << 11,    // Cannot be stunned (mindless constructs)
+        ImmuneToFire = 1 << 9,
+        ImmuneToCold = 1 << 10,
+        ImmuneToStun = 1 << 11,
     }
 }

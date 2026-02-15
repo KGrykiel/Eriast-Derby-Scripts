@@ -4,29 +4,21 @@ using Assets.Scripts.Entities.Vehicle;
 
 namespace Assets.Scripts.Managers.PlayerUI
 {
-    /// <summary>
-    /// Coordinates all player UI controllers and provides high-level orchestration.
-    /// Owns sub-controllers for seats, skills, and targets.
-    /// </summary>
     public class PlayerUICoordinator
     {
         private readonly PlayerUIReferences ui;
         private readonly SeatSkillUIController seatSkillUI;
         private readonly TargetSelectionUIController targetSelectionUI;
-        
+
         public PlayerUICoordinator(PlayerUIReferences uiReferences)
         {
             ui = uiReferences;
             seatSkillUI = new SeatSkillUIController(ui);
             targetSelectionUI = new TargetSelectionUIController(ui);
         }
-        
+
         // ==================== TURN UI ====================
-        
-        /// <summary>
-        /// Shows the complete turn UI: panel, end turn button, and seat tabs.
-        /// Automatically selects the first seat if available.
-        /// </summary>
+
         public void ShowTurnUI(
             List<VehicleSeat> availableSeats, 
             Vehicle vehicle,
@@ -41,16 +33,10 @@ namespace Assets.Scripts.Managers.PlayerUI
 
             seatSkillUI.ShowSeatTabs(availableSeats, onSeatSelected);
             
-            // Select first seat by default
             if (availableSeats.Count > 0)
-            {
                 ShowSeatDetails(0, availableSeats, vehicle, onSkillSelected);
-            }
         }
-        
-        /// <summary>
-        /// Shows details for a specific seat: updates display and shows skills.
-        /// </summary>
+
         public void ShowSeatDetails(
             int seatIndex, 
             List<VehicleSeat> availableSeats, 
@@ -64,9 +50,6 @@ namespace Assets.Scripts.Managers.PlayerUI
             seatSkillUI.ShowSkillSelection(seat, vehicle, onSkillSelected);
         }
         
-        /// <summary>
-        /// Refreshes seat tabs and skill selection after a skill is used.
-        /// </summary>
         public void RefreshAfterSkill(
             List<VehicleSeat> availableSeats,
             VehicleSeat currentSeat,
@@ -82,9 +65,6 @@ namespace Assets.Scripts.Managers.PlayerUI
             }
         }
         
-        /// <summary>
-        /// Hides the turn UI panel and all sub-panels.
-        /// </summary>
         public void HideTurnUI()
         {
             if (ui.playerTurnPanel != null)
@@ -93,9 +73,6 @@ namespace Assets.Scripts.Managers.PlayerUI
             targetSelectionUI.Hide();
         }
         
-        /// <summary>
-        /// Updates the turn status display with vehicle state.
-        /// </summary>
         public void UpdateTurnStatusDisplay(Vehicle vehicle)
         {
             if (ui.turnStatusText != null)
@@ -118,19 +95,11 @@ namespace Assets.Scripts.Managers.PlayerUI
         
         // ==================== UTILITY ====================
         
-        /// <summary>
-        /// Gets available skills for a seat (delegates to sub-controller).
-        /// </summary>
         public List<Skill> GetAvailableSkills(VehicleSeat seat)
         {
             return seatSkillUI.GetAvailableSkills(seat);
         }
-        
-        // ==================== SUB-CONTROLLER ACCESS ====================
-        
-        /// <summary>
-        /// Access target selection UI controller.
-        /// </summary>
+
         public TargetSelectionUIController TargetSelection => targetSelectionUI;
     }
 }

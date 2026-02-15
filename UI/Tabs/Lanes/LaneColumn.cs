@@ -8,10 +8,6 @@ using Assets.Scripts.Stages.Lanes;
 
 namespace Assets.Scripts.UI.Tabs.Lanes
 {
-    /// <summary>
-    /// Displays a single lane column in the lane view.
-    /// Shows lane header with properties and spawns vehicle cards positioned by progress.
-    /// </summary>
     public class LaneColumn : MonoBehaviour
     {
         [Header("UI References")]
@@ -35,21 +31,14 @@ namespace Assets.Scripts.UI.Tabs.Lanes
         private int laneIndex;
         private List<VehicleCard> spawnedCards = new();
         
-        /// <summary>
-        /// Initialize the column with lane data.
-        /// </summary>
         public void Initialize(StageLane lane, int laneIndex, Stage stage)
         {
             this.lane = lane;
             this.laneIndex = laneIndex;
             this.stage = stage;
-            
             Refresh();
         }
-        
-        /// <summary>
-        /// Refresh the column display with current lane data.
-        /// </summary>
+
         public void Refresh()
         {
             if (lane == null) return;
@@ -61,40 +50,28 @@ namespace Assets.Scripts.UI.Tabs.Lanes
         
         private void UpdateHeader()
         {
-            // Lane name
             if (laneNameText != null)
-            {
                 laneNameText.text = $"Lane {laneIndex}: {lane.laneName}";
-            }
-            
-            // Lane info (modifiers from StatusEffect)
+
             if (laneInfoText != null)
-            {
                 laneInfoText.text = GetLaneInfoText();
-            }
-            
-            // Vehicle count
+
             if (vehicleCountText != null)
             {
                 int count = lane.vehiclesInLane?.Count ?? 0;
                 vehicleCountText.text = count > 0 ? $"({count})" : "";
             }
-            
-            // Header color based on lane properties
+
             if (headerBackground != null)
-            {
                 headerBackground.color = GetLaneColor();
-            }
         }
         
         private string GetLaneInfoText()
         {
             var parts = new List<string>();
-            
-            // Show StatusEffect name if present
+
             if (lane.laneStatusEffect != null)
             {
-                // Show key modifiers compactly
                 if (lane.laneStatusEffect.modifiers != null)
                 {
                     foreach (var mod in lane.laneStatusEffect.modifiers)
@@ -112,17 +89,11 @@ namespace Assets.Scripts.UI.Tabs.Lanes
                 }
             }
             
-            // Show hazard indicator
             if (lane.turnEffects != null && lane.turnEffects.Count > 0)
-            {
                 parts.Add($"⚠{lane.turnEffects.Count}");
-            }
-            
-            // Show routing if set
+
             if (lane.nextStage != null)
-            {
                 parts.Add($"→{lane.nextStage.stageName}");
-            }
             
             return parts.Count > 0 ? string.Join(" ", parts) : "-";
         }
@@ -131,8 +102,7 @@ namespace Assets.Scripts.UI.Tabs.Lanes
         {
             if (lane.laneStatusEffect == null && (lane.turnEffects == null || lane.turnEffects.Count == 0))
                 return defaultColor;
-            
-            // Determine color based on properties
+
             bool hasDanger = lane.turnEffects != null && lane.turnEffects.Count > 0;
             bool hasSpeedBoost = false;
             bool hasDefenseBoost = false;
@@ -148,7 +118,6 @@ namespace Assets.Scripts.UI.Tabs.Lanes
                 }
             }
             
-            // Priority: Hazardous > Fast > Safe > Default
             if (hasDanger)
                 return hazardousColor;
             if (hasSpeedBoost)
@@ -161,25 +130,21 @@ namespace Assets.Scripts.UI.Tabs.Lanes
         
         private void UpdateVehicleCards()
         {
-            // Clear existing cards
             foreach (var card in spawnedCards)
             {
                 if (card != null)
                     Destroy(card.gameObject);
             }
             spawnedCards.Clear();
-            
-            // Validate references
+
             if (lane.vehiclesInLane == null || vehicleCardPrefab == null || vehicleContainer == null)
                 return;
-            
-            // Sort vehicles by progress (highest first = top of list)
+
             var sortedVehicles = lane.vehiclesInLane
                 .Where(v => v != null)
                 .OrderByDescending(v => v.progress)
                 .ToList();
-            
-            // Spawn cards - Vertical Layout Group on vehicleContainer handles positioning
+
             foreach (var vehicle in sortedVehicles)
             {
                 var cardObj = Instantiate(vehicleCardPrefab, vehicleContainer);

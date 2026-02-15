@@ -1,70 +1,46 @@
-using System;
 using UnityEngine;
 using Assets.Scripts.Entities.Vehicle.VehicleComponents.ComponentTypes;
 using Assets.Scripts.Effects;
 using Assets.Scripts.Combat;
 
 /// <summary>
-/// Universal resource restoration/drain effect.
-/// Restores or drains Health or Energy from entities.
-/// 
-/// This effect is STATELESS - emits RestorationEvent for logging.
-/// 
-/// DESIGN: This effect works DIRECTLY on the target entity passed to it. No routing!
-/// - Health: Restores entity.health
-/// - Energy: Restores entity.energy (if entity has energy property)
-/// 
-/// All routing logic is handled by SkillEffectApplicator.
-/// This effect is dumb - it just modifies whatever entity you give it.
+/// Restores or drains Health/Energy. Works directly on the target entity passed — no routing.
+/// Right now uses a simple flat amount, but should probably use dice like damage. It's the DnD way, after all.
 /// </summary>
 [System.Serializable]
 public class ResourceRestorationEffect : EffectBase
 {
     public enum ResourceType
     {
-        Health,   // Restores/drains entity HP
-        Energy    // Restores/drains entity energy
+        Health,
+        Energy
     }
 
     [Header("Restoration Configuration")]
     [Tooltip("Which resource to restore/drain")]
     public ResourceType resourceType = ResourceType.Health;
-    
+
     [Tooltip("Amount to restore (positive) or drain (negative)")]
     public int amount = 0;
 
-    /// <summary>
-    /// Applies this restoration effect to the target entity.
-    /// Emits RestorationEvent for logging via CombatEventBus.
-    /// Works ONLY on the entity passed - no routing!
-    /// </summary>
     public override void Apply(Entity user, Entity target, EffectContext context, UnityEngine.Object source = null)
     {
-        if (target == null) return;
-        
-        // Apply restoration directly to target entity
         var breakdown = resourceType switch
         {
             ResourceType.Health => ApplyHealthRestoration(target),
             ResourceType.Energy => ApplyEnergyRestoration(target),
             _ => new RestorationBreakdown()
         };
-        
-        // Store context for breakdown
+
         breakdown.resourceType = resourceType;
         breakdown.source = source != null ? source.name : null ?? "unknown";
-        
-        // Emit event for logging (CombatEventBus handles aggregation)
+
         if (breakdown.actualChange != 0)
         {
             CombatEventBus.EmitRestoration(breakdown, user, target, source);
         }
     }
-    
-    /// <summary>
-    /// Apply health restoration directly to entity.
-    /// No routing - just restores entity.health.
-    /// </summary>
+
     private RestorationBreakdown ApplyHealthRestoration(Entity target)
     {
         int oldValue = target.health;
@@ -86,13 +62,8 @@ public class ResourceRestorationEffect : EffectBase
         };
     }
     
-    /// <summary>
-    /// Apply energy restoration directly to entity.
-    /// Works on PowerCoreComponent (component.currentEnergy).
-    /// </summary>
     private RestorationBreakdown ApplyEnergyRestoration(Entity target)
     {
-        // PowerCoreComponent stores energy
         if (target is PowerCoreComponent powerCore)
         {
             int oldValue = powerCore.currentEnergy;
@@ -119,10 +90,6 @@ public class ResourceRestorationEffect : EffectBase
     }
 }
 
-/// <summary>
-/// Tracks the breakdown of a resource restoration/drain operation.
-/// </summary>
-[Serializable]
 public class RestorationBreakdown
 {
     public ResourceRestorationEffect.ResourceType resourceType;

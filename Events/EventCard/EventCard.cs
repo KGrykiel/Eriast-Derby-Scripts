@@ -1,90 +1,63 @@
 ﻿using Assets.Scripts.Effects;
-using Assets.Scripts.Stages;
 using System.Collections.Generic;
 using UnityEngine;
 
 namespace Assets.Scripts.Events.EventCard
 {
-    /// <summary>
-    /// Base class for event cards that create narrative moments, challenges,
-    /// and tactical decisions during races.
-    /// 
-    /// Concrete implementations:
-    /// - HazardCard: Simple skill check with success/failure effects
-    /// - ChoiceCard: Player chooses from 2-4 options
-    /// - MultiRoleCard: All 5 roles tested simultaneously
-    /// </summary>
+    /// <summary>Base class for event cards</summary>
     public abstract class EventCard : ScriptableObject
     {
         [Header("Card Identity")]
         [Tooltip("Display name for this event card")]
         public string cardName = "Unnamed Event";
-        
+
         [TextArea(3, 6)]
         [Tooltip("Narrative text the DM reads aloud when this card triggers")]
         public string narrativeText = "An event occurs!";
-        
+
         [Tooltip("How dramatic/important this event is for logging")]
         public Logging.EventImportance dramaticWeight = Logging.EventImportance.Medium;
-        
+
         [Header("Targeting")]
         [Tooltip("Who is affected by this card?")]
         public CardTargetMode targetMode = CardTargetMode.DrawingVehicle;
-        
+
         // ==================== ABSTRACT METHODS ====================
-        
-        /// <summary>
-        /// Resolves this card for a player vehicle.
-        /// May pause for player input (choices, confirmations).
-        /// </summary>
-        public abstract CardResolutionResult Resolve(Vehicle vehicle, Stage stage);
-        
-        /// <summary>
-        /// Auto-resolves this card for an NPC vehicle.
-        /// Must not pause execution (AI makes decisions instantly).
-        /// For simple cards, this can just call Resolve().
-        /// For complex cards (choices), AI evaluates options first.
-        /// </summary>
-        public abstract CardResolutionResult AutoResolve(Vehicle vehicle, Stage stage);
-        
+
+        public abstract CardResolutionResult Resolve(Vehicle vehicle);
+
+        /// <summary>AI resolution — must not pause execution.</summary>
+        public abstract CardResolutionResult AutoResolve(Vehicle vehicle);
+
         // ==================== TRIGGER METHOD ====================
-        
-        /// <summary>
-        /// Main entry point called by Stage when card is drawn.
-        /// Routes to Resolve() or AutoResolve() based on vehicle type.
-        /// </summary>
-        public void Trigger(Vehicle vehicle, Stage stage)
+
+        /// <summary>Called by Stage when card is drawn. Routes to Resolve/AutoResolve.</summary>
+        public void Trigger(Vehicle vehicle)
         {
-            if (vehicle == null || stage == null)
+            if (vehicle == null)
             {
-                Debug.LogError($"[EventCard] Cannot trigger {cardName}: vehicle or stage is null");
+                Debug.LogError($"[EventCard] Cannot trigger {cardName}: vehicle is null");
                 return;
             }
-            
-            // Route to player or NPC resolution based on control type
+
             bool isPlayer = vehicle.controlType == ControlType.Player;
-            
+
             CardResolutionResult result = isPlayer 
-                ? Resolve(vehicle, stage) 
-                : AutoResolve(vehicle, stage);
-            
-            // Log to race history if dramatic
-            if (result != null && result.IsDramatic())
+                ? Resolve(vehicle) 
+                : AutoResolve(vehicle);
+
+            if (result != null)
             {
-                LogCardEvent(vehicle, stage, result);
+                LogCardEvent(vehicle, result);
             }
         }
-        
+
         // ==================== HELPER METHODS ====================
-        
-        /// <summary>
-        /// Applies a list of effects to a vehicle.
-        /// Vehicle's routing logic determines which component receives each effect based on effect type.
-        /// </summary>
+
         protected void ApplyEffects(List<EffectInvocation> effects, Vehicle vehicle)
         {
             if (effects == null || effects.Count == 0) return;
-            
+
             foreach (var invocation in effects)
             {
                 if (invocation.effect == null)
@@ -92,41 +65,32 @@ namespace Assets.Scripts.Events.EventCard
                     Debug.LogWarning($"[EventCard] Null effect in {cardName} effect list");
                     continue;
                 }
-                
-                // Route effect to appropriate target (auto-routing)
+
                 Entity targetEntity = vehicle.RouteEffectTarget(invocation.effect);
-                
+
                 if (targetEntity == null)
                 {
                     Debug.LogWarning($"[EventCard] Failed to route effect target for {cardName}");
                     continue;
                 }
-                
-                // Apply effect:
-                // - user: null (environmental effect - no attacker/caster)
-                // - target: routed component (determined by effect type and vehicle routing)
-                // - context: null (no special combat state)
-                // - source: this event card (for tracking)
+
                 invocation.effect.Apply(
-                    user: null,          // No user (environmental effect)
-                    target: targetEntity, // Target = routed by vehicle
-                    context: EffectContext.Default,        // No special context needed
-                    source: this);        // Source = this card
+                    user: null,
+                    target: targetEntity,
+                    context: EffectContext.Default,
+                    source: this);
             }
         }
-        
-        /// <summary>
-        /// Logs this card event to RaceHistory for DM review.
-        /// </summary>
-        protected void LogCardEvent(Vehicle vehicle, Stage stage, CardResolutionResult result)
+
+        protected void LogCardEvent(Vehicle vehicle, CardResolutionResult result)
         {
             string logText = $"{vehicle.vehicleName}: {narrativeText}\n{result.narrativeOutcome}";
-            
+
             Logging.RaceHistory.Log(
                 Logging.EventType.EventCard,
                 dramaticWeight,
                 logText,
-                stage,
+                vehicle.currentStage,
                 vehicle
             ).WithMetadata("cardName", cardName)
              .WithMetadata("success", result.success);

@@ -3,12 +3,7 @@
 namespace Assets.Scripts.Combat.Damage
 {
     /// <summary>
-    /// Pure data specification for a single damage roll.
-    /// Just dice configuration - no weapon knowledge, no modes.
-    /// 
-    /// Weapon resolution happens upstream in DamageEffect.
-    /// Composite damage (weapon + bonus) uses multiple DamageEffects on the skill,
-    /// aggregated naturally by CombatEventBus.
+    /// Formula expressing damage for a single unit of damage. Composite damage can be achieved by applying multiple DamageEffects in one skill, each with its own formula.
     /// </summary>
     [System.Serializable]
     public class DamageFormula

@@ -4,16 +4,9 @@ using Assets.Scripts.Entities.Vehicle;
 
 namespace Assets.Scripts.Combat
 {
-    /// <summary>
-    /// Shared helper methods for d20 roll calculators.
-    /// Converts entity modifiers (AttributeModifier) to roll contributions (RollBonus).
-    /// </summary>
+    /// <summary>Common classes used across Saves and skillcheks extracted to avoid repetition</summary>
     public static class D20RollHelpers
     {
-        /// <summary>
-        /// Gather applied modifiers (status effects, equipment) from an entity
-        /// and convert them to RollBonus entries for a d20 roll result.
-        /// </summary>
         private static List<RollBonus> GatherAppliedBonuses(Entity entity, Attribute attribute)
         {
             var bonuses = new List<RollBonus>();
@@ -33,9 +26,6 @@ namespace Assets.Scripts.Combat
             return bonuses;
         }
         
-        /// <summary>
-        /// Sum all bonus values in a list. Shared by all calculators.
-        /// </summary>
         public static int SumBonuses(List<RollBonus> bonuses)
         {
             int sum = 0;
@@ -43,14 +33,6 @@ namespace Assets.Scripts.Combat
             return sum;
         }
         
-        /// <summary>
-        /// Gather component bonuses for a vehicle attribute check/save.
-        /// Gets the base value from the component and any applied modifiers.
-        /// </summary>
-        /// <param name="component">Component providing the check bonus</param>
-        /// <param name="checkAttribute">Check attribute (Mobility, Stability) - constrained subset for type safety</param>
-        /// <param name="displayLabel">Label for the roll bonus tooltip</param>
-        /// <param name="bonuses">List to add bonuses to</param>
         public static void GatherComponentBonuses(
             Entity component,
             VehicleCheckAttribute checkAttribute,
@@ -68,11 +50,6 @@ namespace Assets.Scripts.Combat
             bonuses.AddRange(GatherAppliedBonuses(component, attribute));
         }
 
-        /// <summary>
-        /// Gather weapon bonuses for an attack roll.
-        /// Gets the base attack bonus from the weapon and any applied modifiers.
-        /// Parallel to GatherComponentBonuses but for weapon attacks.
-        /// </summary>
         public static void GatherWeaponBonuses(
             WeaponComponent weapon,
             List<RollBonus> bonuses)
@@ -88,11 +65,6 @@ namespace Assets.Scripts.Combat
             bonuses.AddRange(GatherAppliedBonuses(weapon, Attribute.AttackBonus));
         }
         
-        /// <summary>
-        /// Get the base value a component provides for a d20 check/save.
-        /// Delegates to the component itself via polymorphism - components know their own base check values.
-        /// Uses VehicleCheckAttribute (constrained subset) for type safety.
-        /// </summary>
         private static int GetComponentBaseValue(Entity component, VehicleCheckAttribute checkAttribute)
         {
             if (component == null)

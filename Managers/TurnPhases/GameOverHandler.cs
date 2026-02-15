@@ -3,8 +3,7 @@
 namespace Assets.Scripts.Managers.TurnPhases
 {
     /// <summary>
-    /// Handles GameOver phase - stops execution permanently.
-    /// Returns null to signal the state machine should stop.
+    /// Called when all player vehicles are destroyed.
     /// </summary>
     public class GameOverHandler : ITurnPhaseHandler
     {

@@ -3,11 +3,7 @@
 namespace Assets.Scripts.Skills.Helpers.Resolvers
 {
     /// <summary>
-    /// Resolver for skills that use saving throws.
-    /// 
-    /// Flow: Target rolls d20 + save bonus vs skill's DC
-    /// - Save SUCCESS = target resisted = effects DON'T apply
-    /// - Save FAILURE = target failed to resist = effects apply
+    /// Handler for saving throws, uses different entry point for non-vehicle entities.
     /// </summary>
     public static class SkillSaveResolver
     {
@@ -20,7 +16,6 @@ namespace Assets.Scripts.Skills.Helpers.Resolvers
 
             if (ctx.TargetVehicle != null)
             {
-                // Vehicle target: use performer (handles routing + computation + event)
                 saveRoll = SavePerformer.Execute(
                     ctx.TargetVehicle,
                     skill.saveSpec,
@@ -31,7 +26,6 @@ namespace Assets.Scripts.Skills.Helpers.Resolvers
             }
             else
             {
-                // Non-vehicle target: direct computation without routing
                 saveRoll = SavePerformer.ExecuteForEntity(
                     ctx.TargetEntity,
                     skill.saveSpec,

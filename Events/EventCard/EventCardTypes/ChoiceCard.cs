@@ -3,25 +3,13 @@ using System.Collections.Generic;
 using UnityEngine;
 using Assets.Scripts.Combat.SkillChecks;
 using Assets.Scripts.Combat.Saves;
-using Assets.Scripts.Stages;
 
 namespace Assets.Scripts.Events.EventCard.EventCardTypes
 {
     /// <summary>
-    /// Choice card that presents 2-4 options to the player.
-    /// Creates player agency and encourages team discussion.
-    /// ~20% of stage decks.
-    /// 
-    /// Each choice can require different types of checks:
-    /// - Skill Check: Active attempt (navigating, repairing, etc.)
-    /// - Saving Throw: Reactive resistance (dodging, enduring, etc.)
-    /// - No Check: Guaranteed outcome
-    /// 
-    /// Examples:
-    /// - "Burning Barricade"
-    ///   A: Ram through (Mobility save or take fire damage)
-    ///   B: Find detour (Perception check or waste time)
-    ///   C: Extinguish (No check, costs time but safe)
+    /// Presents several options to the player. Each option can require a skill check, save, or no check.
+    /// Also used for non-choice events since they're equivalent to a choice card with 1 option.
+    /// Kind of like events in EU4.
     /// </summary>
     [CreateAssetMenu(fileName = "New Choice Card", menuName = "Racing/Event Cards/Choice Card")]
     public class ChoiceCard : EventCard
@@ -29,67 +17,53 @@ namespace Assets.Scripts.Events.EventCard.EventCardTypes
         [Header("Choices")]
         [Tooltip("Available choices (2-4 options)")]
         public List<CardChoice> choices = new();
-        
-        public override CardResolutionResult Resolve(Vehicle vehicle, Stage stage)
+
+        public override CardResolutionResult Resolve(Vehicle vehicle)
         {
             if (choices.Count == 0)
             {
                 Debug.LogError($"[ChoiceCard] {cardName} has no choices defined!");
                 return new CardResolutionResult(false, "No choices available");
             }
-            
-            // Check if UI is available
+
             if (UI.Components.EventCardUI.Instance == null)
             {
                 Debug.LogWarning($"[ChoiceCard] EventCardUI not found! Auto-selecting first choice for {cardName}");
-                return ResolveChoice(choices[0], vehicle, stage);
+                return ResolveChoice(choices[0], vehicle);
             }
-            
-            // Show UI and wait for player choice (async via callback)
+
             UI.Components.EventCardUI.Instance.ShowChoices(this, choices, (selectedChoice) =>
             {
-                // Resolve the chosen option (rolls dice, applies effects immediately)
-                var result = ResolveChoice(selectedChoice, vehicle, stage);
-                
-                // Show result in UI (effects already applied)
+                var result = ResolveChoice(selectedChoice, vehicle);
+
                 UI.Components.EventCardUI.Instance.ShowResult(result, () =>
                 {
-                    // Log to race history after acknowledgement
-                    if (result.IsDramatic())
-                    {
-                        LogCardEvent(vehicle, stage, result);
-                    }
+                    LogCardEvent(vehicle, result);
                 });
             });
-            
-            // Return "pending" result - actual resolution happens in callback
+
             return new CardResolutionResult(true, "Awaiting player choice...");
         }
-        
-        public override CardResolutionResult AutoResolve(Vehicle vehicle, Stage stage)
+
+        /// <summary>
+        /// Entry for AI controlled vehicles, right now picks the first option but could be expanded to evaluate choices based on situation.
+        /// </summary>
+        public override CardResolutionResult AutoResolve(Vehicle vehicle)
         {
-            // For NPCs: Pick best choice based on situation
-            // For now, just pick first valid choice until AI is implemented
             if (choices.Count == 0)
             {
                 Debug.LogError($"[ChoiceCard] {cardName} has no choices defined!");
                 return new CardResolutionResult(false, "No choices available");
             }
-            
-            return ResolveChoice(choices[0], vehicle, stage);
+
+            return ResolveChoice(choices[0], vehicle);
         }
-        
-        /// <summary>
-        /// Executes a specific choice, rolls dice, and applies effects immediately.
-        /// Returns result for UI display.
-        /// </summary>
-        private CardResolutionResult ResolveChoice(CardChoice choice, Vehicle vehicle, Stage stage)
+
+        private CardResolutionResult ResolveChoice(CardChoice choice, Vehicle vehicle)
         {
-            // Route based on check type
             switch (choice.checkType)
             {
                 case ChoiceCheckType.None:
-                    // No check - apply effects and return success
                     ApplyEffects(choice.effects, vehicle);
                     return new CardResolutionResult(true, choice.outcomeNarrative);
                 
@@ -105,9 +79,6 @@ namespace Assets.Scripts.Events.EventCard.EventCardTypes
             }
         }
         
-        /// <summary>
-        /// Resolves a choice that requires a skill check (active attempt).
-        /// </summary>
         private CardResolutionResult ResolveSkillCheck(CardChoice choice, Vehicle vehicle)
         {
             var checkResult = SkillCheckPerformer.Execute(
@@ -125,9 +96,6 @@ namespace Assets.Scripts.Events.EventCard.EventCardTypes
             }
         }
         
-        /// <summary>
-        /// Resolves a choice that requires a saving throw (reactive resistance).
-        /// </summary>
         private CardResolutionResult ResolveSavingThrow(CardChoice choice, Vehicle vehicle)
         {
             var saveResult = SavePerformer.Execute(
@@ -146,9 +114,6 @@ namespace Assets.Scripts.Events.EventCard.EventCardTypes
         }
     }
     
-    /// <summary>
-    /// Type of check a choice requires.
-    /// </summary>
     public enum ChoiceCheckType
     {
         /// <summary>No check required - guaranteed outcome</summary>
@@ -161,9 +126,6 @@ namespace Assets.Scripts.Events.EventCard.EventCardTypes
         SavingThrow
     }
     
-    /// <summary>
-    /// Represents a single choice option in a ChoiceCard.
-    /// </summary>
     [Serializable]
     public class CardChoice
     {

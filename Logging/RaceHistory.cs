@@ -5,13 +5,7 @@ using Assets.Scripts.Stages;
 
 namespace Assets.Scripts.Logging
 {
-    /// <summary>
-    /// Central event logging system for the race.
-    /// Replaces SimulationLogger with structured, filterable event tracking.
-    /// Supports highlight reel generation and per-vehicle narratives.
-    /// 
-    /// Round/turn tracking is owned by TurnStateMachine - this logger just reads it.
-    /// </summary>
+    /// <summary>Central race event log. Round/turn tracking owned by TurnStateMachine.</summary>
     public class RaceHistory : MonoBehaviour
     {
         private static RaceHistory instance;
@@ -28,40 +22,13 @@ namespace Assets.Scripts.Logging
                 return instance;
             }
         }
-        
-        /// <summary>
-        /// All events that have occurred in the race.
-        /// </summary>
+
         private List<RaceEvent> allEvents = new();
-        
-        /// <summary>
-        /// Events indexed by vehicle for quick per-vehicle lookups.
-        /// </summary>
         private Dictionary<Vehicle, List<RaceEvent>> vehicleEvents = new();
-        
-        /// <summary>
-        /// Maximum number of events to keep in memory (prevent memory bloat).
-        /// Older events are archived/discarded.
-        /// </summary>
         public int maxStoredEvents = 10000;
-        
-        /// <summary>
-        /// Read-only access to all events.
-        /// </summary>
+
         public IReadOnlyList<RaceEvent> AllEvents => allEvents;
         
-        /// <summary>
-        /// Logs a new event to the history.
-        /// </summary>
-        public static void LogEvent(RaceEvent raceEvent)
-        {
-            Instance.LogEventInternal(raceEvent);
-        }
-        
-        /// <summary>
-        /// Convenience method for logging simple events.
-        /// Round number is read from TurnStateMachine (single source of truth).
-        /// </summary>
         public static RaceEvent Log(
             EventType type,
             EventImportance importance,
@@ -69,9 +36,8 @@ namespace Assets.Scripts.Logging
             Stage location = null,
             params Vehicle[] vehicles)
         {
-            // Get current round from TurnStateMachine (single source of truth)
             int currentRound = GetCurrentRound();
-            
+
             RaceEvent evt = new(
                 currentRound,
                 type,
@@ -80,42 +46,30 @@ namespace Assets.Scripts.Logging
                 location,
                 vehicles
             );
-            
+
             Instance.LogEventInternal(evt);
 
             return evt;
         }
-        
-        /// <summary>
-        /// Get current round number from TurnStateMachine.
-        /// Returns 0 if no GameManager/TurnStateMachine exists (shouldn't happen in normal play).
-        /// </summary>
+
         private static int GetCurrentRound()
         {
             var gameManager = FindFirstObjectByType<GameManager>();
             var stateMachine = gameManager?.GetStateMachine();
             return stateMachine?.CurrentRound ?? 0;
         }
-        
-        /// <summary>
-        /// Internal event logging implementation.
-        /// </summary>
+
         private void LogEventInternal(RaceEvent evt)
         {
-            // Ensure turn number is set (fallback if not passed in constructor)
             if (evt.turnNumber == 0)
                 evt.turnNumber = GetCurrentRound();
-            
+
             allEvents.Add(evt);
-            
-            // SimulationLogger removed - no longer needed
-            // All logging now goes through RaceHistory
-            
-            // Index by vehicles
+
             foreach (var vehicle in evt.involvedVehicles)
             {
                 if (vehicle == null) continue;
-                
+
                 if (!vehicleEvents.ContainsKey(vehicle))
                 {
                     vehicleEvents[vehicle] = new List<RaceEvent>();
@@ -139,145 +93,19 @@ namespace Assets.Scripts.Logging
             }
             #endif
         }
-        
-        
-        /// <summary>
-        /// Gets all events for a specific vehicle.
-        /// </summary>
+
+
         public static List<RaceEvent> GetVehicleEvents(Vehicle vehicle)
         {
             if (Instance.vehicleEvents.ContainsKey(vehicle))
-            {
                 return Instance.vehicleEvents[vehicle];
-            }
             return new List<RaceEvent>();
         }
-        
-        /// <summary>
-        /// Gets events filtered by importance.
-        /// </summary>
-        public static List<RaceEvent> GetEventsByImportance(EventImportance minImportance)
-        {
-            return Instance.allEvents.Where(e => e.importance <= minImportance).ToList();
-        }
-        
-        /// <summary>
-        /// Gets events filtered by type.
-        /// </summary>
-        public static List<RaceEvent> GetEventsByType(EventType type)
-        {
-            return Instance.allEvents.Where(e => e.type == type).ToList();
-        }
-        
-        /// <summary>
-        /// Gets events from a specific turn range.
-        /// </summary>
-        public static List<RaceEvent> GetEventsInTurnRange(int startTurn, int endTurn)
-        {
-            return Instance.allEvents
-                .Where(e => e.turnNumber >= startTurn && e.turnNumber <= endTurn)
-                .ToList();
-        }
-        
-        /// <summary>
-        /// Gets highlight-worthy events for post-race reel.
-        /// </summary>
-        public static List<RaceEvent> GetHighlights(int topN = 10)
-        {
-            return Instance.allEvents
-                .Where(e => e.IsHighlightWorthy)
-                .OrderByDescending(e => e.CalculateDramaScore())
-                .Take(topN)
-                .ToList();
-        }
-        
-        /// <summary>
-        /// Generates a narrative summary for a specific vehicle.
-        /// </summary>
-        public static string GenerateVehicleStory(Vehicle vehicle)
-        {
-            var events = GetVehicleEvents(vehicle);
-            
-            if (events.Count == 0)
-            {
-                return $"{vehicle.vehicleName} had an uneventful race.";
-            }
 
-            // Key moments
-            var combatEvents = events.Where(e => e.type == EventType.Combat).ToList();
-            var hazards = events.Where(e => e.type == EventType.StageHazard).ToList();
-            var heroic = events.Where(e => e.type == EventType.HeroicMoment).ToList();
-            var tragic = events.Where(e => e.type == EventType.TragicMoment).ToList();
-            
-            string story = $"<b>{vehicle.vehicleName}'s Race:</b>\n\n";
-            
-            if (heroic.Count > 0)
-            {
-                story += $"[HERO] {heroic.Count} heroic moment(s)\n";
-            }
-            
-            if (tragic.Count > 0)
-            {
-                story += $"[TRAGIC] {tragic.Count} tragic moment(s)\n";
-            }
-            
-            if (combatEvents.Count > 0)
-            {
-                int totalDamageDealt = combatEvents
-                    .Where(e => e.metadata.ContainsKey("damage"))
-                    .Sum(e => (int)e.metadata["damage"]);
-                    
-                story += $"[ATK] {combatEvents.Count} combat engagement(s), {totalDamageDealt} damage dealt\n";
-            }
-            
-            if (hazards.Count > 0)
-            {
-                story += $"[WARN] {hazards.Count} hazard(s) encountered\n";
-            }
-            
-            // Final outcome
-            var finishEvent = events.FirstOrDefault(e => e.type == EventType.FinishLine);
-            var destroyedEvent = events.FirstOrDefault(e => e.type == EventType.Destruction);
-            
-            if (finishEvent != null)
-            {
-                story += $"\n[OK] Finished the race (Turn {finishEvent.turnNumber})";
-            }
-            else if (destroyedEvent != null)
-            {
-                story += $"\n[X] Eliminated (Turn {destroyedEvent.turnNumber})";
-            }
-            else
-            {
-                story += $"\n[...] Still racing...";
-            }
-            
-            return story;
-        }
-        
-        
-        /// <summary>
-        /// Clears all event history (for new race).
-        /// </summary>
         public static void ClearHistory()
         {
             Instance.allEvents.Clear();
             Instance.vehicleEvents.Clear();
-            // Round counter is owned by TurnStateMachine, not RaceHistory
-        }
-        
-        /// <summary>
-        /// Exports event history to JSON string.
-        /// </summary>
-        public static string ExportToJSON()
-        {
-            return JsonUtility.ToJson(new EventHistoryData { events = Instance.allEvents }, true);
-        }
-        
-        [System.Serializable]
-        private class EventHistoryData
-        {
-            public List<RaceEvent> events;
         }
     }
 }

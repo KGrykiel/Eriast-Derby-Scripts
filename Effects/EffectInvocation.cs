@@ -2,9 +2,8 @@ using UnityEngine;
 using SerializeReferenceEditor;
 
 /// <summary>
-/// Wraps an effect with explicit component-aware targeting.
-/// Supports single targets, multi-targets (AOE), and automatic component routing.
-/// The final target entity is determined by Vehicle.RouteEffectTarget() based on effect type.
+/// The full wrapper that is used in the Unity editor. Allows to route each effect in a skill/event to different targets
+/// for example, damage to selected target but speed buff to self. Vehicle.RouteEffectTarget() handles the routing based on EffectTarget and effect type.
 /// </summary>
 [System.Serializable]
 public class EffectInvocation
@@ -17,11 +16,7 @@ public class EffectInvocation
 }
 
 /// <summary>
-/// Explicit targeting system with automatic component routing.
-/// Vehicle.RouteEffectTarget() determines the final entity based on effect type:
-/// - DamageEffect ? Chassis
-/// - AttributeModifierEffect(Speed) ? Drive
-/// - AttributeModifierEffect(Energy) ? PowerCore
+/// Target of the particular effect.
 /// </summary>
 public enum EffectTarget
 {

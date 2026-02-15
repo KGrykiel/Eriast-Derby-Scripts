@@ -3,6 +3,11 @@ using UnityEngine;
 using Assets.Scripts.Effects;
 using Assets.Scripts.Effects.EffectTypes.CustomEffectCommands;
 
+/// <summary>
+/// Catch-all for effects that don't fit other categories, using a command pattern to delegate logic to ScriptableObject commands.
+/// Arguments are passed via parameters set here.
+/// Might need to think of a cleaner way to do it in the future once I think of more effects that need this kind of flexibility.
+/// </summary>
 [Serializable]
 public class CustomEffect : EffectBase
 {

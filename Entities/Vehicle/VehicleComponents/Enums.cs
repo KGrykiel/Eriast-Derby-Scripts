@@ -1,16 +1,9 @@
-﻿// ==================== VEHICLE ENUMS ====================
-// All vehicle-specific enums consolidated in one place.
-// System-wide enums (e.g., Attribute) are in separate files.
-
-using System;
+﻿using System;
 
 /// <summary>
-/// Defines the types of roles that vehicle components can enable.
-/// Each role allows a character to perform specific actions during combat.
-/// 
-/// This is a [Flags] enum to support combined roles (e.g., Driver | Gunner for solo vehicles).
-/// Components set their roleType to indicate what role(s) they enable.
-/// Seats aggregate roles from all their controlled components.
+/// Flags enum — combined roles supported (e.g. Driver | Gunner for solo vehicles).
+/// Roles are mostly implicit based on the components assigned to the seat
+/// But the enum is useful for routing. 
 /// </summary>
 [Flags]
 public enum RoleType
@@ -21,13 +14,13 @@ public enum RoleType
     /// <summary>Driver role - controls vehicle movement (enabled by DriveComponent)</summary>
     Driver = 1 << 0,      // 1
 
-    /// <summary>Navigator role - assists with pathfinding and stage selection</summary>
+    /// <summary>Navigator role - assists with pathfinding and stage selection (enabled by NavigatorComponent)</summary>
     Navigator = 1 << 1,   // 2
 
     /// <summary>Gunner role - operates weapons (enabled by WeaponComponent)</summary>
     Gunner = 1 << 2,      // 4
 
-    /// <summary>Technician role - repairs, manages power, enables/disables components</summary>
+    /// <summary>Technician role - repairs, manages power, enables/disables components (enabled by TechnicianComponent</summary>
     Technician = 1 << 3,  // 8
     
     // === EXTENSION SLOTS (for future custom roles) ===
@@ -38,8 +31,7 @@ public enum RoleType
 }
 
 /// <summary>
-/// Defines the type/category of a vehicle component.
-/// Used for organization, filtering, and UI display.
+/// Taken from obsidian notes, most are unimplemented and just for future reference.
 /// </summary>
 public enum ComponentType
 {
@@ -127,10 +119,6 @@ public enum ComponentType
     Custom
 }
 
-/// <summary>
-/// Defines how exposed/accessible a component is for targeting in combat.
-/// Determines whether a component can be directly targeted or requires special conditions.
-/// </summary>
 public enum ComponentExposure
 {
     /// <summary>
@@ -141,13 +129,13 @@ public enum ComponentExposure
     
     /// <summary>
     /// Protected by armor or shielding components.
-    /// Can only be targeted if shielding component is destroyed or using penetrating attacks.
+    /// Can only be targeted if shielding component is destroyed or using penetrating attacks (TODO).
     /// </summary>
     Protected,
     
     /// <summary>
     /// Deep inside the vehicle (power core, critical systems).
-    /// Requires chassis damage (below 50% HP) or special abilities to access.
+    /// Requires chassis damage (below e.g. 50% HP) or special abilities to access.
     /// </summary>
     Internal,
     
@@ -158,18 +146,12 @@ public enum ComponentExposure
     Shielded
 }
 
-/// <summary>
-/// Defines who controls the vehicle.
-/// </summary>
 public enum ControlType
 {
     Player,
     AI
 }
 
-/// <summary>
-/// Defines the operational status of a vehicle.
-/// </summary>
 public enum VehicleStatus
 {
     Active,

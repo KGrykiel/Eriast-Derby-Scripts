@@ -5,13 +5,8 @@ using Assets.Scripts.Entities.Vehicle;
 namespace Assets.Scripts.Combat.Saves
 {
     /// <summary>
-    /// Describes what a saving throw tests — either a vehicle attribute or a character attribute.
-    /// Replaces the flat SaveType enum, eliminating redundant CharacterAttribute mirrors.
-    /// 
-    /// Vehicle saves: domain=Vehicle, vehicleAttribute=Mobility (tests the vehicle's own stat).
-    /// Character saves: domain=Character, characterAttribute=Dexterity (tests a character's resilience).
-    /// 
-    /// Serializable for use on Skill ScriptableObjects.
+    /// What a saving throw tests — either a vehicle attribute or a character attribute.
+    /// Right now it handles both with the other being null, but might think of a better system for this if it gets more complicated.
     /// </summary>
     [System.Serializable]
     public struct SaveSpec

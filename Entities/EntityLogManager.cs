@@ -4,19 +4,10 @@ using EventType = Assets.Scripts.Logging.EventType;
 
 namespace Assets.Scripts.Entities
 {
-    /// <summary>
-    /// Extension methods for clean, reusable entity logging.
-    /// Centralizes common logging patterns with minimal boilerplate.
-    /// Reduces 10-15 lines of logging code to a single method call.
-    /// </summary>
     public static class EntityLogManager
     {
         // ==================== MOVEMENT LOGGING ====================
-        
-        /// <summary>
-        /// Log speed change for a drive component.
-        /// Handles all speed change reasons: friction, acceleration, deceleration, scaling.
-        /// </summary>
+
         public static void LogSpeedChange(this DriveComponent drive, int oldSpeed, int newSpeed, string reason, int? amount = null)
         {
             if (oldSpeed == newSpeed || drive.ParentVehicle == null) return;
@@ -43,10 +34,6 @@ namespace Assets.Scripts.Entities
                 log.WithMetadata(reason + "Amount", amount.Value);
         }
         
-        /// <summary>
-        /// Log speed scaling when maxSpeed changes due to buffs/debuffs.
-        /// Includes old/new maxSpeed in metadata.
-        /// </summary>
         public static void LogSpeedScaling(this DriveComponent drive, int oldSpeed, int newSpeed, int oldMaxSpeed, int newMaxSpeed)
         {
             if (oldSpeed == newSpeed || drive.ParentVehicle == null) return;
@@ -63,9 +50,6 @@ namespace Assets.Scripts.Entities
              .WithMetadata("newMaxSpeed", newMaxSpeed);
         }
         
-        /// <summary>
-        /// Log target speed setting.
-        /// </summary>
         public static void LogTargetSpeedSet(this DriveComponent drive, int oldPercent, int newPercent)
         {
             if (oldPercent == newPercent || drive.ParentVehicle == null) return;
@@ -88,9 +72,6 @@ namespace Assets.Scripts.Entities
         
         // ==================== DAMAGE/HEALTH LOGGING ====================
         
-        /// <summary>
-        /// Log chassis destruction (structural collapse - vehicle destroyed).
-        /// </summary>
         public static void LogChassisDestroyed(this ChassisComponent chassis)
         {
             if (chassis.ParentVehicle == null) return;
@@ -106,9 +87,6 @@ namespace Assets.Scripts.Entities
              .WithMetadata("catastrophicFailure", true);
         }
         
-        /// <summary>
-        /// Log power core destruction (energy system failure - vehicle powerless).
-        /// </summary>
         public static void LogPowerCoreDestroyed(this PowerCoreComponent powerCore)
         {
             if (powerCore.ParentVehicle == null) return;
@@ -125,9 +103,6 @@ namespace Assets.Scripts.Entities
              .WithMetadata("catastrophicFailure", true);
         }
         
-        /// <summary>
-        /// Log component destruction (generic - for non-critical components).
-        /// </summary>
         public static void LogComponentDestroyed(this VehicleComponent component)
         {
             if (component.ParentVehicle == null) return;
@@ -142,9 +117,6 @@ namespace Assets.Scripts.Entities
              .WithMetadata("componentType", component.componentType.ToString());
         }
         
-        /// <summary>
-        /// Log modifier removal from component.
-        /// </summary>
         public static void LogModifierRemoved(this VehicleComponent component, AttributeModifier modifier)
         {
             if (component.ParentVehicle == null) return;
@@ -161,9 +133,6 @@ namespace Assets.Scripts.Entities
              .WithMetadata("removed", true);
         }
         
-        /// <summary>
-        /// Log component power starvation (insufficient power to operate).
-        /// </summary>
         public static void LogPowerStarved(this VehicleComponent component, int requiredPower)
         {
             if (component.ParentVehicle == null) return;
@@ -179,9 +148,6 @@ namespace Assets.Scripts.Entities
              .WithMetadata("reason", "InsufficientPower");
         }
         
-        /// <summary>
-        /// Log manual component enable/disable by engineer.
-        /// </summary>
         public static void LogManualStateChange(this VehicleComponent component, bool isDisabled)
         {
             if (component.ParentVehicle == null) return;
@@ -200,9 +166,6 @@ namespace Assets.Scripts.Entities
 
         // ==================== RESOURCE LOGGING ====================
         
-        /// <summary>
-        /// Log energy regeneration at start of turn.
-        /// </summary>
         public static void LogEnergyRegeneration(this PowerCoreComponent powerCore, int regenAmount, int currentEnergy, int maxEnergy)
         {
             if (regenAmount <= 0 || powerCore.ParentVehicle == null) return;
@@ -218,9 +181,6 @@ namespace Assets.Scripts.Entities
              .WithMetadata("maxEnergy", maxEnergy);
         }
         
-        /// <summary>
-        /// Log power draw from a component.
-        /// </summary>
         public static void LogPowerDraw(this PowerCoreComponent powerCore, int amount, VehicleComponent requester, string reason, int remainingEnergy, int turnDrawTotal)
         {
             if (powerCore.ParentVehicle == null) return;

@@ -3,26 +3,22 @@ using System.Collections.Generic;
 using Assets.Scripts.Combat.SkillChecks;
 using Assets.Scripts.Combat.Saves;
 
+
 /// <summary>
-/// Skill categories for editor organization and preset initialization.
-/// Category is descriptive metadata only - does NOT enforce which effects can be used.
+/// Descriptive only, maybe used later for sorting or UI organisation, but does not restrict effects in any way. 
+/// Effects can be mixed and matched across categories as needed.
 /// </summary>
 public enum SkillCategory
 {
-    Attack,      // Damage-focused skills
-    Restoration, // Healing/repair skills
-    Buff,        // Stat enhancement skills
-    Debuff,      // Status effect/penalty skills
-    Utility,     // Movement, lanes, non-combat
-    Special,     // Complex/custom behaviors
-    Custom       // Fully manual configuration
+    Attack,
+    Restoration,
+    Buff,
+    Debuff,
+    Utility,
+    Special,
+    Custom
 }
 
-/// <summary>
-/// Skill data container (ScriptableObject).
-/// Execution logic is handled by SkillExecutor.
-/// Preset initialization is handled by SkillCreator (editor-only).
-/// </summary>
 public class Skill : ScriptableObject
 {
     [Header("Classification")]

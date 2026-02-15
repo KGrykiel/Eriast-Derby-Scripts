@@ -1,23 +1,19 @@
 ﻿namespace Assets.Scripts.Combat.Attacks
 {
     /// <summary>
-    /// Attack result = universal roll outcome + attack-specific context.
-    /// Pure data bag - no logic or factories.
-    /// Access roll data through the Roll property.
-    /// 
-    /// Follows same pattern as SaveResult/SkillCheckResult:
-    /// D20RollOutcome (mechanics) + domain context (what happened).
+    /// Result of a D20 roll for an attack with additional attack-related info.
+    /// Same layering as SaveResult/SkillCheckResult.
     /// </summary>
     [System.Serializable]
     public class AttackResult
     {
-        /// <summary>Universal roll outcome (the decisive roll)</summary>
+        /// <summary>Universal D20 outcome struct</summary>
         public D20RollOutcome Roll { get; }
 
-        /// <summary>Entity that was actually hit. Null if complete miss.</summary>
+        /// <summary>Entity that was hit</summary>
         public Entity HitTarget { get; }
 
-        /// <summary>Whether this hit used the fallback target instead of the primary.</summary>
+        /// <summary>Flag to signify if the hit entity wasn't the primary target via the fallback mechanic. Used for logging</summary>
         public bool WasFallback { get; }
 
         public AttackResult(D20RollOutcome roll, Entity hitTarget = null, bool wasFallback = false)

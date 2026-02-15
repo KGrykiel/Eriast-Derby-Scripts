@@ -7,21 +7,15 @@ using UnityEngine.UI;
 
 namespace Assets.Scripts.Managers.PlayerUI
 {
-    /// <summary>
-    /// Handles target selection UI (vehicles, components, and source components).
-    /// </summary>
     public class TargetSelectionUIController
     {
         private readonly PlayerUIReferences ui;
-        
+
         public TargetSelectionUIController(PlayerUIReferences uiReferences)
         {
             ui = uiReferences;
         }
-        
-        /// <summary>
-        /// Shows vehicle target selection UI.
-        /// </summary>
+
         public void ShowTargetSelection(List<Vehicle> validTargets, Action<Vehicle> onTargetSelected, Action onCancelled)
         {
             if (ui.targetSelectionPanel == null || ui.targetButtonContainer == null || ui.targetButtonPrefab == null)
@@ -29,7 +23,6 @@ namespace Assets.Scripts.Managers.PlayerUI
 
             ui.targetSelectionPanel.SetActive(true);
 
-            // Clear existing buttons
             foreach (Transform child in ui.targetButtonContainer)
                 UnityEngine.Object.Destroy(child.gameObject);
 
@@ -47,8 +40,7 @@ namespace Assets.Scripts.Managers.PlayerUI
                 btn.GetComponentInChildren<TextMeshProUGUI>().text = $"{v.vehicleName} (HP: {hp})";
                 btn.onClick.AddListener(() => onTargetSelected?.Invoke(v));
             }
-            
-            // Setup cancel button
+
             if (ui.targetCancelButton != null)
             {
                 ui.targetCancelButton.onClick.RemoveAllListeners();
@@ -56,138 +48,92 @@ namespace Assets.Scripts.Managers.PlayerUI
             }
         }
         
-        /// <summary>
-        /// Shows component selection UI for precise targeting.
-        /// </summary>
         public void ShowComponentSelection(Vehicle targetVehicle, Action<VehicleComponent> onComponentSelected)
         {
             if (ui.targetSelectionPanel == null || ui.targetButtonContainer == null || ui.targetButtonPrefab == null)
                 return;
 
-            // Reuse target selection panel for component selection
             ui.targetSelectionPanel.SetActive(true);
 
-            // Clear existing buttons
             foreach (Transform child in ui.targetButtonContainer)
                 UnityEngine.Object.Destroy(child.gameObject);
 
-            // Option 1: Target Chassis (vehicle HP)
             Button chassisBtn = UnityEngine.Object.Instantiate(ui.targetButtonPrefab, ui.targetButtonContainer);
             int hp = targetVehicle.chassis != null ? targetVehicle.chassis.GetCurrentHealth() : 0;
             int maxHp = targetVehicle.chassis != null ? targetVehicle.chassis.GetMaxHealth() : 0;
             int ac = targetVehicle.chassis != null ? targetVehicle.chassis.GetArmorClass() : 10;
             chassisBtn.GetComponentInChildren<TextMeshProUGUI>().text = 
                 $"[#] Chassis (HP: {hp}/{maxHp}, AC: {ac})";
-            chassisBtn.onClick.AddListener(() => onComponentSelected?.Invoke(null)); // null = chassis
+            chassisBtn.onClick.AddListener(() => onComponentSelected?.Invoke(null));
 
-            // Option 2: All Components (EXCEPT chassis - it's already shown above)
             foreach (var component in targetVehicle.AllComponents)
             {
                 if (component == null) continue;
-                
-                // Skip chassis - it's already shown as the first option
                 if (component is ChassisComponent) continue;
 
                 Button btn = UnityEngine.Object.Instantiate(ui.targetButtonPrefab, ui.targetButtonContainer);
-                
-                // Build component button text
-                string componentText = BuildComponentButtonText(targetVehicle, component);
-                btn.GetComponentInChildren<TextMeshProUGUI>().text = componentText;
-                
-                // Check accessibility
+                btn.GetComponentInChildren<TextMeshProUGUI>().text = BuildComponentButtonText(targetVehicle, component);
+
                 bool isAccessible = targetVehicle.IsComponentAccessible(component);
                 btn.interactable = isAccessible && !component.isDestroyed;
-                
-                // Add click handler
-                VehicleComponent comp = component; // Capture for lambda
+
+                VehicleComponent comp = component;
                 btn.onClick.AddListener(() => onComponentSelected?.Invoke(comp));
             }
         }
         
-        /// <summary>
-        /// Shows source component selection UI (player's own vehicle).
-        /// </summary>
         public void ShowSourceComponentSelection(Vehicle playerVehicle, Action<VehicleComponent> onComponentSelected)
         {
             if (ui.targetSelectionPanel == null || ui.targetButtonContainer == null || ui.targetButtonPrefab == null)
                 return;
 
-            // Reuse target selection panel for source component selection
             ui.targetSelectionPanel.SetActive(true);
 
-            // Clear existing buttons
             foreach (Transform child in ui.targetButtonContainer)
                 UnityEngine.Object.Destroy(child.gameObject);
 
-            // Option 1: Target Chassis (vehicle HP)
             Button chassisBtn = UnityEngine.Object.Instantiate(ui.targetButtonPrefab, ui.targetButtonContainer);
             int hp = playerVehicle.chassis != null ? playerVehicle.chassis.GetCurrentHealth() : 0;
             int maxHp = playerVehicle.chassis != null ? playerVehicle.chassis.GetMaxHealth() : 0;
             int ac = playerVehicle.chassis != null ? playerVehicle.chassis.GetArmorClass() : 10;
             chassisBtn.GetComponentInChildren<TextMeshProUGUI>().text = 
                 $"[#] Chassis (HP: {hp}/{maxHp}, AC: {ac})";
-            chassisBtn.onClick.AddListener(() => onComponentSelected?.Invoke(null)); // null = chassis
+            chassisBtn.onClick.AddListener(() => onComponentSelected?.Invoke(null));
 
-            // Option 2: All Components (EXCEPT chassis - it's already shown above)
             foreach (var component in playerVehicle.AllComponents)
             {
                 if (component == null) continue;
-                
-                // Skip chassis - it's already shown as the first option
                 if (component is ChassisComponent) continue;
 
                 Button btn = UnityEngine.Object.Instantiate(ui.targetButtonPrefab, ui.targetButtonContainer);
-                
-                // Build component button text
-                string componentText = BuildComponentButtonText(playerVehicle, component);
-                btn.GetComponentInChildren<TextMeshProUGUI>().text = componentText;
-                
-                // All components are accessible on own vehicle
+                btn.GetComponentInChildren<TextMeshProUGUI>().text = BuildComponentButtonText(playerVehicle, component);
                 btn.interactable = !component.isDestroyed;
-                
-                // Add click handler
-                VehicleComponent comp = component; // Capture for lambda
+
+                VehicleComponent comp = component;
                 btn.onClick.AddListener(() => onComponentSelected?.Invoke(comp));
             }
         }
         
-        /// <summary>
-        /// Hides the target selection panel.
-        /// </summary>
         public void Hide()
         {
             if (ui.targetSelectionPanel != null)
                 ui.targetSelectionPanel.SetActive(false);
         }
-        
-        /// <summary>
-        /// Builds display text for a component button showing HP, AC, and status.
-        /// </summary>
+
         private string BuildComponentButtonText(Vehicle targetVehicle, VehicleComponent component)
         {
-            // Get modified AC from StatCalculator
             var (modifiedAC, _, _) = StatCalculator.GatherDefenseValueWithBreakdown(component);
-            
-            // HP info using accessor method for modified max HP
             int modifiedMaxHP = component.GetMaxHealth();
-            
+
             string text = $"{component.name} (HP: {component.health}/{modifiedMaxHP}, AC: {modifiedAC})";
-            
-            // Status icons/text
+
             if (component.isDestroyed)
-            {
                 text = $"[X] {text} - DESTROYED";
-            }
             else if (!targetVehicle.IsComponentAccessible(component))
-            {
-                string reason = targetVehicle.GetInaccessibilityReason(component);
-                text = $"[?] {text} - {reason}";
-            }
+                text = $"[?] {text} - {targetVehicle.GetInaccessibilityReason(component)}";
             else
-            {
                 text = $"[>] {text}";
-            }
-            
+
             return text;
         }
     }

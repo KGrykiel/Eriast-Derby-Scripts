@@ -7,13 +7,6 @@ using Assets.Scripts.Logging;
 using Assets.Scripts.UI.Components;
 using Assets.Scripts.Entities.Vehicle;
 
-/// <summary>
-/// Inspector panel for detailed vehicle examination.
-/// Shows full stats, modifiers, skills, and event history.
-/// Refreshes on turn changes and vehicle selection.
-/// 
-/// NEW: Uses structured UI with StatValueDisplay components and dynamic ComponentEntry prefabs.
-/// </summary>
 public class VehicleInspectorPanel : MonoBehaviour
 {
     [Header("Header")]
@@ -50,16 +43,13 @@ public class VehicleInspectorPanel : MonoBehaviour
     public TMP_Text skillsSectionText;
     public TMP_Text eventHistorySectionText;
     
-    // Private state
     private List<Vehicle> allVehicles = new();
     private Vehicle selectedVehicle;
-    private Vehicle pendingVehicleSelection; // Vehicle to select after initialization
+    private Vehicle pendingVehicleSelection;
     private bool initialized = false;
-    
-    // Component entry pool
+
     private List<GameObject> componentEntryInstances = new();
-    
-    // Dirty tracking for refresh
+
     private int lastEventCount = 0;
     
     void Start()
@@ -74,10 +64,8 @@ public class VehicleInspectorPanel : MonoBehaviour
     
     void OnEnable()
     {
-        // Force refresh when panel becomes active
         if (initialized)
         {
-            // Apply pending selection if any
             if (pendingVehicleSelection != null && allVehicles != null)
             {
                 int index = allVehicles.IndexOf(pendingVehicleSelection);
@@ -85,10 +73,7 @@ public class VehicleInspectorPanel : MonoBehaviour
                 {
                     selectedVehicle = pendingVehicleSelection;
                     if (vehicleDropdown != null)
-                    {
-                        // Force dropdown to show correct value
                         vehicleDropdown.value = index;
-                    }
                 }
                 pendingVehicleSelection = null;
             }
@@ -96,21 +81,18 @@ public class VehicleInspectorPanel : MonoBehaviour
         }
         else
         {
-            // Try to initialize and apply pending selection
             TryInitialize();
         }
     }
 
     void Update()
     {
-        // Try to initialize if not ready
         if (!initialized)
         {
             TryInitialize();
             return;
         }
-        
-        // Simple polling: refresh when event count changes
+
         if (RaceHistory.Instance != null)
         {
             int currentEventCount = RaceHistory.Instance.AllEvents.Count;
@@ -134,19 +116,13 @@ public class VehicleInspectorPanel : MonoBehaviour
                 allVehicles = vehicles;
                 PopulateDropdown();
                 initialized = true;
-                
-                // Initialize event count
+
                 if (RaceHistory.Instance != null)
-                {
                     lastEventCount = RaceHistory.Instance.AllEvents.Count;
-                }
             }
         }
     }
     
-    /// <summary>
-    /// Called externally when turn state changes.
-    /// </summary>
     public void OnTurnChanged()
     {
         if (initialized && gameObject.activeInHierarchy)
@@ -209,43 +185,33 @@ public class VehicleInspectorPanel : MonoBehaviour
         }
     }
     
-    /// <summary>
-    /// Select a specific vehicle by reference.
-    /// Called externally (e.g., from VehicleCard click).
-    /// </summary>
     public void SelectVehicle(Vehicle vehicle)
     {
         if (vehicle == null) return;
-        
-        // If panel is not active, store for when it becomes active
+
         if (!gameObject.activeInHierarchy)
         {
             pendingVehicleSelection = vehicle;
             return;
         }
-        
-        // If not initialized, store for later
+
         if (!initialized || allVehicles == null || allVehicles.Count == 0)
         {
             pendingVehicleSelection = vehicle;
             TryInitialize();
             return;
         }
-        
-        // Panel is active and initialized - apply immediately
+
         int index = allVehicles.IndexOf(vehicle);
         if (index >= 0)
         {
             selectedVehicle = vehicle;
             if (vehicleDropdown != null)
-            {
                 vehicleDropdown.value = index;
-            }
             RefreshDetails();
         }
         else
         {
-            // Vehicle not in list - just set it directly
             selectedVehicle = vehicle;
             RefreshDetails();
         }
@@ -258,11 +224,9 @@ public class VehicleInspectorPanel : MonoBehaviour
         PopulateBasicInfo();
         PopulateStats();
         PopulateComponents();
-        PopulateSkills(); // Legacy text-based
-        PopulateEventHistory(); // Legacy text-based
+        PopulateSkills();
+        PopulateEventHistory();
     }
-    
-    // ==================== BASIC INFO SECTION ====================
     
     private void PopulateBasicInfo()
     {
@@ -305,18 +269,15 @@ public class VehicleInspectorPanel : MonoBehaviour
         }
     }
     
-    // ==================== STATS SECTION ====================
-    
     private void PopulateStats()
     {
-        // HP
         if (vehicleHPValueText != null)
         {
             var hpDisplay = vehicleHPValueText.GetComponent<StatValueDisplay>();
             int currentHealth = selectedVehicle.chassis?.GetCurrentHealth() ?? 0;
             int maxHealth = selectedVehicle.chassis?.GetMaxHealth() ?? 0;
-            int baseMaxHP = selectedVehicle.chassis?.GetBaseMaxHealth() ?? 100;  // INTEGER-FIRST
-            
+            int baseMaxHP = selectedVehicle.chassis?.GetBaseMaxHealth() ?? 100;
+
             if (hpDisplay != null)
             {
                 hpDisplay.UpdateDisplay(
@@ -341,13 +302,12 @@ public class VehicleInspectorPanel : MonoBehaviour
             }
         }
         
-        // Energy
         if (vehicleEnergyValueText != null)
         {
             var energyDisplay = vehicleEnergyValueText.GetComponent<StatValueDisplay>();
             int currentEnergy = selectedVehicle.powerCore?.GetCurrentEnergy() ?? 0;
             int maxEnergy = selectedVehicle.powerCore?.GetMaxEnergy() ?? 0;
-            int baseMaxEnergy = selectedVehicle.powerCore?.GetBaseMaxEnergy() ?? 100;  // INTEGER-FIRST
+            int baseMaxEnergy = selectedVehicle.powerCore?.GetBaseMaxEnergy() ?? 100;
             
             if (energyDisplay != null)
             {
@@ -373,7 +333,6 @@ public class VehicleInspectorPanel : MonoBehaviour
             }
         }
         
-        // Speed
         if (vehicleSpeedValueText != null)
         {
             var drive = selectedVehicle.GetDriveComponent();
@@ -382,7 +341,6 @@ public class VehicleInspectorPanel : MonoBehaviour
             vehicleSpeedValueText.text = $"{speed:F1}";
         }
         
-        // AC
         if (vehicleACValueText != null)
         {
             var acDisplay = vehicleACValueText.GetComponent<StatValueDisplay>();
@@ -402,7 +360,6 @@ public class VehicleInspectorPanel : MonoBehaviour
             }
             else if (acDisplay != null)
             {
-                // No chassis - show default AC with no modifiers (resets color to white)
                 acDisplay.UpdateDisplaySimple(10, 10, modifiedAC.ToString());
             }
             else
@@ -411,11 +368,10 @@ public class VehicleInspectorPanel : MonoBehaviour
             }
         }
         
-        // Energy Regen - with StatValueDisplay tooltip support
         if (vehicleEnergyRegenValueText != null)
         {
             var regenDisplay = vehicleEnergyRegenValueText.GetComponent<StatValueDisplay>();
-            int modifiedRegen = selectedVehicle.powerCore?.GetEnergyRegen() ?? 0;  // INTEGER-FIRST
+            int modifiedRegen = selectedVehicle.powerCore?.GetEnergyRegen() ?? 0;
             
             if (regenDisplay != null && selectedVehicle.powerCore != null)
             {
@@ -426,12 +382,11 @@ public class VehicleInspectorPanel : MonoBehaviour
                     Attribute.EnergyRegen,
                     baseRegen,
                     modifiedRegen,
-                    $"{modifiedRegen}"  // No decimals
+                    $"{modifiedRegen}"
                 );
             }
             else if (regenDisplay != null)
             {
-                // No power core - show 0 with no modifiers (resets color to white)
                 regenDisplay.UpdateDisplaySimple(0, 0, $"{modifiedRegen}");
             }
             else
@@ -440,7 +395,6 @@ public class VehicleInspectorPanel : MonoBehaviour
             }
         }
         
-        // Vehicle Size - displays size category with color coding and tooltip
         if (vehicleSizeValueText != null && selectedVehicle.chassis != null)
         {
             var sizeDisplay = vehicleSizeValueText.GetComponent<SizeDisplay>();
@@ -451,19 +405,15 @@ public class VehicleInspectorPanel : MonoBehaviour
             
             if (sizeDisplay != null)
             {
-                // Use SizeDisplay component for tooltip support
                 sizeDisplay.UpdateDisplay(sizeCategory, sizeColor, tooltip);
             }
             else
             {
-                // Fallback: just set text and color
                 vehicleSizeValueText.text = sizeText;
                 vehicleSizeValueText.color = sizeColor;
             }
         }
     }
-    
-    // ==================== COMPONENTS SECTION ====================
     
     private void PopulateComponents()
     {
@@ -473,7 +423,6 @@ public class VehicleInspectorPanel : MonoBehaviour
             return;
         }
         
-        // Ensure ComponentListContainer has necessary components for dynamic sizing
         var contentSizeFitter = componentListContainer.GetComponent<ContentSizeFitter>();
         if (contentSizeFitter == null)
         {
@@ -492,7 +441,6 @@ public class VehicleInspectorPanel : MonoBehaviour
             verticalLayout.childControlHeight = true;
         }
         
-        // Clear existing component entries
         foreach (var entry in componentEntryInstances)
         {
             if (entry != null)
@@ -502,7 +450,6 @@ public class VehicleInspectorPanel : MonoBehaviour
         }
         componentEntryInstances.Clear();
         
-        // Create new component entries
         var allComponents = selectedVehicle.AllComponents;
         if (allComponents == null || allComponents.Count == 0)
         {
@@ -519,26 +466,19 @@ public class VehicleInspectorPanel : MonoBehaviour
             PopulateComponentEntry(entryObj, component);
         }
         
-        // Force layout rebuild after creating all entries
         StartCoroutine(ForceLayoutRebuild());
     }
     
-    /// <summary>
-    /// Force Unity's layout system to recalculate all sizes.
-    /// Needed because layout groups don't always update immediately when content changes.
-    /// </summary>
     private System.Collections.IEnumerator ForceLayoutRebuild()
     {
-        yield return null; // Wait one frame for instantiation to complete
-        
-        // Rebuild layout from bottom up
+        yield return null;
+
         if (componentListContainer != null)
         {
             var rectTransform = componentListContainer as RectTransform;
             LayoutRebuilder.ForceRebuildLayoutImmediate(rectTransform);
         }
         
-        // Rebuild parent content container
         Transform content = componentListContainer != null ? componentListContainer.parent : null;
         while (content != null)
         {
@@ -555,7 +495,6 @@ public class VehicleInspectorPanel : MonoBehaviour
     
     private void PopulateComponentEntry(GameObject entryObj, VehicleComponent component)
     {
-        // IMPORTANT: Ensure the entry has a Layout Element for proper sizing
         var layoutElement = entryObj.GetComponent<LayoutElement>();
         if (layoutElement == null)
         {
@@ -564,7 +503,6 @@ public class VehicleInspectorPanel : MonoBehaviour
         layoutElement.minHeight = 80;
         layoutElement.preferredHeight = -1;
         
-        // ==================== COMPONENT HEADER ====================
         var componentIcon = entryObj.transform.Find("ComponentHeader/ComponentIcon")?.GetComponent<Image>();
         var componentName = entryObj.transform.Find("ComponentHeader/ComponentName")?.GetComponent<TMP_Text>();
         var destroyedIcon = entryObj.transform.Find("ComponentHeader/StatusIconGroup/DestroyedIcon");
@@ -575,8 +513,6 @@ public class VehicleInspectorPanel : MonoBehaviour
             componentName.text = component.name;
         }
         
-        // Leave component icon color as-is (don't override sprite colors)
-        
         if (destroyedIcon != null)
         {
             destroyedIcon.gameObject.SetActive(component.isDestroyed);
@@ -584,15 +520,10 @@ public class VehicleInspectorPanel : MonoBehaviour
         
         if (disabledIcon != null)
         {
-            // Show disabled icon if:
-            // - Manually disabled (isManuallyDisabled = true), OR
-            // - Cannot act due to status effects (stunned, etc.)
-            // But not if destroyed (destroyed icon takes priority)
             bool showDisabled = !component.IsOperational;
             disabledIcon.gameObject.SetActive(showDisabled);
         }
         
-        // ==================== EXPOSURE (separate from stats) ====================
         var exposureValueText = entryObj.transform.Find("ExposureRow/ExposureValueText")?.GetComponent<TMP_Text>()
                              ?? entryObj.transform.Find("ComponentHeader/ExposureValueText")?.GetComponent<TMP_Text>()
                              ?? entryObj.transform.Find("ExposureValueText")?.GetComponent<TMP_Text>();
@@ -603,13 +534,10 @@ public class VehicleInspectorPanel : MonoBehaviour
             exposureValueText.color = GetExposureColor(component.exposure);
         }
         
-        // ==================== UNIVERSAL STATS (HP, AC) ====================
-        
         var hpValueText = entryObj.transform.Find("ComponentStatsRow/HPGroup/HPValueText")?.GetComponent<TMP_Text>();
         var hpBar = entryObj.transform.Find("ComponentStatsRow/HPGroup/HPBar")?.GetComponent<Slider>();
         var acValueText = entryObj.transform.Find("ComponentStatsRow/ACGroup/ACValueText")?.GetComponent<TMP_Text>();
         
-        // HP Text - with StatValueDisplay tooltip support
         if (hpValueText != null)
         {
             var hpDisplay = hpValueText.GetComponent<StatValueDisplay>();
@@ -629,7 +557,6 @@ public class VehicleInspectorPanel : MonoBehaviour
             }
         }
         
-        // HP Bar
         if (hpBar != null)
         {
             int maxHP = component.GetMaxHealth();
@@ -641,7 +568,6 @@ public class VehicleInspectorPanel : MonoBehaviour
             hpBar.value = percent;
         }
         
-        // AC - with StatValueDisplay tooltip support
         if (acValueText != null)
         {
             int baseAC = component.GetBaseArmorClass();
@@ -664,22 +590,15 @@ public class VehicleInspectorPanel : MonoBehaviour
             }
         }
         
-        // ==================== DYNAMIC STATS (inline, to the right of HP/AC) ====================
-        // Look for DynamicStatsContainer inside ComponentStatsRow (same row, right side)
-        
         var dynamicStatsContainer = entryObj.transform.Find("ComponentStatsRow/DynamicStatsContainer")
                                  ?? entryObj.transform.Find("ComponentStatsRow/DynamicStats")
                                  ?? entryObj.transform.Find("DynamicStatsRow");
         
         if (dynamicStatsContainer != null)
         {
-            // Ensure container has HorizontalLayoutGroup for inline display
             ConfigureStatsContainerLayout(dynamicStatsContainer);
-            
-            // Clear any previously created dynamic stat fields
             ClearDynamicStatFields(dynamicStatsContainer);
-            
-            // Get display stats from component (each component type defines its own stats)
+
             var displayStats = component.GetDisplayStats();
             
             foreach (var stat in displayStats)
@@ -688,7 +607,6 @@ public class VehicleInspectorPanel : MonoBehaviour
             }
         }
         
-        // ==================== STATUS EFFECT BAR ====================
         var statusBar = entryObj.transform.Find("ComponentStatusEffectBar")?.GetComponent<StatusEffectBar>();
         if (statusBar != null)
         {
@@ -696,7 +614,6 @@ public class VehicleInspectorPanel : MonoBehaviour
             statusBar.Refresh();
         }
         
-        // ==================== ROLE INFO ROW (with Inaccessibility Warning) ====================
         var roleInfoRow = entryObj.transform.Find("RoleInfoRow");
         if (roleInfoRow != null)
         {
@@ -721,7 +638,6 @@ public class VehicleInspectorPanel : MonoBehaviour
                 characterName.gameObject.SetActive(showRoleInfo);
                 if (showRoleInfo)
                 {
-                    // Get character from seat that controls this component
                     var seat = selectedVehicle.GetSeatForComponent(component);
                     var character = seat?.assignedCharacter;
                     characterName.text = character != null 
@@ -742,9 +658,6 @@ public class VehicleInspectorPanel : MonoBehaviour
         }
     }
     
-    /// <summary>
-    /// Configure the stats container to use horizontal layout for inline stat display.
-    /// </summary>
     private void ConfigureStatsContainerLayout(Transform container)
     {
         var layoutGroup = container.GetComponent<HorizontalLayoutGroup>();
@@ -762,42 +675,28 @@ public class VehicleInspectorPanel : MonoBehaviour
         layoutGroup.padding = new RectOffset(0, 0, 0, 0);
     }
     
-    /// <summary>
-    /// Clear dynamically created stat fields (identified by name prefix).
-    /// </summary>
     private void ClearDynamicStatFields(Transform container)
     {
         var toDestroy = new List<GameObject>();
         foreach (Transform child in container)
         {
-            // Only use name prefix - no tag required
             if (child.name.StartsWith("DynStat_"))
-            {
                 toDestroy.Add(child.gameObject);
-            }
         }
         foreach (var go in toDestroy)
-        {
             Destroy(go);
-        }
     }
     
-    /// <summary>
-    /// Create a stat field from a DisplayStat with tooltip support.
-    /// </summary>
     private void CreateStatField(Transform container, VehicleComponent component, VehicleComponentUI.DisplayStat stat)
     {
         if (statFieldPrefab == null) return;
-        
+
         var newField = Instantiate(statFieldPrefab, container);
         newField.name = $"DynStat_{stat.Name}";
-        
-        // Add LayoutElement for proper sizing in horizontal layout
+
         var layoutElement = newField.GetComponent<LayoutElement>();
         if (layoutElement == null)
-        {
             layoutElement = newField.AddComponent<LayoutElement>();
-        }
         layoutElement.minWidth = 60f;
         layoutElement.preferredWidth = 80f;
         layoutElement.flexibleWidth = 0f;
@@ -805,15 +704,11 @@ public class VehicleInspectorPanel : MonoBehaviour
         var statField = newField.GetComponent<ComponentStatField>();
         if (statField != null)
         {
-            // Configure with DisplayStat (includes attribute for tooltip)
             statField.Configure(stat);
-            
-            // Update display with entity and stat data
             statField.UpdateDisplay(component, stat, true);
         }
         else
         {
-            // Fallback: find label and value text manually
             var labelText = newField.transform.Find("Label")?.GetComponent<TMP_Text>()
                          ?? newField.transform.Find("StatLabel")?.GetComponent<TMP_Text>();
             var valueText = newField.transform.Find("Value")?.GetComponent<TMP_Text>()
@@ -825,27 +720,20 @@ public class VehicleInspectorPanel : MonoBehaviour
         }
     }
     
-    // ==================== LEGACY TEXT SECTIONS ====================
-    
     private void PopulateSkills()
     {
         if (skillsSectionText == null) return;
         
         var seats = selectedVehicle.seats;
         int totalSkills = 0;
-        
-        // Count total skills from all seats
+
         foreach (var seat in seats)
         {
             if (seat == null) continue;
             foreach (var component in seat.GetOperationalComponents())
-            {
                 totalSkills += component.GetAllSkills().Count;
-            }
             if (seat.assignedCharacter != null)
-            {
                 totalSkills += seat.assignedCharacter.GetPersonalAbilities().Count;
-            }
         }
         
         string info = $"<b>CREW & SKILLS ({seats.Count} seats, {totalSkills} skills):</b>\n";
@@ -860,7 +748,6 @@ public class VehicleInspectorPanel : MonoBehaviour
             {
                 if (seat == null) continue;
                 
-                // Seat status icon
                 string statusIcon;
                 string statusColor;
                 if (!seat.CanAct())
@@ -879,24 +766,20 @@ public class VehicleInspectorPanel : MonoBehaviour
                     statusColor = "#66FF66";
                 }
                 
-                // Character name
                 string characterName = seat.assignedCharacter != null ? seat.assignedCharacter.characterName : null ?? "<color=#FF6666>Unassigned</color>";
-                
-                // Roles enabled by this seat
+
                 RoleType roles = seat.GetEnabledRoles();
                 string roleText = roles != RoleType.None ? $" [{roles}]" : "";
                 
                 info += $"\n  <b><color={statusColor}>{statusIcon} {seat.seatName}</color></b>{roleText}\n";
                 info += $"    Operator: {characterName}\n";
                 
-                // Show reason if can't act
                 if (!seat.CanAct())
                 {
                     string reason = seat.GetCannotActReason();
                     info += $"    <color=#FF6666>{reason}</color>\n";
                 }
-                
-                // Gather all skills for this seat
+
                 var seatSkills = new List<Skill>();
                 foreach (var component in seat.GetOperationalComponents())
                 {
@@ -958,8 +841,6 @@ public class VehicleInspectorPanel : MonoBehaviour
         eventHistorySectionText.text = info;
     }
     
-    // ==================== HELPER METHODS ====================
-    
     private string GetStatusString(VehicleStatus status)
     {
         return status switch
@@ -1004,10 +885,6 @@ public class VehicleInspectorPanel : MonoBehaviour
         };
     }
     
-    /// <summary>
-    /// Build a rich tooltip showing all size modifiers.
-    /// Dynamically reads from VehicleSizeModifiers to stay in sync.
-    /// </summary>
     private string BuildSizeTooltip(VehicleSizeCategory size)
     {
         var modifiers = VehicleSizeModifiers.GetModifiers(size, null);
@@ -1026,8 +903,7 @@ public class VehicleInspectorPanel : MonoBehaviour
         {
             string sign = mod.Value >= 0 ? "+" : "";
             string attrName = mod.Attribute.ToString();
-            
-            // Format attribute name nicely
+
             attrName = attrName switch
             {
                 "ArmorClass" => "AC",
@@ -1040,10 +916,6 @@ public class VehicleInspectorPanel : MonoBehaviour
         return tooltip;
     }
     
-    /// <summary>
-    /// Get color for size category text.
-    /// Tiny/Small = green (bonuses), Medium = white (baseline), Large/Huge = orange (penalties).
-    /// </summary>
     private Color GetSizeColor(VehicleSizeCategory size)
     {
         return size switch

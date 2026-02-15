@@ -3,53 +3,34 @@
 namespace Assets.Scripts.Entities.Vehicle
 {
     /// <summary>
-    /// Vehicle size categories for physics-based balancing.
-    /// Based on total mass, determines AC, mobility, speed, and initiative modifiers.
-    /// See SizeBalancing.md for complete design rationale.
+    /// Bonuses/Penalties for different vehicle sizes to level the playing field and keep realism.
+    /// Otherwise larger vehicles would have an explicit advantage in all aspects of the race.
     /// </summary>
     public enum VehicleSizeCategory
     {
-        /// <summary>Tiny vehicle (solo speeder, &lt;50 mass). +3 AC, +3 Mobility, +5 Initiative, Fast.</summary>
+        /// <summary> +3 AC, +3 Mobility, Nimble.</summary>
         Tiny,
         
-        /// <summary>Small vehicle (2-person light, 50-100 mass). +1 AC, +1 Mobility, +2 Initiative, Fast.</summary>
+        /// <summary> +1 AC, +1 Mobility, Nimble.</summary>
         Small,
         
-        /// <summary>Medium vehicle (3-5 person standard, 100-200 mass). Baseline (0 modifiers).</summary>
+        /// <summary>Baseline (0 modifiers).</summary>
         Medium,
         
-        /// <summary>Large vehicle (4-person heavy, 200-400 mass). -2 AC, -3 Mobility, -3 Initiative, Slow.</summary>
+        /// <summary> -2 AC, -3 Mobility, Slow.</summary>
         Large,
         
-        /// <summary>Huge vehicle (oversized battle wagon, 400+ mass). -4 AC, -5 Mobility, -5 Initiative, Very Slow.</summary>
+        /// <summary> -4 AC, -5 Mobility, Very Slow.</summary>
         Huge
     }
     
-    /// <summary>
-    /// Static utility for size-based modifier definitions.
-    /// Returns AttributeModifier lists that automatically route to correct components.
-    /// Modifiers use ModifierCategory.Equipment so they persist until vehicle size changes.
-    /// </summary>
     public static class VehicleSizeModifiers
     {
-        /// <summary>
-        /// Get all attribute modifiers for a given vehicle size.
-        /// These modifiers are applied to the vehicle and automatically route to correct components.
-        /// 
-        /// Returns modifiers for:
-        /// - ArmorClass (routes to Chassis)
-        /// - Mobility (routes to Chassis, used in saves)
-        /// - MaxSpeed (routes to DriveComponent)
-        /// - Initiative (vehicle-level stat)
-        /// </summary>
-        /// <param name="size">Vehicle size category</param>
-        /// <param name="source">Source object for the modifiers (usually the Vehicle itself)</param>
-        /// <returns>List of attribute modifiers to apply</returns>
         public static List<AttributeModifier> GetModifiers(VehicleSizeCategory size, UnityEngine.Object source)
         {
             var modifiers = new List<AttributeModifier>();
             
-            // AC Modifier (routes to Chassis)
+            // AC Modifier for chassis
             // Large vehicles are easier to hit (bigger target)
             int acMod = size switch
             {
@@ -97,6 +78,8 @@ namespace Assets.Scripts.Entities.Vehicle
                 ));
             }
             return modifiers;
+
+            // add more modifiers as needed, maybe acceleration or maxSpeed.
         }
     }
 }

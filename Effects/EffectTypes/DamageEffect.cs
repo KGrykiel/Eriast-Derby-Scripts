@@ -4,14 +4,8 @@ using Assets.Scripts.Effects;
 using SerializeReferenceEditor;
 
 /// <summary>
-/// Damage effect for skills and event cards.
-/// Uses DamageCalculator to compute damage, then DamageApplicator to apply it.
-/// 
-/// Formula resolution is delegated to IFormulaProvider (Strategy Pattern).
-/// This keeps DamageEffect general-purpose - weapon integration is handled by WeaponFormulaProvider.
-/// 
-/// Composite damage (weapon + extra): use two DamageEffects on the same skill.
-/// CombatEventBus aggregates them naturally.
+/// The effect for applying damage to an entity target.
+/// Uses a formula provider to determine the damage formula, which is then processed by the DamageCalculator and applied via the DamageApplicator.
 /// </summary>
 [System.Serializable]
 public class DamageEffect : EffectBase
@@ -22,20 +16,13 @@ public class DamageEffect : EffectBase
 
     public override void Apply(Entity user, Entity target, EffectContext context, Object source = null)
     {
-        // Build context and resolve formula
         var formulaContext = new FormulaContext(user);
         DamageFormula formula = formulaProvider.GetFormula(formulaContext);
 
-        // Resolve resistance from target
         ResistanceLevel resistance = target.GetResistance(formula.damageType);
-
-        // Calculate damage
         DamageResult result = DamageCalculator.Compute(formula, resistance, context.IsCriticalHit);
-
-        // Determine source type
         DamageSource sourceType = user is WeaponComponent ? DamageSource.Weapon : DamageSource.Ability;
 
-        // Apply damage
         DamageApplicator.Apply(
             result: result,
             target: target,

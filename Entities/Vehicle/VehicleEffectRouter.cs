@@ -1,15 +1,8 @@
 ﻿using System.Linq;
-using Assets.Scripts.Entities.Vehicle.VehicleComponents.ComponentTypes;
 
 namespace Assets.Scripts.Entities.Vehicle
 {
-    /// <summary>
-    /// Handles effect routing and modifier targeting for a vehicle.
-    /// Determines which component should receive effects and modifiers based on effect type and attributes.
-    /// 
-    /// Extracted from Vehicle.cs to separate concerns.
-    /// Vehicle delegates to this coordinator for all effect routing logic.
-    /// </summary>
+    /// <summary>Routes effects and modifiers to the correct component based on type/attribute.</summary>
     public class VehicleEffectRouter
     {
         private readonly global::Vehicle vehicle;
@@ -21,46 +14,22 @@ namespace Assets.Scripts.Entities.Vehicle
 
         // ==================== EFFECT ROUTING ====================
 
-        /// <summary>
-        /// Route an effect to the appropriate component.
-        /// If playerSelectedComponent provided, uses it. Otherwise auto-routes based on effect type.
-        /// </summary>
-        public Entity RouteEffectTarget(IEffect effect, VehicleComponent playerSelectedComponent = null)
+        public Entity RouteEffectTarget(IEffect effect)
         {
-            // Use player selection if provided
-            if (playerSelectedComponent != null)
-                return playerSelectedComponent;
-
-            // Otherwise auto-route based on effect type and attributes
-            return RouteEffectByAttribute(effect);
-        }
-
-        /// <summary>
-        /// Route effect to appropriate component by analyzing its attributes.
-        /// Used for auto-routing (non-precise targeting).
-        /// </summary>
-        private Entity RouteEffectByAttribute(IEffect effect)
-        {
-            if (effect == null)
-                return vehicle.chassis;
-
-            // Direct damage always goes to chassis
+            // damaging the "vehicle" is always damaging the chassis. The chassis is the vehicle.
             if (effect is DamageEffect)
                 return vehicle.chassis;
 
-            // Healing/restoration goes to chassis
-            // TODO: Consider energy restoration routing to power core?
+            // TODO: energy should be routed to power core, but we don't have any energy restoration effects yet, so for now just route to chassis
             if (effect is ResourceRestorationEffect)
                 return vehicle.chassis;
 
-            // Attribute modifiers route by attribute
             if (effect is AttributeModifierEffect modifierEffect)
             {
                 VehicleComponent component = ResolveModifierTarget(modifierEffect.attribute);
                 return component != null ? component : vehicle.chassis;
             }
 
-            // Status effects route by their first modifier's attribute
             if (effect is ApplyStatusEffect statusEffect)
             {
                 if (statusEffect.statusEffect != null && 
@@ -71,20 +40,14 @@ namespace Assets.Scripts.Entities.Vehicle
                     VehicleComponent component = ResolveModifierTarget(firstModifier.attribute);
                     return component != null ? component : vehicle.chassis;
                 }
-                // No modifiers - default to chassis for behavioral effects (stun, etc.)
                 return vehicle.chassis;
             }
 
-            // Unknown effect type - default to chassis
             return vehicle.chassis;
         }
 
         // ==================== MODIFIER TARGET RESOLUTION ====================
 
-        /// <summary>
-        /// Resolve which component should receive a modifier based on the attribute being modified.
-        /// Used by cross-component modifiers and effect routing.
-        /// </summary>
         public VehicleComponent ResolveModifierTarget(Attribute attribute)
         {
             return attribute switch

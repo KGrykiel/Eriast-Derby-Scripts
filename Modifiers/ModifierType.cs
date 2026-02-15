@@ -7,27 +7,25 @@ public enum ModifierType
 }
 
 /// <summary>
-/// Category of a modifier, indicating its source type and behavior.
-/// Used for grouping in tooltips, filtering for dispel, and semantic clarity.
+/// Category of modifier source, for tracking and display purposes.
 /// </summary>
 public enum ModifierCategory
 {
     /// <summary>
     /// Permanent modifier from equipment/components.
-    /// Not dispellable, persists as long as component is installed.
+    /// Removed when component disabled or destroyed.
     /// </summary>
     Equipment,
     
     /// <summary>
     /// Temporary modifier from status effects (buffs/debuffs).
-    /// Dispellable, has duration, tracked by AppliedStatusEffect.
     /// </summary>
     StatusEffect,
     
     /// <summary>
     /// Dynamic modifier calculated from other attributes.
     /// Not stored on entity - evaluated on-demand during stat calculation.
-    /// Example: Speed ? AC (fast vehicles harder to hit)
+    /// e.g. speed to AC (fast vehicles harder to hit)
     /// </summary>
     Dynamic,
     
@@ -51,59 +49,22 @@ public enum ModifierCategory
 }
 
 /// <summary>
-/// A simple stat change. Duration is tracked by StatusEffect (if applicable), not here.
-/// Source can be either a StatusEffect (temporary/indefinite) or a Component (permanent equipment).
-/// 
-/// Modifier Types:
-/// - Flat: Additive bonus/penalty (e.g., +10 Speed)
-/// - Multiplier: Multiplicative modifier following D&D standard (e.g., 1.5 = +50%, 0.5 = -50%, 2.0 = ×2)
-/// 
-/// Application Order (D&D standard):
-/// 1. Start with base value
-/// 2. Apply all Flat modifiers (additive)
-/// 3. Apply all Multiplier modifiers (multiplicative)
-/// 
-/// Example:
-///   Base Speed: 50
-///   Flat +10: 50 + 10 = 60
-///   Multiplier 1.5×: 60 × 1.5 = 90
+/// Flat modifiers are additive, Multiplier modifiers are multiplicative.
+/// Application order (D&D standard): base -> all Flat -> all Multiplier.
 /// </summary>
 [Serializable]
 public class AttributeModifier
 {
-    // What it modifies
     public Attribute Attribute;
     public ModifierType Type;
     public float Value;
-    
-    // Source tracking (StatusEffect OR Component)
     public UnityEngine.Object Source;
-    
-    // Category tracking (for grouping and filtering)
     public ModifierCategory Category;
-    
-    // Optional display name override (for Dynamic modifiers)
     public string DisplayNameOverride;
-    
-    /// <summary>
-    /// Display name for UI (uses override if set, otherwise source name, or "Unknown")
-    /// For Dynamic modifiers, this shows the formula (e.g., "Speed ? AC")
-    /// </summary>
+
     public string SourceDisplayName => DisplayNameOverride ?? (Source != null ? Source.name : "Unknown");
-    
-    /// <summary>
-    /// Is this modifier dispellable? (Status effects are, equipment is not)
-    /// </summary>
     public bool IsDispellable => Category == ModifierCategory.StatusEffect || Category == ModifierCategory.Aura;
-    
-    /// <summary>
-    /// Is this modifier permanent? (Equipment is, status effects are not)
-    /// </summary>
     public bool IsPermanent => Category == ModifierCategory.Equipment;
-    
-    /// <summary>
-    /// Is this modifier from a temporary effect?
-    /// </summary>
     public bool IsTemporary => Category == ModifierCategory.StatusEffect || 
                               Category == ModifierCategory.Aura || 
                               Category == ModifierCategory.Skill;

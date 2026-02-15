@@ -2,10 +2,6 @@ using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.InputSystem;
 
-/// <summary>
-/// Manages UI view switching between DM Interface and Game View.
-/// Panels handle their own refresh independently via Update() polling.
-/// </summary>
 public class UIManager : MonoBehaviour
 {
     public static UIManager Instance { get; private set; }
@@ -31,7 +27,6 @@ public class UIManager : MonoBehaviour
 
     void Awake()
     {
-        // Singleton pattern
         if (Instance != null && Instance != this)
         {
             Destroy(gameObject);
@@ -42,31 +37,21 @@ public class UIManager : MonoBehaviour
 
     void Start()
     {
-        // Setup button listeners
         if (showDMInterfaceButton != null)
             showDMInterfaceButton.onClick.AddListener(ShowDMInterface);
 
         if (returnToGameButton != null)
             returnToGameButton.onClick.AddListener(ShowGameView);
 
-        // Start in Game View by default
         ShowGameView();
     }
 
     void Update()
     {
-        // New Input System - check if Tab key was pressed this frame
         if (Keyboard.current != null && Keyboard.current[toggleHotkey].wasPressedThisFrame)
-        {
             ToggleView();
-        }
     }
 
-    // ==================== VIEW SWITCHING ====================
-
-    /// <summary>
-    /// Shows the DM Interface (tabs, analytics, detailed view).
-    /// </summary>
     public void ShowDMInterface()
     {
         if (dmInterfaceCanvas != null)
@@ -77,9 +62,6 @@ public class UIManager : MonoBehaviour
         Debug.Log("[UIManager] Switched to DM Interface");
     }
 
-    /// <summary>
-    /// Shows the Game View (gameplay, turn buttons, player actions).
-    /// </summary>
     public void ShowGameView()
     {
         if (dmInterfaceCanvas != null)
@@ -93,9 +75,6 @@ public class UIManager : MonoBehaviour
         Debug.Log("[UIManager] Switched to Game View");
     }
 
-    /// <summary>
-    /// Toggles between DM Interface and Game View.
-    /// </summary>
     public void ToggleView()
     {
         if (isDMInterfaceActive)

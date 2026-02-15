@@ -3,23 +3,11 @@
 namespace Assets.Scripts.Combat.SkillChecks
 {
     /// <summary>
-    /// Universal entry point for skill checks.
-    /// Handles routing + computation + event emission in one call.
-    /// Inspired by WOTR's Rulebook system - execution automatically logs events.
-    /// 
-    /// Used by: Skills, Events, Stages, Status Effects, and any system that needs skill checks.
+    /// Entry point for skill checks from all sources — skills, event cards, maybe more in the future.
+    /// different methods for vehicles that need routing vs standalone entities that don't (objects, monsters etc).
     /// </summary>
     public static class SkillCheckPerformer
     {
-        /// <summary>
-        /// Execute a skill check for a vehicle.
-        /// Routes internally, computes, emits events automatically.
-        /// </summary>
-        /// <param name="vehicle">Vehicle making the check</param>
-        /// <param name="spec">What type of check</param>
-        /// <param name="dc">Difficulty class</param>
-        /// <param name="causalSource">What triggered this check (Skill, Card, Stage, etc.)</param>
-        /// <param name="initiatingCharacter">Character who initiated the check (null for vehicle-wide checks)</param>
         public static SkillCheckResult Execute(
             Vehicle vehicle,
             SkillCheckSpec spec,
@@ -53,25 +41,20 @@ namespace Assets.Scripts.Combat.SkillChecks
             return result;
         }
 
-        /// <summary>
-        /// Execute a skill check for a standalone entity (no vehicle routing).
-        /// Used for NPCs, props, or any non-vehicle entity making a check.
-        /// </summary>
+        /// <summary>Standalone entity overload — no vehicle routing.</summary>
         public static SkillCheckResult ExecuteForEntity(
             Entity entity,
             SkillCheckSpec spec,
             int dc,
-            Object causalSource,
-            Character character = null)
+            Object causalSource)
         {
-            var result = SkillCheckCalculator.Compute(spec, dc, entity, character);
+            var result = SkillCheckCalculator.Compute(spec, dc, entity);
 
             CombatEventBus.EmitSkillCheck(
                 result,
                 entity,
                 causalSource,
-                result.Roll.Success,
-                character);
+                result.Roll.Success);
 
             return result;
         }

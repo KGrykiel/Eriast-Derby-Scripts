@@ -6,38 +6,18 @@ using EventType = Assets.Scripts.Logging.EventType;
 
 namespace Assets.Scripts.Managers.Logging
 {
-    /// <summary>
-    /// Subscribes to TurnEventBus and logs all turn-related events to RaceHistory.
-    /// Keeps logging concerns completely separate from game logic.
-    /// 
-    /// TurnEventBus is the single source of truth for all turn events:
-    /// - Lifecycle events (rounds, turns, game over)
-    /// - Operation events (movement, power, stages)
-    /// - Player events (player actions)
-    /// 
-    /// Usage: Create instance and call SubscribeToTurnEventBus() during initialization.
-    /// </summary>
+    /// <summary>Subscribes to TurnEventBus and logs all turn events to RaceHistory.</summary>
     public class TurnEventLogger
     {
         private TurnStateMachine stateMachine;
-        
-        // ==================== SUBSCRIPTION ====================
-        
-        /// <summary>
-        /// Store reference to state machine for metadata in logs.
-        /// </summary>
+
         public void SetStateMachineReference(TurnStateMachine machine)
         {
             stateMachine = machine;
         }
-        
-        /// <summary>
-        /// Subscribe to TurnEventBus for ALL turn-related events.
-        /// Single subscription point for lifecycle, operations, and player events.
-        /// </summary>
+
         public void SubscribeToTurnEventBus()
         {
-            // Lifecycle events
             TurnEventBus.OnPhaseChanged += LogPhaseChange;
             TurnEventBus.OnRoundStarted += LogRoundStart;
             TurnEventBus.OnRoundEnded += LogRoundEnd;
@@ -47,7 +27,7 @@ namespace Assets.Scripts.Managers.Logging
             TurnEventBus.OnInitiativeRolled += LogInitiativeRoll;
             TurnEventBus.OnVehicleRemoved += LogVehicleRemoved;
             TurnEventBus.OnVehicleDestroyed += LogVehicleDestroyed;
-            
+
             // Operation events
             TurnEventBus.OnAutoMovement += LogAutoMovement;
             TurnEventBus.OnComponentPowerShutdown += LogComponentPowerShutdown;
@@ -55,20 +35,16 @@ namespace Assets.Scripts.Managers.Logging
             TurnEventBus.OnMovementExecuted += LogMovementExecuted;
             TurnEventBus.OnStageEntered += LogStageEntered;
             TurnEventBus.OnFinishLineCrossed += LogFinishLineCrossed;
-            
+
             // Player events
             TurnEventBus.OnPlayerCannotAct += LogPlayerCannotAct;
             TurnEventBus.OnPlayerActionPhaseStarted += LogPlayerActionPhaseStarted;
             TurnEventBus.OnPlayerEndedTurn += LogPlayerEndedTurn;
             TurnEventBus.OnPlayerTriggeredMovement += LogPlayerTriggeredMovement;
         }
-        
-        /// <summary>
-        /// Unsubscribe from all events (call on cleanup).
-        /// </summary>
+
         public void Unsubscribe()
         {
-            // Lifecycle events
             TurnEventBus.OnPhaseChanged -= LogPhaseChange;
             TurnEventBus.OnRoundStarted -= LogRoundStart;
             TurnEventBus.OnRoundEnded -= LogRoundEnd;
@@ -78,7 +54,7 @@ namespace Assets.Scripts.Managers.Logging
             TurnEventBus.OnInitiativeRolled -= LogInitiativeRoll;
             TurnEventBus.OnVehicleRemoved -= LogVehicleRemoved;
             TurnEventBus.OnVehicleDestroyed -= LogVehicleDestroyed;
-            
+
             // Operation events
             TurnEventBus.OnAutoMovement -= LogAutoMovement;
             TurnEventBus.OnComponentPowerShutdown -= LogComponentPowerShutdown;
@@ -86,7 +62,7 @@ namespace Assets.Scripts.Managers.Logging
             TurnEventBus.OnMovementExecuted -= LogMovementExecuted;
             TurnEventBus.OnStageEntered -= LogStageEntered;
             TurnEventBus.OnFinishLineCrossed -= LogFinishLineCrossed;
-            
+
             // Player events
             TurnEventBus.OnPlayerCannotAct -= LogPlayerCannotAct;
             TurnEventBus.OnPlayerActionPhaseStarted -= LogPlayerActionPhaseStarted;
@@ -98,8 +74,6 @@ namespace Assets.Scripts.Managers.Logging
         
         private void LogPhaseChange(TurnPhase oldPhase, TurnPhase newPhase)
         {
-            // Only log significant phase changes (not every transition)
-            // Most logging happens in specific event handlers
         }
         
         private void LogRoundStart(int roundNumber)
@@ -317,10 +291,7 @@ namespace Assets.Scripts.Managers.Logging
         }
         
         // ==================== INITIALIZATION LOGGING ====================
-        
-        /// <summary>
-        /// Log race initialization (called by GameManager).
-        /// </summary>
+
         public void LogRaceInitialized(int vehicleCount, int stageCount)
         {
             RaceHistory.Log(
@@ -330,9 +301,6 @@ namespace Assets.Scripts.Managers.Logging
             );
         }
         
-        /// <summary>
-        /// Log turn order after initiative is rolled.
-        /// </summary>
         public void LogTurnOrderEstablished(IReadOnlyList<Vehicle> vehicles)
         {
             string turnOrder = string.Join(", ", vehicles.Select(v => v.vehicleName));
@@ -343,9 +311,6 @@ namespace Assets.Scripts.Managers.Logging
             );
         }
         
-        /// <summary>
-        /// Log vehicle starting position.
-        /// </summary>
         public void LogVehiclePlaced(Vehicle vehicle, Stage stage)
         {
             RaceHistory.Log(
@@ -357,9 +322,6 @@ namespace Assets.Scripts.Managers.Logging
             );
         }
         
-        /// <summary>
-        /// Log crew composition for a vehicle.
-        /// </summary>
         public void LogCrewComposition(Vehicle vehicle, Stage stage)
         {
             if (vehicle.seats.Count == 0) return;

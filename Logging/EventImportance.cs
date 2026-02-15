@@ -1,8 +1,7 @@
 namespace Assets.Scripts.Logging
 {
     /// <summary>
-    /// Defines importance levels for race events.
-    /// Used for filtering and prioritizing what the DM sees.
+    /// Used to filter combat events by importance level in the UI.
     /// </summary>
     public enum EventImportance
     {

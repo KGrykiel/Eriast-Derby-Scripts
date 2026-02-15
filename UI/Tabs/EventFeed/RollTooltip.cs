@@ -2,16 +2,7 @@
 using UnityEngine.UI;
 using TMPro;
 using UnityEngine.InputSystem;
-using Assets.Scripts.Combat.Damage;
-using Assets.Scripts.Combat.Attacks;
-using Assets.Scripts.Combat.Logging;
 
-/// <summary>
-/// Tooltip panel that displays detailed roll/damage breakdowns on hover.
-/// Singleton that positions itself near the hovered UI element (not cursor).
-/// 
-/// Uses CombatLogManager for all formatting (single source of truth).
-/// </summary>
 public class RollTooltip : MonoBehaviour
 {
     private static RollTooltip instance;
@@ -94,9 +85,6 @@ public class RollTooltip : MonoBehaviour
         }
     }
 
-    /// <summary>
-    /// Shows tooltip with delay at the position of the target element.
-    /// </summary>
     public static void Show(string content, RectTransform target = null)
     {
         if (Instance == null || string.IsNullOrEmpty(content)) return;
@@ -106,9 +94,6 @@ public class RollTooltip : MonoBehaviour
         Instance.showTimer = 0f;
     }
 
-    /// <summary>
-    /// Shows tooltip immediately without delay at the position of the target element.
-    /// </summary>
     public static void ShowNow(string content, RectTransform target = null)
     {
         if (Instance == null) return;
@@ -127,12 +112,8 @@ public class RollTooltip : MonoBehaviour
 
         if (tooltipPanel != null)
         {
-            // Move tooltip to end of sibling list (renders last = on top)
             tooltipPanel.SetAsLastSibling();
-            
             tooltipPanel.gameObject.SetActive(true);
-
-            // Force layout rebuild to get correct size
             LayoutRebuilder.ForceRebuildLayoutImmediate(tooltipPanel);
         }
 
@@ -141,9 +122,6 @@ public class RollTooltip : MonoBehaviour
         UpdatePosition();
     }
 
-    /// <summary>
-    /// Hides the tooltip.
-    /// </summary>
     public static void Hide()
     {
         if (Instance == null) return;
@@ -163,17 +141,12 @@ public class RollTooltip : MonoBehaviour
         targetElement = null;
     }
 
-    /// <summary>
-    /// Updates tooltip position to align with target element while staying on screen.
-    /// Handles edge cases: flips horizontally if too close to left/right, flips vertically if too close to top/bottom.
-    /// </summary>
     private void UpdatePosition()
     {
         if (tooltipPanel == null) return;
 
-        // Force layout rebuild first to get accurate size
         LayoutRebuilder.ForceRebuildLayoutImmediate(tooltipPanel);
-        
+
         Vector2 tooltipSize = tooltipPanel.rect.size;
         Vector2 screenSize = new(Screen.width, Screen.height);
         float scaleFactor = parentCanvas != null ? parentCanvas.scaleFactor : 1f;
@@ -183,33 +156,27 @@ public class RollTooltip : MonoBehaviour
             ? null 
             : (parentCanvas != null ? parentCanvas.worldCamera : null);
         
-        // Get target element bounds in screen space
         Vector2 targetCenter;
         Vector2 targetSize = Vector2.zero;
-        
+
         if (targetElement != null)
         {
             Vector3[] worldCorners = new Vector3[4];
             targetElement.GetWorldCorners(worldCorners);
-            
-            // Convert corners to screen space
+
             Vector2 minScreen = RectTransformUtility.WorldToScreenPoint(cam, worldCorners[0]);
             Vector2 maxScreen = RectTransformUtility.WorldToScreenPoint(cam, worldCorners[2]);
-            
+
             targetCenter = (minScreen + maxScreen) / 2f;
             targetSize = new Vector2(Mathf.Abs(maxScreen.x - minScreen.x), Mathf.Abs(maxScreen.y - minScreen.y));
         }
         else
         {
-            // Fallback to cursor position
             targetCenter = Mouse.current != null ? Mouse.current.position.ReadValue() : Vector2.zero;
         }
-        
-        // Determine best position: try right of target first, then left
-        // Try below target first, then above
-        
+
         Vector2 finalScreenPos;
-        
+
         // Horizontal positioning
         float rightX = targetCenter.x + targetSize.x / 2f + Mathf.Abs(elementOffset.x);
         float leftX = targetCenter.x - targetSize.x / 2f - scaledTooltipSize.x - Mathf.Abs(elementOffset.x);
@@ -219,48 +186,28 @@ public class RollTooltip : MonoBehaviour
         
         float finalX;
         if (canFitRight)
-        {
-            // Position to the right of target
             finalX = rightX;
-        }
         else if (canFitLeft)
-        {
-            // Position to the left of target
             finalX = leftX;
-        }
         else
-        {
-            // Can't fit on either side, clamp to screen
             finalX = Mathf.Clamp(rightX, edgePadding, screenSize.x - scaledTooltipSize.x - edgePadding);
-        }
-        
-        // Vertical positioning
+
         float belowY = targetCenter.y - targetSize.y / 2f + elementOffset.y;
         float aboveY = targetCenter.y + targetSize.y / 2f + scaledTooltipSize.y - elementOffset.y;
-        
+
         bool canFitBelow = (belowY - scaledTooltipSize.y - edgePadding) >= 0;
         bool canFitAbove = (aboveY + edgePadding) <= screenSize.y;
-        
+
         float finalY;
         if (canFitBelow)
-        {
-            // Position below target (tooltip top-left corner at this Y)
             finalY = belowY;
-        }
         else if (canFitAbove)
-        {
-            // Position above target
             finalY = aboveY;
-        }
         else
-        {
-            // Can't fit above or below, clamp to screen
             finalY = Mathf.Clamp(belowY, scaledTooltipSize.y + edgePadding, screenSize.y - edgePadding);
-        }
-        
+
         finalScreenPos = new Vector2(finalX, finalY);
-        
-        // Convert screen position to local canvas space
+
         if (canvasRect != null)
         {
             RectTransformUtility.ScreenPointToLocalPointInRectangle(
@@ -269,14 +216,12 @@ public class RollTooltip : MonoBehaviour
                 cam,
                 out Vector2 localPoint
             );
-            
-            // Set position - assumes pivot is (0, 1) = top-left
-            // If pivot is different, adjust accordingly
+
             Vector2 pivotOffset = new(
                 tooltipPanel.pivot.x * tooltipSize.x,
                 (tooltipPanel.pivot.y - 1f) * tooltipSize.y
             );
-            
+
             tooltipPanel.anchoredPosition = localPoint + pivotOffset;
         }
     }

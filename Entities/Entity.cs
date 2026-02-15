@@ -9,23 +9,8 @@ using Assets.Scripts.Combat;
 using Assets.Scripts.Core;
 
 /// <summary>
-/// Abstract base class for all entities that can be damaged, targeted, or interact with skills.
-/// Entities are "things with HP" - this includes:
-/// - VehicleComponents (chassis, weapons, power cores, etc.)
-/// - Props (barrels, doors, obstacles)
-/// - NPCs (creatures, turrets)
-/// - Any other targetable object
-/// 
-/// NOTE: Vehicle itself is NOT an Entity - it's a container/coordinator for Entity components.
-/// 
-/// Display name uses Unity's built-in name property (GameObject.name).
-/// 
-/// MODIFIER SYSTEM (Phase 1):
-/// - Entities store their own modifiers and status effects
-/// - Two sources: StatusEffect (temporary/indefinite) OR Component (permanent equipment)
-/// - Skills apply StatusEffects ONLY, Components apply direct modifiers
-/// 
-/// LOGGING: Status effect events are emitted to CombatEventBus for aggregated logging.
+/// Base class for anything with HP that can be damaged/targeted.
+/// Note: Vehicle itself is NOT an Entity, it's a container for Entity components.
 /// </summary>
 public abstract class Entity : MonoBehaviour
 {
@@ -80,28 +65,19 @@ public abstract class Entity : MonoBehaviour
     
     // ==================== ENTITY FEATURES ====================
     
-    /// <summary>
-    /// Check if this entity has a specific feature (or combination of features).
-    /// </summary>
     public bool HasFeature(EntityFeature feature)
     {
         return (features & feature) == feature;
     }
-    
-    /// <summary>
-    /// Check if entity has ANY of the specified features.
-    /// </summary>
+
     public bool HasAnyFeature(EntityFeature flags)
     {
         return (features & flags) != 0;
     }
 
     // ==================== DAMAGE RESISTANCES ====================
-    
-    /// <summary>
-    /// Get resistance level for a specific damage type.
-    /// Returns Normal if no resistance is defined.
-    /// </summary>
+
+    /// <summary>Returns Normal if no resistance defined.</summary>
     public virtual ResistanceLevel GetResistance(DamageType type)
     {
         // Find resistance entry for this damage type
@@ -110,21 +86,16 @@ public abstract class Entity : MonoBehaviour
             if (resistance.type == type)
                 return resistance.level;
         }
-        
-        // No resistance defined - return normal
+
         return ResistanceLevel.Normal;
     }
 
     // ==================== DAMAGE & HEALING ====================
     
-    /// <summary>
-    /// Apply damage to this entity.
-    /// Override in subclasses for custom damage handling (resistances, shields, etc.)
-    /// </summary>
     public virtual void TakeDamage(int amount)
     {
         if (isDestroyed) return;
-        
+
         int previousHealth = health;
         health = Mathf.Max(health - amount, 0);
 
@@ -137,26 +108,10 @@ public abstract class Entity : MonoBehaviour
         }
     }
 
-    /// <summary>
-    /// Called when damage is taken. Override for logging, effects, etc.
-    /// </summary>
-    protected virtual void OnDamageTaken(int amount, int previousHealth, int newHealth)
-    {
-        // Override in subclasses
-    }
+    protected virtual void OnDamageTaken(int amount, int previousHealth, int newHealth){}
 
-    /// <summary>
-    /// Called when entity is destroyed (health reaches 0).
-    /// Override in subclasses for destruction effects, drops, etc.
-    /// </summary>
-    protected virtual void OnEntityDestroyed()
-    {
-        // Override in subclasses
-    }
+    protected virtual void OnEntityDestroyed(){}
 
-    /// <summary>
-    /// Heal this entity by the specified amount.
-    /// </summary>
     public virtual void Heal(int amount)
     {
         if (isDestroyed) return;
@@ -166,27 +121,17 @@ public abstract class Entity : MonoBehaviour
 
     // ==================== MODIFIER SYSTEM ====================
     
-    /// <summary>
-    /// Add a direct modifier to this entity.
-    /// Used by Components to apply permanent equipment bonuses.
-    /// Skills should use ApplyStatusEffect() instead.
-    /// </summary>
+    /// <summary>Components use this for permanent equipment bonuses. Skills should use ApplyStatusEffect().</summary>
     public virtual void AddModifier(AttributeModifier modifier)
     {
         entityModifiers.Add(modifier);
     }
-    
-    /// <summary>
-    /// Remove a specific modifier from this entity.
-    /// </summary>
+
     public virtual void RemoveModifier(AttributeModifier modifier)
     {
         entityModifiers.Remove(modifier);
     }
-    
-    /// <summary>
-    /// Get all active modifiers on this entity.
-    /// </summary>
+
     public virtual List<AttributeModifier> GetModifiers()
     {
         return entityModifiers;
@@ -194,12 +139,7 @@ public abstract class Entity : MonoBehaviour
 
     // ==================== STATUS EFFECT SYSTEM ====================
     
-    /// <summary>
-    /// Apply a status effect to this entity.
-    /// Handles stacking rules: same status effect compares and keeps better one.
-    /// Emits StatusEffectEvent for logging via CombatEventBus.
-    /// Returns the applied (or existing better) status effect instance, or null if failed.
-    /// </summary>
+    /// <summary>Handles stacking rules and emits events. Returns null if feature requirements not met.</summary>
     public virtual AppliedStatusEffect ApplyStatusEffect(StatusEffect effect, Object applier)
     {
         // Validate targeting (feature requirements)
@@ -242,9 +182,6 @@ public abstract class Entity : MonoBehaviour
         return applied;
     }
     
-    /// <summary>
-    /// Remove a specific status effect from this entity.
-    /// </summary>
     public virtual void RemoveStatusEffect(AppliedStatusEffect statusEffect)
     {
         if (activeStatusEffects.Remove(statusEffect))
@@ -252,12 +189,8 @@ public abstract class Entity : MonoBehaviour
             statusEffect.OnRemove();
         }
     }
-    
-    /// <summary>
-    /// Remove all status effects applied by a specific source.
-    /// Much more efficient than searching by template.
-    /// Useful for removing stage/lane effects when leaving.
-    /// </summary>
+
+    /// <summary>Removes all effects from a specific source (e.g. leaving a lane).</summary>
     public virtual void RemoveStatusEffectsFromSource(Object source)
     {
         if (source == null) return;
@@ -269,18 +202,12 @@ public abstract class Entity : MonoBehaviour
         }
     }
     
-    /// <summary>
-    /// Get all active status effects on this entity.
-    /// </summary>
     public virtual List<AppliedStatusEffect> GetActiveStatusEffects()
     {
         return activeStatusEffects;
     }
-    
-    /// <summary>
-    /// Update status effects (tick periodic effects, decrement durations, remove expired).
-    /// Call this at the start/end of each turn.
-    /// </summary>
+
+    /// <summary>Ticks periodic effects, decrements durations, removes expired. Called each turn.</summary>
     public virtual void UpdateStatusEffects()
     {
         // Tick all status effects (periodic damage, healing, etc.)
@@ -307,9 +234,6 @@ public abstract class Entity : MonoBehaviour
         }
     }
     
-    /// <summary>
-    /// Check if a status effect can be applied to this entity (feature validation).
-    /// </summary>
     public virtual bool CanApplyStatusEffect(StatusEffect effect)
     {
         // Check required features
@@ -329,9 +253,7 @@ public abstract class Entity : MonoBehaviour
         return true;
     }
     
-    /// <summary>
-    /// Determine if new status effect should replace existing one (stacking rules).
-    /// </summary>
+    /// <summary>Stacking rules: higher magnitude wins, then longer duration.</summary>
     private bool ShouldReplaceStatusEffect(AppliedStatusEffect existing, StatusEffect newEffect)
     {
         float existingMagnitude = existing.template.modifiers.Sum(m => Mathf.Abs(m.value));
@@ -354,43 +276,19 @@ public abstract class Entity : MonoBehaviour
     
     // ==================== TARGETING ====================
     
-    /// <summary>
-    /// Check if this entity can be targeted.
-    /// Override for invisibility, phasing, etc.
-    /// </summary>
     public virtual bool CanBeTargeted()
     {
         return !isDestroyed;
     }
 
-    /// <summary>
-    /// Get display name for UI.
-    /// Uses Unity's GameObject.name by default.
-    /// Override if you need custom display logic.
-    /// </summary>
     public virtual string GetDisplayName()
     {
-        return name; // Unity's built-in Object.name property
+        return name; // GameObject name from unity editor.
     }
     
     // ==================== D20 ROLL BASE VALUES ====================
     
-    /// <summary>
-    /// Get the base value this component provides for a d20 check or save.
-    /// 
-    /// This is used by D20RollHelpers to gather component bonuses for checks and saves.
-    /// Components override this to provide their base check values (e.g., Chassis provides Mobility).
-    /// 
-    /// Uses VehicleCheckAttribute (constrained subset) instead of full Attribute enum for type safety.
-    /// Only valid check attributes (Mobility, Stability) can be rolled - prevents rolling MaxHealth or DamageDice.
-    /// 
-    /// Returns 0 by default (most entities don't contribute to d20 rolls).
-    /// 
-    /// NOTE: This is the BASE value only, not including applied modifiers (status effects, equipment).
-    /// Applied modifiers are gathered separately via StatCalculator.
-    /// </summary>
-    /// <param name="checkAttribute">The check attribute being rolled (Mobility, Stability, etc.)</param>
-    /// <returns>Base value contribution, or 0 if this component doesn't provide this check attribute</returns>
+    /// <summary>Base value for d20 checks/saves. Override in components (e.g. Chassis provides Mobility).</summary>
     public virtual int GetBaseCheckValue(VehicleCheckAttribute checkAttribute)
     {
         return 0;

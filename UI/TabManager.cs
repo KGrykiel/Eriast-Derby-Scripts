@@ -1,10 +1,6 @@
 using UnityEngine;
 using UnityEngine.UI;
 
-/// <summary>
-/// Manages tab switching for the DM interface.
-/// Controls visibility of tab panels based on button clicks.
-/// </summary>
 public class TabManager : MonoBehaviour
 {
     [Header("Tab Buttons")]
@@ -29,7 +25,6 @@ public class TabManager : MonoBehaviour
 
     void Start()
     {
-        // Setup button listeners
         focusTabButton.onClick.AddListener(() => ShowTab(focusPanel, focusTabButton));
         overviewTabButton.onClick.AddListener(() => ShowTab(overviewPanel, overviewTabButton));
         inspectorTabButton.onClick.AddListener(() => ShowTab(inspectorPanel, inspectorTabButton));
@@ -37,30 +32,24 @@ public class TabManager : MonoBehaviour
         if (lanesTabButton != null)
             lanesTabButton.onClick.AddListener(() => ShowTab(lanesPanel, lanesTabButton));
 
-        // Show focus tab by default
         ShowTab(focusPanel, focusTabButton);
     }
 
     private void ShowTab(GameObject panelToShow, Button buttonClicked)
     {
-        // Hide all panels
         focusPanel.SetActive(false);
         overviewPanel.SetActive(false);
         inspectorPanel.SetActive(false);
         logPanel.SetActive(false);
         if (lanesPanel != null) lanesPanel.SetActive(false);
 
-        // Reset all button colors
         SetButtonColor(focusTabButton, inactiveColor);
         SetButtonColor(overviewTabButton, inactiveColor);
         SetButtonColor(inspectorTabButton, inactiveColor);
         SetButtonColor(logTabButton, inactiveColor);
         if (lanesTabButton != null) SetButtonColor(lanesTabButton, inactiveColor);
 
-        // Show selected panel
         panelToShow.SetActive(true);
-
-        // Highlight selected button
         SetButtonColor(buttonClicked, activeColor);
         currentActiveButton = buttonClicked;
     }

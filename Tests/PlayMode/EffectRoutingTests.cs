@@ -98,26 +98,6 @@ namespace Assets.Scripts.Tests.PlayMode
             Assert.AreEqual(vehicle.powerCore, result, "MaxEnergy modifier should route to PowerCore");
         }
 
-        // ==================== Player Selection Override ====================
-
-        [UnityTest]
-        public IEnumerator RouteEffect_PlayerSelected_OverridesAutoRoute()
-        {
-            vehicle = new TestVehicleBuilder()
-                .WithChassis()
-                .WithWeapon()
-                .Build();
-
-            var weapon = vehicle.optionalComponents[0] as WeaponComponent;
-            var damageEffect = new DamageEffect();
-
-            // Player specifically selects weapon
-            var result = vehicle.RouteEffectTarget(damageEffect, weapon);
-            yield return null;
-
-            Assert.AreEqual(weapon, result, "Player selection should override auto-route");
-        }
-
         // ==================== Fallback Routing ====================
 
         [UnityTest]

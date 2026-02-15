@@ -4,10 +4,7 @@ using Assets.Scripts.Entities.Vehicle.VehicleComponents.ComponentTypes;
 
 namespace Assets.Scripts.Entities.Vehicle
 {
-    /// <summary>
-    /// Manages vehicle component discovery, initialization, role management, and accessibility.
-    /// Separates component coordination logic from Vehicle MonoBehaviour.
-    /// </summary>
+    /// <summary>Component discovery, initialization, accessibility, and cross-component modifiers.</summary>
     public class VehicleComponentCoordinator
     {
         private readonly global::Vehicle vehicle;
@@ -20,21 +17,16 @@ namespace Assets.Scripts.Entities.Vehicle
         // ==================== COMPONENT INITIALIZATION ====================
 
         /// <summary>
-        /// Discover and initialize all vehicle components.
-        /// Called automatically in Vehicle.Awake().
+        /// Components are discovered in Unity hierarchy automatically.
         /// </summary>
         public void InitializeComponents()
         {
-            // Find all VehicleComponent child objects
             var allFoundComponents = vehicle.GetComponentsInChildren<VehicleComponent>();
 
-            // Auto-categorize components
             foreach (var component in allFoundComponents)
             {
-                // Initialize component with vehicle reference
                 component.Initialize(vehicle);
 
-                // Auto-assign mandatory components if not manually set
                 if (component is ChassisComponent && vehicle.chassis == null)
                 {
                     vehicle.chassis = component as ChassisComponent;
@@ -45,7 +37,6 @@ namespace Assets.Scripts.Entities.Vehicle
                 }
                 else
                 {
-                    // Add to optional components if not already there
                     if (!vehicle.optionalComponents.Contains(component))
                     {
                         vehicle.optionalComponents.Add(component);
@@ -53,78 +44,57 @@ namespace Assets.Scripts.Entities.Vehicle
                 }
             }
 
-            // Validate mandatory components
+            // Chassis and PowerCore are mandatory - the vehicle doesn't function without them.
             if (vehicle.chassis == null)
-            {
                 Debug.LogWarning($"[Vehicle] {vehicle.vehicleName} has no Chassis component! Vehicle stats will be incomplete.");
-            }
 
             if (vehicle.powerCore == null)
-            {
                 Debug.LogWarning($"[Vehicle] {vehicle.vehicleName} has no Power Core component! Vehicle will have no power.");
-            }
 
-            // Apply cross-component modifiers after all components are discovered
+            // Cross-component modifiers depend on all components being discovered first
             InitializeComponentModifiers();
 
-            // Log component discovery
             Debug.Log($"[Vehicle] {vehicle.vehicleName} initialized with {GetAllComponents().Count} component(s)");
         }
 
         // ==================== COMPONENT ACCESSIBILITY ====================
 
-        /// <summary>
-        /// Check if a component is currently accessible for targeting.
-        /// External components always accessible.
-        /// Protected/Shielded components require shield destruction.
-        /// Internal components require chassis damage (threshold set per component).
-        /// </summary>
         public bool IsComponentAccessible(VehicleComponent target)
         {
             if (target == null || target.isDestroyed)
                 return false;
 
-            // External components are always accessible
             if (target.exposure == ComponentExposure.External)
                 return true;
 
-            // Protected/Shielded components: check if shielding component is destroyed
+            // Protected/Shielded components - inaccessible until their shield is destroyed.
             if ((target.exposure == ComponentExposure.Protected || target.exposure == ComponentExposure.Shielded)
                 && target.shieldedByComponent != null)
             {
-                // Accessible if shield is destroyed
                 return target.shieldedByComponent.isDestroyed;
             }
 
-            // Internal components: requires chassis damage based on component's threshold
+            // Internal components - inaccessible until chassis is damaged enough.
             if (target.exposure == ComponentExposure.Internal)
             {
                 if (vehicle.chassis == null) return true; // Fallback if no chassis
 
-                // Calculate chassis damage percentage (1.0 = fully damaged, 0.0 = undamaged)
-                float chassisDamagePercent = 1f - ((float)vehicle.chassis.health / (float)vehicle.chassis.GetMaxHealth());
-
-                // Accessible if chassis damage >= threshold
+                int chassisDamagePercent = 100 - (vehicle.chassis.GetCurrentHealth() * 100 / vehicle.chassis.GetMaxHealth());
                 return chassisDamagePercent >= target.internalAccessThreshold;
             }
 
-            // Default: accessible
             return true;
         }
 
-        /// <summary>
-        /// Get the reason why a component cannot be accessed (for UI display).
-        /// Returns null if component is accessible.
-        /// </summary>
+        /// <summary>Null if accessible.</summary>
         public string GetInaccessibilityReason(VehicleComponent target)
         {
             if (target == null || target.isDestroyed)
                 return "Component destroyed";
 
             if (IsComponentAccessible(target))
-                return null; // Accessible
+                return null;
 
-            // Protected/Shielded components
             if ((target.exposure == ComponentExposure.Protected || target.exposure == ComponentExposure.Shielded)
                 && target.shieldedByComponent != null)
             {
@@ -132,16 +102,14 @@ namespace Assets.Scripts.Entities.Vehicle
                     return $"Shielded by {target.shieldedByComponent.name}";
             }
 
-            // Internal components
             if (target.exposure == ComponentExposure.Internal)
             {
                 if (vehicle.chassis != null)
                 {
-                    float chassisDamagePercent = 1f - ((float)vehicle.chassis.health / (float)vehicle.chassis.GetMaxHealth());
+                    int chassisDamagePercent = 100 - (vehicle.chassis.GetCurrentHealth() * 100 / vehicle.chassis.GetMaxHealth());
                     if (chassisDamagePercent < target.internalAccessThreshold)
                     {
-                        int requiredDamagePercent = Mathf.RoundToInt(target.internalAccessThreshold * 100f);
-                        return $"Chassis must be {requiredDamagePercent}% damaged";
+                        return $"Chassis must be {target.internalAccessThreshold}% damaged";
                     }
                 }
             }
@@ -151,9 +119,6 @@ namespace Assets.Scripts.Entities.Vehicle
 
         // ==================== COMPONENT QUERIES ====================
 
-        /// <summary>
-        /// Get all components (mandatory + optional).
-        /// </summary>
         public List<VehicleComponent> GetAllComponents()
         {
             List<VehicleComponent> all = new();
@@ -165,10 +130,7 @@ namespace Assets.Scripts.Entities.Vehicle
 
         // ==================== COMPONENT SPACE VALIDATION ====================
 
-        /// <summary>
-        /// Calculate total component space used.
-        /// Returns positive value if over capacity (exceeds chassis space).
-        /// </summary>
+        /// <summary>Positive = over capacity.</summary>
         public int CalculateNetComponentSpace()
         {
             int total = 0;
@@ -184,15 +146,9 @@ namespace Assets.Scripts.Entities.Vehicle
 
         // ==================== CROSS-COMPONENT MODIFIER SYSTEM ====================
 
-        /// <summary>
-        /// Initialize all component-provided modifiers.
-        /// Called once during vehicle initialization after all components are discovered.
-        /// Components provide modifiers to OTHER components (e.g., Armor Plating → Chassis +2 AC).
-        /// For runtime changes (destroy/disable), components handle their own modifier cleanup.
-        /// </summary>
+        /// <summary>Apply cross-component modifiers (e.g. Armor Plating → Chassis +2 AC). Called once at init.</summary>
         public void InitializeComponentModifiers()
         {
-            // Apply modifiers from all active (non-destroyed, non-disabled) providers
             foreach (var provider in GetAllComponents())
             {
                 if (provider.IsOperational)
@@ -202,12 +158,6 @@ namespace Assets.Scripts.Entities.Vehicle
             }
         }
 
-        /// <summary>
-        /// Apply size-based modifiers to all components.
-        /// Called during vehicle initialization.
-        /// Size modifiers automatically route to correct components (AC→Chassis, Speed→Drive, etc.).
-        /// Requires VehicleEffectRouter for attribute-to-component resolution.
-        /// </summary>
         public void ApplySizeModifiers(VehicleEffectRouter effectRouter)
         {
             if (vehicle.chassis == null)
@@ -216,13 +166,10 @@ namespace Assets.Scripts.Entities.Vehicle
                 return;
             }
 
-            // Get size modifiers from chassis's size category
             var sizeModifiers = VehicleSizeModifiers.GetModifiers(vehicle.chassis.sizeCategory, vehicle);
 
-            // Apply each modifier to the appropriate component
             foreach (var modifier in sizeModifiers)
             {
-                // Route modifier to correct component based on attribute
                 VehicleComponent targetComponent = effectRouter.ResolveModifierTarget(modifier.Attribute);
 
                 if (targetComponent != null && !targetComponent.isDestroyed)

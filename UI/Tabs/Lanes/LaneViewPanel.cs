@@ -7,11 +7,6 @@ using Assets.Scripts.Logging;
 
 namespace Assets.Scripts.UI.Tabs.Lanes
 {
-    /// <summary>
-    /// Main controller for the Lane View UI tab.
-    /// Shows lanes as vertical columns with vehicle cards positioned by progress.
-    /// Observes game state and refreshes when changes detected (like other panels).
-    /// </summary>
     public class LaneViewPanel : MonoBehaviour
     {
         [Header("UI References")]
@@ -26,54 +21,38 @@ namespace Assets.Scripts.UI.Tabs.Lanes
         private List<Stage> stagesWithLanes = new();
         private List<LaneColumn> spawnedColumns = new();
         
-        // Dirty tracking (like VehicleInspectorPanel)
         private int lastEventCount = 0;
         private int lastVehicleHash = 0;
-        
+
         private void Start()
         {
-            // Setup UI events
             if (refreshButton != null)
-            {
                 refreshButton.onClick.AddListener(RefreshView);
-            }
-            
+
             if (stageDropdown != null)
-            {
                 stageDropdown.onValueChanged.AddListener(OnStageSelected);
-            }
-            
-            // Initial setup
+
             PopulateStageDropdown();
             SelectDefaultStage();
         }
-        
+
         private void Update()
         {
-            // Only check for changes when panel is active
             if (!gameObject.activeInHierarchy) return;
-            
-            // Check if state has changed (polling like other panels)
+
             if (HasStateChanged())
-            {
                 RefreshView();
-            }
         }
-        
+
         private void OnEnable()
         {
-            // Refresh when tab becomes visible
             PopulateStageDropdown();
             SelectDefaultStage();
             RefreshView();
         }
         
-        /// <summary>
-        /// Check if game state has changed since last refresh.
-        /// </summary>
         private bool HasStateChanged()
         {
-            // Check event count (new events = something happened)
             if (RaceHistory.Instance != null)
             {
                 int currentEventCount = RaceHistory.Instance.AllEvents.Count;
@@ -83,21 +62,17 @@ namespace Assets.Scripts.UI.Tabs.Lanes
                     return true;
                 }
             }
-            
-            // Check vehicle positions hash (lane changes, progress changes)
+
             int currentHash = CalculateVehicleHash();
             if (currentHash != lastVehicleHash)
             {
                 lastVehicleHash = currentHash;
                 return true;
             }
-            
+
             return false;
         }
-        
-        /// <summary>
-        /// Calculate a hash of vehicle positions for change detection.
-        /// </summary>
+
         private int CalculateVehicleHash()
         {
             if (currentStage == null) return 0;
@@ -113,50 +88,40 @@ namespace Assets.Scripts.UI.Tabs.Lanes
             return hash;
         }
         
-        /// <summary>
-        /// Populate the stage dropdown with all stages that have lanes.
-        /// </summary>
         private void PopulateStageDropdown()
         {
             if (stageDropdown == null) return;
-            
+
             stagesWithLanes.Clear();
             stageDropdown.ClearOptions();
-            
-            // Find all stages in scene
+
             var allStages = FindObjectsByType<Stage>(FindObjectsSortMode.None);
             var options = new List<string>();
-            
+
             foreach (var stage in allStages)
             {
-                // Include all stages, but mark those with lanes
                 stagesWithLanes.Add(stage);
-                
+
                 string label = stage.lanes != null && stage.lanes.Count > 0 
                     ? $"{stage.stageName} ({stage.lanes.Count} lanes)"
                     : $"{stage.stageName} (no lanes)";
-                
+
                 options.Add(label);
             }
-            
+
             stageDropdown.AddOptions(options);
         }
-        
-        /// <summary>
-        /// Select the default stage (player's current stage or first with lanes).
-        /// </summary>
+
         private void SelectDefaultStage()
         {
             if (stagesWithLanes.Count == 0) return;
-            
-            // Try to find player's current stage via GameManager
+
             var gameManager = FindFirstObjectByType<GameManager>();
             if (gameManager != null)
             {
                 var vehicles = gameManager.GetVehicles();
                 if (vehicles != null)
                 {
-                    // Find player vehicle
                     foreach (var vehicle in vehicles)
                     {
                         if (vehicle != null && vehicle.controlType == ControlType.Player && vehicle.currentStage != null)
@@ -173,7 +138,6 @@ namespace Assets.Scripts.UI.Tabs.Lanes
                 }
             }
             
-            // Fallback: First stage with lanes
             foreach (var stage in stagesWithLanes)
             {
                 if (stage.lanes != null && stage.lanes.Count > 0)
@@ -185,7 +149,6 @@ namespace Assets.Scripts.UI.Tabs.Lanes
                 }
             }
             
-            // Final fallback: First stage
             if (stagesWithLanes.Count > 0)
             {
                 stageDropdown.value = 0;
@@ -204,46 +167,37 @@ namespace Assets.Scripts.UI.Tabs.Lanes
         private void SetCurrentStage(Stage stage)
         {
             currentStage = stage;
-            lastVehicleHash = 0; // Force refresh
+            lastVehicleHash = 0;
             RefreshView();
         }
-        
-        /// <summary>
-        /// Refresh the entire lane view.
-        /// </summary>
+
         public void RefreshView()
         {
-            // Update dirty tracking
             if (RaceHistory.Instance != null)
-            {
                 lastEventCount = RaceHistory.Instance.AllEvents.Count;
-            }
             lastVehicleHash = CalculateVehicleHash();
-            
-            // Clear existing columns
+
             foreach (var column in spawnedColumns)
             {
                 if (column != null)
                     Destroy(column.gameObject);
             }
             spawnedColumns.Clear();
-            
-            // Validate we can spawn columns
+
             if (currentStage == null || currentStage.lanes == null || currentStage.lanes.Count == 0)
                 return;
-            
+
             if (laneColumnPrefab == null || laneContainer == null)
                 return;
-            
-            // Spawn lane columns
+
             for (int i = 0; i < currentStage.lanes.Count; i++)
             {
                 var lane = currentStage.lanes[i];
                 if (lane == null) continue;
-                
+
                 var columnObj = Instantiate(laneColumnPrefab, laneContainer);
                 var column = columnObj.GetComponent<LaneColumn>();
-                
+
                 if (column != null)
                 {
                     column.Initialize(lane, i, currentStage);
@@ -251,15 +205,11 @@ namespace Assets.Scripts.UI.Tabs.Lanes
                 }
             }
         }
-        
-        /// <summary>
-        /// Set the displayed stage externally.
-        /// </summary>
+
         public void ShowStage(Stage stage)
         {
             if (stage == null) return;
             
-            // Update dropdown selection
             int index = stagesWithLanes.IndexOf(stage);
             if (index >= 0 && stageDropdown != null)
             {

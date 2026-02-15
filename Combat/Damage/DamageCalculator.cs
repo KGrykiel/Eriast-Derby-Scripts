@@ -1,22 +1,9 @@
 ﻿namespace Assets.Scripts.Combat.Damage
 {
-    /// <summary>
-    /// Calculator for damage rolls.
-    /// Takes a DamageFormula (pure data) and computes an immutable DamageResult.
-    /// Follows the same pattern as AttackCalculator, SaveCalculator, and SkillCheckCalculator.
-    /// 
-    /// Weapon-agnostic: weapon resolution happens upstream in DamageEffect.
-    /// All dice rolling and damage calculation happens here.
-    /// </summary>
+    /// <summary>The single place in the codebase calculating damage. Might be expanded to include additional mechanics like hardness in the future.</summary>
     public static class DamageCalculator
     {
-        /// <summary>
-        /// Compute damage from a formula with resistance.
-        /// Critical hits double dice count, not flat bonuses.
-        /// </summary>
-        /// <param name="formula">Damage formula configuration (pure data)</param>
-        /// <param name="resistance">Target's resistance level to this damage type</param>
-        /// <param name="isCriticalHit">If true, doubles dice count</param>
+        /// <summary>Critical hits double dice count only, not flat bonuses. According to DnD rules.</summary>
         public static DamageResult Compute(
             DamageFormula formula,
             ResistanceLevel resistance,

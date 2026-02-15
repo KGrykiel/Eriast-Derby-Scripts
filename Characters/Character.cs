@@ -4,12 +4,9 @@ using Assets.Scripts.Characters;
 using System;
 
 /// <summary>
-/// Represents a character that can operate vehicle components.
-/// This is a data class — characters store attributes, proficiencies, and identity.
-/// All bonus calculations are performed by the calculators (SkillCheckCalculator, SaveCalculator).
-/// 
-/// Characters work through vehicle components. Their seat determines which components
-/// they can use. CheckResolver resolves the character + component pairing.
+/// representation of a character: pure data bag for attributes, proficiencies, and identity.
+/// Character is not an entity in this system, it's more like a glorified character sheet. It has no inherent combat stats like HP or AC, and is not directly targetable.
+/// Related alculations live in CharacterFormulas.
 /// </summary>
 [CreateAssetMenu(fileName = "New Character", menuName = "Racing/Player Character")]
 public class Character : ScriptableObject
@@ -73,10 +70,6 @@ public class Character : ScriptableObject
 
     // ==================== ATTRIBUTE METHODS ====================
 
-    /// <summary>
-    /// Get the raw score for a character attribute.
-    /// Pure data access - formulas live in CharacterFormulas.
-    /// </summary>
     public int GetAttributeScore(CharacterAttribute attribute)
     {
         return attribute switch
@@ -93,10 +86,6 @@ public class Character : ScriptableObject
 
     // ==================== PROFICIENCY METHODS ====================
 
-    /// <summary>
-    /// Check if this character is proficient in a skill.
-    /// Pure data access - formulas live in CharacterFormulas.
-    /// </summary>
     public bool IsProficient(CharacterSkill skill)
     {
         return proficientSkills != null && proficientSkills.Contains(skill);
@@ -104,11 +93,7 @@ public class Character : ScriptableObject
     
     // ==================== PERSONAL ABILITIES ====================
 
-    /// <summary>
-    /// Get personal abilities this character can use.
-    /// These are usable regardless of which component they're assigned to.
-    /// Returns: List of Skill ScriptableObject assets (abilities like Evasive Maneuver, Quick Scan).
-    /// </summary>
+    /// <summary>Returns a defensive copy.</summary>
     public List<Skill> GetPersonalAbilities()
     {
         return personalAbilities != null ? new List<Skill>(personalAbilities) : new List<Skill>();

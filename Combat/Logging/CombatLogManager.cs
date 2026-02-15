@@ -3,36 +3,16 @@ using System.Collections.Generic;
 using System.Linq;
 using EventType = Assets.Scripts.Logging.EventType;
 using Assets.Scripts.Logging;
-using Assets.Scripts.StatusEffects;
-using Assets.Scripts.Combat.Damage;
 using Assets.Scripts.Core;
-using Assets.Scripts.Combat.Attacks;
-using Assets.Scripts.Combat.Saves;
-using Assets.Scripts.Combat.SkillChecks;
 
 namespace Assets.Scripts.Combat.Logging
 {
     /// <summary>
     /// Logging orchestration for combat events.
     /// Takes combat events, formats them via CombatFormatter, and emits to RaceHistory.
-    /// 
-    /// Public Format* methods delegate to CombatFormatter for backward compatibility
-    /// with UI code that references CombatLogManager directly.
     /// </summary>
     public static class CombatLogManager
     {
-        // ==================== PUBLIC FORMATTING API (delegates to CombatFormatter) ====================
-
-        public static string FormatAttackDetailed(AttackResult r) => CombatFormatter.FormatAttackDetailed(r);
-        public static string FormatSaveDetailed(SaveResult r) => CombatFormatter.FormatSaveDetailed(r);
-        public static string FormatSkillCheckDetailed(SkillCheckResult r) => CombatFormatter.FormatSkillCheckDetailed(r);
-        public static string FormatDCDetailed(int dc, string name, SaveSpec spec) => CombatFormatter.FormatDCDetailed(dc, name, spec);
-        public static string FormatDefenseDetailed(int total, float baseVal, List<AttributeModifier> mods, string name = "AC") => CombatFormatter.FormatDefenseDetailed(total, baseVal, mods, name);
-        public static string FormatDamageDetailed(DamageResult r) => CombatFormatter.FormatDamageDetailed(r);
-        public static string FormatCombinedDamageDetailed(List<DamageResult> r, string name = null) => CombatFormatter.FormatCombinedDamageDetailed(r, name);
-        public static string FormatStatBreakdown(Entity e, Attribute a, int baseVal, int finalVal) => CombatFormatter.FormatStatBreakdown(e, a, baseVal, finalVal);
-        public static string FormatStatusEffectTooltip(AppliedStatusEffect e) => CombatFormatter.FormatStatusEffectTooltip(e);
-
         // ==================== MAIN LOGGING ENTRY POINTS ====================
 
         public static void LogAction(CombatAction action)

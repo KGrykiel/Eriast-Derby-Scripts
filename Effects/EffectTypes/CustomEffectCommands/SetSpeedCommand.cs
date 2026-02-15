@@ -2,12 +2,7 @@
 
 namespace Assets.Scripts.Effects.EffectTypes.CustomEffectCommands
 {
-    /// <summary>
-    /// Sets the target speed (as percentage 0-100) on the source vehicle's drive component.
-    /// Used by driver skills to control vehicle speed during action phase.
-    /// Reads speed value from ParameterizedSkill.floatParameter if available.
-    /// INTEGER-FIRST: Uses integer percentage (0-100).
-    /// </summary>
+    /// <summary>Sets target speed percentage on the source vehicle's drive component.</summary>
     [CreateAssetMenu(fileName = "SetSpeed", menuName = "Racing/Commands/Set Speed")]
     public class SetSpeedCommand : EffectCommand
     {
@@ -30,7 +25,6 @@ namespace Assets.Scripts.Effects.EffectTypes.CustomEffectCommands
             
             if (source is CustomEffect customEffect && customEffect.intParameter >= 0)
             {
-                // Effect provides parameter value (0-100 percentage)
                 speedPercent = customEffect.intParameter;
             }
 

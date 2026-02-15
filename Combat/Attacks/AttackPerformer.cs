@@ -1,19 +1,14 @@
 ﻿namespace Assets.Scripts.Combat.Attacks
 {
     /// <summary>
-    /// Universal entry point for attack rolls.
-    /// Orchestrates: calculator (computation) + event emission + optional special rules.
-    /// Inspired by WOTR's Rulebook system - execution automatically logs events.
+    /// Main entry for executing an attack roll. Created to handle any special rules in the future without polluting AttackCalculator.
+    /// The component fallback is hardcoded for now, but I'll need to think of a more structured way to handle special rules once there are more.
     /// </summary>
     public static class AttackPerformer
     {
-        /// <summary>
-        /// Execute an attack from a spec.
-        /// Delegates computation to AttackCalculator, applies special rules, emits events.
-        /// </summary>
         public static AttackResult Execute(AttackSpec spec)
         {
-            // Roll against primary target
+            // Roll against primary target, conclude if successful
             var primaryResult = AttackCalculator.Compute(spec.Target, spec.Attacker, spec.Character);
 
             if (primaryResult.Roll.Success)
@@ -29,7 +24,7 @@
 
             // OPTIONAL RULE: Component fallback
             // TO DISABLE THIS RULE: Delete the lines below
-            var fallbackResult = AttackSpecialRules.TryComponentFallback(spec, missResult);
+            var fallbackResult = AttackSpecialRules.TryComponentFallback(spec);
             if (fallbackResult != null)
             {
                 EmitEvent(fallbackResult, spec, isFallback: true);

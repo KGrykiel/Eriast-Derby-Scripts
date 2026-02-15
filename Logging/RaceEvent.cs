@@ -5,111 +5,22 @@ using Assets.Scripts.Stages;
 namespace Assets.Scripts.Logging
 {
     /// <summary>
-    /// Represents a single event that occurred during the race.
-    /// Stores all data needed for display, filtering, and highlight reel generation.
+    /// Represents an event that occurs during a race, such as a combat action, a stage hazard, or a status effect application.
+    /// Contains all relevant information for logging and display in the UI including importance for filtering.
     /// </summary>
     [System.Serializable]
     public class RaceEvent
     {
-        /// <summary>
-        /// Turn number when this event occurred.
-        /// </summary>
         public int turnNumber;
-
-        /// <summary>
-        /// Type of event for categorization and filtering.
-        /// </summary>
         public EventType type;
-
-        /// <summary>
-        /// Importance level for display prioritization.
-        /// </summary>
         public EventImportance importance;
-
-        /// <summary>
-        /// Stage where the event occurred (can be null for global events).
-        /// </summary>
         public Stage location;
-
-        /// <summary>
-        /// Vehicles involved in this event (attacker, target, witnesses, etc.).
-        /// </summary>
         public List<Vehicle> involvedVehicles = new();
-
-        /// <summary>
-        /// Human-readable description of the event for DM narration.
-        /// </summary>
         public string description;
-
-        /// <summary>
-        /// Short summary for condensed displays (max ~50 chars).
-        /// </summary>
         public string shortDescription;
-
-        /// <summary>
-        /// Additional metadata for specific event types.
-        /// Examples: damage dealt, roll results, modifier values.
-        /// </summary>
         public Dictionary<string, object> metadata = new();
-
-        /// <summary>
-        /// Timestamp when event occurred (for debugging/replay).
-        /// </summary>
         public float timestamp;
 
-        /// <summary>
-        /// Whether this event is worthy of appearing in highlight reel.
-        /// </summary>
-        public bool IsHighlightWorthy => importance <= EventImportance.High || CalculateDramaScore() > 5f;
-
-        /// <summary>
-        /// Calculates how "dramatic" this event is for highlight reel prioritization.
-        /// Higher score = more interesting for players to see.
-        /// </summary>
-        public float CalculateDramaScore()
-        {
-            float score = 0f;
-
-            // Base score by importance
-            score += (int)importance switch
-            {
-                0 => 10f, // Critical
-                1 => 5f,  // High
-                2 => 2f,  // Medium
-                _ => 0f
-            };
-
-            // Type bonuses
-            switch (type)
-            {
-                case EventType.Destruction:
-                    score += 8f;
-                    break;
-                case EventType.HeroicMoment:
-                case EventType.TragicMoment:
-                    score += 7f;
-                    break;
-                case EventType.Combat:
-                    // Big damage = more dramatic
-                    if (metadata.ContainsKey("damage") && metadata["damage"] is int damage)
-                    {
-                        score += damage / 10f;
-                    }
-                    break;
-                case EventType.FinishLine:
-                    score += 6f;
-                    break;
-            }
-
-            // Multiple vehicles = more interesting
-            score += involvedVehicles.Count * 0.5f;
-
-            return score;
-        }
-
-        /// <summary>
-        /// Constructor for creating events.
-        /// </summary>
         public RaceEvent(
             int turn,
             EventType eventType,
@@ -122,7 +33,7 @@ namespace Assets.Scripts.Logging
             type = eventType;
             importance = eventImportance;
             description = desc;
-            shortDescription = desc.Length > 50 ? desc.Substring(0, 47) + "..." : desc;
+            shortDescription = desc.Length > 50 ? desc[..47] + "..." : desc;
             location = stage;
             timestamp = Time.time;
 
@@ -132,27 +43,12 @@ namespace Assets.Scripts.Logging
             }
         }
 
-        /// <summary>
-        /// Fluent API for adding metadata.
-        /// </summary>
         public RaceEvent WithMetadata(string key, object value)
         {
             metadata[key] = value;
             return this;
         }
 
-        /// <summary>
-        /// Fluent API for setting short description.
-        /// </summary>
-        public RaceEvent WithShortDescription(string shortDesc)
-        {
-            shortDescription = shortDesc;
-            return this;
-        }
-
-        /// <summary>
-        /// Gets formatted display text with color coding based on importance.
-        /// </summary>
         public string GetFormattedText(bool includeTimestamp = false, bool includeLocation = true)
         {
             string color = importance switch
@@ -180,9 +76,6 @@ namespace Assets.Scripts.Logging
             return text;
         }
 
-        /// <summary>
-        /// Gets an icon/emoji representing the event type.
-        /// </summary>
         private string GetTypeIcon()
         {
             return type switch

@@ -5,13 +5,7 @@ using Assets.Scripts.Entities.Vehicle;
 namespace Assets.Scripts.Combat.SkillChecks
 {
     /// <summary>
-    /// Describes what a skill check tests — either a vehicle attribute or a character skill.
-    /// Replaces the flat SkillCheckType enum, eliminating redundant CharacterSkill mirrors.
-    /// 
-    /// Vehicle checks: domain=Vehicle, vehicleAttribute=Mobility (tests the vehicle's own stat).
-    /// Character checks: domain=Character, characterSkill=Piloting (tests a character's training).
-    /// 
-    /// Serializable for use on Skill ScriptableObjects.
+    /// What a skill check tests — either a vehicle attribute or a character skill.
     /// </summary>
     [System.Serializable]
     public struct SkillCheckSpec

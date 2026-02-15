@@ -13,7 +13,7 @@ namespace Assets.Scripts.Combat.Logging
 
         /// <summary>
         /// Format an entity with its parent vehicle in brackets.
-        /// "Chassis [Ironclad]", "Stone Golem", "Ironclad", "Unknown"
+        /// "Chassis [D1S Speedster]", "Stone Golem", "Ironclad", "Unknown"
         /// </summary>
         public static string FormatEntityWithVehicle(Entity entity, Vehicle parentVehicle = null)
         {
@@ -85,9 +85,6 @@ namespace Assets.Scripts.Combat.Logging
             return vehicleName ?? "Unknown";
         }
 
-        /// <summary>
-        /// Format the source of a combat action using all available context.
-        /// </summary>
         public static string FormatActionSource(CombatAction action)
         {
             return FormatSource(action.SourceCharacter, action.Actor, action.ActorVehicle);
@@ -95,9 +92,6 @@ namespace Assets.Scripts.Combat.Logging
 
         // ==================== COMBAT LOGIC HELPERS ====================
 
-        /// <summary>
-        /// Check if source and target represent self-targeting (same entity or same vehicle).
-        /// </summary>
         public static bool IsSelfTarget(Entity source, Entity target, Vehicle sourceVehicle, Vehicle targetVehicle)
         {
             if (source != null && source == target)
@@ -107,9 +101,6 @@ namespace Assets.Scripts.Combat.Logging
             return false;
         }
 
-        /// <summary>
-        /// Determine if a status effect is a buff or debuff.
-        /// </summary>
         public static bool DetermineIfBuff(StatusEffect statusEffect)
         {
             float totalModifierValue = statusEffect.modifiers.Sum(m => m.value);

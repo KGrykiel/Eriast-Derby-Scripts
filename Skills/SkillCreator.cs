@@ -10,8 +10,7 @@ using Assets.Scripts.Combat.Saves;
 namespace Assets.Scripts.Skills
 {
     /// <summary>
-    /// Editor-only factory for creating skill assets with category-based presets.
-    /// All preset and initialization logic lives here, keeping Skill.cs lean.
+    /// Convenience editor class to create new Skill assets with preset configurations based on category.
     /// </summary>
     public static class SkillCreator
     {
@@ -59,52 +58,32 @@ namespace Assets.Scripts.Skills
             CreateSkillAsset(SkillCategory.Custom, "NewCustomSkill");
         }
 
-        /// <summary>
-        /// Creates and saves a skill asset with the specified category and presets applied.
-        /// </summary>
         private static void CreateSkillAsset(SkillCategory category, string defaultName)
         {
-            // Create the skill instance
             Skill skill = ScriptableObject.CreateInstance<Skill>();
             skill.category = category;
-            
-            // Apply category-based presets
             ApplyPresets(skill);
 
-            // Get the current folder path in the Project window
             string path = "Assets";
-            
-            // If something is selected, use that folder (or its parent if it's a file)
+
             if (Selection.activeObject != null)
             {
                 path = AssetDatabase.GetAssetPath(Selection.activeObject);
-                
-                // If the selection is a file, get its directory
                 if (!string.IsNullOrEmpty(path) && System.IO.File.Exists(path))
-                {
                     path = System.IO.Path.GetDirectoryName(path);
-                }
             }
 
-            // Create unique asset path in the current folder
             string assetPath = AssetDatabase.GenerateUniqueAssetPath($"{path}/{defaultName}.asset");
 
-            // Save the asset
             AssetDatabase.CreateAsset(skill, assetPath);
             AssetDatabase.SaveAssets();
 
-            // Select the new asset
             Selection.activeObject = skill;
             EditorUtility.FocusProjectWindow();
         }
         
-        /// <summary>
-        /// Apply category-based presets to a skill.
-        /// Configures roll types, targeting, and default effects.
-        /// </summary>
         private static void ApplyPresets(Skill skill)
         {
-            // Configure effect invocations
             skill.effectInvocations = skill.category switch
             {
                 SkillCategory.Attack => GetAttackPreset(),
@@ -114,8 +93,7 @@ namespace Assets.Scripts.Skills
                 SkillCategory.Special => GetSpecialPreset(),
                 _ => new List<EffectInvocation>()
             };
-            
-            // Configure roll and targeting based on category
+
             switch (skill.category)
             {
                 case SkillCategory.Attack:
@@ -173,7 +151,6 @@ namespace Assets.Scripts.Skills
                     break;
                     
                 case SkillCategory.Custom:
-                    // Leave at defaults for full customization
                     break;
             }
         }
