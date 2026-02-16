@@ -1,4 +1,5 @@
 # 🚧 WORK IN PROGRESS 🚧
+Note: This project is tightly coupled to Unity and does not work without it. The repository is created for display and version control of the scripts.
 
 # Eriast Derby
 
