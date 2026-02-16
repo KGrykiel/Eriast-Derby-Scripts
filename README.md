@@ -178,7 +178,6 @@ the Unity editor, without looking at a single line of code.
 | **Observer / Event Bus** | [`CombatEventBus`](Combat/CombatEventBus.cs), [`TurnEventBus`](Managers/TurnEventBus.cs) | Scoped action aggregation for multi-event combat logging. Critical for multi-hit attacks that need to log as one action. |
 | **Context Object** | [`SkillContext`](Skills/Helpers/SkillContext.cs), [`EffectContext`](Effects/EffectContext.cs), [`FormulaContext`](Combat/Damage/FormulaProviders/FormulaContext.cs) | Bundle execution data, eliminate parameter sprawl. Immutable copy helpers for clean data flow. |
 | **ScriptableObject Architecture** | [`Skill`](Skills/Skill.cs), [`StatusEffect`](StatusEffects/StatusEffect.cs), [`Character`](Characters/Character.cs), [`EventCard`](Events/EventCard/EventCard.cs) | Data-driven design — all game content configured in editor, no code changes needed. |
-| **Coordinator / Mediator** | [`VehicleComponentCoordinator`](Entities/Vehicle/VehicleComponentCoordinator.cs), [`CheckRouter`](Combat/CheckRouter.cs) | Subsystems interact through coordinator. CheckRouter is the *only* class that knows vehicle internals; calculators stay agnostic. |
 
 ---
 
