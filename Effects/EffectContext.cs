@@ -1,5 +1,5 @@
 ﻿using Assets.Scripts.Combat.Damage;
-using Assets.Scripts.Skills.Helpers;
+using Assets.Scripts.Combat.RollSpecs;
 
 namespace Assets.Scripts.Effects
 {
@@ -15,7 +15,7 @@ namespace Assets.Scripts.Effects
 
         public static EffectContext Default => new();
 
-        public static EffectContext FromSkillContext(SkillContext ctx)
+        public static EffectContext FromRollContext(RollContext ctx)
         {
             return new EffectContext
             {

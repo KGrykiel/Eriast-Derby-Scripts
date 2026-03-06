@@ -2,9 +2,7 @@
 using UnityEngine;
 using Assets.Scripts.Stages.Lanes;
 using Assets.Scripts.StatusEffects;
-using Assets.Scripts.Combat.SkillChecks;
-using Assets.Scripts.Combat.Saves;
-using Assets.Scripts.Effects;
+using Assets.Scripts.Combat.RollSpecs;
 
 namespace Assets.Scripts.Stages
 {
@@ -196,64 +194,9 @@ namespace Assets.Scripts.Stages
 
         private void ResolveLaneTurnEffect(Vehicle vehicle, StageLane lane, LaneTurnEffect effect)
         {
-            switch (effect.checkType)
-            {
-                case LaneCheckType.None:
-                    ApplyTurnEffects(vehicle, effect.onSuccess);
-                    stage.LogLaneTurnEffect(vehicle, lane, effect, true);
-                    break;
-
-                case LaneCheckType.SkillCheck:
-                    ResolveSkillCheckTurnEffect(vehicle, lane, effect);
-                    break;
-
-                case LaneCheckType.SavingThrow:
-                    ResolveSavingThrowTurnEffect(vehicle, lane, effect);
-                    break;
-            }
-        }
-
-        private void ResolveSkillCheckTurnEffect(Vehicle vehicle, StageLane lane, LaneTurnEffect effect)
-        {
-            var result = SkillCheckPerformer.Execute(
-                vehicle, effect.checkSpec, effect.dc, causalSource: stage);
-
-            if (result.Roll.Success)
-                ApplyTurnEffects(vehicle, effect.onSuccess);
-            else
-                ApplyTurnEffects(vehicle, effect.onFailure);
-
-            stage.LogLaneTurnEffectWithCheck(vehicle, lane, effect, result);
-        }
-
-        private void ResolveSavingThrowTurnEffect(Vehicle vehicle, StageLane lane, LaneTurnEffect effect)
-        {
-            var result = SavePerformer.Execute(
-                vehicle, effect.saveSpec, effect.dc, causalSource: stage);
-
-            if (result.Roll.Success)
-                ApplyTurnEffects(vehicle, effect.onSuccess);
-            else
-                ApplyTurnEffects(vehicle, effect.onFailure);
-
-            stage.LogLaneTurnEffectWithSave(vehicle, lane, effect, result);
-        }
-
-        private void ApplyTurnEffects(Vehicle vehicle, List<EffectInvocation> effects)
-        {
-            if (effects == null || effects.Count == 0) return;
-
-            foreach (var effectInvocation in effects)
-            {
-                if (effectInvocation?.effect != null)
-                {
-                    effectInvocation.effect.Apply(
-                        vehicle.chassis,
-                        new EffectContext(),
-                        stage
-                    );
-                }
-            }
+            var ctx = new RollContext { SourceVehicle = vehicle };
+            bool success = RollNodeExecutor.Execute(effect.rollNode, ctx, causalSource: stage);
+            stage.LogLaneTurnEffect(vehicle, lane, effect, success);
         }
     }
 }

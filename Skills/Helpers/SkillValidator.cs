@@ -1,58 +1,52 @@
-﻿using UnityEngine;
+﻿using Assets.Scripts.Combat.RollSpecs;
+using UnityEngine;
 
 namespace Assets.Scripts.Skills.Helpers
 {
+    /// <summary>
+    /// Validates skill configuration and targeting rules.
+    /// For player actions, UI already enforces targeting rules — this catches AI/test errors.
+    /// </summary>
     public static class SkillValidator
     {
-        public static bool ValidateSkillConfiguration(SkillContext ctx)
+        public static bool Validate(RollContext ctx, Skill skill)
         {
-            Vehicle user = ctx.SourceVehicle;
-            Skill skill = ctx.Skill;
-            
-            if (skill.effectInvocations == null || skill.effectInvocations.Count == 0)
+            return ValidateConfiguration(ctx, skill) && ValidateTarget(ctx, skill);
+        }
+
+        private static bool ValidateConfiguration(RollContext ctx, Skill skill)
+        {
+            if (skill.rollNode == null)
             {
-                Debug.LogError($"[SkillValidator] {user.vehicleName} attempted to use {skill.name} but it has no effects configured. Fix the skill asset!");
+                Debug.LogError($"[SkillValidator] {ctx.SourceVehicle.vehicleName} attempted to use {skill.name} but it has no roll node configured. Fix the skill asset!");
                 return false;
             }
-            
+
             return true;
         }
-        
-        public static bool ValidateTarget(SkillContext ctx)
-        {
-            Vehicle user = ctx.SourceVehicle;
-            Skill skill = ctx.Skill;
-            Entity targetEntity = ctx.TargetEntity;
 
-            VehicleComponent targetComponent = ctx.TargetComponent;
-            if (targetComponent == null)
+        private static bool ValidateTarget(RollContext ctx, Skill skill)
+        {
+            Entity targetEntity = ctx.TargetEntity;
+            if (targetEntity == null) return true;
+
+            if (targetEntity.isDestroyed)
             {
-                if (targetEntity.isDestroyed)
+                Debug.LogWarning($"[SkillValidator] {ctx.SourceVehicle.vehicleName} tried to target destroyed entity {targetEntity.name} with {skill.name}");
+                return false;
+            }
+
+            if (ctx.TargetComponent != null)
+            {
+                bool isSelfTargeting = ctx.SourceVehicle == ctx.TargetVehicle;
+                if (!isSelfTargeting && !ctx.TargetVehicle.IsComponentAccessible(ctx.TargetComponent))
                 {
-                    Debug.LogWarning($"[SkillValidator] {user.vehicleName} tried to target {targetEntity.name} with {skill.name}, but it's destroyed");
+                    string reason = ctx.TargetVehicle.GetInaccessibilityReason(ctx.TargetComponent);
+                    Debug.LogWarning($"[SkillValidator] {ctx.SourceVehicle.vehicleName} cannot target inaccessible component {ctx.TargetComponent.name}: {reason}");
                     return false;
                 }
-                return true;
-            }
-            
-            Vehicle mainTarget = ctx.TargetVehicle;
-            string attackerName = user.vehicleName;
-            string targetComponentName = targetComponent.name;
-
-            if (targetComponent.isDestroyed)
-            {
-                Debug.LogWarning($"[SkillValidator] {attackerName} tried to target {mainTarget.vehicleName}'s {targetComponentName} with {skill.name}, but it's destroyed");
-                return false;
             }
 
-            bool isSelfTargeting = user == mainTarget;
-            if (!isSelfTargeting && !mainTarget.IsComponentAccessible(targetComponent))
-            {
-                string reason = mainTarget.GetInaccessibilityReason(targetComponent);
-                Debug.LogWarning($"[SkillValidator] {attackerName} cannot target {mainTarget.vehicleName}'s {targetComponentName} with {skill.name}: {reason}");
-                return false;
-            }
-            
             return true;
         }
     }

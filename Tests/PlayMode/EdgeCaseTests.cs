@@ -54,9 +54,9 @@ namespace Assets.Scripts.Tests.PlayMode
 
             var spec = TestSkillFactory.CharacterSkillCheck(CharacterSkill.Mechanics, requiredComponent: ComponentType.Weapon);
 
-            var result1 = SkillCheckPerformer.Execute(vehicle, spec, dc: 10, causalSource: null, initiatingCharacter: null);
+            var result1 = SkillCheckPerformer.Execute(new SkillCheckExecutionContext { Vehicle = vehicle, Spec = spec, DC = 10, CausalSource = null, InitiatingCharacter = null });
             yield return null;
-            var result2 = SkillCheckPerformer.Execute(vehicle, spec, dc: 10, causalSource: null, initiatingCharacter: null);
+            var result2 = SkillCheckPerformer.Execute(new SkillCheckExecutionContext { Vehicle = vehicle, Spec = spec, DC = 10, CausalSource = null, InitiatingCharacter = null });
             yield return null;
 
             Assert.AreEqual(result1.Character, result2.Character, "Should deterministically select same character");
@@ -73,7 +73,7 @@ namespace Assets.Scripts.Tests.PlayMode
                 .Build();
 
             var spec = TestSkillFactory.CharacterSkillCheck(CharacterSkill.Mechanics, requiredComponent: ComponentType.Utility);
-            var result = SkillCheckPerformer.Execute(vehicle, spec, dc: 10, causalSource: null, initiatingCharacter: null);
+            var result = SkillCheckPerformer.Execute(new SkillCheckExecutionContext { Vehicle = vehicle, Spec = spec, DC = 10, CausalSource = null, InitiatingCharacter = null });
             yield return null;
 
             Assert.IsNotNull(result);

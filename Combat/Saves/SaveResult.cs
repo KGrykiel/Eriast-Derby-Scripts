@@ -1,4 +1,6 @@
-﻿namespace Assets.Scripts.Combat.Saves
+﻿using Assets.Scripts.Combat.RollSpecs;
+
+namespace Assets.Scripts.Combat.Saves
 {
     /// <summary>
     /// D20RollOutcome (mechanics) + save-specific context.

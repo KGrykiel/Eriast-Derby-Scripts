@@ -7,6 +7,7 @@ using TMPro;
 using Assets.Scripts.Events.EventCard.EventCardTypes;
 using Assets.Scripts.Events.EventCard;
 using Assets.Scripts.Combat.Damage;
+using Assets.Scripts.Combat.RollSpecs;
 
 namespace Assets.Scripts.UI.Components
 {
@@ -115,8 +116,7 @@ namespace Assets.Scripts.UI.Components
                 buttonText.text = choice.choiceText;
             }
             
-            var button = buttonObj.GetComponent<Button>();
-            if (button != null)
+            if (buttonObj.TryGetComponent<Button>(out var button))
             {
                 button.onClick.AddListener(() => 
                 {
@@ -127,8 +127,7 @@ namespace Assets.Scripts.UI.Components
             
             if (showTooltip)
             {
-                var hoverComponent = buttonObj.GetComponent<ChoiceButtonHover>();
-                if (hoverComponent == null)
+                if (!buttonObj.TryGetComponent<ChoiceButtonHover>(out var hoverComponent))
                 {
                     hoverComponent = buttonObj.AddComponent<ChoiceButtonHover>();
                 }
@@ -201,28 +200,29 @@ namespace Assets.Scripts.UI.Components
         {
             RollTooltip.Hide();
         }
-        
+
         private string BuildTooltip(CardChoice choice)
         {
             var tooltip = "";
-            
-            if (choice.checkType == ChoiceCheckType.SavingThrow)
+
+            if (choice.rollNode?.rollSpec is SaveSpec saveSpec)
             {
-                tooltip += $"<b>{choice.saveSpec.DisplayName} Save DC {choice.dc}</b>\n";
+                tooltip += $"<b>{saveSpec.DisplayName} Save DC {choice.rollNode.dc}</b>\n";
             }
-            else if (choice.checkType == ChoiceCheckType.SkillCheck)
+            else if (choice.rollNode?.rollSpec is SkillCheckSpec checkSpec)
             {
-                tooltip += $"<b>{choice.checkSpec.DisplayName} Check DC {choice.dc}</b>\n";
+                tooltip += $"<b>{checkSpec.DisplayName} Check DC {choice.rollNode.dc}</b>\n";
             }
             else
             {
                 tooltip += "<b>No check required</b>\n";
             }
-            
-            if (choice.effects != null && choice.effects.Count > 0)
+
+            var successEffects = choice.rollNode?.successEffects;
+            if (successEffects != null && successEffects.Count > 0)
             {
                 tooltip += "\n<color=green><b>On Success:</b></color>";
-                foreach (var effect in choice.effects)
+                foreach (var effect in successEffects)
                 {
                     if (effect != null && effect.effect != null)
                     {
@@ -230,11 +230,12 @@ namespace Assets.Scripts.UI.Components
                     }
                 }
             }
-            
-            if (choice.failureEffects != null && choice.failureEffects.Count > 0)
+
+            var failureEffects = choice.rollNode?.failureEffects;
+            if (failureEffects != null && failureEffects.Count > 0)
             {
                 tooltip += "\n<color=red><b>On Failure:</b></color>";
-                foreach (var effect in choice.failureEffects)
+                foreach (var effect in failureEffects)
                 {
                     if (effect != null && effect.effect != null)
                     {
@@ -242,7 +243,7 @@ namespace Assets.Scripts.UI.Components
                     }
                 }
             }
-            
+
             return tooltip;
         }
         

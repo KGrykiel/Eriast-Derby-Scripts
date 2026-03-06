@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using Assets.Scripts.Characters;
+using Assets.Scripts.Combat.RollSpecs;
 
 namespace Assets.Scripts.Combat.SkillChecks
 {

@@ -1,4 +1,6 @@
-﻿namespace Assets.Scripts.Combat.SkillChecks
+﻿using Assets.Scripts.Combat.RollSpecs;
+
+namespace Assets.Scripts.Combat.SkillChecks
 {
     /// <summary>
     /// D20RollOutcome (mechanics) + check-specific context.

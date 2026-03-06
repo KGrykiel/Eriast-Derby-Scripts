@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿using Assets.Scripts.Combat.RollSpecs;
+using UnityEngine;
 
 namespace Assets.Scripts.Combat.Saves
 {
@@ -8,36 +9,30 @@ namespace Assets.Scripts.Combat.Saves
     /// </summary>
     public static class SavePerformer
     {
-        public static SaveResult Execute(
-            Vehicle vehicle,
-            SaveSpec spec,
-            int dc,
-            Object causalSource,
-            VehicleComponent targetComponent = null,
-            Entity attackerEntity = null)
+        public static SaveResult Execute(SaveExecutionContext ctx)
         {
             // Step 1: Route (resolve who/what makes this save)
-            var routing = CheckRouter.RouteSave(vehicle, spec, targetComponent);
+            var routing = CheckRouter.RouteSave(ctx.Vehicle, ctx.Spec, ctx.TargetComponent);
 
             // Step 2: Compute
             SaveResult result;
             if (!routing.CanAttempt)
             {
-                result = SaveCalculator.AutoFail(spec, dc);
+                result = SaveCalculator.AutoFail(ctx.Spec, ctx.DC);
             }
             else
             {
-                result = SaveCalculator.Compute(spec, dc, routing.Component, routing.Character);
+                result = SaveCalculator.Compute(ctx.Spec, ctx.DC, routing.Component, routing.Character);
             }
 
             // Step 3: Emit event automatically
-            Entity defenderEntity = routing.Component ?? vehicle.chassis;
-            string targetName = targetComponent != null ? targetComponent.name : "Vehicle";
+            Entity defenderEntity = routing.Component != null ? routing.Component : ctx.Vehicle.chassis;
+            string targetName = ctx.TargetComponent != null ? ctx.TargetComponent.name : "Vehicle";
             CombatEventBus.EmitSavingThrow(
                 result,
-                attackerEntity,
+                ctx.AttackerEntity,
                 defenderEntity,
-                causalSource,
+                ctx.CausalSource,
                 result.Roll.Success,
                 targetName,
                 result.Character);

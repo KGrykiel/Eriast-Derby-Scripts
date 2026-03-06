@@ -30,7 +30,7 @@ namespace Assets.Scripts.Tests.Helpers
             template.baseDuration = duration;
             template.modifiers = new System.Collections.Generic.List<ModifierData>
             {
-                new ModifierData { attribute = attribute, type = ModifierType.Flat, value = value }
+                new() { attribute = attribute, type = ModifierType.Flat, value = value }
             };
             template.periodicEffects = new System.Collections.Generic.List<PeriodicEffectData>();
             template.behavioralEffects = new BehavioralEffectData();
@@ -60,8 +60,7 @@ namespace Assets.Scripts.Tests.Helpers
             template.modifiers = new System.Collections.Generic.List<ModifierData>();
             template.periodicEffects = new System.Collections.Generic.List<PeriodicEffectData>
             {
-                new PeriodicEffectData
-                {
+                new() {
                     type = PeriodicEffectType.Damage,
                     damageFormula = new DamageFormula
                     {

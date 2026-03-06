@@ -4,8 +4,7 @@ using UnityEditor;
 using Assets.Scripts.Combat.Damage;
 using System.Collections.Generic;
 using Assets.Scripts.Entities.Vehicle;
-using Assets.Scripts.Combat.SkillChecks;
-using Assets.Scripts.Combat.Saves;
+using Assets.Scripts.Combat.RollSpecs;
 
 namespace Assets.Scripts.Skills
 {
@@ -84,75 +83,46 @@ namespace Assets.Scripts.Skills
         
         private static void ApplyPresets(Skill skill)
         {
-            skill.effectInvocations = skill.category switch
+            var successEffects = skill.category switch
             {
-                SkillCategory.Attack => GetAttackPreset(),
+                SkillCategory.Attack     => GetAttackPreset(),
                 SkillCategory.Restoration => GetRestorationPreset(),
-                SkillCategory.Buff => GetBuffPreset(),
-                SkillCategory.Debuff => GetDebuffPreset(),
-                SkillCategory.Special => GetSpecialPreset(),
-                _ => new List<EffectInvocation>()
+                SkillCategory.Buff       => GetBuffPreset(),
+                SkillCategory.Debuff     => GetDebuffPreset(),
+                SkillCategory.Special    => GetSpecialPreset(),
+                _                        => new List<EffectInvocation>()
             };
 
-            switch (skill.category)
+            skill.rollNode = skill.category switch
             {
-                case SkillCategory.Attack:
-                    skill.skillRollType = SkillRollType.AttackRoll;
-                    skill.saveSpec = SaveSpec.None;
-                    skill.saveDCBase = 0;
-                    skill.checkSpec = SkillCheckSpec.None;
-                    skill.checkDC = 0;
-                    skill.targetingMode = TargetingMode.Enemy;
-                    break;
-                    
-                case SkillCategory.Restoration:
-                    skill.skillRollType = SkillRollType.None;
-                    skill.saveSpec = SaveSpec.None;
-                    skill.saveDCBase = 0;
-                    skill.checkSpec = SkillCheckSpec.None;
-                    skill.checkDC = 0;
-                    skill.targetingMode = TargetingMode.SourceComponent;
-                    break;
-                    
-                case SkillCategory.Buff:
-                    skill.skillRollType = SkillRollType.SkillCheck;
-                    skill.saveSpec = SaveSpec.None;
-                    skill.saveDCBase = 0;
-                    skill.checkSpec = SkillCheckSpec.ForVehicle(VehicleCheckAttribute.Mobility);
-                    skill.checkDC = 15;
-                    skill.targetingMode = TargetingMode.Self;
-                    break;
-                    
-                case SkillCategory.Debuff:
-                    skill.skillRollType = SkillRollType.SavingThrow;
-                    skill.saveSpec = SaveSpec.ForVehicle(VehicleCheckAttribute.Mobility);
-                    skill.saveDCBase = 15;
-                    skill.checkSpec = SkillCheckSpec.None;
-                    skill.checkDC = 0;
-                    skill.targetingMode = TargetingMode.Enemy;
-                    break;
-                    
-                case SkillCategory.Utility:
-                    skill.skillRollType = SkillRollType.None;
-                    skill.saveSpec = SaveSpec.None;
-                    skill.saveDCBase = 0;
-                    skill.checkSpec = SkillCheckSpec.None;
-                    skill.checkDC = 0;
-                    skill.targetingMode = TargetingMode.Self;
-                    break;
-                    
-                case SkillCategory.Special:
-                    skill.skillRollType = SkillRollType.None;
-                    skill.saveSpec = SaveSpec.None;
-                    skill.saveDCBase = 0;
-                    skill.checkSpec = SkillCheckSpec.None;
-                    skill.checkDC = 0;
-                    skill.targetingMode = TargetingMode.Enemy;
-                    break;
-                    
-                case SkillCategory.Custom:
-                    break;
-            }
+                SkillCategory.Attack => new RollNode
+                {
+                    rollSpec = new AttackSpec(),
+                    successEffects = successEffects
+                },
+                SkillCategory.Buff => new RollNode
+                {
+                    rollSpec = SkillCheckSpec.ForVehicle(VehicleCheckAttribute.Mobility),
+                    dc = 15,
+                    successEffects = successEffects
+                },
+                SkillCategory.Debuff => new RollNode
+                {
+                    rollSpec = SaveSpec.ForVehicle(VehicleCheckAttribute.Mobility),
+                    dc = 15,
+                    failureEffects = successEffects  // debuff applies when target fails the save
+                },
+                _ => new RollNode { successEffects = successEffects }
+            };
+
+            skill.targetingMode = skill.category switch
+            {
+                SkillCategory.Attack  => TargetingMode.Enemy,
+                SkillCategory.Debuff  => TargetingMode.Enemy,
+                SkillCategory.Buff    => TargetingMode.Self,
+                SkillCategory.Restoration => TargetingMode.SourceComponent,
+                _                     => TargetingMode.Self
+            };
         }
         
         // ==================== PRESET GENERATORS ====================

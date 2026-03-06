@@ -14,6 +14,7 @@ using Assets.Scripts.Stages.Lanes;
 using Assets.Scripts.StatusEffects;
 using Assets.Scripts.Skills.Helpers;
 using Assets.Scripts.Tests.Helpers;
+using Assets.Scripts.Combat.RollSpecs;
 
 namespace Assets.Scripts.Tests.PlayMode
 {
@@ -73,15 +74,14 @@ namespace Assets.Scripts.Tests.PlayMode
             int energyBefore = playerVehicle.powerCore.currentEnergy;
 
             // Execute skill through the full pipeline
-            var ctx = new SkillContext
+            var ctx = new RollContext
             {
-                Skill = cannonShot,
                 SourceVehicle = playerVehicle,
                 SourceEntity = playerVehicle.optionalComponents[0],
                 SourceCharacter = bob,
                 TargetEntity = enemyVehicle.chassis
             };
-            playerVehicle.ExecuteSkill(ctx);
+            playerVehicle.ExecuteSkill(ctx, cannonShot);
             yield return null;
 
             // Energy should always be consumed (hit or miss)
@@ -111,15 +111,14 @@ namespace Assets.Scripts.Tests.PlayMode
 
             int enemyHPBefore = enemyVehicle.chassis.GetCurrentHealth();
 
-            var ctx = new SkillContext
+            var ctx = new RollContext
             {
-                Skill = expensiveSkill,
                 SourceVehicle = playerVehicle,
                 SourceEntity = playerVehicle.optionalComponents[0],
                 SourceCharacter = gunner,
                 TargetEntity = enemyVehicle.chassis
             };
-            bool executed = playerVehicle.ExecuteSkill(ctx);
+            bool executed = playerVehicle.ExecuteSkill(ctx, expensiveSkill);
             yield return null;
 
             Assert.IsFalse(executed, "Skill should be blocked when not enough energy");
@@ -146,8 +145,7 @@ namespace Assets.Scripts.Tests.PlayMode
             var reinforceSkill = TestSkillFactory.CreateNoRollSkill("Reinforce Hull",
                 new System.Collections.Generic.List<EffectInvocation>
                 {
-                    new EffectInvocation
-                    {
+                    new() {
                         effect = new ApplyStatusEffect { statusEffect = reinforceTemplate },
                         target = EffectTarget.SelectedTarget
                     }
@@ -157,15 +155,14 @@ namespace Assets.Scripts.Tests.PlayMode
 
             int acBefore = playerVehicle.chassis.GetArmorClass();
 
-            var ctx = new SkillContext
+            var ctx = new RollContext
             {
-                Skill = reinforceSkill,
                 SourceVehicle = playerVehicle,
                 SourceEntity = playerVehicle.powerCore,
                 SourceCharacter = engineer,
                 TargetEntity = playerVehicle.chassis
             };
-            playerVehicle.ExecuteSkill(ctx);
+            playerVehicle.ExecuteSkill(ctx, reinforceSkill);
             yield return null;
 
             int acAfter = playerVehicle.chassis.GetArmorClass();
@@ -200,8 +197,7 @@ namespace Assets.Scripts.Tests.PlayMode
             var flameThrower = TestSkillFactory.CreateNoRollSkill("Flame Thrower",
                 new System.Collections.Generic.List<EffectInvocation>
                 {
-                    new EffectInvocation
-                    {
+                    new() {
                         effect = new ApplyStatusEffect { statusEffect = burningTemplate },
                         target = EffectTarget.SelectedTarget
                     }
@@ -210,15 +206,14 @@ namespace Assets.Scripts.Tests.PlayMode
                 cleanup: cleanup);
 
             // Apply Burning to enemy
-            var ctx = new SkillContext
+            var ctx = new RollContext
             {
-                Skill = flameThrower,
                 SourceVehicle = playerVehicle,
                 SourceEntity = playerVehicle.optionalComponents[0],
                 SourceCharacter = pyro,
                 TargetEntity = enemyVehicle.chassis
             };
-            playerVehicle.ExecuteSkill(ctx);
+            playerVehicle.ExecuteSkill(ctx, flameThrower);
             yield return null;
 
             Assert.AreEqual(1, enemyVehicle.chassis.GetActiveStatusEffects().Count, "Enemy should be Burning");
@@ -265,20 +260,20 @@ namespace Assets.Scripts.Tests.PlayMode
 
             // Test 1: Piloting check routes to Driver
             var pilotSpec = SkillCheckSpec.ForCharacter(CharacterSkill.Piloting, ComponentType.Chassis);
-            var pilotResult = SkillCheckPerformer.Execute(playerVehicle, pilotSpec, dc: 12, causalSource: null, initiatingCharacter: driver);
+            var pilotResult = SkillCheckPerformer.Execute(new SkillCheckExecutionContext { Vehicle = playerVehicle, Spec = pilotSpec, DC = 12, CausalSource = null, InitiatingCharacter = driver });
             yield return null;
             Assert.AreEqual(driver, pilotResult.Character, "Piloting check should route to Driver");
             Assert.IsFalse(pilotResult.IsAutoFail);
 
             // Test 2: Mechanics check routes to Engineer via PowerCore
             var mechanicsSpec = SkillCheckSpec.ForCharacter(CharacterSkill.Mechanics, ComponentType.PowerCore);
-            var mechResult = SkillCheckPerformer.Execute(playerVehicle, mechanicsSpec, dc: 10, causalSource: null, initiatingCharacter: engineer);
+            var mechResult = SkillCheckPerformer.Execute(new SkillCheckExecutionContext { Vehicle = playerVehicle, Spec = mechanicsSpec, DC = 10, CausalSource = null, InitiatingCharacter = engineer });
             yield return null;
             Assert.AreEqual(engineer, mechResult.Character, "Mechanics check should route to Engineer");
 
             // Test 3: Best Perception routes to character with highest WIS modifier
             var percSpec = SkillCheckSpec.ForCharacter(CharacterSkill.Perception);
-            var percResult = SkillCheckPerformer.Execute(playerVehicle, percSpec, dc: 14, causalSource: null);
+            var percResult = SkillCheckPerformer.Execute(new SkillCheckExecutionContext { Vehicle = playerVehicle, Spec = percSpec, DC = 14, CausalSource = null });
             yield return null;
             Assert.IsNotNull(percResult.Character, "Perception check should find a character");
             Assert.IsFalse(percResult.IsAutoFail);
@@ -346,24 +341,29 @@ namespace Assets.Scripts.Tests.PlayMode
             var stage = TestStageFactory.CreateStage("Hazard Stage", out stageObj);
             var hazardLane = TestStageFactory.CreateLane("Hazard Lane", stage, stageObj);
 
+            var checkSpec = SkillCheckSpec.ForCharacter(CharacterSkill.Piloting);
             var turnEffect = new LaneTurnEffect
             {
                 effectName = "Rocky Road Hazard",
                 description = "Navigate treacherous rocks",
-                checkType = LaneCheckType.SkillCheck,
-                checkSpec = SkillCheckSpec.ForCharacter(CharacterSkill.Piloting),
-                dc = 10,
+                rollNode = new RollNode
+                {
+                    rollSpec = checkSpec,
+                    dc = 10
+                }
             };
             hazardLane.turnEffects.Add(turnEffect);
             hazardLane.vehiclesInLane.Add(playerVehicle);
             playerVehicle.currentLane = hazardLane;
 
             // Execute the skill check (simulating what the turn system would do)
-            var checkResult = SkillCheckPerformer.Execute(
-                playerVehicle,
-                turnEffect.checkSpec,
-                turnEffect.dc,
-                causalSource: null);
+            var checkResult = SkillCheckPerformer.Execute(new SkillCheckExecutionContext
+            {
+                Vehicle = playerVehicle,
+                Spec = checkSpec,
+                DC = turnEffect.rollNode.dc,
+                CausalSource = null
+            });
             yield return null;
 
             // Result should be valid
@@ -410,8 +410,7 @@ namespace Assets.Scripts.Tests.PlayMode
             var psychicScream = TestSkillFactory.CreateSaveSkill("Psychic Scream", CharacterAttribute.Wisdom, dc: 20,
                 new System.Collections.Generic.List<EffectInvocation>
                 {
-                    new EffectInvocation
-                    {
+                    new() {
                         effect = new DamageEffect
                         {
                             formulaProvider = new StaticFormulaProvider
@@ -432,14 +431,13 @@ namespace Assets.Scripts.Tests.PlayMode
             int playerHPBefore = playerVehicle.chassis.GetCurrentHealth();
 
             // Execute save skill against player chassis
-            var ctx = new SkillContext
+            var ctx = new RollContext
             {
-                Skill = psychicScream,
                 SourceVehicle = enemyVehicle,
                 SourceCharacter = enemyCaster,
                 TargetEntity = playerVehicle.chassis
             };
-            enemyVehicle.ExecuteSkill(ctx);
+            enemyVehicle.ExecuteSkill(ctx, psychicScream);
             yield return null;
 
             // Energy consumed from enemy
@@ -483,7 +481,7 @@ namespace Assets.Scripts.Tests.PlayMode
 
             // Skill requiring Utility should auto-fail
             var spec = SkillCheckSpec.ForCharacter(CharacterSkill.Mechanics, ComponentType.Utility);
-            var result = SkillCheckPerformer.Execute(playerVehicle, spec, dc: 10, causalSource: null, initiatingCharacter: driver);
+            var result = SkillCheckPerformer.Execute(new SkillCheckExecutionContext { Vehicle = playerVehicle, Spec = spec, DC = 10, CausalSource = null, InitiatingCharacter = driver });
             yield return null;
 
             Assert.IsTrue(result.IsAutoFail, "Should auto-fail when required component is stunned");
@@ -495,7 +493,7 @@ namespace Assets.Scripts.Tests.PlayMode
 
             Assert.IsTrue(utilityComp.IsOperational, "Component should be operational after stun expires");
 
-            var resultAfter = SkillCheckPerformer.Execute(playerVehicle, spec, dc: 10, causalSource: null, initiatingCharacter: driver);
+            var resultAfter = SkillCheckPerformer.Execute(new SkillCheckExecutionContext { Vehicle = playerVehicle, Spec = spec, DC = 10, CausalSource = null, InitiatingCharacter = driver });
             Assert.IsFalse(resultAfter.IsAutoFail, "Should be able to attempt after stun expires");
         }
 
@@ -517,7 +515,7 @@ namespace Assets.Scripts.Tests.PlayMode
             var spec = SkillCheckSpec.ForCharacter(CharacterSkill.Mechanics, ComponentType.Utility);
 
             // Phase 1: Working normally
-            var result1 = SkillCheckPerformer.Execute(playerVehicle, spec, dc: 10, causalSource: null, initiatingCharacter: engineer);
+            var result1 = SkillCheckPerformer.Execute(new SkillCheckExecutionContext { Vehicle = playerVehicle, Spec = spec, DC = 10, CausalSource = null, InitiatingCharacter = engineer });
             yield return null;
             Assert.IsFalse(result1.IsAutoFail, "Should work when component is healthy");
 
@@ -525,7 +523,7 @@ namespace Assets.Scripts.Tests.PlayMode
             utility.TakeDamage(utility.GetCurrentHealth());
             Assert.IsTrue(utility.isDestroyed, "Component should be destroyed");
 
-            var result2 = SkillCheckPerformer.Execute(playerVehicle, spec, dc: 10, causalSource: null, initiatingCharacter: engineer);
+            var result2 = SkillCheckPerformer.Execute(new SkillCheckExecutionContext { Vehicle = playerVehicle, Spec = spec, DC = 10, CausalSource = null, InitiatingCharacter = engineer });
             yield return null;
             Assert.IsTrue(result2.IsAutoFail, "Should auto-fail when component destroyed");
 
@@ -534,7 +532,7 @@ namespace Assets.Scripts.Tests.PlayMode
             utility.SetHealth(utility.GetMaxHealth());
             Assert.IsTrue(utility.IsOperational, "Component should be operational after restoration");
 
-            var result3 = SkillCheckPerformer.Execute(playerVehicle, spec, dc: 10, causalSource: null, initiatingCharacter: engineer);
+            var result3 = SkillCheckPerformer.Execute(new SkillCheckExecutionContext { Vehicle = playerVehicle, Spec = spec, DC = 10, CausalSource = null, InitiatingCharacter = engineer });
             yield return null;
             Assert.IsFalse(result3.IsAutoFail, "Should work again after component restored");
         }
@@ -639,29 +637,27 @@ namespace Assets.Scripts.Tests.PlayMode
                 // Player attacks enemy
                 if (playerVehicle.powerCore.CanDrawPower(3))
                 {
-                    var playerCtx = new SkillContext
+                    var playerCtx = new RollContext
                     {
-                        Skill = playerAttack,
                         SourceVehicle = playerVehicle,
                         SourceEntity = playerVehicle.optionalComponents[0],
                         SourceCharacter = pGunner,
                         TargetEntity = enemyVehicle.chassis
                     };
-                    playerVehicle.ExecuteSkill(playerCtx);
+                    playerVehicle.ExecuteSkill(playerCtx, playerAttack);
                 }
 
                 // Enemy attacks player
                 if (enemyVehicle.powerCore.CanDrawPower(2))
                 {
-                    var enemyCtx = new SkillContext
+                    var enemyCtx = new RollContext
                     {
-                        Skill = enemyAttack,
                         SourceVehicle = enemyVehicle,
                         SourceEntity = enemyVehicle.optionalComponents[0],
                         SourceCharacter = eGunner,
                         TargetEntity = playerVehicle.chassis
                     };
-                    enemyVehicle.ExecuteSkill(enemyCtx);
+                    enemyVehicle.ExecuteSkill(enemyCtx, enemyAttack);
                 }
 
                 // End-of-turn: tick status effects

@@ -36,7 +36,7 @@ namespace Assets.Scripts.Tests.PlayMode
             vehicle = TestVehicleBuilder.CreateWithChassis(ada);
 
             var spec = TestSkillFactory.CharacterSkillCheck(CharacterSkill.Piloting, requiredComponent: ComponentType.Chassis);
-            var result = SkillCheckPerformer.Execute(vehicle, spec, dc: 12, causalSource: null, initiatingCharacter: ada);
+            var result = SkillCheckPerformer.Execute(new SkillCheckExecutionContext { Vehicle = vehicle, Spec = spec, DC = 12, CausalSource = null, InitiatingCharacter = ada });
             yield return null;
 
             Assert.IsNotNull(result);
@@ -59,7 +59,7 @@ namespace Assets.Scripts.Tests.PlayMode
             vehicle = TestVehicleBuilder.CreateWithChassis(character);
 
             var spec = TestSkillFactory.CharacterSkillCheck(CharacterSkill.Mechanics, requiredComponent: ComponentType.Utility);
-            var result = SkillCheckPerformer.Execute(vehicle, spec, dc: 15, causalSource: null, initiatingCharacter: character);
+            var result = SkillCheckPerformer.Execute(new SkillCheckExecutionContext { Vehicle = vehicle, Spec = spec, DC = 15, CausalSource = null, InitiatingCharacter = character });
             yield return null;
 
             Assert.IsNotNull(result);
@@ -84,7 +84,7 @@ namespace Assets.Scripts.Tests.PlayMode
             utility.TakeDamage(utility.GetCurrentHealth());
 
             var spec = TestSkillFactory.CharacterSkillCheck(CharacterSkill.Mechanics, requiredComponent: ComponentType.Utility);
-            var result = SkillCheckPerformer.Execute(vehicle, spec, dc: 15, causalSource: null, initiatingCharacter: character);
+            var result = SkillCheckPerformer.Execute(new SkillCheckExecutionContext { Vehicle = vehicle, Spec = spec, DC = 15, CausalSource = null, InitiatingCharacter = character });
             yield return null;
 
             Assert.IsNotNull(result);
@@ -107,7 +107,7 @@ namespace Assets.Scripts.Tests.PlayMode
                 .Build();
 
             var spec = TestSkillFactory.CharacterSkillCheck(CharacterSkill.Perception);
-            var result = SkillCheckPerformer.Execute(vehicle, spec, dc: 14, causalSource: null, initiatingCharacter: null);
+            var result = SkillCheckPerformer.Execute(new SkillCheckExecutionContext { Vehicle = vehicle, Spec = spec, DC = 14, CausalSource = null, InitiatingCharacter = null });
             yield return null;
 
             Assert.IsNotNull(result);
@@ -128,7 +128,7 @@ namespace Assets.Scripts.Tests.PlayMode
                 .Build();
 
             var spec = TestSkillFactory.CharacterSkillCheck(CharacterSkill.Perception);
-            var result = SkillCheckPerformer.Execute(vehicle, spec, dc: 14, causalSource: null, initiatingCharacter: null);
+            var result = SkillCheckPerformer.Execute(new SkillCheckExecutionContext { Vehicle = vehicle, Spec = spec, DC = 14, CausalSource = null, InitiatingCharacter = null });
             yield return null;
 
             Assert.IsNotNull(result);
@@ -152,7 +152,7 @@ namespace Assets.Scripts.Tests.PlayMode
                 .Build();
 
             var spec = TestSkillFactory.CharacterSkillCheck(CharacterSkill.Mechanics);
-            var result = SkillCheckPerformer.Execute(vehicle, spec, dc: 12, causalSource: null, initiatingCharacter: bob);
+            var result = SkillCheckPerformer.Execute(new SkillCheckExecutionContext { Vehicle = vehicle, Spec = spec, DC = 12, CausalSource = null, InitiatingCharacter = bob });
             yield return null;
 
             Assert.IsNotNull(result);

@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿using Assets.Scripts.Combat.RollSpecs;
+using UnityEngine;
 
 namespace Assets.Scripts.Combat.SkillChecks
 {
@@ -8,33 +9,28 @@ namespace Assets.Scripts.Combat.SkillChecks
     /// </summary>
     public static class SkillCheckPerformer
     {
-        public static SkillCheckResult Execute(
-            Vehicle vehicle,
-            SkillCheckSpec spec,
-            int dc,
-            Object causalSource,
-            Character initiatingCharacter = null)
+        public static SkillCheckResult Execute(SkillCheckExecutionContext ctx)
         {
             // Step 1: Route (resolve who/what makes this check)
-            var routing = CheckRouter.RouteSkillCheck(vehicle, spec, initiatingCharacter);
+            var routing = CheckRouter.RouteSkillCheck(ctx.Vehicle, ctx.Spec, ctx.InitiatingCharacter);
 
             // Step 2: Compute
             SkillCheckResult result;
             if (!routing.CanAttempt)
             {
-                result = SkillCheckCalculator.AutoFail(spec, dc);
+                result = SkillCheckCalculator.AutoFail(ctx.Spec, ctx.DC);
             }
             else
             {
-                result = SkillCheckCalculator.Compute(spec, dc, routing.Component, routing.Character);
+                result = SkillCheckCalculator.Compute(ctx.Spec, ctx.DC, routing.Component, routing.Character);
             }
 
             // Step 3: Emit event automatically (WOTR-style)
-            Entity sourceEntity = routing.Component ?? vehicle.chassis;
+            Entity sourceEntity = routing.Component != null ? routing.Component : ctx.Vehicle.chassis;
             CombatEventBus.EmitSkillCheck(
                 result,
                 sourceEntity,
-                causalSource,
+                ctx.CausalSource,
                 result.Roll.Success,
                 result.Character);
 

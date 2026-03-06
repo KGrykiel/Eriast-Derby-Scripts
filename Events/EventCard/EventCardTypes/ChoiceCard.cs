@@ -1,8 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using UnityEngine;
-using Assets.Scripts.Combat.SkillChecks;
-using Assets.Scripts.Combat.Saves;
+using SerializeReferenceEditor;
+using Assets.Scripts.Combat.RollSpecs;
 
 namespace Assets.Scripts.Events.EventCard.EventCardTypes
 {
@@ -61,102 +61,25 @@ namespace Assets.Scripts.Events.EventCard.EventCardTypes
 
         private CardResolutionResult ResolveChoice(CardChoice choice, Vehicle vehicle)
         {
-            switch (choice.checkType)
-            {
-                case ChoiceCheckType.None:
-                    ApplyEffects(choice.effects, vehicle);
-                    return new CardResolutionResult(true, choice.outcomeNarrative);
-                
-                case ChoiceCheckType.SkillCheck:
-                    return ResolveSkillCheck(choice, vehicle);
-                
-                case ChoiceCheckType.SavingThrow:
-                    return ResolveSavingThrow(choice, vehicle);
-                
-                default:
-                    Debug.LogError($"[ChoiceCard] Unknown check type: {choice.checkType}");
-                    return new CardResolutionResult(false, "Invalid choice configuration");
-            }
-        }
-        
-        private CardResolutionResult ResolveSkillCheck(CardChoice choice, Vehicle vehicle)
-        {
-            var checkResult = SkillCheckPerformer.Execute(
-                vehicle, choice.checkSpec, choice.dc, causalSource: this);
+            var ctx = new RollContext { SourceVehicle = vehicle };
+            bool success = RollNodeExecutor.Execute(choice.rollNode, ctx, causalSource: this);
 
-            if (checkResult.Roll.Success)
-            {
-                ApplyEffects(choice.effects, vehicle);
-                return new CardResolutionResult(true, choice.outcomeNarrative);
-            }
-            else
-            {
-                ApplyEffects(choice.failureEffects, vehicle);
-                return new CardResolutionResult(false, choice.failureNarrative);
-            }
-        }
-        
-        private CardResolutionResult ResolveSavingThrow(CardChoice choice, Vehicle vehicle)
-        {
-            var saveResult = SavePerformer.Execute(
-                vehicle, choice.saveSpec, choice.dc, causalSource: this);
+            string narrative = success ? choice.rollNode?.successNarrative : choice.rollNode?.failureNarrative;
+            if (string.IsNullOrEmpty(narrative))
+                narrative = choice.choiceText;
 
-            if (saveResult.Roll.Success)
-            {
-                ApplyEffects(choice.effects, vehicle);
-                return new CardResolutionResult(true, choice.outcomeNarrative);
-            }
-            else
-            {
-                ApplyEffects(choice.failureEffects, vehicle);
-                return new CardResolutionResult(false, choice.failureNarrative);
-            }
+            return new CardResolutionResult(success, narrative);
         }
     }
-    
-    public enum ChoiceCheckType
-    {
-        /// <summary>No check required - guaranteed outcome</summary>
-        None,
-        
-        /// <summary>Active skill check (navigating, searching, repairing)</summary>
-        SkillCheck,
-        
-        /// <summary>Passive saving throw (dodging, resisting, enduring)</summary>
-        SavingThrow
-    }
-    
+
     [Serializable]
     public class CardChoice
     {
         [Tooltip("Text shown to player (e.g., 'Ram through the flames')")]
         public string choiceText = "Choice";
-        
-        [Header("Check Configuration")]
-        [Tooltip("Type of check this choice requires")]
-        public ChoiceCheckType checkType = ChoiceCheckType.None;
-        
-        [Tooltip("Skill check spec (if checkType = SkillCheck)")]
-        public SkillCheckSpec checkSpec;
-        
-        [Tooltip("Save spec (if checkType = SavingThrow)")]
-        public SaveSpec saveSpec;
-        
-        [Tooltip("Difficulty class for the check/save")]
-        public int dc = 15;
-        
-        [Header("Effects")]
-        [Tooltip("Effects applied if choice succeeds (or no check required)")]
-        public List<EffectInvocation> effects = new();
-        
-        [Tooltip("Effects applied if check/save fails")]
-        public List<EffectInvocation> failureEffects = new();
-        
-        [Header("Narrative")]
-        [Tooltip("Narrative for successful outcome")]
-        public string outcomeNarrative = "Choice made";
-        
-        [Tooltip("Narrative for failed check/save")]
-        public string failureNarrative = "Choice failed";
+
+        [SerializeReference, SR]
+        [Tooltip("The full resolution of this choice: roll type, DC, success and failure effects, optional chain.")]
+        public RollNode rollNode;
     }
 }

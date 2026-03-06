@@ -7,13 +7,11 @@
     /// </summary>
     public static class AttackSpecialRules
     {
-        private const int ComponentTargetingPenalty = 5;
-
         /// <summary>Returns fallback result if applicable, null if rule doesn't apply.</summary>
-        public static AttackResult TryComponentFallback(AttackSpec spec)
+        public static AttackResult TryComponentFallback(AttackExecutionContext ctx)
         {
             // not targetting a vehicle component, no fallback
-            if (spec.Target is not VehicleComponent targetComponent)
+            if (ctx.Target is not VehicleComponent targetComponent)
                 return null;
 
             // Find the chassis (fallback target)
@@ -25,12 +23,12 @@
             if (targetComponent == vehicle.chassis)
                 return null;
 
-            // Roll against chassis with penalty
+            // Roll against chassis with penalty from spec
             var fallbackResult = AttackCalculator.Compute(
                 vehicle.chassis, 
-                spec.Attacker, 
-                spec.Character, 
-                ComponentTargetingPenalty);
+                ctx.Attacker, 
+                ctx.Character, 
+                ctx.Spec.componentTargetingPenalty);
 
             Entity hitTarget = fallbackResult.Roll.Success ? vehicle.chassis : null;
             return new AttackResult(fallbackResult.Roll, hitTarget, wasFallback: true);

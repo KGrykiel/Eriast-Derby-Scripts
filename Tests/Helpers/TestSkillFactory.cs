@@ -1,8 +1,7 @@
 ﻿using UnityEngine;
 using Assets.Scripts.Characters;
-using Assets.Scripts.Combat.SkillChecks;
-using Assets.Scripts.Combat.Saves;
 using Assets.Scripts.Combat.Damage;
+using Assets.Scripts.Combat.RollSpecs;
 
 namespace Assets.Scripts.Tests.Helpers
 {
@@ -41,8 +40,7 @@ namespace Assets.Scripts.Tests.Helpers
             var skill = ScriptableObject.CreateInstance<Skill>();
             skill.name = name;
             skill.energyCost = energyCost;
-            skill.skillRollType = SkillRollType.None;
-            skill.effectInvocations = effects;
+            skill.rollNode = new RollNode { successEffects = effects };
 
             cleanup?.Add(skill);
             return skill;
@@ -63,25 +61,27 @@ namespace Assets.Scripts.Tests.Helpers
             var skill = ScriptableObject.CreateInstance<Skill>();
             skill.name = name;
             skill.energyCost = energyCost;
-            skill.skillRollType = SkillRollType.AttackRoll;
-            skill.effectInvocations = new System.Collections.Generic.List<EffectInvocation>
+            skill.rollNode = new RollNode
             {
-                new EffectInvocation
+                rollSpec = new AttackSpec(),
+                successEffects = new System.Collections.Generic.List<EffectInvocation>
                 {
-                    effect = new DamageEffect
-                    {
-                        formulaProvider = new StaticFormulaProvider
+                    new() {
+                        effect = new DamageEffect
                         {
-                            formula = new DamageFormula
+                            formulaProvider = new StaticFormulaProvider
                             {
-                                baseDice = damageDice,
-                                dieSize = dieSize,
-                                bonus = bonus,
-                                damageType = damageType
+                                formula = new DamageFormula
+                                {
+                                    baseDice = damageDice,
+                                    dieSize = dieSize,
+                                    bonus = bonus,
+                                    damageType = damageType
+                                }
                             }
-                        }
-                    },
-                    target = EffectTarget.SelectedTarget
+                        },
+                        target = EffectTarget.SelectedTarget
+                    }
                 }
             };
 
@@ -103,10 +103,13 @@ namespace Assets.Scripts.Tests.Helpers
             var skill = ScriptableObject.CreateInstance<Skill>();
             skill.name = name;
             skill.energyCost = energyCost;
-            skill.skillRollType = SkillRollType.SavingThrow;
-            skill.saveSpec = SaveSpec.ForCharacter(saveAttribute);
-            skill.saveDCBase = dc;
-            skill.effectInvocations = effects;
+            // Effects go in failureEffects: the target makes the save, and effects apply when they fail it.
+            skill.rollNode = new RollNode
+            {
+                rollSpec = SaveSpec.ForCharacter(saveAttribute),
+                dc = dc,
+                failureEffects = effects
+            };
 
             cleanup?.Add(skill);
             return skill;

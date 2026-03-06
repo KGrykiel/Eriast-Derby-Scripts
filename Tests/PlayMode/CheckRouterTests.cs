@@ -4,9 +4,8 @@ using UnityEngine;
 using UnityEngine.TestTools;
 using Assets.Scripts.Characters;
 using Assets.Scripts.Combat;
-using Assets.Scripts.Combat.SkillChecks;
-using Assets.Scripts.Combat.Saves;
 using Assets.Scripts.Tests.Helpers;
+using Assets.Scripts.Combat.RollSpecs;
 
 namespace Assets.Scripts.Tests.PlayMode
 {

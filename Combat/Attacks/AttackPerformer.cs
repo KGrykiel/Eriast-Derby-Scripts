@@ -6,28 +6,28 @@
     /// </summary>
     public static class AttackPerformer
     {
-        public static AttackResult Execute(AttackSpec spec)
+        public static AttackResult Execute(AttackExecutionContext ctx)
         {
             // Roll against primary target, conclude if successful
-            var primaryResult = AttackCalculator.Compute(spec.Target, spec.Attacker, spec.Character);
+            var primaryResult = AttackCalculator.Compute(ctx.Target, ctx.Attacker, ctx.Character);
 
             if (primaryResult.Roll.Success)
             {
-                var result = new AttackResult(primaryResult.Roll, hitTarget: spec.Target);
-                EmitEvent(result, spec, isFallback: false);
+                var result = new AttackResult(primaryResult.Roll, hitTarget: ctx.Target);
+                EmitEvent(result, ctx, isFallback: false);
                 return result;
             }
 
             // Primary miss - emit miss event
             var missResult = new AttackResult(primaryResult.Roll, hitTarget: null);
-            EmitEvent(missResult, spec, isFallback: false);
+            EmitEvent(missResult, ctx, isFallback: false);
 
             // OPTIONAL RULE: Component fallback
             // TO DISABLE THIS RULE: Delete the lines below
-            var fallbackResult = AttackSpecialRules.TryComponentFallback(spec);
+            var fallbackResult = AttackSpecialRules.TryComponentFallback(ctx);
             if (fallbackResult != null)
             {
-                EmitEvent(fallbackResult, spec, isFallback: true);
+                EmitEvent(fallbackResult, ctx, isFallback: true);
                 return fallbackResult;
             }
 
@@ -36,20 +36,20 @@
 
         // ==================== EVENT EMISSION ====================
 
-        private static void EmitEvent(AttackResult result, AttackSpec spec, bool isFallback)
+        private static void EmitEvent(AttackResult result, AttackExecutionContext ctx, bool isFallback)
         {
-            string targetCompName = spec.Target != null ? spec.Target.name : null;
-            Entity eventTarget = isFallback ? result.HitTarget : spec.Target;
+            string targetCompName = ctx.Target != null ? ctx.Target.name : null;
+            Entity eventTarget = isFallback ? result.HitTarget : ctx.Target;
 
             CombatEventBus.EmitAttackRoll(
                 result,
-                spec.Attacker,
+                ctx.Attacker,
                 eventTarget,
-                spec.CausalSource,
+                ctx.CausalSource,
                 result.Roll.Success,
                 targetCompName,
                 isFallback,
-                spec.Character);
+                ctx.Character);
         }
     }
 }

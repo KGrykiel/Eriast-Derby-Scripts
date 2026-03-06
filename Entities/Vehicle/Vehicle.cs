@@ -6,7 +6,7 @@ using Assets.Scripts.Entities.Vehicle;
 using Assets.Scripts.Managers;
 using Assets.Scripts.Stages;
 using Assets.Scripts.Stages.Lanes;
-using SkillContext = Assets.Scripts.Skills.Helpers.SkillContext;
+using RollContext = Assets.Scripts.Combat.RollSpecs.RollContext;
 
 /// <summary>
 /// Container/coordinator for Entity components. NOT an Entity itself.
@@ -83,6 +83,9 @@ public class Vehicle : MonoBehaviour
     
     public DriveComponent GetDriveComponent()
         => optionalComponents.OfType<DriveComponent>().FirstOrDefault();
+
+    public VehicleComponent GetComponentOfType(ComponentType type)
+        => AllComponents.FirstOrDefault(c => c.componentType == type);
 
     public void ResetComponentsForNewTurn()
     {
@@ -192,16 +195,14 @@ public class Vehicle : MonoBehaviour
     
     // ==================== SKILL EXECUTION ====================
     
-    public bool ExecuteSkill(SkillContext ctx)
+    public bool ExecuteSkill(RollContext ctx, Skill skill)
     {
-        Skill skill = ctx.Skill;
-        
         if (ctx.TargetEntity == null)
         {
             Debug.LogError($"[Vehicle] ExecuteSkill called with null target!");
             return false;
         }
-        
+
         // Resource validation
         if (!CanAffordSkill(skill))
         {
@@ -209,16 +210,20 @@ public class Vehicle : MonoBehaviour
             Debug.LogWarning($"[Vehicle] {vehicleName} cannot afford {skill.name} (need {skill.energyCost}, have {currentEnergy})");
             return false;
         }
-        
+
         // Resource consumption
         if (!ConsumeSkillCost(skill, ctx.SourceComponent))
         {
             Debug.LogError($"[Vehicle] {vehicleName} failed to consume resources for {skill.name}");
             return false;
         }
-        
-        // Delegate to SkillExecutor for resolution
-        return Assets.Scripts.Skills.Helpers.SkillExecutor.Execute(ctx);
+
+        // Skill configuration validation
+        if (!Assets.Scripts.Skills.Helpers.SkillValidator.Validate(ctx, skill))
+            return false;
+
+        // Execute via RollNodeExecutor
+        return Assets.Scripts.Combat.RollSpecs.RollNodeExecutor.Execute(skill.rollNode, ctx, skill);
     }
 
     private bool CanAffordSkill(Skill skill)

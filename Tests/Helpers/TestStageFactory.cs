@@ -2,6 +2,7 @@
 using Assets.Scripts.Stages;
 using Assets.Scripts.Stages.Lanes;
 using Assets.Scripts.StatusEffects;
+using Assets.Scripts.Combat.RollSpecs;
 
 namespace Assets.Scripts.Tests.Helpers
 {
@@ -53,21 +54,16 @@ namespace Assets.Scripts.Tests.Helpers
         /// Create a LaneTurnEffect for testing lane hazards.
         /// </summary>
         /// <param name="name">Effect name</param>
-        /// <param name="checkType">Type of check required</param>
-        /// <param name="dc">Difficulty class</param>
+        /// <param name="rollNode">Roll configuration. Null for an unconditional effect.</param>
         public static LaneTurnEffect CreateLaneTurnEffect(
             string name,
-            LaneCheckType checkType,
-            int dc = 15)
+            RollNode rollNode = null)
         {
             return new LaneTurnEffect
             {
                 effectName = name,
                 description = $"Test hazard: {name}",
-                checkType = checkType,
-                dc = dc,
-                onSuccess = new System.Collections.Generic.List<EffectInvocation>(),
-                onFailure = new System.Collections.Generic.List<EffectInvocation>()
+                rollNode = rollNode
             };
         }
     }

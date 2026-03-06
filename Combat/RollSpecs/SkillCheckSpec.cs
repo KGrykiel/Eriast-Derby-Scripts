@@ -1,14 +1,16 @@
 ﻿using UnityEngine;
+using SerializeReferenceEditor;
 using Assets.Scripts.Characters;
 using Assets.Scripts.Entities.Vehicle;
 
-namespace Assets.Scripts.Combat.SkillChecks
+namespace Assets.Scripts.Combat.RollSpecs
 {
     /// <summary>
     /// What a skill check tests — either a vehicle attribute or a character skill.
     /// </summary>
     [System.Serializable]
-    public struct SkillCheckSpec
+    [SRName("Skill Check")]
+    public class SkillCheckSpec : IRollSpec
     {
         [Tooltip("Does this check test the vehicle or a character?")]
         public CheckDomain domain;
@@ -26,13 +28,13 @@ namespace Assets.Scripts.Combat.SkillChecks
         public ComponentType requiredComponentType;
 
         /// <summary>Display-friendly name for logs and tooltips.</summary>
-        public readonly string DisplayName => domain == CheckDomain.Character
+        public string DisplayName => domain == CheckDomain.Character
             ? characterSkill.ToString()
             : vehicleAttribute.ToString();
 
-        public readonly bool IsCharacterCheck => domain == CheckDomain.Character;
-        public readonly bool IsVehicleCheck => domain == CheckDomain.Vehicle;
-        public readonly bool RequiresComponent => requiresComponent;
+        public bool IsCharacterCheck => domain == CheckDomain.Character;
+        public bool IsVehicleCheck => domain == CheckDomain.Vehicle;
+        public bool RequiresComponent => requiresComponent;
         
         // ==================== FACTORIES ====================
         
@@ -56,7 +58,5 @@ namespace Assets.Scripts.Combat.SkillChecks
                 requiredComponentType = requiredComponent ?? default
             };
         }
-        
-        public static SkillCheckSpec None => ForVehicle(default);
     }
 }

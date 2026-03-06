@@ -34,7 +34,7 @@ namespace Assets.Scripts.Tests.PlayMode
             vehicle = TestVehicleBuilder.CreateWithChassis(ada);
 
             var spec = TestSkillFactory.CharacterSave(CharacterAttribute.Dexterity);
-            var result = SavePerformer.Execute(vehicle, spec, dc: 15, causalSource: null, targetComponent: vehicle.chassis);
+            var result = SavePerformer.Execute(new SaveExecutionContext { Vehicle = vehicle, Spec = spec, DC = 15, CausalSource = null, TargetComponent = vehicle.chassis });
             yield return null;
 
             Assert.IsNotNull(result);
@@ -62,7 +62,7 @@ namespace Assets.Scripts.Tests.PlayMode
                 .Build();
 
             var spec = TestSkillFactory.CharacterSave(CharacterAttribute.Wisdom);
-            var result = SavePerformer.Execute(vehicle, spec, dc: 13, causalSource: null);
+            var result = SavePerformer.Execute(new SaveExecutionContext { Vehicle = vehicle, Spec = spec, DC = 13, CausalSource = null });
             yield return null;
 
             Assert.IsNotNull(result);
@@ -81,7 +81,7 @@ namespace Assets.Scripts.Tests.PlayMode
             vehicle = TestVehicleBuilder.CreateWithChassis(character);
 
             var spec = TestSkillFactory.CharacterSave(CharacterAttribute.Intelligence, requiredComponent: ComponentType.PowerCore);
-            var result = SavePerformer.Execute(vehicle, spec, dc: 15, causalSource: null);
+            var result = SavePerformer.Execute(new SaveExecutionContext { Vehicle = vehicle, Spec = spec, DC = 15, CausalSource = null });
             yield return null;
 
             Assert.IsNotNull(result);
@@ -100,7 +100,7 @@ namespace Assets.Scripts.Tests.PlayMode
                 .Build();
 
             var spec = TestSkillFactory.CharacterSave(CharacterAttribute.Intelligence, requiredComponent: ComponentType.PowerCore);
-            var result = SavePerformer.Execute(vehicle, spec, dc: 15, causalSource: null);
+            var result = SavePerformer.Execute(new SaveExecutionContext { Vehicle = vehicle, Spec = spec, DC = 15, CausalSource = null });
             yield return null;
 
             Assert.IsNotNull(result);

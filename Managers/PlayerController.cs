@@ -4,7 +4,7 @@ using UnityEngine;
 using Assets.Scripts.Entities.Vehicle;
 using Assets.Scripts.Managers;
 using Assets.Scripts.Managers.PlayerUI;
-using Assets.Scripts.Skills.Helpers;
+using Assets.Scripts.Combat.RollSpecs;
 
 /// <summary>Orchestrates player input for whichever vehicle is currently taking its turn.</summary>
 public class PlayerController : MonoBehaviour
@@ -220,9 +220,8 @@ public class PlayerController : MonoBehaviour
         Entity targetEntity = selectedTargetComponent != null ? selectedTargetComponent : target.chassis;
         Character character = currentSeat != null ? currentSeat.assignedCharacter : null;
 
-        var ctx = new SkillContext
+        var ctx = new RollContext
         {
-            Skill = selectedSkill,
             SourceVehicle = vehicle,
             SourceEntity = selectedSkillSourceComponent,
             SourceCharacter = character,
@@ -230,7 +229,7 @@ public class PlayerController : MonoBehaviour
             IsCriticalHit = false
         };
 
-        vehicle.ExecuteSkill(ctx);
+        vehicle.ExecuteSkill(ctx, selectedSkill);
 
         currentSeat?.MarkAsActed();
 

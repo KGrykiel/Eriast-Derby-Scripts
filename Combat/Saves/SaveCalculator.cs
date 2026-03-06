@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using Assets.Scripts.Characters;
+using Assets.Scripts.Combat.RollSpecs;
 
 namespace Assets.Scripts.Combat.Saves
 {
@@ -67,11 +68,6 @@ namespace Assets.Scripts.Combat.Saves
         }
 
         // ==================== HELPERS ====================
-
-        public static int CalculateSaveDC(Skill skill)
-        {
-            return skill.saveDCBase;
-        }
 
         /// <summary>Factory for making auto-failed results if no suitablke component/character found</summary>
         public static SaveResult AutoFail(SaveSpec spec, int dc)

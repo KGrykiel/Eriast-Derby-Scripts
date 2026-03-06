@@ -3,6 +3,7 @@ using System.Linq;
 using System.Text;
 using Assets.Scripts.Combat.Attacks;
 using Assets.Scripts.Combat.Damage;
+using Assets.Scripts.Combat.RollSpecs;
 using Assets.Scripts.Combat.Saves;
 using Assets.Scripts.Combat.SkillChecks;
 using Assets.Scripts.Core;

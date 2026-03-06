@@ -1,15 +1,17 @@
 ﻿using UnityEngine;
+using SerializeReferenceEditor;
 using Assets.Scripts.Characters;
 using Assets.Scripts.Entities.Vehicle;
 
-namespace Assets.Scripts.Combat.Saves
+namespace Assets.Scripts.Combat.RollSpecs
 {
     /// <summary>
     /// What a saving throw tests — either a vehicle attribute or a character attribute.
     /// Right now it handles both with the other being null, but might think of a better system for this if it gets more complicated.
     /// </summary>
     [System.Serializable]
-    public struct SaveSpec
+    [SRName("Saving Throw")]
+    public class SaveSpec : IRollSpec
     {
         [Tooltip("Does this save test the vehicle or a character?")]
         public CheckDomain domain;
@@ -27,13 +29,13 @@ namespace Assets.Scripts.Combat.Saves
         public ComponentType requiredComponentType;
 
         /// <summary>Display-friendly name for logs and tooltips.</summary>
-        public readonly string DisplayName => domain == CheckDomain.Character
+        public string DisplayName => domain == CheckDomain.Character
             ? characterAttribute.ToString()
             : vehicleAttribute.ToString();
 
-        public readonly bool IsCharacterSave => domain == CheckDomain.Character;
-        public readonly bool IsVehicleSave => domain == CheckDomain.Vehicle;
-        public readonly bool RequiresComponent => requiresComponent;
+        public bool IsCharacterSave => domain == CheckDomain.Character;
+        public bool IsVehicleSave => domain == CheckDomain.Vehicle;
+        public bool RequiresComponent => requiresComponent;
         
         // ==================== FACTORIES ====================
         
@@ -59,7 +61,5 @@ namespace Assets.Scripts.Combat.Saves
                 requiredComponentType = requiredComponent ?? default
             };
         }
-        
-        public static SaveSpec None => ForVehicle(default);
     }
 }
