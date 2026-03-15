@@ -1,7 +1,7 @@
 ﻿using System;
 using UnityEngine;
-using Assets.Scripts.Combat.RollSpecs;
 using SerializeReferenceEditor;
+using Assets.Scripts.Combat.Rolls.RollSpecs;
 
 namespace Assets.Scripts.Stages.Lanes
 {

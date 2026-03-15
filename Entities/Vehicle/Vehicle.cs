@@ -6,7 +6,8 @@ using Assets.Scripts.Entities.Vehicle;
 using Assets.Scripts.Managers;
 using Assets.Scripts.Stages;
 using Assets.Scripts.Stages.Lanes;
-using RollContext = Assets.Scripts.Combat.RollSpecs.RollContext;
+using RollContext = Assets.Scripts.Combat.Rolls.RollSpecs.RollContext;
+using Assets.Scripts.Combat.Rolls.RollSpecs;
 
 /// <summary>
 /// Container/coordinator for Entity components. NOT an Entity itself.
@@ -247,7 +248,7 @@ public class Vehicle : MonoBehaviour
             return false;
 
         // Execute via RollNodeExecutor
-        return Assets.Scripts.Combat.RollSpecs.RollNodeExecutor.Execute(skill.rollNode, ctx, skill);
+        return RollNodeExecutor.Execute(skill.rollNode, ctx, skill);
     }
 
     private bool CanAffordSkill(Skill skill)

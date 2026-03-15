@@ -5,8 +5,9 @@ using Assets.Scripts.Combat.Damage;
 using System.Collections.Generic;
 using Assets.Scripts.Entities.Vehicle;
 using Assets.Scripts.Characters;
-using Assets.Scripts.Combat.RollSpecs;
 using StatusEffectTemplate = Assets.Scripts.StatusEffects.StatusEffect;
+using Assets.Scripts.Combat.Rolls.RollSpecs;
+using Assets.Scripts.Combat.Rolls.RollSpecs.SpecTypes;
 
 namespace Assets.Scripts.Skills
 {
@@ -208,15 +209,15 @@ namespace Assets.Scripts.Skills
         {
             System.IO.Directory.CreateDirectory(SkillsFolder);
 
-            RegenerateSkill(DefineCannonShot(),      "CannonShot");
-            RegenerateSkill(DefineEmergencyPatch(),  "EmergencyPatch");
-            RegenerateSkill(DefineOverclock(),        "Overclock");
-            RegenerateSkill(DefineStabilityDrain(),  "StabilityDrain");
-            RegenerateSkill(DefineArmorPierce(),     "ArmorPierce");
-            RegenerateSkill(DefineHarpoon(),         "Harpoon");
-            RegenerateSkill(DefineTargetingLock(),   "TargetingLock");
-            RegenerateSkill(DefineRecoilCannon(),    "RecoilCannon");
-            RegenerateSkill(DefineRammingContest(),  "RammingContest");
+            RegenerateSkill(DefineCannonShot());
+            RegenerateSkill(DefineEmergencyPatch());
+            RegenerateSkill(DefineOverclock());
+            RegenerateSkill(DefineStabilityDrain());
+            RegenerateSkill(DefineArmorPierce());
+            RegenerateSkill(DefineHarpoon());
+            RegenerateSkill(DefineTargetingLock());
+            RegenerateSkill(DefineRecoilCannon());
+            RegenerateSkill(DefineRammingContest());
 
             AssetDatabase.SaveAssets();
             Debug.Log("[SkillCreator] All skills regenerated.");
@@ -300,17 +301,17 @@ namespace Assets.Scripts.Skills
                 Opposed(
                     new OpposedCheckRollSpec
                     {
-                        attackerSpec = SkillCheckSpec.ForVehicle(VehicleCheckAttribute.Stability),
-                        defenderSpec = SkillCheckSpec.ForVehicle(VehicleCheckAttribute.Stability)
+                        attackerSpec = SkillCheckSpec.ForVehicle(VehicleCheckAttribute.Mobility),
+                        defenderSpec = SkillCheckSpec.ForVehicle(VehicleCheckAttribute.Mobility)
                     },
                     onWin:  FX(Dmg(2, 6, 2, DamageType.Bludgeoning, EffectTarget.SelectedTarget)),
                     onLose: FX(Dmg(1, 6, 0, DamageType.Bludgeoning, EffectTarget.SourceComponent))),
                 TargetingMode.Enemy,
                 energyCost: 1);
 
-        private static void RegenerateSkill(Skill definition, string assetName)
+        private static void RegenerateSkill(Skill definition)
         {
-            string path = $"{SkillsFolder}/{assetName}.asset";
+            string path = $"{SkillsFolder}/{definition.name}.asset";
             var existing = AssetDatabase.LoadAssetAtPath<Skill>(path);
             if (existing != null)
             {

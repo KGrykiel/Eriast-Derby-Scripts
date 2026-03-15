@@ -2,7 +2,7 @@
 using Assets.Scripts.Stages;
 using Assets.Scripts.Stages.Lanes;
 using Assets.Scripts.StatusEffects;
-using Assets.Scripts.Combat.RollSpecs;
+using Assets.Scripts.Combat.Rolls.RollSpecs;
 
 namespace Assets.Scripts.Tests.Helpers
 {

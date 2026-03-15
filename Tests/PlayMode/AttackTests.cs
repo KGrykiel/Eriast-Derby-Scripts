@@ -3,8 +3,8 @@ using System.Linq;
 using NUnit.Framework;
 using UnityEngine;
 using UnityEngine.TestTools;
-using Assets.Scripts.Combat.Attacks;
 using Assets.Scripts.Tests.Helpers;
+using Assets.Scripts.Combat.Rolls.RollTypes.Attacks;
 
 namespace Assets.Scripts.Tests.PlayMode
 {

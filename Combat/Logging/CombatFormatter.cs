@@ -1,12 +1,13 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using Assets.Scripts.Combat.Attacks;
 using Assets.Scripts.Combat.Damage;
-using Assets.Scripts.Combat.OpposedChecks;
-using Assets.Scripts.Combat.RollSpecs;
-using Assets.Scripts.Combat.Saves;
-using Assets.Scripts.Combat.SkillChecks;
+using Assets.Scripts.Combat.Rolls;
+using Assets.Scripts.Combat.Rolls.RollSpecs.SpecTypes;
+using Assets.Scripts.Combat.Rolls.RollTypes.Attacks;
+using Assets.Scripts.Combat.Rolls.RollTypes.OpposedChecks;
+using Assets.Scripts.Combat.Rolls.RollTypes.Saves;
+using Assets.Scripts.Combat.Rolls.RollTypes.SkillChecks;
 using Assets.Scripts.Core;
 using Assets.Scripts.StatusEffects;
 

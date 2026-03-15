@@ -1,5 +1,5 @@
 ﻿using Assets.Scripts.Characters;
-using Assets.Scripts.Combat.RollSpecs;
+using Assets.Scripts.Combat.Rolls.RollSpecs.SpecTypes;
 using Assets.Scripts.Entities.Vehicle;
 
 namespace Assets.Scripts.Combat

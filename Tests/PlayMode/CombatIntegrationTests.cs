@@ -4,17 +4,14 @@ using NUnit.Framework;
 using UnityEngine;
 using UnityEngine.TestTools;
 using Assets.Scripts.Characters;
-using Assets.Scripts.Combat;
-using Assets.Scripts.Combat.Attacks;
 using Assets.Scripts.Combat.Damage;
-using Assets.Scripts.Combat.SkillChecks;
-using Assets.Scripts.Combat.Saves;
-using Assets.Scripts.Stages;
 using Assets.Scripts.Stages.Lanes;
 using Assets.Scripts.StatusEffects;
-using Assets.Scripts.Skills.Helpers;
 using Assets.Scripts.Tests.Helpers;
-using Assets.Scripts.Combat.RollSpecs;
+using Assets.Scripts.Combat.Rolls.RollTypes.Attacks;
+using Assets.Scripts.Combat.Rolls.RollTypes.SkillChecks;
+using Assets.Scripts.Combat.Rolls.RollSpecs;
+using Assets.Scripts.Combat.Rolls.RollSpecs.SpecTypes;
 
 namespace Assets.Scripts.Tests.PlayMode
 {

@@ -3,8 +3,8 @@ using NUnit.Framework;
 using UnityEngine;
 using UnityEngine.TestTools;
 using Assets.Scripts.Characters;
-using Assets.Scripts.Combat.SkillChecks;
 using Assets.Scripts.Tests.Helpers;
+using Assets.Scripts.Combat.Rolls.RollTypes.SkillChecks;
 
 namespace Assets.Scripts.Tests.PlayMode
 {

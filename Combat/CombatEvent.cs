@@ -1,10 +1,10 @@
 ﻿using UnityEngine;
-using Assets.Scripts.Combat.SkillChecks;
-using Assets.Scripts.Combat.Saves;
 using Assets.Scripts.Combat.Damage;
 using Assets.Scripts.StatusEffects;
-using Assets.Scripts.Combat.Attacks;
-using Assets.Scripts.Combat.OpposedChecks;
+using Assets.Scripts.Combat.Rolls.RollTypes.Attacks;
+using Assets.Scripts.Combat.Rolls.RollTypes.OpposedChecks;
+using Assets.Scripts.Combat.Rolls.RollTypes.Saves;
+using Assets.Scripts.Combat.Rolls.RollTypes.SkillChecks;
 
 namespace Assets.Scripts.Combat
 {

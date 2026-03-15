@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using EventType = Assets.Scripts.Logging.EventType;
 using Assets.Scripts.Logging;
-using Assets.Scripts.Combat.OpposedChecks;
 using Assets.Scripts.Core;
 
 namespace Assets.Scripts.Combat.Logging

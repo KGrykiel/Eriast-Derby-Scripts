@@ -7,7 +7,7 @@ using TMPro;
 using Assets.Scripts.Events.EventCard.EventCardTypes;
 using Assets.Scripts.Events.EventCard;
 using Assets.Scripts.Combat.Damage;
-using Assets.Scripts.Combat.RollSpecs;
+using Assets.Scripts.Combat.Rolls.RollSpecs.SpecTypes;
 
 namespace Assets.Scripts.UI.Components
 {

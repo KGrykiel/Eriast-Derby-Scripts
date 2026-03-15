@@ -1,4 +1,4 @@
-﻿using Assets.Scripts.Combat.RollSpecs;
+﻿using Assets.Scripts.Combat.Rolls.RollSpecs;
 using UnityEngine;
 
 namespace Assets.Scripts.Skills.Helpers

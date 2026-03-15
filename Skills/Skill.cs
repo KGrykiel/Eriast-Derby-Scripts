@@ -1,6 +1,6 @@
 ﻿using UnityEngine;
-using Assets.Scripts.Combat.RollSpecs;
 using SerializeReferenceEditor;
+using Assets.Scripts.Combat.Rolls.RollSpecs;
 
 
 /// <summary>

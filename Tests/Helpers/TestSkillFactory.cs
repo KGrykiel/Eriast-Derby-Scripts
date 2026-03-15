@@ -1,7 +1,8 @@
 ﻿using UnityEngine;
 using Assets.Scripts.Characters;
 using Assets.Scripts.Combat.Damage;
-using Assets.Scripts.Combat.RollSpecs;
+using Assets.Scripts.Combat.Rolls.RollSpecs;
+using Assets.Scripts.Combat.Rolls.RollSpecs.SpecTypes;
 
 namespace Assets.Scripts.Tests.Helpers
 {

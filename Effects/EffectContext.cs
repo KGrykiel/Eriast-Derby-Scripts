@@ -1,5 +1,5 @@
 ﻿using Assets.Scripts.Combat.Damage;
-using Assets.Scripts.Combat.RollSpecs;
+using Assets.Scripts.Combat.Rolls.RollSpecs;
 
 namespace Assets.Scripts.Effects
 {

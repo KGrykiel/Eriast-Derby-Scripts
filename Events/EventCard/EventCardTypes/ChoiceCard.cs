@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 using SerializeReferenceEditor;
-using Assets.Scripts.Combat.RollSpecs;
+using Assets.Scripts.Combat.Rolls.RollSpecs;
 
 namespace Assets.Scripts.Events.EventCard.EventCardTypes
 {

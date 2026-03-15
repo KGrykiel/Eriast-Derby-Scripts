@@ -1,7 +1,6 @@
 ﻿using System.Linq;
 using NUnit.Framework;
 using UnityEngine;
-using Assets.Scripts.StatusEffects;
 using Assets.Scripts.Tests.Helpers;
 
 namespace Assets.Scripts.Tests.PlayMode
