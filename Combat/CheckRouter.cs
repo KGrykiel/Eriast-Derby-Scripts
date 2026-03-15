@@ -163,7 +163,8 @@ namespace Assets.Scripts.Combat
             Attribute attribute = checkAttr.ToAttribute();
             return attribute switch
             {
-                Attribute.Mobility => vehicle.chassis,
+                Attribute.Mobility  => vehicle.chassis,
+                Attribute.Integrity => vehicle.chassis,
                 _ => null
             };
         }

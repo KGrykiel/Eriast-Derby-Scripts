@@ -12,6 +12,12 @@ public class ChassisComponent : VehicleComponent
     [Tooltip("Base mobility for saving throws (dodging, evasion). Higher = easier to dodge AOE/traps (base value before modifiers).")]
     private int baseMobility = 8;
 
+    [SerializeField]
+    [Tooltip("Structural quality of this vehicle's build. Cheap components = low, professionally built = high. " +
+             "Effective integrity also decreases as the chassis takes damage, modelling how a battered vehicle " +
+             "is less able to withstand further stress (base value before modifiers).")]
+    private int baseIntegrity = 1;
+
     [Header("Chassis Size")]
     [Tooltip("Size category determines AC, mobility, and speed modifiers. Larger = easier to hit, harder to maneuver.")]
     public VehicleSizeCategory sizeCategory = VehicleSizeCategory.Medium;
@@ -37,6 +43,7 @@ public class ChassisComponent : VehicleComponent
         sizeCategory = VehicleSizeCategory.Medium;
         basePowerDrawPerTurn = 0;
         roleType = RoleType.None;
+        baseIntegrity = 1;
     }
 
     void Awake()
@@ -48,19 +55,35 @@ public class ChassisComponent : VehicleComponent
     // ==================== STAT ACCESSORS ====================
 
     public int GetBaseMobility() => baseMobility;
+    public int GetBaseIntegrity() => baseIntegrity;
     public int GetBaseDragCoefficientPercent() => baseDragCoefficientPercent;
 
     public int GetMobility() => StatCalculator.GatherAttributeValue(this, Attribute.Mobility);
+    public int GetIntegrity() => StatCalculator.GatherAttributeValue(this, Attribute.Integrity);
     public int GetDragCoefficientPercent() => StatCalculator.GatherAttributeValue(this, Attribute.DragCoefficient);
 
     public override int GetBaseValue(Attribute attribute)
     {
         return attribute switch
         {
-            Attribute.Mobility => baseMobility,
+            Attribute.Mobility        => baseMobility,
+            Attribute.Integrity       => baseIntegrity + GetIntegrityDamagePenalty(),
             Attribute.DragCoefficient => baseDragCoefficientPercent,
             _ => base.GetBaseValue(attribute)
         };
+    }
+
+    // Chassis takes a tiered penalty to integrity as it accumulates damage.
+    // Models how a battered structure is less able to withstand further stress.
+    // TODO: consider making it smarter, the below should be considered as a placeholder.
+    private int GetIntegrityDamagePenalty()
+    {
+        if (baseMaxHealth <= 0) return 0;
+        float ratio = (float)health / baseMaxHealth;
+        if (ratio > 0.75f) return 0;
+        if (ratio > 0.50f) return -1;
+        if (ratio > 0.25f) return -3;
+        return -5;
     }
 
     // ==================== STATS ====================

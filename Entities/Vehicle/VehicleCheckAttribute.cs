@@ -8,8 +8,9 @@
         
         /// <summary>Holding course, resisting knockback/spin. Component: Drive.</summary>
         Stability,
-        
-        // Integrity
+
+        /// <summary>Structural quality and damage resilience. Component: Chassis.</summary>
+        Integrity,
     }
     
     public static class VehicleCheckAttributeHelper
@@ -21,9 +22,10 @@
         {
             return checkAttr switch
             {
-                VehicleCheckAttribute.Mobility => Attribute.Mobility,
-                VehicleCheckAttribute.Stability => Attribute.Stability,
-                _ => Attribute.Mobility
+                VehicleCheckAttribute.Mobility   => Attribute.Mobility,
+                VehicleCheckAttribute.Stability  => Attribute.Stability,
+                VehicleCheckAttribute.Integrity  => Attribute.Integrity,
+                _                                => Attribute.Mobility
             };
         }
     }

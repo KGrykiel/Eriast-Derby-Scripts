@@ -135,6 +135,30 @@ public class Vehicle : MonoBehaviour
         return seats.Where(s => s != null && s.CanAct()).ToList();
     }
 
+    // ==================== STATE QUERIES ====================
+
+    /// <summary>Live vehicle state values that can be queried for threshold checks.</summary>
+    public enum RuntimeState
+    {
+        CurrentSpeed,
+        CurrentEnergy,
+        CurrentHealth,
+        CurrentProgress,
+    }
+
+    /// <summary>Returns the current value of a live vehicle state. Used by StateThresholdSpec.</summary>
+    public int GetStateValue(RuntimeState state)
+    {
+        return state switch
+        {
+            RuntimeState.CurrentSpeed    => GetDriveComponent()?.GetCurrentSpeed() ?? 0,
+            RuntimeState.CurrentEnergy   => powerCore?.GetCurrentEnergy() ?? 0,
+            RuntimeState.CurrentHealth   => chassis?.GetCurrentHealth() ?? 0,
+            RuntimeState.CurrentProgress => progress,
+            _                            => 0
+        };
+    }
+
     // ==================== EFFECT ROUTING ====================
 
     public void UpdateStatusEffects()

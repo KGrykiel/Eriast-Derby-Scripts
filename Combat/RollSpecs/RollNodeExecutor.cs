@@ -45,12 +45,13 @@ namespace Assets.Scripts.Combat.RollSpecs
         {
             return node.rollSpec switch
             {
-                null                 => (true, ctx),
-                SkillCheckSpec spec  => (ResolveSkillCheck(spec, node.dc, ctx, causalSource), ctx),
-                SaveSpec spec        => (ResolveSavingThrow(spec, node.dc, ctx, causalSource), ctx),
-                AttackSpec spec      => ResolveAttack(spec, node, ctx, causalSource),
-                OpposedCheckRollSpec => (ResolveOpposedCheck(ctx), ctx),
-                _                    => (false, ctx)
+                null                       => (true, ctx),
+                SkillCheckSpec spec         => (ResolveSkillCheck(spec, node.dc, ctx, causalSource), ctx),
+                SaveSpec spec               => (ResolveSavingThrow(spec, node.dc, ctx, causalSource), ctx),
+                AttackSpec spec             => ResolveAttack(spec, node, ctx, causalSource),
+                StateThresholdSpec spec     => (ResolveStateThreshold(spec, ctx), ctx),
+                OpposedCheckRollSpec        => (ResolveOpposedCheck(ctx), ctx),
+                _                           => (false, ctx)
             };
         }
 
@@ -114,6 +115,16 @@ namespace Assets.Scripts.Combat.RollSpecs
                 .WithCriticalHit(result.Roll.IsCriticalHit);
 
             return (result.HitTarget != null, updatedCtx);
+        }
+
+        private static bool ResolveStateThreshold(StateThresholdSpec spec, RollContext ctx)
+        {
+            int value = ctx.SourceVehicle.GetStateValue(spec.state);
+            bool success = value >= spec.minimumValue;
+
+            Debug.Log($"[StateThreshold] {ctx.SourceVehicle?.vehicleName}: {spec.state} {value} vs minimum {spec.minimumValue} — {(success ? "PASS" : "FAIL")}");
+
+            return success;
         }
 
         private static bool ResolveOpposedCheck(RollContext ctx)
