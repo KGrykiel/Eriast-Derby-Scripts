@@ -4,6 +4,7 @@ using Assets.Scripts.Combat.Saves;
 using Assets.Scripts.Combat.Damage;
 using Assets.Scripts.StatusEffects;
 using Assets.Scripts.Combat.Attacks;
+using Assets.Scripts.Combat.OpposedChecks;
 
 namespace Assets.Scripts.Combat
 {
@@ -159,7 +160,7 @@ namespace Assets.Scripts.Combat
 
         /// <summary>Null for vehicle-only checks.</summary>
         public Character Character { get; set; }
-        
+
         public SkillCheckEvent(
             SkillCheckResult result,
             Entity source,
@@ -173,6 +174,25 @@ namespace Assets.Scripts.Combat
             CausalSource = causalSource;
             Succeeded = succeeded;
             Character = character;
+        }
+    }
+
+    public class OpposedCheckEvent : CombatEvent
+    {
+        public OpposedCheckResult Result { get; set; }
+        public bool AttackerWins { get; set; }
+
+        public OpposedCheckEvent(
+            OpposedCheckResult result,
+            Entity attacker,
+            Entity defender,
+            UnityEngine.Object causalSource)
+        {
+            Result = result;
+            Source = attacker;
+            Target = defender;
+            CausalSource = causalSource;
+            AttackerWins = result.AttackerWins;
         }
     }
 }

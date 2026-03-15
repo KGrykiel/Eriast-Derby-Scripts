@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using Assets.Scripts.Combat.Attacks;
+using Assets.Scripts.Combat.OpposedChecks;
 using Assets.Scripts.Combat.SkillChecks;
 using Assets.Scripts.Combat.Saves;
 using Assets.Scripts.Effects;
@@ -50,7 +51,7 @@ namespace Assets.Scripts.Combat.RollSpecs
                 SaveSpec spec               => (ResolveSavingThrow(spec, node.dc, ctx, causalSource), ctx),
                 AttackSpec spec             => ResolveAttack(spec, node, ctx, causalSource),
                 StateThresholdSpec spec     => (ResolveStateThreshold(spec, ctx), ctx),
-                OpposedCheckRollSpec        => (ResolveOpposedCheck(ctx), ctx),
+                OpposedCheckRollSpec spec   => (ResolveOpposedCheck(spec, ctx, causalSource), ctx),
                 _                           => (false, ctx)
             };
         }
@@ -127,10 +128,25 @@ namespace Assets.Scripts.Combat.RollSpecs
             return success;
         }
 
-        private static bool ResolveOpposedCheck(RollContext ctx)
+        private static bool ResolveOpposedCheck(OpposedCheckRollSpec spec, RollContext ctx, Object causalSource)
         {
-            Debug.LogWarning("[RollNodeExecutor] OpposedCheck is not yet implemented.");
-            return false;
+            if (ctx.TargetVehicle == null)
+            {
+                Debug.LogError("[RollNodeExecutor] OpposedCheck requires a TargetVehicle in RollContext.");
+                return false;
+            }
+
+            var checkCtx = new OpposedCheckExecutionContext
+            {
+                AttackerVehicle = ctx.SourceVehicle,
+                DefenderVehicle = ctx.TargetVehicle,
+                Spec = spec,
+                CausalSource = causalSource,
+                AttackerCharacter = ctx.SourceCharacter
+            };
+
+            var result = OpposedCheckPerformer.Execute(checkCtx);
+            return result.AttackerWins;
         }
 
         // ==================== EFFECT APPLICATION ====================

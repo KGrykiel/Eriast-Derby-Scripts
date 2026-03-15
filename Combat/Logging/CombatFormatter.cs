@@ -3,6 +3,7 @@ using System.Linq;
 using System.Text;
 using Assets.Scripts.Combat.Attacks;
 using Assets.Scripts.Combat.Damage;
+using Assets.Scripts.Combat.OpposedChecks;
 using Assets.Scripts.Combat.RollSpecs;
 using Assets.Scripts.Combat.Saves;
 using Assets.Scripts.Combat.SkillChecks;
@@ -37,7 +38,8 @@ namespace Assets.Scripts.Combat.Logging
             string header,
             string targetLabel,
             string successText,
-            string failText)
+            string failText,
+            bool showResult = true)
         {
             var sb = new StringBuilder();
             sb.AppendLine($"{header}:");
@@ -55,8 +57,11 @@ namespace Assets.Scripts.Combat.Logging
             if (roll.TargetValue > 0)
             {
                 sb.AppendLine($"  vs {targetLabel}: {roll.TargetValue}");
-                string resultText = roll.Success ? successText : failText;
-                sb.AppendLine($"  Result: {resultText}");
+                if (showResult)
+                {
+                    string resultText = roll.Success ? successText : failText;
+                    sb.AppendLine($"  Result: {resultText}");
+                }
             }
 
             return sb.ToString();
@@ -79,6 +84,30 @@ namespace Assets.Scripts.Combat.Logging
         {
             if (result == null) return "No roll data";
             return FormatD20RollDetailed(result.Roll, $"{result.Spec.DisplayName} Check", "DC", "SUCCESS", "FAILURE");
+        }
+
+        public static string FormatOpposedCheckDetailed(OpposedCheckResult result)
+        {
+            if (result == null) return "No roll data";
+
+            string winner = result.AttackerWins ? "Attacker wins" : "Defender wins";
+            string winnerColor = result.AttackerWins ? Colors.Success : Colors.Failure;
+
+            var sb = new StringBuilder();
+            sb.AppendLine($"<color={winnerColor}>{winner}</color> — {result.AttackerRoll.Total} vs {result.DefenderRoll.Total}");
+            sb.AppendLine();
+            sb.Append(FormatD20RollDetailed(
+                result.AttackerRoll,
+                $"Attacker ({result.AttackerSpec.DisplayName})",
+                "Opponent", "WINS", "LOSES",
+                showResult: false));
+            sb.AppendLine();
+            sb.Append(FormatD20RollDetailed(
+                result.DefenderRoll,
+                $"Defender ({result.DefenderSpec.DisplayName})",
+                "Opponent", "WINS", "LOSES",
+                showResult: false));
+            return sb.ToString();
         }
 
         // ==================== DC / DEFENSE FORMATTING ====================

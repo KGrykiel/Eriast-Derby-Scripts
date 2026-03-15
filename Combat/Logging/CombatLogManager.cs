@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using EventType = Assets.Scripts.Logging.EventType;
 using Assets.Scripts.Logging;
+using Assets.Scripts.Combat.OpposedChecks;
 using Assets.Scripts.Core;
 
 namespace Assets.Scripts.Combat.Logging
@@ -22,6 +23,7 @@ namespace Assets.Scripts.Combat.Logging
             LogAttackRolls(action);
             LogSavingThrows(action);
             LogSkillChecks(action);
+            LogOpposedChecks(action);
             LogDamageByTarget(action);
             LogStatusEffects(action);
             LogRestorations(action);
@@ -38,6 +40,7 @@ namespace Assets.Scripts.Combat.Logging
                 case AttackRollEvent attack:     LogSingleAttackRoll(attack); break;
                 case SavingThrowEvent save:      LogSingleSavingThrow(save); break;
                 case SkillCheckEvent check:      LogSingleSkillCheck(check); break;
+                case OpposedCheckEvent opposed:  LogSingleOpposedCheck(opposed); break;
             }
         }
 
@@ -167,6 +170,41 @@ namespace Assets.Scripts.Combat.Logging
 
             if (evt.Result != null && evt.CausalSource is Skill skill)
                 logEvt.WithMetadata("dcBreakdown", $"{checkTypeName} Check DC: {evt.Result.Roll.TargetValue} ({skill.name})");
+        }
+
+        // ==================== OPPOSED CHECK LOGGING ====================
+
+        private static void LogOpposedChecks(CombatAction action)
+        {
+            foreach (var evt in action.GetOpposedCheckEvents())
+                LogSingleOpposedCheck(evt, action);
+        }
+
+        private static void LogSingleOpposedCheck(OpposedCheckEvent evt, CombatAction action = null)
+        {
+            Vehicle attackerVehicle = EntityHelpers.GetParentVehicle(evt.Source);
+            Vehicle defenderVehicle = EntityHelpers.GetParentVehicle(evt.Target);
+
+            string winnerName = evt.AttackerWins
+                ? (attackerVehicle?.vehicleName ?? "Attacker")
+                : (defenderVehicle?.vehicleName ?? "Defender");
+            string loserName = evt.AttackerWins
+                ? (defenderVehicle?.vehicleName ?? "Defender")
+                : (attackerVehicle?.vehicleName ?? "Attacker");
+            string skillName = action?.SourceName ?? (evt.CausalSource != null ? evt.CausalSource.name : "contest");
+            int attackerTotal = evt.Result?.AttackerRoll?.Total ?? 0;
+            int defenderTotal = evt.Result?.DefenderRoll?.Total ?? 0;
+
+            string message = $"{winnerName} wins {skillName} against {loserName} ({attackerTotal} vs {defenderTotal}).";
+
+            var logEvt = RaceHistory.Log(
+                EventType.Combat, EventImportance.High, message,
+                attackerVehicle != null ? attackerVehicle.currentStage : null,
+                attackerVehicle, defenderVehicle);
+
+            logEvt.WithMetadata("skillName", skillName)
+                  .WithMetadata("result", evt.AttackerWins ? "attacker_wins" : "defender_wins")
+                  .WithMetadata("rollBreakdown", evt.Result != null ? CombatFormatter.FormatOpposedCheckDetailed(evt.Result) : "");
         }
 
         // ==================== DAMAGE LOGGING ====================

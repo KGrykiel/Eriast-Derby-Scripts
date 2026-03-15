@@ -5,6 +5,7 @@ using Assets.Scripts.Combat.Saves;
 using Assets.Scripts.Combat.Damage;
 using Assets.Scripts.StatusEffects;
 using Assets.Scripts.Combat.Attacks;
+using Assets.Scripts.Combat.OpposedChecks;
 using Assets.Scripts.Combat.Logging;
 
 namespace Assets.Scripts.Combat
@@ -137,6 +138,15 @@ namespace Assets.Scripts.Combat
             Character character = null)
         {
             Emit(new SkillCheckEvent(result, source, causalSource, succeeded, character));
+        }
+
+        public static void EmitOpposedCheck(
+            OpposedCheckResult result,
+            Entity attacker,
+            Entity defender,
+            Object causalSource)
+        {
+            Emit(new OpposedCheckEvent(result, attacker, defender, causalSource));
         }
 
         // ==================== UTILITY ====================

@@ -216,6 +216,7 @@ namespace Assets.Scripts.Skills
             RegenerateSkill(DefineHarpoon(),         "Harpoon");
             RegenerateSkill(DefineTargetingLock(),   "TargetingLock");
             RegenerateSkill(DefineRecoilCannon(),    "RecoilCannon");
+            RegenerateSkill(DefineRammingContest(),  "RammingContest");
 
             AssetDatabase.SaveAssets();
             Debug.Log("[SkillCreator] All skills regenerated.");
@@ -291,6 +292,21 @@ namespace Assets.Scripts.Skills
                     Dmg(1, 6, 0, DamageType.Force, EffectTarget.SourceComponent))),
                 TargetingMode.EnemyComponent,
                 energyCost: 3);
+
+        // Pattern: opposed check — both sides roll Stability; attacker wins → deal damage;
+        // defender wins → attacker takes self-damage from the failed ram.
+        private static Skill DefineRammingContest()
+            => Make("Ramming Contest",
+                Opposed(
+                    new OpposedCheckRollSpec
+                    {
+                        attackerSpec = SkillCheckSpec.ForVehicle(VehicleCheckAttribute.Stability),
+                        defenderSpec = SkillCheckSpec.ForVehicle(VehicleCheckAttribute.Stability)
+                    },
+                    onWin:  FX(Dmg(2, 6, 2, DamageType.Bludgeoning, EffectTarget.SelectedTarget)),
+                    onLose: FX(Dmg(1, 6, 0, DamageType.Bludgeoning, EffectTarget.SourceComponent))),
+                TargetingMode.Enemy,
+                energyCost: 1);
 
         private static void RegenerateSkill(Skill definition, string assetName)
         {
@@ -395,6 +411,19 @@ namespace Assets.Scripts.Skills
                 successEffects = onSuccess ?? new List<EffectInvocation>(),
                 failureEffects = onFail ?? new List<EffectInvocation>(),
                 onSuccessChain = successChain
+            };
+
+        private static RollNode Opposed(
+            OpposedCheckRollSpec spec,
+            List<EffectInvocation> onWin,
+            List<EffectInvocation> onLose = null,
+            RollNode winChain = null)
+            => new RollNode
+            {
+                rollSpec = spec,
+                successEffects = onWin ?? new List<EffectInvocation>(),
+                failureEffects = onLose ?? new List<EffectInvocation>(),
+                onSuccessChain = winChain
             };
 
         private static Skill Make(

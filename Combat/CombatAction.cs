@@ -61,6 +61,9 @@ namespace Assets.Scripts.Combat
         public IEnumerable<SkillCheckEvent> GetSkillCheckEvents() 
             => Events.OfType<SkillCheckEvent>();
 
+        public IEnumerable<OpposedCheckEvent> GetOpposedCheckEvents()
+            => Events.OfType<OpposedCheckEvent>();
+
         public Dictionary<Entity, List<DamageEvent>> GetDamageByTarget()
         {
             return GetDamageEvents()
