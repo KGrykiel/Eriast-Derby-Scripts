@@ -18,11 +18,11 @@ namespace Assets.Scripts.Combat.Rolls.RollTypes.SkillChecks
             SkillCheckResult result;
             if (!routing.CanAttempt)
             {
-                result = SkillCheckCalculator.AutoFail(ctx.Spec, ctx.DC);
+                result = SkillCheckCalculator.AutoFail(ctx.Spec);
             }
             else
             {
-                result = SkillCheckCalculator.Compute(ctx.Spec, ctx.DC, routing.Component, routing.Character);
+                result = SkillCheckCalculator.Compute(ctx.Spec, routing.Component, routing.Character);
             }
 
             // Step 3: Emit event automatically (WOTR-style)
@@ -41,10 +41,9 @@ namespace Assets.Scripts.Combat.Rolls.RollTypes.SkillChecks
         public static SkillCheckResult ExecuteForEntity(
             Entity entity,
             SkillCheckSpec spec,
-            int dc,
             Object causalSource)
         {
-            var result = SkillCheckCalculator.Compute(spec, dc, entity);
+            var result = SkillCheckCalculator.Compute(spec, entity);
 
             CombatEventBus.EmitSkillCheck(
                 result,

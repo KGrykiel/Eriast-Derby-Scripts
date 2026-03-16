@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using Assets.Scripts.Characters;
+using Assets.Scripts.Combat.Rolls.Advantage;
 using Assets.Scripts.Combat.Rolls.RollSpecs.SpecTypes;
 
 namespace Assets.Scripts.Combat.Rolls.RollTypes.SkillChecks
@@ -12,12 +13,15 @@ namespace Assets.Scripts.Combat.Rolls.RollTypes.SkillChecks
     {
         public static SkillCheckResult Compute(
             SkillCheckSpec checkSpec,
-            int dc,
             Entity entity = null,
             Character character = null)
         {
             var bonuses = GatherBonuses(checkSpec, entity, character);
-            var roll = D20Calculator.Roll(bonuses, dc);
+            var grantedSource = checkSpec.grantedMode != RollMode.Normal
+                ? new AdvantageSource(checkSpec.DisplayName, checkSpec.grantedMode)
+                : default;
+            var advantageSources = D20RollHelpers.GatherAdvantageSources(entity, checkSpec, grantedSource);
+            var roll = D20Calculator.Roll(bonuses, checkSpec.dc, advantageSources);
             return new SkillCheckResult(roll, checkSpec, character);
         }
 
@@ -69,14 +73,13 @@ namespace Assets.Scripts.Combat.Rolls.RollTypes.SkillChecks
         }
 
         /// <summary>For generating auto-failed skill checks when e.g. no suitable character found</summary>
-        public static SkillCheckResult AutoFail(SkillCheckSpec spec, int dc)
+        public static SkillCheckResult AutoFail(SkillCheckSpec spec)
         {
             return new SkillCheckResult(
-                D20Calculator.AutoFail(dc),
+                D20Calculator.AutoFail(spec.dc),
                 spec,
                 character: null,
                 isAutoFail: true);
         }
     }
 }
-

@@ -9,7 +9,7 @@
         public static AttackResult Execute(AttackExecutionContext ctx)
         {
             // Roll against primary target, conclude if successful
-            var primaryResult = AttackCalculator.Compute(ctx.Target, ctx.Attacker, ctx.Character);
+            var primaryResult = AttackCalculator.Compute(ctx.Spec, ctx.Target, ctx.Attacker, ctx.Character);
 
             if (primaryResult.Roll.Success)
             {

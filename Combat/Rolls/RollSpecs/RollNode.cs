@@ -18,9 +18,6 @@ namespace Assets.Scripts.Combat.Rolls.RollSpecs
         [Tooltip("What kind of roll this node requires. Leave null for an unconditional effect (always succeeds).")]
         public IRollSpec rollSpec;
 
-        [Tooltip("Difficulty class for skill checks and saves. Ignored by attacks (use target AC) and opposed checks (compare rolls).")] 
-        public int dc = 15;
-
         [Header("Effects")]
         [Tooltip("Effects applied on a successful roll, or always if rollSpec is null.")]
         public List<EffectInvocation> successEffects = new();

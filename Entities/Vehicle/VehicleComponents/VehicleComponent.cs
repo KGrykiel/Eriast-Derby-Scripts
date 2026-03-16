@@ -5,6 +5,7 @@ using System;
 using Assets.Scripts.Entities;
 using Assets.Scripts.Core;
 using Assets.Scripts.Entities.Vehicle.VehicleComponents;
+using Assets.Scripts.Combat.Rolls.Advantage;
 
 /// <summary>
 /// Base class for vehicle components. Components ARE Entities (have HP, can be damaged).
@@ -52,6 +53,10 @@ public abstract class VehicleComponent : Entity
     [Header("Skills")]
     [Tooltip("Skills provided by this component (assigned in Inspector)")]
     public List<Skill> componentSkills = new();
+
+    [Header("Advantage / Disadvantage")]
+    [Tooltip("Intrinsic advantage/disadvantage grants while this component is operational")]
+    public List<AdvantageGrant> advantageGrants = new();
     
     // Reference to parent vehicle (set during initialization)
     protected Vehicle parentVehicle;

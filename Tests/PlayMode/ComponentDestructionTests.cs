@@ -39,8 +39,8 @@ namespace Assets.Scripts.Tests.PlayMode
             var utility = vehicle.optionalComponents[0];
 
             // First attempt - should work
-            var spec = TestSkillFactory.CharacterSkillCheck(CharacterSkill.Mechanics, requiredComponent: ComponentType.Utility);
-            var resultBefore = SkillCheckPerformer.Execute(new SkillCheckExecutionContext { Vehicle = vehicle, Spec = spec, DC = 10, CausalSource = null, InitiatingCharacter = character });
+            var spec = TestSkillFactory.CharacterSkillCheck(CharacterSkill.Mechanics, requiredComponent: ComponentType.Utility, dc: 10);
+            var resultBefore = SkillCheckPerformer.Execute(new SkillCheckExecutionContext { Vehicle = vehicle, Spec = spec, CausalSource = null, InitiatingCharacter = character });
             yield return null;
             Assert.IsFalse(resultBefore.IsAutoFail, "Should succeed before destruction");
 
@@ -49,7 +49,7 @@ namespace Assets.Scripts.Tests.PlayMode
             Assert.IsTrue(utility.isDestroyed, "Utility should be destroyed");
 
             // Second attempt - should auto-fail
-            var resultAfter = SkillCheckPerformer.Execute(new SkillCheckExecutionContext { Vehicle = vehicle, Spec = spec, DC = 10, CausalSource = null, InitiatingCharacter = character });
+            var resultAfter = SkillCheckPerformer.Execute(new SkillCheckExecutionContext { Vehicle = vehicle, Spec = spec, CausalSource = null, InitiatingCharacter = character });
             yield return null;
             Assert.IsTrue(resultAfter.IsAutoFail, "Should auto-fail after component destroyed");
         }
@@ -66,13 +66,13 @@ namespace Assets.Scripts.Tests.PlayMode
                 .Build();
 
             var utility = vehicle.optionalComponents[0];
-            var spec = TestSkillFactory.CharacterSkillCheck(CharacterSkill.Mechanics, requiredComponent: ComponentType.Utility);
+            var spec = TestSkillFactory.CharacterSkillCheck(CharacterSkill.Mechanics, requiredComponent: ComponentType.Utility, dc: 10);
 
             // Destroy
             utility.TakeDamage(utility.GetCurrentHealth());
             Assert.IsTrue(utility.isDestroyed, "Should be destroyed");
 
-            var resultDestroyed = SkillCheckPerformer.Execute(new SkillCheckExecutionContext { Vehicle = vehicle, Spec = spec, DC = 10, CausalSource = null, InitiatingCharacter = character });
+            var resultDestroyed = SkillCheckPerformer.Execute(new SkillCheckExecutionContext { Vehicle = vehicle, Spec = spec, CausalSource = null, InitiatingCharacter = character });
             yield return null;
             Assert.IsTrue(resultDestroyed.IsAutoFail, "Should auto-fail when destroyed");
 
@@ -83,7 +83,7 @@ namespace Assets.Scripts.Tests.PlayMode
             bool isOperational = utility.IsOperational;
             Assert.IsTrue(isOperational, "Should be operational after restoration");
 
-            var resultRestored = SkillCheckPerformer.Execute(new SkillCheckExecutionContext { Vehicle = vehicle, Spec = spec, DC = 10, CausalSource = null, InitiatingCharacter = character });
+            var resultRestored = SkillCheckPerformer.Execute(new SkillCheckExecutionContext { Vehicle = vehicle, Spec = spec, CausalSource = null, InitiatingCharacter = character });
             yield return null;
             Assert.IsFalse(resultRestored.IsAutoFail, "Should work after component restored");
         }

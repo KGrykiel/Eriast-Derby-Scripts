@@ -44,7 +44,19 @@ namespace Assets.Scripts.Combat.Logging
         {
             var sb = new StringBuilder();
             sb.AppendLine($"{header}:");
-            sb.AppendLine($"  d20: {roll.BaseRoll}");
+
+            if (roll.Advantage.DroppedRoll.HasValue)
+                sb.AppendLine($"  d20: {roll.BaseRoll} (dropped: {roll.Advantage.DroppedRoll.Value}) [{roll.Advantage.Mode}]");
+            else
+                sb.AppendLine($"  d20: {roll.BaseRoll}");
+
+            if (roll.Advantage.Sources != null && roll.Advantage.Sources.Length > 0)
+            {
+                foreach (var src in roll.Advantage.Sources)
+                {
+                    sb.AppendLine($"  {src.Label}: {src.Type}");
+                }
+            }
 
             foreach (var bonus in roll.Bonuses)
             {

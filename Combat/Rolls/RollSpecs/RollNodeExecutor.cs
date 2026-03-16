@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using Assets.Scripts.Combat.Rolls.Advantage;
 using Assets.Scripts.Effects;
 using UnityEngine;
 using Assets.Scripts.Combat.Rolls.RollTypes.Attacks;
@@ -48,22 +49,21 @@ namespace Assets.Scripts.Combat.Rolls.RollSpecs
             return node.rollSpec switch
             {
                 null                       => (true, ctx),
-                SkillCheckSpec spec         => (ResolveSkillCheck(spec, node.dc, ctx, causalSource), ctx),
-                SaveSpec spec               => (ResolveSavingThrow(spec, node.dc, ctx, causalSource), ctx),
-                AttackSpec spec             => ResolveAttack(spec, node, ctx, causalSource),
+                SkillCheckSpec spec         => (ResolveSkillCheck(spec, ctx, causalSource), ctx),
+                SaveSpec spec               => (ResolveSavingThrow(spec, ctx, causalSource), ctx),
+                AttackSpec spec             => ResolveAttack(spec, ctx, causalSource),
                 StateThresholdSpec spec     => (ResolveStateThreshold(spec, ctx), ctx),
                 OpposedCheckRollSpec spec   => (ResolveOpposedCheck(spec, ctx, causalSource), ctx),
                 _                           => (false, ctx)
             };
         }
 
-        private static bool ResolveSkillCheck(SkillCheckSpec spec, int dc, RollContext ctx, Object causalSource)
+        private static bool ResolveSkillCheck(SkillCheckSpec spec, RollContext ctx, Object causalSource)
         {
             var checkCtx = new SkillCheckExecutionContext
             {
                 Vehicle = ctx.SourceVehicle,
                 Spec = spec,
-                DC = dc,
                 CausalSource = causalSource,
                 InitiatingCharacter = ctx.SourceCharacter
             };
@@ -72,7 +72,7 @@ namespace Assets.Scripts.Combat.Rolls.RollSpecs
             return result.Roll.Success;
         }
 
-        private static bool ResolveSavingThrow(SaveSpec spec, int dc, RollContext ctx, Object causalSource)
+        private static bool ResolveSavingThrow(SaveSpec spec, RollContext ctx, Object causalSource)
         {
             // In skill context the target makes the save; in event/lane context the acting vehicle makes it.
             Vehicle roller = ctx.TargetVehicle != null ? ctx.TargetVehicle : ctx.SourceVehicle;
@@ -81,7 +81,6 @@ namespace Assets.Scripts.Combat.Rolls.RollSpecs
             {
                 Vehicle = roller,
                 Spec = spec,
-                DC = dc,
                 CausalSource = causalSource,
                 TargetComponent = ctx.TargetComponent,
                 AttackerEntity = ctx.SourceComponent
@@ -91,7 +90,7 @@ namespace Assets.Scripts.Combat.Rolls.RollSpecs
             return result.Roll.Success;
         }
 
-        private static (bool success, RollContext updatedCtx) ResolveAttack(AttackSpec spec, RollNode node, RollContext ctx, Object causalSource)
+        private static (bool success, RollContext updatedCtx) ResolveAttack(AttackSpec spec, RollContext ctx, Object causalSource)
         {
             if (ctx.TargetEntity == null)
             {

@@ -16,9 +16,6 @@ namespace Assets.Scripts.Combat.Rolls.RollTypes.SkillChecks
         /// <summary>Check specification — what skill/attribute to test.</summary>
         public SkillCheckSpec Spec;
 
-        /// <summary>Difficulty class to beat.</summary>
-        public int DC;
-
         /// <summary>What triggered this check (Skill, EventCard, LaneTurnEffect, etc.). Used for logging.</summary>
         public Object CausalSource;
 

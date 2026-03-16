@@ -25,10 +25,11 @@
 
             // Roll against chassis with penalty from spec
             var fallbackResult = AttackCalculator.Compute(
+                ctx.Spec,
                 vehicle.chassis, 
                 ctx.Attacker, 
                 ctx.Character, 
-                ctx.Spec.componentTargetingPenalty);
+                isFallback: true);
 
             Entity hitTarget = fallbackResult.Roll.Success ? vehicle.chassis : null;
             return new AttackResult(fallbackResult.Roll, hitTarget, wasFallback: true);

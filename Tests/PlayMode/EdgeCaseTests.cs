@@ -52,11 +52,11 @@ namespace Assets.Scripts.Tests.PlayMode
                 .WithWeapon(gunner2, weaponName: "Weapon2")
                 .Build();
 
-            var spec = TestSkillFactory.CharacterSkillCheck(CharacterSkill.Mechanics, requiredComponent: ComponentType.Weapon);
+            var spec = TestSkillFactory.CharacterSkillCheck(CharacterSkill.Mechanics, requiredComponent: ComponentType.Weapon, dc: 10);
 
-            var result1 = SkillCheckPerformer.Execute(new SkillCheckExecutionContext { Vehicle = vehicle, Spec = spec, DC = 10, CausalSource = null, InitiatingCharacter = null });
+            var result1 = SkillCheckPerformer.Execute(new SkillCheckExecutionContext { Vehicle = vehicle, Spec = spec, CausalSource = null, InitiatingCharacter = null });
             yield return null;
-            var result2 = SkillCheckPerformer.Execute(new SkillCheckExecutionContext { Vehicle = vehicle, Spec = spec, DC = 10, CausalSource = null, InitiatingCharacter = null });
+            var result2 = SkillCheckPerformer.Execute(new SkillCheckExecutionContext { Vehicle = vehicle, Spec = spec, CausalSource = null, InitiatingCharacter = null });
             yield return null;
 
             Assert.AreEqual(result1.Character, result2.Character, "Should deterministically select same character");
@@ -72,8 +72,8 @@ namespace Assets.Scripts.Tests.PlayMode
                 .WithUtility() // No character assigned
                 .Build();
 
-            var spec = TestSkillFactory.CharacterSkillCheck(CharacterSkill.Mechanics, requiredComponent: ComponentType.Utility);
-            var result = SkillCheckPerformer.Execute(new SkillCheckExecutionContext { Vehicle = vehicle, Spec = spec, DC = 10, CausalSource = null, InitiatingCharacter = null });
+            var spec = TestSkillFactory.CharacterSkillCheck(CharacterSkill.Mechanics, requiredComponent: ComponentType.Utility, dc: 10);
+            var result = SkillCheckPerformer.Execute(new SkillCheckExecutionContext { Vehicle = vehicle, Spec = spec, CausalSource = null, InitiatingCharacter = null });
             yield return null;
 
             Assert.IsNotNull(result);

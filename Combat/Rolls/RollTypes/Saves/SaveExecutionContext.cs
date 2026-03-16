@@ -16,9 +16,6 @@ namespace Assets.Scripts.Combat.Rolls.RollTypes.Saves
         /// <summary>Save specification — what attribute/skill to test.</summary>
         public SaveSpec Spec;
 
-        /// <summary>Difficulty class to beat.</summary>
-        public int DC;
-
         /// <summary>What triggered this save (Skill, EventCard, StatusEffect, etc.). Used for logging.</summary>
         public Object CausalSource;
 

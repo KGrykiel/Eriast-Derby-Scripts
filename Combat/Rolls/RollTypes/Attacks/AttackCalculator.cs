@@ -1,5 +1,7 @@
 ﻿using System.Collections.Generic;
 using Assets.Scripts.Characters;
+using Assets.Scripts.Combat.Rolls.Advantage;
+using Assets.Scripts.Combat.Rolls.RollSpecs.SpecTypes;
 
 namespace Assets.Scripts.Combat.Rolls.RollTypes.Attacks
 {
@@ -10,20 +12,25 @@ namespace Assets.Scripts.Combat.Rolls.RollTypes.Attacks
     public static class AttackCalculator
     {
         public static AttackResult Compute(
+            AttackSpec spec,
             Entity target,
             Entity attacker = null,
             Character character = null,
-            int additionalPenalty = 0)
+            bool isFallback = false)
         {
             var bonuses = GatherBonuses(attacker, character);
 
-            if (additionalPenalty != 0)
+            if (isFallback && spec.componentTargetingPenalty != 0)
             {
-                bonuses.Add(new RollBonus("Targeting Penalty", -additionalPenalty));
+                bonuses.Add(new RollBonus("Targeting Penalty", -spec.componentTargetingPenalty));
             }
 
+            var grantedSource = spec.grantedMode != RollMode.Normal
+                ? new AdvantageSource("Attack", spec.grantedMode)
+                : default;
+            var advantageSources = D20RollHelpers.GatherAdvantageSources(attacker, spec, grantedSource);
             int defenseValue = target.GetArmorClass();
-            var roll = D20Calculator.Roll(bonuses, defenseValue);
+            var roll = D20Calculator.Roll(bonuses, defenseValue, advantageSources);
 
             return new AttackResult(roll);
         }

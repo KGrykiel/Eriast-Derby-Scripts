@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using Assets.Scripts.Entities;
 using Assets.Scripts.Combat.Damage;
+using Assets.Scripts.Combat.Rolls.Advantage;
 
 namespace Assets.Scripts.StatusEffects
 {
@@ -41,7 +42,11 @@ namespace Assets.Scripts.StatusEffects
         [Header("Custom Behaviors (Optional)")]
         [Tooltip("Advanced: ScriptableObject behaviors for complex/unusual effects")]
         public List<StatusEffectBehavior> customBehaviors = new();
-        
+
+        [Header("Advantage / Disadvantage")]
+        [Tooltip("Advantage or disadvantage grants applied while this effect is active")]
+        public List<AdvantageGrant> advantageGrants = new();
+
         [Header("Duration")]
         [Tooltip("Base duration in turns. -1 = indefinite (permanent until dispelled), 0 = instant, >0 = number of turns")]
         public int baseDuration = -1;

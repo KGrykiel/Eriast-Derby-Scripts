@@ -1,4 +1,5 @@
-﻿using Assets.Scripts.Combat.Rolls.RollSpecs.SpecTypes;
+﻿using Assets.Scripts.Combat.Rolls.Advantage;
+using Assets.Scripts.Combat.Rolls.RollSpecs.SpecTypes;
 using Assets.Scripts.Combat.Rolls.RollTypes.SkillChecks;
 
 namespace Assets.Scripts.Combat.Rolls.RollTypes.OpposedChecks
@@ -16,23 +17,22 @@ namespace Assets.Scripts.Combat.Rolls.RollTypes.OpposedChecks
             var attackerBonuses = SkillCheckCalculator.GatherBonuses(attackerSpec, attackerEntity, attackerCharacter);
             var defenderBonuses = SkillCheckCalculator.GatherBonuses(defenderSpec, defenderEntity, defenderCharacter);
 
-            int attackerBase = RollUtility.RollD20();
-            int attackerMod = D20RollHelpers.SumBonuses(attackerBonuses);
-            int attackerTotal = attackerBase + attackerMod;
+            var attackerGrantedSource = attackerSpec.grantedMode != RollMode.Normal
+                ? new AdvantageSource(attackerSpec.DisplayName, attackerSpec.grantedMode)
+                : default;
+            var attackerAdvantageSources = D20RollHelpers.GatherAdvantageSources(attackerEntity, attackerSpec, attackerGrantedSource);
 
-            int defenderBase = RollUtility.RollD20();
-            int defenderMod = D20RollHelpers.SumBonuses(defenderBonuses);
-            int defenderTotal = defenderBase + defenderMod;
+            var defenderGrantedSource = defenderSpec.grantedMode != RollMode.Normal
+                ? new AdvantageSource(defenderSpec.DisplayName, defenderSpec.grantedMode)
+                : default;
+            var defenderAdvantageSources = D20RollHelpers.GatherAdvantageSources(defenderEntity, defenderSpec, defenderGrantedSource);
 
-            bool attackerWins = attackerTotal >= defenderTotal;
+            // Use 0 as targetValue — opposed checks compare totals, not against a DC.
+            // Success/crit/fumble on individual rolls are not used; winner is determined by total comparison.
+            var attackerRoll = D20Calculator.Roll(attackerBonuses, 0, attackerAdvantageSources);
+            var defenderRoll = D20Calculator.Roll(defenderBonuses, 0, defenderAdvantageSources);
 
-            var attackerRoll = new D20RollOutcome(
-                attackerBase, attackerBonuses, attackerMod, attackerTotal,
-                defenderTotal, attackerWins, attackerBase == 20, attackerBase == 1);
-
-            var defenderRoll = new D20RollOutcome(
-                defenderBase, defenderBonuses, defenderMod, defenderTotal,
-                attackerTotal, !attackerWins, defenderBase == 20, defenderBase == 1);
+            bool attackerWins = attackerRoll.Total >= defenderRoll.Total;
 
             return new OpposedCheckResult(
                 attackerRoll, defenderRoll,

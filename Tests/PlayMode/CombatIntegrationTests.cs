@@ -257,20 +257,23 @@ namespace Assets.Scripts.Tests.PlayMode
 
             // Test 1: Piloting check routes to Driver
             var pilotSpec = SkillCheckSpec.ForCharacter(CharacterSkill.Piloting, ComponentType.Chassis);
-            var pilotResult = SkillCheckPerformer.Execute(new SkillCheckExecutionContext { Vehicle = playerVehicle, Spec = pilotSpec, DC = 12, CausalSource = null, InitiatingCharacter = driver });
+            pilotSpec.dc = 12;
+            var pilotResult = SkillCheckPerformer.Execute(new SkillCheckExecutionContext { Vehicle = playerVehicle, Spec = pilotSpec, CausalSource = null, InitiatingCharacter = driver });
             yield return null;
             Assert.AreEqual(driver, pilotResult.Character, "Piloting check should route to Driver");
             Assert.IsFalse(pilotResult.IsAutoFail);
 
             // Test 2: Mechanics check routes to Engineer via PowerCore
             var mechanicsSpec = SkillCheckSpec.ForCharacter(CharacterSkill.Mechanics, ComponentType.PowerCore);
-            var mechResult = SkillCheckPerformer.Execute(new SkillCheckExecutionContext { Vehicle = playerVehicle, Spec = mechanicsSpec, DC = 10, CausalSource = null, InitiatingCharacter = engineer });
+            mechanicsSpec.dc = 10;
+            var mechResult = SkillCheckPerformer.Execute(new SkillCheckExecutionContext { Vehicle = playerVehicle, Spec = mechanicsSpec, CausalSource = null, InitiatingCharacter = engineer });
             yield return null;
             Assert.AreEqual(engineer, mechResult.Character, "Mechanics check should route to Engineer");
 
             // Test 3: Best Perception routes to character with highest WIS modifier
             var percSpec = SkillCheckSpec.ForCharacter(CharacterSkill.Perception);
-            var percResult = SkillCheckPerformer.Execute(new SkillCheckExecutionContext { Vehicle = playerVehicle, Spec = percSpec, DC = 14, CausalSource = null });
+            percSpec.dc = 14;
+            var percResult = SkillCheckPerformer.Execute(new SkillCheckExecutionContext { Vehicle = playerVehicle, Spec = percSpec, CausalSource = null });
             yield return null;
             Assert.IsNotNull(percResult.Character, "Perception check should find a character");
             Assert.IsFalse(percResult.IsAutoFail);
@@ -339,14 +342,14 @@ namespace Assets.Scripts.Tests.PlayMode
             var hazardLane = TestStageFactory.CreateLane("Hazard Lane", stage, stageObj);
 
             var checkSpec = SkillCheckSpec.ForCharacter(CharacterSkill.Piloting);
+            checkSpec.dc = 10;
             var turnEffect = new LaneTurnEffect
             {
                 effectName = "Rocky Road Hazard",
                 description = "Navigate treacherous rocks",
                 rollNode = new RollNode
                 {
-                    rollSpec = checkSpec,
-                    dc = 10
+                    rollSpec = checkSpec
                 }
             };
             hazardLane.turnEffects.Add(turnEffect);
@@ -358,7 +361,6 @@ namespace Assets.Scripts.Tests.PlayMode
             {
                 Vehicle = playerVehicle,
                 Spec = checkSpec,
-                DC = turnEffect.rollNode.dc,
                 CausalSource = null
             });
             yield return null;
@@ -478,7 +480,8 @@ namespace Assets.Scripts.Tests.PlayMode
 
             // Skill requiring Utility should auto-fail
             var spec = SkillCheckSpec.ForCharacter(CharacterSkill.Mechanics, ComponentType.Utility);
-            var result = SkillCheckPerformer.Execute(new SkillCheckExecutionContext { Vehicle = playerVehicle, Spec = spec, DC = 10, CausalSource = null, InitiatingCharacter = driver });
+            spec.dc = 10;
+            var result = SkillCheckPerformer.Execute(new SkillCheckExecutionContext { Vehicle = playerVehicle, Spec = spec, CausalSource = null, InitiatingCharacter = driver });
             yield return null;
 
             Assert.IsTrue(result.IsAutoFail, "Should auto-fail when required component is stunned");
@@ -490,7 +493,7 @@ namespace Assets.Scripts.Tests.PlayMode
 
             Assert.IsTrue(utilityComp.IsOperational, "Component should be operational after stun expires");
 
-            var resultAfter = SkillCheckPerformer.Execute(new SkillCheckExecutionContext { Vehicle = playerVehicle, Spec = spec, DC = 10, CausalSource = null, InitiatingCharacter = driver });
+            var resultAfter = SkillCheckPerformer.Execute(new SkillCheckExecutionContext { Vehicle = playerVehicle, Spec = spec, CausalSource = null, InitiatingCharacter = driver });
             Assert.IsFalse(resultAfter.IsAutoFail, "Should be able to attempt after stun expires");
         }
 
@@ -510,9 +513,10 @@ namespace Assets.Scripts.Tests.PlayMode
 
             var utility = playerVehicle.optionalComponents[0];
             var spec = SkillCheckSpec.ForCharacter(CharacterSkill.Mechanics, ComponentType.Utility);
+            spec.dc = 10;
 
             // Phase 1: Working normally
-            var result1 = SkillCheckPerformer.Execute(new SkillCheckExecutionContext { Vehicle = playerVehicle, Spec = spec, DC = 10, CausalSource = null, InitiatingCharacter = engineer });
+            var result1 = SkillCheckPerformer.Execute(new SkillCheckExecutionContext { Vehicle = playerVehicle, Spec = spec, CausalSource = null, InitiatingCharacter = engineer });
             yield return null;
             Assert.IsFalse(result1.IsAutoFail, "Should work when component is healthy");
 
@@ -520,7 +524,7 @@ namespace Assets.Scripts.Tests.PlayMode
             utility.TakeDamage(utility.GetCurrentHealth());
             Assert.IsTrue(utility.isDestroyed, "Component should be destroyed");
 
-            var result2 = SkillCheckPerformer.Execute(new SkillCheckExecutionContext { Vehicle = playerVehicle, Spec = spec, DC = 10, CausalSource = null, InitiatingCharacter = engineer });
+            var result2 = SkillCheckPerformer.Execute(new SkillCheckExecutionContext { Vehicle = playerVehicle, Spec = spec, CausalSource = null, InitiatingCharacter = engineer });
             yield return null;
             Assert.IsTrue(result2.IsAutoFail, "Should auto-fail when component destroyed");
 
@@ -529,7 +533,7 @@ namespace Assets.Scripts.Tests.PlayMode
             utility.SetHealth(utility.GetMaxHealth());
             Assert.IsTrue(utility.IsOperational, "Component should be operational after restoration");
 
-            var result3 = SkillCheckPerformer.Execute(new SkillCheckExecutionContext { Vehicle = playerVehicle, Spec = spec, DC = 10, CausalSource = null, InitiatingCharacter = engineer });
+            var result3 = SkillCheckPerformer.Execute(new SkillCheckExecutionContext { Vehicle = playerVehicle, Spec = spec, CausalSource = null, InitiatingCharacter = engineer });
             yield return null;
             Assert.IsFalse(result3.IsAutoFail, "Should work again after component restored");
         }

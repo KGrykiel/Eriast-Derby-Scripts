@@ -15,16 +15,22 @@ namespace Assets.Scripts.Tests.Helpers
 
         public static SkillCheckSpec CharacterSkillCheck(
             CharacterSkill skill,
-            ComponentType? requiredComponent = null)
+            ComponentType? requiredComponent = null,
+            int dc = 15)
         {
-            return SkillCheckSpec.ForCharacter(skill, requiredComponent);
+            var spec = SkillCheckSpec.ForCharacter(skill, requiredComponent);
+            spec.dc = dc;
+            return spec;
         }
 
         public static SaveSpec CharacterSave(
             CharacterAttribute attribute,
-            ComponentType? requiredComponent = null)
+            ComponentType? requiredComponent = null,
+            int dc = 15)
         {
-            return SaveSpec.ForCharacter(attribute, requiredComponent);
+            var spec = SaveSpec.ForCharacter(attribute, requiredComponent);
+            spec.dc = dc;
+            return spec;
         }
 
         // ==================== SKILLS (for full execution tests) ====================
@@ -105,10 +111,11 @@ namespace Assets.Scripts.Tests.Helpers
             skill.name = name;
             skill.energyCost = energyCost;
             // Effects go in failureEffects: the target makes the save, and effects apply when they fail it.
+            var saveSpec = SaveSpec.ForCharacter(saveAttribute);
+            saveSpec.dc = dc;
             skill.rollNode = new RollNode
             {
-                rollSpec = SaveSpec.ForCharacter(saveAttribute),
-                dc = dc,
+                rollSpec = saveSpec,
                 failureEffects = effects
             };
 

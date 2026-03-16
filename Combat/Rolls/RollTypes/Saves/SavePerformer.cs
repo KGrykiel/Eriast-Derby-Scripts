@@ -18,11 +18,11 @@ namespace Assets.Scripts.Combat.Rolls.RollTypes.Saves
             SaveResult result;
             if (!routing.CanAttempt)
             {
-                result = SaveCalculator.AutoFail(ctx.Spec, ctx.DC);
+                result = SaveCalculator.AutoFail(ctx.Spec);
             }
             else
             {
-                result = SaveCalculator.Compute(ctx.Spec, ctx.DC, routing.Component, routing.Character);
+                result = SaveCalculator.Compute(ctx.Spec, routing.Component, routing.Character);
             }
 
             // Step 3: Emit event automatically
@@ -44,11 +44,10 @@ namespace Assets.Scripts.Combat.Rolls.RollTypes.Saves
         public static SaveResult ExecuteForEntity(
             Entity entity,
             SaveSpec spec,
-            int dc,
             Object causalSource,
             Entity attackerEntity = null)
         {
-            var result = SaveCalculator.Compute(spec, dc, entity);
+            var result = SaveCalculator.Compute(spec, entity);
 
             string targetName = entity != null ? entity.name : "Target";
             CombatEventBus.EmitSavingThrow(

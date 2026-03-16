@@ -1,6 +1,7 @@
 ﻿using UnityEngine;
 using SerializeReferenceEditor;
 using Assets.Scripts.Characters;
+using Assets.Scripts.Combat.Rolls.Advantage;
 using Assets.Scripts.Entities.Vehicle;
 
 namespace Assets.Scripts.Combat.Rolls.RollSpecs.SpecTypes
@@ -13,6 +14,15 @@ namespace Assets.Scripts.Combat.Rolls.RollSpecs.SpecTypes
     [SRName("Saving Throw")]
     public class SaveSpec : IRollSpec
     {
+        [Header("Difficulty")]
+        [Tooltip("Difficulty class to beat.")]
+        public int dc = 15;
+
+        [Header("Advantage / Disadvantage")]
+        [Tooltip("Advantage or disadvantage granted by this spec. Normal = no grant.")]
+        public RollMode grantedMode;
+
+        [Header("Save")]
         [Tooltip("Does this save test the vehicle or a character?")]
         public CheckDomain domain;
         

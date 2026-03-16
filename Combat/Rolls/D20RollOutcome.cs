@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using Assets.Scripts.Combat.Rolls.Advantage;
 
 namespace Assets.Scripts.Combat.Rolls
 {
@@ -17,6 +18,7 @@ namespace Assets.Scripts.Combat.Rolls
         public bool Success { get; }
         public bool IsCriticalHit { get; }
         public bool IsFumble { get; }
+        public AdvantageResult Advantage { get; }
 
         public D20RollOutcome(
             int baseRoll,
@@ -26,7 +28,8 @@ namespace Assets.Scripts.Combat.Rolls
             int targetValue,
             bool success,
             bool isCriticalHit,
-            bool isFumble)
+            bool isFumble,
+            AdvantageResult advantage = default)
         {
             BaseRoll = baseRoll;
             Bonuses = bonuses;
@@ -36,6 +39,7 @@ namespace Assets.Scripts.Combat.Rolls
             Success = success;
             IsCriticalHit = isCriticalHit;
             IsFumble = isFumble;
+            Advantage = advantage;
         }
     }
 }

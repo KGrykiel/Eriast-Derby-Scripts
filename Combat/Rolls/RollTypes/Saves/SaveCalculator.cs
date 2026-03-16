@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using Assets.Scripts.Characters;
+using Assets.Scripts.Combat.Rolls.Advantage;
 using Assets.Scripts.Combat.Rolls.RollSpecs.SpecTypes;
 
 namespace Assets.Scripts.Combat.Rolls.RollTypes.Saves
@@ -16,12 +17,15 @@ namespace Assets.Scripts.Combat.Rolls.RollTypes.Saves
         /// </summary>
         public static SaveResult Compute(
             SaveSpec saveSpec,
-            int dc,
             Entity entity = null,
             Character character = null)
         {
             var bonuses = GatherBonuses(saveSpec, entity, character);
-            var roll = D20Calculator.Roll(bonuses, dc);
+            var grantedSource = saveSpec.grantedMode != RollMode.Normal
+                ? new AdvantageSource(saveSpec.DisplayName, saveSpec.grantedMode)
+                : default;
+            var advantageSources = D20RollHelpers.GatherAdvantageSources(entity, saveSpec, grantedSource);
+            var roll = D20Calculator.Roll(bonuses, saveSpec.dc, advantageSources);
             return new SaveResult(roll, saveSpec, character);
         }
 
@@ -70,10 +74,10 @@ namespace Assets.Scripts.Combat.Rolls.RollTypes.Saves
         // ==================== HELPERS ====================
 
         /// <summary>Factory for making auto-failed results if no suitablke component/character found</summary>
-        public static SaveResult AutoFail(SaveSpec spec, int dc)
+        public static SaveResult AutoFail(SaveSpec spec)
         {
             return new SaveResult(
-                D20Calculator.AutoFail(dc),
+                D20Calculator.AutoFail(spec.dc),
                 spec,
                 character: null,
                 isAutoFail: true);

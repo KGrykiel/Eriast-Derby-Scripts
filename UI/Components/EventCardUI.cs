@@ -207,11 +207,11 @@ namespace Assets.Scripts.UI.Components
 
             if (choice.rollNode?.rollSpec is SaveSpec saveSpec)
             {
-                tooltip += $"<b>{saveSpec.DisplayName} Save DC {choice.rollNode.dc}</b>\n";
+                tooltip += $"<b>{saveSpec.DisplayName} Save DC {saveSpec.dc}</b>\n";
             }
             else if (choice.rollNode?.rollSpec is SkillCheckSpec checkSpec)
             {
-                tooltip += $"<b>{checkSpec.DisplayName} Check DC {choice.rollNode.dc}</b>\n";
+                tooltip += $"<b>{checkSpec.DisplayName} Check DC {checkSpec.dc}</b>\n";
             }
             else
             {

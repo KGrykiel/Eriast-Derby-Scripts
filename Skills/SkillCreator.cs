@@ -105,14 +105,12 @@ namespace Assets.Scripts.Skills
                 },
                 SkillCategory.Buff => new RollNode
                 {
-                    rollSpec = SkillCheckSpec.ForVehicle(VehicleCheckAttribute.Mobility),
-                    dc = 15,
+                    rollSpec = CreateCheckWithDc(SkillCheckSpec.ForVehicle(VehicleCheckAttribute.Mobility), 15),
                     successEffects = successEffects
                 },
                 SkillCategory.Debuff => new RollNode
                 {
-                    rollSpec = SaveSpec.ForVehicle(VehicleCheckAttribute.Mobility),
-                    dc = 15,
+                    rollSpec = CreateSaveWithDc(SaveSpec.ForVehicle(VehicleCheckAttribute.Mobility), 15),
                     failureEffects = successEffects  // debuff applies when target fails the save
                 },
                 _ => new RollNode { successEffects = successEffects }
@@ -386,33 +384,49 @@ namespace Assets.Scripts.Skills
                 onSuccessChain = successChain
             };
 
+        private static SkillCheckSpec CreateCheckWithDc(SkillCheckSpec spec, int dc)
+        {
+            spec.dc = dc;
+            return spec;
+        }
+
+        private static SaveSpec CreateSaveWithDc(SaveSpec spec, int dc)
+        {
+            spec.dc = dc;
+            return spec;
+        }
+
         private static RollNode Save(
             SaveSpec spec, int dc,
             List<EffectInvocation> onFail,
             List<EffectInvocation> onPass = null,
             RollNode failChain = null)
-            => new RollNode
+        {
+            spec.dc = dc;
+            return new RollNode
             {
                 rollSpec = spec,
-                dc = dc,
                 failureEffects = onFail ?? new List<EffectInvocation>(),
                 successEffects = onPass ?? new List<EffectInvocation>(),
                 onFailureChain = failChain
             };
+        }
 
         private static RollNode Check(
             SkillCheckSpec spec, int dc,
             List<EffectInvocation> onSuccess,
             List<EffectInvocation> onFail = null,
             RollNode successChain = null)
-            => new RollNode
+        {
+            spec.dc = dc;
+            return new RollNode
             {
                 rollSpec = spec,
-                dc = dc,
                 successEffects = onSuccess ?? new List<EffectInvocation>(),
                 failureEffects = onFail ?? new List<EffectInvocation>(),
                 onSuccessChain = successChain
             };
+        }
 
         private static RollNode Opposed(
             OpposedCheckRollSpec spec,
