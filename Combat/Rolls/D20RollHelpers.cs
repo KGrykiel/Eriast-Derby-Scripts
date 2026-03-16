@@ -36,12 +36,13 @@ namespace Assets.Scripts.Combat.Rolls
             return sum;
         }
 
-        public static void GatherComponentBonuses(
+        public static List<RollBonus> GatherComponentBonuses(
             Entity component,
             VehicleCheckAttribute checkAttribute,
-            string displayLabel,
-            List<RollBonus> bonuses)
+            string displayLabel)
         {
+            var bonuses = new List<RollBonus>();
+
             // Convert to full Attribute only for StatCalculator lookup
             Attribute attribute = checkAttribute.ToAttribute();
 
@@ -52,13 +53,13 @@ namespace Assets.Scripts.Combat.Rolls
             }
 
             bonuses.AddRange(GatherAppliedBonuses(component, attribute));
+            return bonuses;
         }
 
-        public static void GatherWeaponBonuses(
-            WeaponComponent weapon,
-            List<RollBonus> bonuses)
+        public static List<RollBonus> GatherWeaponBonuses(WeaponComponent weapon)
         {
-            if (weapon == null) return;
+            var bonuses = new List<RollBonus>();
+            if (weapon == null) return bonuses;
 
             int baseAttackBonus = weapon.GetBaseAttackBonus();
             if (baseAttackBonus != 0)
@@ -67,6 +68,7 @@ namespace Assets.Scripts.Combat.Rolls
             }
 
             bonuses.AddRange(GatherAppliedBonuses(weapon, Attribute.AttackBonus));
+            return bonuses;
         }
 
         // ==================== ADVANTAGE / DISADVANTAGE ====================
@@ -83,13 +85,14 @@ namespace Assets.Scripts.Combat.Rolls
                 sources.Add(grantedSource);
 
             if (entity != null)
-                GatherEntityAdvantageSources(entity, spec, sources);
+                sources.AddRange(GatherEntityAdvantageSources(entity, spec));
 
             return sources.ToArray();
         }
 
-        private static void GatherEntityAdvantageSources(Entity entity, IRollSpec spec, List<AdvantageSource> sources)
+        private static List<AdvantageSource> GatherEntityAdvantageSources(Entity entity, IRollSpec spec)
         {
+            var sources = new List<AdvantageSource>();
             foreach (var applied in entity.GetActiveStatusEffects())
             {
                 foreach (var grant in applied.template.advantageGrants)
@@ -104,7 +107,7 @@ namespace Assets.Scripts.Combat.Rolls
             }
 
             Vehicle vehicle = entity is VehicleComponent comp ? comp.ParentVehicle : null;
-            if (vehicle == null) return;
+            if (vehicle == null) return sources;
 
             foreach (var component in vehicle.AllComponents)
             {
@@ -121,6 +124,8 @@ namespace Assets.Scripts.Combat.Rolls
                     }
                 }
             }
+
+            return sources;
         }
 
         private static bool GrantMatchesSpec(AdvantageGrant grant, IRollSpec spec)

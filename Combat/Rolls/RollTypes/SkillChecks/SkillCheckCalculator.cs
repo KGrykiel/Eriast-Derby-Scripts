@@ -35,12 +35,12 @@ namespace Assets.Scripts.Combat.Rolls.RollTypes.SkillChecks
             if (entity != null && checkSpec.IsVehicleCheck)
             {
                 string label = entity.name ?? checkSpec.DisplayName;
-                D20RollHelpers.GatherComponentBonuses(entity, checkSpec.vehicleAttribute, label, bonuses);
+                bonuses.AddRange(D20RollHelpers.GatherComponentBonuses(entity, checkSpec.vehicleAttribute, label));
             }
 
             if (character != null && checkSpec.IsCharacterCheck)
             {
-                GatherCharacterBonuses(character, checkSpec.characterSkill, bonuses);
+                bonuses.AddRange(GatherCharacterBonuses(character, checkSpec.characterSkill));
             }
 
             return bonuses;
@@ -48,11 +48,12 @@ namespace Assets.Scripts.Combat.Rolls.RollTypes.SkillChecks
 
         // ==================== CHARACTER BONUSES ====================
 
-        private static void GatherCharacterBonuses(
+        private static List<RollBonus> GatherCharacterBonuses(
             Character character,
-            CharacterSkill skill,
-            List<RollBonus> bonuses)
+            CharacterSkill skill)
         {
+            var bonuses = new List<RollBonus>();
+
             CharacterAttribute attribute = CharacterSkillHelper.GetPrimaryAttribute(skill);
 
             int attributeScore = character.GetAttributeScore(attribute);
@@ -70,6 +71,8 @@ namespace Assets.Scripts.Combat.Rolls.RollTypes.SkillChecks
                     bonuses.Add(new RollBonus("Proficiency", proficiency));
                 }
             }
+
+            return bonuses;
         }
 
         /// <summary>For generating auto-failed skill checks when e.g. no suitable character found</summary>

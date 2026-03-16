@@ -39,12 +39,12 @@ namespace Assets.Scripts.Combat.Rolls.RollTypes.Saves
             if (entity != null && saveSpec.IsVehicleSave)
             {
                 string label = entity.name ?? saveSpec.DisplayName;
-                D20RollHelpers.GatherComponentBonuses(entity, saveSpec.vehicleAttribute, label, bonuses);
+                bonuses.AddRange(D20RollHelpers.GatherComponentBonuses(entity, saveSpec.vehicleAttribute, label));
             }
 
             if (character != null && saveSpec.IsCharacterSave)
             {
-                GatherCharacterSaveBonuses(character, saveSpec.characterAttribute, bonuses);
+                bonuses.AddRange(GatherCharacterSaveBonuses(character, saveSpec.characterAttribute));
             }
 
             return bonuses;
@@ -52,11 +52,12 @@ namespace Assets.Scripts.Combat.Rolls.RollTypes.Saves
 
         // ==================== CHARACTER BONUSES ====================
 
-        private static void GatherCharacterSaveBonuses(
+        private static List<RollBonus> GatherCharacterSaveBonuses(
             Character character,
-            CharacterAttribute attribute,
-            List<RollBonus> bonuses)
+            CharacterAttribute attribute)
         {
+            var bonuses = new List<RollBonus>();
+
             int attributeScore = character.GetAttributeScore(attribute);
             int attrMod = CharacterFormulas.CalculateAttributeModifier(attributeScore);
             if (attrMod != 0)
@@ -69,6 +70,8 @@ namespace Assets.Scripts.Combat.Rolls.RollTypes.Saves
             {
                 bonuses.Add(new RollBonus("Half Level", halfLevel));
             }
+
+            return bonuses;
         }
 
         // ==================== HELPERS ====================

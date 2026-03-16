@@ -44,7 +44,7 @@ namespace Assets.Scripts.Combat.Rolls.RollTypes.Attacks
             // Weapon bonuses (base + applied modifiers)
             if (attacker is WeaponComponent weapon)
             {
-                D20RollHelpers.GatherWeaponBonuses(weapon, bonuses);
+                bonuses.AddRange(D20RollHelpers.GatherWeaponBonuses(weapon));
             }
 
             // Character bonus (via CharacterFormulas for consistency)
