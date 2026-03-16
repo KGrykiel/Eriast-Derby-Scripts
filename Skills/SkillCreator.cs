@@ -8,6 +8,7 @@ using Assets.Scripts.Characters;
 using StatusEffectTemplate = Assets.Scripts.StatusEffects.StatusEffect;
 using Assets.Scripts.Combat.Rolls.RollSpecs;
 using Assets.Scripts.Combat.Rolls.RollSpecs.SpecTypes;
+using Assets.Scripts.Combat.Rolls.Advantage;
 
 namespace Assets.Scripts.Skills
 {
@@ -216,6 +217,7 @@ namespace Assets.Scripts.Skills
             RegenerateSkill(DefineTargetingLock());
             RegenerateSkill(DefineRecoilCannon());
             RegenerateSkill(DefineRammingContest());
+            RegenerateSkill(DefineAimedShot());
 
             AssetDatabase.SaveAssets();
             Debug.Log("[SkillCreator] All skills regenerated.");
@@ -289,6 +291,13 @@ namespace Assets.Scripts.Skills
                 Attack(FX(
                     Dmg(3, 8, 2, DamageType.Piercing, EffectTarget.SelectedTarget),
                     Dmg(1, 6, 0, DamageType.Force, EffectTarget.SourceComponent))),
+                TargetingMode.EnemyComponent,
+                energyCost: 3);
+
+        // Pattern: attack with granted advantage — the gunner lines up a careful shot.
+        private static Skill DefineAimedShot()
+            => Make("Aimed Shot",
+                Attack(new AttackSpec { grantedMode = RollMode.Advantage }, FX(Dmg(2, 8, 2, DamageType.Piercing))),
                 TargetingMode.EnemyComponent,
                 energyCost: 3);
 
@@ -379,6 +388,19 @@ namespace Assets.Scripts.Skills
             => new RollNode
             {
                 rollSpec = new AttackSpec(),
+                successEffects = onHit ?? new List<EffectInvocation>(),
+                failureEffects = onMiss ?? new List<EffectInvocation>(),
+                onSuccessChain = successChain
+            };
+
+        private static RollNode Attack(
+            AttackSpec spec,
+            List<EffectInvocation> onHit,
+            List<EffectInvocation> onMiss = null,
+            RollNode successChain = null)
+            => new RollNode
+            {
+                rollSpec = spec,
                 successEffects = onHit ?? new List<EffectInvocation>(),
                 failureEffects = onMiss ?? new List<EffectInvocation>(),
                 onSuccessChain = successChain
