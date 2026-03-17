@@ -12,7 +12,7 @@ namespace Assets.Scripts.StatusEffects
         public UnityEngine.Object applier;
         public int turnsRemaining;
         public List<AttributeModifier> createdModifiers = new();
-        
+
         public bool IsIndefinite => turnsRemaining < 0;
         public bool IsExpired => turnsRemaining == 0;
 
@@ -24,7 +24,7 @@ namespace Assets.Scripts.StatusEffects
             this.turnsRemaining = template.baseDuration;
         }
         
-        public void OnApply()
+        public void Activate()
         {
             foreach (var modData in template.modifiers)
             {
@@ -47,7 +47,7 @@ namespace Assets.Scripts.StatusEffects
                 ApplyPeriodicEffect(periodicEffect);
         }
         
-        public void OnRemove()
+        public void Deactivate()
         {
             foreach (var modifier in createdModifiers)
                 target.RemoveModifier(modifier);

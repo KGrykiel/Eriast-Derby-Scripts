@@ -39,12 +39,16 @@ public abstract class Entity : MonoBehaviour
     public List<DamageResistance> resistances = new();
 
     // ==================== MODIFIER & STATUS EFFECT STORAGE ====================
-    
+
     [SerializeField, HideInInspector]
     protected List<AttributeModifier> entityModifiers = new();
-    
-    [SerializeField, HideInInspector]
-    protected List<AppliedStatusEffect> activeStatusEffects = new();
+
+    private EntityStatusEffectManager statusEffects;
+
+    protected virtual void Awake()
+    {
+        statusEffects = new EntityStatusEffectManager(this);
+    }
 
     // ==================== STAT ACCESSORS ====================
     // Naming convention:
@@ -112,6 +116,11 @@ public abstract class Entity : MonoBehaviour
 
     protected virtual void OnEntityDestroyed(){}
 
+    protected virtual void OnDestroy()
+    {
+        statusEffects?.Cleanup();
+    }
+
     public virtual void Heal(int amount)
     {
         if (isDestroyed) return;
@@ -144,142 +153,36 @@ public abstract class Entity : MonoBehaviour
     }
 
     // ==================== STATUS EFFECT SYSTEM ====================
-    
+
     /// <summary>Handles stacking rules and emits events. Returns null if feature requirements not met.</summary>
     public virtual AppliedStatusEffect ApplyStatusEffect(StatusEffect effect, Object applier)
     {
-        // Validate targeting (feature requirements)
-        if (!CanApplyStatusEffect(effect))
-        {
-            Debug.LogWarning($"[Entity] Cannot apply {effect.effectName} to {GetDisplayName()} - feature requirements not met");
-            return null;
-        }
-        
-        // Check for existing status effect of same type (stacking rules)
-        var existing = activeStatusEffects.FirstOrDefault(a => a.template == effect);
-        bool wasReplacement = false;
-        
-        if (existing != null)
-        {
-            // Compare and keep better effect
-            if (ShouldReplaceStatusEffect(existing, effect))
-            {
-                // Remove old effect
-                existing.OnRemove();
-                activeStatusEffects.Remove(existing);
-                wasReplacement = true;
-            }
-            else
-            {
-                // Keep existing effect (it's better or equal)
-                return existing;
-            }
-        }
-        
-        // Create and apply new status effect
-        var applied = new AppliedStatusEffect(effect, this, applier);
-        applied.OnApply();
-        activeStatusEffects.Add(applied);
-        
-        // Emit event for logging (CombatEventBus handles aggregation)
-        Entity sourceEntity = applier as Entity;
-        CombatEventBus.EmitStatusEffect(applied, sourceEntity, this, applier, wasReplacement);
-        
-        return applied;
+        return statusEffects.Apply(effect, applier);
     }
     
     public virtual void RemoveStatusEffect(AppliedStatusEffect statusEffect)
     {
-        if (activeStatusEffects.Remove(statusEffect))
-        {
-            statusEffect.OnRemove();
-        }
+        statusEffects.Remove(statusEffect);
     }
 
     /// <summary>Removes all effects from a specific source (e.g. leaving a lane).</summary>
     public virtual void RemoveStatusEffectsFromSource(Object source)
     {
-        if (source == null) return;
-        
-        var toRemove = activeStatusEffects.Where(e => e.applier == source).ToList();
-        foreach (var effect in toRemove)
-        {
-            RemoveStatusEffect(effect);
-        }
+        statusEffects.RemoveFromSource(source);
     }
     
     public virtual List<AppliedStatusEffect> GetActiveStatusEffects()
     {
-        return activeStatusEffects;
+        return statusEffects.GetActive();
     }
 
     /// <summary>Ticks periodic effects, decrements durations, removes expired. Called each turn.</summary>
     public virtual void UpdateStatusEffects()
     {
-        // Tick all status effects (periodic damage, healing, etc.)
-        foreach (var statusEffect in activeStatusEffects.ToList())
-        {
-            statusEffect.OnTick();
-        }
-        
-        // Decrement durations and remove expired
-        for (int i = activeStatusEffects.Count - 1; i >= 0; i--)
-        {
-            var statusEffect = activeStatusEffects[i];
-            
-            statusEffect.DecrementDuration();
-            
-            if (statusEffect.IsExpired)
-            {
-                // Emit expiration event
-                CombatEventBus.EmitStatusExpired(statusEffect, this);
-                
-                statusEffect.OnRemove();
-                activeStatusEffects.RemoveAt(i);
-            }
-        }
+        statusEffects.OnTurnStart();
     }
-    
-    public virtual bool CanApplyStatusEffect(StatusEffect effect)
-    {
-        // Check required features
-        if (effect.requiredFeatures != EntityFeature.None)
-        {
-            if (!HasFeature(effect.requiredFeatures))
-                return false;
-        }
-        
-        // Check excluded features
-        if (effect.excludedFeatures != EntityFeature.None)
-        {
-            if (HasAnyFeature(effect.excludedFeatures))
-                return false;
-        }
-        
-        return true;
-    }
-    
-    /// <summary>Stacking rules: higher magnitude wins, then longer duration.</summary>
-    private bool ShouldReplaceStatusEffect(AppliedStatusEffect existing, StatusEffect newEffect)
-    {
-        float existingMagnitude = existing.template.modifiers.Sum(m => Mathf.Abs(m.value));
-        float newMagnitude = newEffect.modifiers.Sum(m => Mathf.Abs(m.value));
-        
-        if (newMagnitude > existingMagnitude)
-            return true;
-        if (newMagnitude < existingMagnitude)
-            return false;
-        
-        int existingDuration = existing.turnsRemaining;
-        int newDuration = newEffect.baseDuration;
-        
-        if (newDuration > existingDuration)
-            return true;
-        
-        return false;
-    }
-    
-    
+
+
     // ==================== TARGETING ====================
     
     public virtual bool CanBeTargeted()

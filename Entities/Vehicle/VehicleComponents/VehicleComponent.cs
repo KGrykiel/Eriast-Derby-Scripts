@@ -228,7 +228,7 @@ public abstract class VehicleComponent : Entity
         {
             if (isDestroyed || isManuallyDisabled) return false;
 
-            foreach (var statusEffect in activeStatusEffects)
+            foreach (var statusEffect in GetActiveStatusEffects())
             {
                 if (statusEffect.PreventsActions)
                     return false;
@@ -252,7 +252,7 @@ public abstract class VehicleComponent : Entity
     {
         if (!IsOperational) return false;
 
-        foreach (var statusEffect in activeStatusEffects)
+        foreach (var statusEffect in GetActiveStatusEffects())
         {
             if (statusEffect.PreventsMovement)
                 return false;
