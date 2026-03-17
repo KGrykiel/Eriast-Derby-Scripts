@@ -120,7 +120,7 @@ namespace Assets.Scripts.Entities
         public static void LogModifierRemoved(this VehicleComponent component, AttributeModifier modifier)
         {
             if (component.ParentVehicle == null) return;
-            
+
             RaceHistory.Log(
                 EventType.Modifier,
                 EventImportance.Debug,
@@ -184,9 +184,9 @@ namespace Assets.Scripts.Entities
         public static void LogPowerDraw(this PowerCoreComponent powerCore, int amount, VehicleComponent requester, string reason, int remainingEnergy, int turnDrawTotal)
         {
             if (powerCore.ParentVehicle == null) return;
-            
+
             string requesterName = requester != null ? requester.name : "Unknown";
-            
+
             RaceHistory.Log(
                 EventType.Resource,
                 EventImportance.Debug,

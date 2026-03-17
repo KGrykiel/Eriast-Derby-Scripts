@@ -114,9 +114,7 @@ public abstract class Entity : MonoBehaviour
 
     protected virtual void OnDamageTaken(int amount, int previousHealth, int newHealth){}
 
-    protected virtual void OnEntityDestroyed(){}
-
-    protected virtual void OnDestroy()
+    protected virtual void OnEntityDestroyed()
     {
         statusEffects.Cleanup();
     }

@@ -220,6 +220,7 @@ namespace Assets.Scripts.Skills
             RegenerateSkill(DefineRammingContest());
             RegenerateSkill(DefineAimedShot());
             RegenerateSkill(DefineIncendiaryShot());
+            RegenerateSkill(DefineWebShot());
 
             AssetDatabase.SaveAssets();
             Debug.Log("[SkillCreator] All skills regenerated.");
@@ -324,6 +325,15 @@ namespace Assets.Scripts.Skills
                 Attack(FX(
                     Dmg(1, 6, 2, DamageType.Fire, EffectTarget.SelectedTarget),
                     Status(LoadStatus("Assets/Content/StatusEffects/Burning.asset"), EffectTarget.SelectedTarget))),
+                TargetingMode.EnemyComponent,
+                energyCost: 2);
+
+        // Pattern: attack with stackable debuff — applies Slowed (stacks up to 3 times) on hit.
+        private static Skill DefineWebShot()
+            => Make("Web Shot",
+                Attack(FX(
+                    Dmg(1, 4, 0, DamageType.Bludgeoning, EffectTarget.SelectedTarget),
+                    Status(LoadStatus("Assets/Content/StatusEffects/Slowed.asset"), EffectTarget.SelectedTarget))),
                 TargetingMode.EnemyComponent,
                 energyCost: 2);
 

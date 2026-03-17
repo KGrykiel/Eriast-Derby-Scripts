@@ -36,6 +36,11 @@ namespace Assets.Scripts.Combat.Logging
                 case DamageEvent damage:        LogSingleDamage(damage); break;
                 case StatusEffectEvent status:   LogSingleStatusEffect(status); break;
                 case StatusEffectExpiredEvent expired: LogStatusExpired(expired); break;
+                case StatusEffectRefreshedEvent refreshed: LogStatusRefreshed(refreshed); break;
+                case StatusEffectIgnoredEvent ignored: LogStatusIgnored(ignored); break;
+                case StatusEffectReplacedEvent replaced: LogStatusReplaced(replaced); break;
+                case StatusEffectKeptStrongerEvent kept: LogStatusKeptStronger(kept); break;
+                case StatusEffectStackLimitEvent stackLimit: LogStatusStackLimit(stackLimit); break;
                 case RestorationEvent restoration:     LogSingleRestoration(restoration); break;
                 case AttackRollEvent attack:     LogSingleAttackRoll(attack); break;
                 case SavingThrowEvent save:      LogSingleSavingThrow(save); break;
@@ -299,6 +304,24 @@ namespace Assets.Scripts.Combat.Logging
         {
             foreach (var evt in action.GetStatusEffectEvents().Where(e => !e.WasBlocked))
                 LogSingleStatusEffect(evt, action);
+
+            foreach (var evt in action.GetStatusRefreshedEvents())
+                LogStatusRefreshed(evt);
+
+            foreach (var evt in action.GetStatusIgnoredEvents())
+                LogStatusIgnored(evt);
+
+            foreach (var evt in action.GetStatusReplacedEvents())
+                LogStatusReplaced(evt);
+
+            foreach (var evt in action.GetStatusKeptStrongerEvents())
+                LogStatusKeptStronger(evt);
+
+            foreach (var evt in action.GetStatusStackLimitEvents())
+                LogStatusStackLimit(evt);
+
+            foreach (var evt in action.GetStatusExpiredEvents())
+                LogStatusExpired(evt);
         }
 
         private static void LogSingleStatusEffect(StatusEffectEvent evt, CombatAction action = null)
@@ -375,6 +398,110 @@ namespace Assets.Scripts.Combat.Logging
             logEvt.WithMetadata("statusEffectName", evt.Expired.template.effectName)
                   .WithMetadata("expired", true)
                   .WithMetadata("effectBreakdown", CombatFormatter.FormatStatusEffectTooltip(evt.Expired));
+        }
+
+        private static void LogStatusRefreshed(StatusEffectRefreshedEvent evt)
+        {
+            Vehicle targetVehicle = EntityHelpers.GetParentVehicle(evt.Target);
+            string targetName = CombatDisplayHelpers.FormatEntityWithVehicle(evt.Target, targetVehicle);
+
+            string durationText = evt.Refreshed.IsIndefinite
+                ? "indefinite"
+                : $"{evt.Refreshed.turnsRemaining} turns";
+
+            var logEvt = RaceHistory.Log(
+                EventType.StatusEffect, EventImportance.Low,
+                $"{targetName}'s {evt.Refreshed.template.effectName} refreshed ({durationText})",
+                targetVehicle != null ? targetVehicle.currentStage : null,
+                null, targetVehicle);
+
+            logEvt.WithMetadata("statusEffectName", evt.Refreshed.template.effectName)
+                  .WithMetadata("refreshed", true)
+                  .WithMetadata("duration", evt.Refreshed.turnsRemaining)
+                  .WithMetadata("effectBreakdown", CombatFormatter.FormatStatusEffectTooltip(evt.Refreshed));
+        }
+
+        private static void LogStatusIgnored(StatusEffectIgnoredEvent evt)
+        {
+            Vehicle targetVehicle = EntityHelpers.GetParentVehicle(evt.Target);
+            string targetName = CombatDisplayHelpers.FormatEntityWithVehicle(evt.Target, targetVehicle);
+
+            var logEvt = RaceHistory.Log(
+                EventType.StatusEffect, EventImportance.Low,
+                $"{targetName}'s {evt.Existing.template.effectName} reapplication ignored (already active)",
+                targetVehicle != null ? targetVehicle.currentStage : null,
+                null, targetVehicle);
+
+            logEvt.WithMetadata("statusEffectName", evt.Existing.template.effectName)
+                  .WithMetadata("ignored", true)
+                  .WithMetadata("stackBehaviour", "Ignore")
+                  .WithMetadata("effectBreakdown", CombatFormatter.FormatStatusEffectTooltip(evt.Existing));
+        }
+
+        private static void LogStatusReplaced(StatusEffectReplacedEvent evt)
+        {
+            Vehicle targetVehicle = EntityHelpers.GetParentVehicle(evt.Target);
+            string targetName = CombatDisplayHelpers.FormatEntityWithVehicle(evt.Target, targetVehicle);
+
+            string newDurationText = evt.NewEffect.IsIndefinite
+                ? "indefinite"
+                : $"{evt.NewEffect.turnsRemaining} turns";
+
+            string oldDurationText = evt.OldDuration == -1
+                ? "indefinite"
+                : $"{evt.OldDuration} turns";
+
+            var logEvt = RaceHistory.Log(
+                EventType.StatusEffect, EventImportance.Low,
+                $"{targetName}'s {evt.NewEffect.template.effectName} replaced ({oldDurationText} → {newDurationText})",
+                targetVehicle != null ? targetVehicle.currentStage : null,
+                null, targetVehicle);
+
+            logEvt.WithMetadata("statusEffectName", evt.NewEffect.template.effectName)
+                  .WithMetadata("replaced", true)
+                  .WithMetadata("oldDuration", evt.OldDuration)
+                  .WithMetadata("newDuration", evt.NewEffect.turnsRemaining)
+                  .WithMetadata("stackBehaviour", "Replace")
+                  .WithMetadata("effectBreakdown", CombatFormatter.FormatStatusEffectTooltip(evt.NewEffect));
+        }
+
+        private static void LogStatusKeptStronger(StatusEffectKeptStrongerEvent evt)
+        {
+            Vehicle targetVehicle = EntityHelpers.GetParentVehicle(evt.Target);
+            string targetName = CombatDisplayHelpers.FormatEntityWithVehicle(evt.Target, targetVehicle);
+
+            string durationText = evt.Kept.IsIndefinite
+                ? "indefinite"
+                : $"{evt.Kept.turnsRemaining} turns";
+
+            var logEvt = RaceHistory.Log(
+                EventType.StatusEffect, EventImportance.Low,
+                $"{targetName}'s {evt.Kept.template.effectName} kept stronger version ({durationText})",
+                targetVehicle != null ? targetVehicle.currentStage : null,
+                null, targetVehicle);
+
+            logEvt.WithMetadata("statusEffectName", evt.Kept.template.effectName)
+                  .WithMetadata("keptStronger", true)
+                  .WithMetadata("duration", evt.Kept.turnsRemaining)
+                  .WithMetadata("stackBehaviour", "Replace")
+                  .WithMetadata("effectBreakdown", CombatFormatter.FormatStatusEffectTooltip(evt.Kept));
+        }
+
+        private static void LogStatusStackLimit(StatusEffectStackLimitEvent evt)
+        {
+            Vehicle targetVehicle = EntityHelpers.GetParentVehicle(evt.Target);
+            string targetName = CombatDisplayHelpers.FormatEntityWithVehicle(evt.Target, targetVehicle);
+
+            var logEvt = RaceHistory.Log(
+                EventType.StatusEffect, EventImportance.Low,
+                $"{targetName}'s {evt.Template.effectName} stack limit reached ({evt.MaxStacks})",
+                targetVehicle != null ? targetVehicle.currentStage : null,
+                null, targetVehicle);
+
+            logEvt.WithMetadata("statusEffectName", evt.Template.effectName)
+                  .WithMetadata("stackLimitReached", true)
+                  .WithMetadata("maxStacks", evt.MaxStacks)
+                  .WithMetadata("stackBehaviour", "Stack");
         }
 
         // ==================== RESTORATION LOGGING ====================

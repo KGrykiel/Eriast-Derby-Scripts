@@ -67,7 +67,7 @@ namespace Assets.Scripts.Combat
     public class StatusEffectExpiredEvent : CombatEvent
     {
         public AppliedStatusEffect Expired { get; set; }
-        
+
         public StatusEffectExpiredEvent(AppliedStatusEffect expired, Entity target)
         {
             Expired = expired;
@@ -76,7 +76,76 @@ namespace Assets.Scripts.Combat
             CausalSource = expired?.template;
         }
     }
-    
+
+    public class StatusEffectRefreshedEvent : CombatEvent
+    {
+        public AppliedStatusEffect Refreshed { get; set; }
+
+        public StatusEffectRefreshedEvent(AppliedStatusEffect refreshed, Entity target)
+        {
+            Refreshed = refreshed;
+            Target = target;
+            Source = null;
+            CausalSource = refreshed?.template;
+        }
+    }
+
+    public class StatusEffectIgnoredEvent : CombatEvent
+    {
+        public AppliedStatusEffect Existing { get; set; }
+
+        public StatusEffectIgnoredEvent(AppliedStatusEffect existing, Entity target)
+        {
+            Existing = existing;
+            Target = target;
+            Source = null;
+            CausalSource = existing?.template;
+        }
+    }
+
+    public class StatusEffectReplacedEvent : CombatEvent
+    {
+        public AppliedStatusEffect NewEffect { get; set; }
+        public int OldDuration { get; set; }
+
+        public StatusEffectReplacedEvent(AppliedStatusEffect newEffect, Entity target, int oldDuration)
+        {
+            NewEffect = newEffect;
+            Target = target;
+            OldDuration = oldDuration;
+            Source = null;
+            CausalSource = newEffect?.template;
+        }
+    }
+
+    public class StatusEffectKeptStrongerEvent : CombatEvent
+    {
+        public AppliedStatusEffect Kept { get; set; }
+
+        public StatusEffectKeptStrongerEvent(AppliedStatusEffect kept, Entity target)
+        {
+            Kept = kept;
+            Target = target;
+            Source = null;
+            CausalSource = kept?.template;
+        }
+    }
+
+    public class StatusEffectStackLimitEvent : CombatEvent
+    {
+        public StatusEffect Template { get; set; }
+        public int MaxStacks { get; set; }
+
+        public StatusEffectStackLimitEvent(StatusEffect template, Entity target, int maxStacks)
+        {
+            Template = template;
+            Target = target;
+            MaxStacks = maxStacks;
+            Source = null;
+            CausalSource = template;
+        }
+    }
+
     public class RestorationEvent : CombatEvent
     {
         public RestorationResult Result { get; set; }

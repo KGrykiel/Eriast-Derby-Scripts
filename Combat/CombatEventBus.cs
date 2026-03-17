@@ -91,12 +91,37 @@ namespace Assets.Scripts.Combat
         {
             Emit(new StatusEffectEvent(applied, source, target, causalSource, wasReplacement));
         }
-        
+
         public static void EmitStatusExpired(AppliedStatusEffect expired, Entity target)
         {
             Emit(new StatusEffectExpiredEvent(expired, target));
         }
-        
+
+        public static void EmitStatusRefreshed(AppliedStatusEffect refreshed, Entity target)
+        {
+            Emit(new StatusEffectRefreshedEvent(refreshed, target));
+        }
+
+        public static void EmitStatusIgnored(AppliedStatusEffect existing, Entity target)
+        {
+            Emit(new StatusEffectIgnoredEvent(existing, target));
+        }
+
+        public static void EmitStatusReplaced(AppliedStatusEffect newEffect, Entity target, int oldDuration)
+        {
+            Emit(new StatusEffectReplacedEvent(newEffect, target, oldDuration));
+        }
+
+        public static void EmitStatusKeptStronger(AppliedStatusEffect kept, Entity target)
+        {
+            Emit(new StatusEffectKeptStrongerEvent(kept, target));
+        }
+
+        public static void EmitStatusStackLimit(StatusEffect template, Entity target, int maxStacks)
+        {
+            Emit(new StatusEffectStackLimitEvent(template, target, maxStacks));
+        }
+
         public static void EmitRestoration(
             RestorationResult result,
             Entity source,

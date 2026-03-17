@@ -61,6 +61,11 @@ namespace Assets.Scripts.StatusEffects
             turnsRemaining--;
         }
 
+        public void RefreshDuration()
+        {
+            turnsRemaining = template.baseDuration;
+        }
+
         private void ApplyPeriodicEffect(IPeriodicEffect periodic)
         {
             switch (periodic)

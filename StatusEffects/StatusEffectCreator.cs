@@ -132,11 +132,14 @@ namespace Assets.Scripts.StatusEffects
         // Pattern: behavioral — prevents all actions, short duration.
         private static StatusEffect DefineStunned()
             => Make("Stunned", baseDuration: 1,
+                stackBehaviour: StackBehaviour.Ignore,
                 behavioral: Behavioral(preventsActions: true));
 
         // Pattern: modifier — reduces speed and mobility.
         private static StatusEffect DefineSlowed()
             => Make("Slowed", baseDuration: 2,
+                stackBehaviour: StackBehaviour.Stack,
+                maxStacks: 3,
                 modifiers: Mods(
                     Mod(Attribute.MaxSpeed, ModifierType.Multiplier, 0.5f),
                     Mod(Attribute.Mobility, ModifierType.Flat, -3f)));
@@ -144,6 +147,7 @@ namespace Assets.Scripts.StatusEffects
         // Pattern: multi-modifier buff — armor and integrity bonus.
         private static StatusEffect DefineFortified()
             => Make("Fortified", baseDuration: 2,
+                stackBehaviour: StackBehaviour.Replace,
                 modifiers: Mods(
                     Mod(Attribute.ArmorClass, ModifierType.Flat, 3f),
                     Mod(Attribute.Integrity, ModifierType.Flat, 2f)));
@@ -159,6 +163,7 @@ namespace Assets.Scripts.StatusEffects
         // Pattern: disadvantage grant on attacks.
         private static StatusEffect DefineBlinded()
             => Make("Blinded", baseDuration: 2,
+                stackBehaviour: StackBehaviour.Ignore,
                 advantageGrants: new List<AdvantageGrant>
                 {
                     AdvGrant("Blinded", RollMode.Disadvantage, new AttackAdvantage())
@@ -167,6 +172,8 @@ namespace Assets.Scripts.StatusEffects
         // Pattern: behavioral — amplifies damage taken.
         private static StatusEffect DefineVulnerable()
             => Make("Vulnerable", baseDuration: 2,
+                stackBehaviour: StackBehaviour.Stack,
+                maxStacks: 3,
                 behavioral: Behavioral(damageAmplification: 1.5f));
 
         // Pattern: HoT — periodic healing per turn.
@@ -239,6 +246,8 @@ namespace Assets.Scripts.StatusEffects
         private static StatusEffect Make(
             string name,
             int baseDuration = -1,
+            StackBehaviour stackBehaviour = StackBehaviour.Refresh,
+            int maxStacks = 0,
             EntityFeature required = EntityFeature.None,
             EntityFeature excluded = EntityFeature.None,
             List<ModifierData> modifiers = null,
@@ -250,6 +259,8 @@ namespace Assets.Scripts.StatusEffects
             effect.name = name;
             effect.effectName = name;
             effect.baseDuration = baseDuration;
+            effect.stackBehaviour = stackBehaviour;
+            effect.maxStacks = maxStacks;
             effect.requiredFeatures = required;
             effect.excludedFeatures = excluded;
             effect.modifiers = modifiers ?? new List<ModifierData>();

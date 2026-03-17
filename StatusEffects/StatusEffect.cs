@@ -53,11 +53,18 @@ namespace Assets.Scripts.StatusEffects
         [Header("Duration")]
         [Tooltip("Base duration in turns. -1 = indefinite (permanent until dispelled), 0 = instant, >0 = number of turns")]
         public int baseDuration = -1;
-        
+
+        [Header("Stacking Behaviour")]
+        [Tooltip("How this effect behaves when reapplied: Refresh (reset duration), Stack (multiple instances), Ignore (no change), Replace (if stronger)")]
+        public StackBehaviour stackBehaviour = StackBehaviour.Refresh;
+
+        [Tooltip("Maximum number of stacks allowed. ONLY USED IF stackBehaviour = Stack. 0 = unlimited stacks.")]
+        public int maxStacks = 0;
+
         [Header("Targeting Validation")]
         [Tooltip("Entity must have ALL of these features to receive this effect")]
         public EntityFeature requiredFeatures = EntityFeature.None;
-        
+
         [Tooltip("Entity cannot have ANY of these features to receive this effect")]
         public EntityFeature excludedFeatures = EntityFeature.None;
     }

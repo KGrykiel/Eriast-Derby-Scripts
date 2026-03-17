@@ -32,31 +32,14 @@ namespace Assets.Scripts.Entities
                 return null;
             }
 
-            var existing = activeEffects.FirstOrDefault(a => a.template == effect);
-            bool wasReplacement = false;
-
-            if (existing != null)
+            return effect.stackBehaviour switch
             {
-                if (ShouldReplace(existing, effect))
-                {
-                    existing.Deactivate();
-                    activeEffects.Remove(existing);
-                    wasReplacement = true;
-                }
-                else
-                {
-                    return existing;
-                }
-            }
-
-            var applied = new AppliedStatusEffect(effect, owner, applier);
-            applied.Activate();
-            activeEffects.Add(applied);
-
-            Entity sourceEntity = applier as Entity;
-            CombatEventBus.EmitStatusEffect(applied, sourceEntity, owner, applier, wasReplacement);
-
-            return applied;
+                StackBehaviour.Refresh => ApplyWithRefresh(effect, applier),
+                StackBehaviour.Stack => ApplyWithStack(effect, applier),
+                StackBehaviour.Ignore => ApplyWithIgnore(effect, applier),
+                StackBehaviour.Replace => ApplyWithReplace(effect, applier),
+                _ => ApplyWithRefresh(effect, applier)
+            };
         }
 
         public void Remove(AppliedStatusEffect effect)
@@ -133,8 +116,88 @@ namespace Assets.Scripts.Entities
             return true;
         }
 
-        /// <summary>Stacking rules: higher magnitude wins, then longer duration.</summary>
-        private bool ShouldReplace(AppliedStatusEffect existing, StatusEffect newEffect)
+        // ==================== STACKING LOGIC ====================
+
+        private AppliedStatusEffect ApplyWithRefresh(StatusEffect effect, Object applier)
+        {
+            var existing = activeEffects.FirstOrDefault(a => a.template == effect);
+
+            if (existing != null)
+            {
+                existing.RefreshDuration();
+                CombatEventBus.EmitStatusRefreshed(existing, owner);
+                return existing;
+            }
+
+            return CreateAndActivate(effect, applier, wasReplacement: false);
+        }
+
+        private AppliedStatusEffect ApplyWithStack(StatusEffect effect, Object applier)
+        {
+            int currentStackCount = activeEffects.Count(a => a.template == effect);
+
+            if (effect.maxStacks > 0 && currentStackCount >= effect.maxStacks)
+            {
+                CombatEventBus.EmitStatusStackLimit(effect, owner, effect.maxStacks);
+                return null;
+            }
+
+            return CreateAndActivate(effect, applier, wasReplacement: false);
+        }
+
+        private AppliedStatusEffect ApplyWithIgnore(StatusEffect effect, Object applier)
+        {
+            var existing = activeEffects.FirstOrDefault(a => a.template == effect);
+
+            if (existing != null)
+            {
+                CombatEventBus.EmitStatusIgnored(existing, owner);
+                return existing;
+            }
+
+            return CreateAndActivate(effect, applier, wasReplacement: false);
+        }
+
+        private AppliedStatusEffect ApplyWithReplace(StatusEffect effect, Object applier)
+        {
+            var existing = activeEffects.FirstOrDefault(a => a.template == effect);
+
+            if (existing != null)
+            {
+                if (IsStronger(effect, existing))
+                {
+                    int oldDuration = existing.turnsRemaining;
+                    existing.Deactivate();
+                    activeEffects.Remove(existing);
+                    var newEffect = CreateAndActivate(effect, applier, wasReplacement: true);
+                    CombatEventBus.EmitStatusReplaced(newEffect, owner, oldDuration);
+                    return newEffect;
+                }
+                else
+                {
+                    CombatEventBus.EmitStatusKeptStronger(existing, owner);
+                    return existing;
+                }
+            }
+
+            return CreateAndActivate(effect, applier, wasReplacement: false);
+        }
+
+        /// <summary>Helper: creates, activates, adds to list, emits event.</summary>
+        private AppliedStatusEffect CreateAndActivate(StatusEffect effect, Object applier, bool wasReplacement)
+        {
+            var applied = new AppliedStatusEffect(effect, owner, applier);
+            applied.Activate();
+            activeEffects.Add(applied);
+
+            Entity sourceEntity = applier as Entity;
+            CombatEventBus.EmitStatusEffect(applied, sourceEntity, owner, applier, wasReplacement);
+
+            return applied;
+        }
+
+        /// <summary>Compares strength: higher magnitude wins, then longer duration.</summary>
+        private bool IsStronger(StatusEffect newEffect, AppliedStatusEffect existing)
         {
             float existingMagnitude = existing.template.modifiers.Sum(m => Mathf.Abs(m.value));
             float newMagnitude = newEffect.modifiers.Sum(m => Mathf.Abs(m.value));
@@ -144,13 +207,15 @@ namespace Assets.Scripts.Entities
             if (newMagnitude < existingMagnitude)
                 return false;
 
-            int existingDuration = existing.turnsRemaining;
-            int newDuration = newEffect.baseDuration;
+            bool newIsIndefinite = newEffect.baseDuration == -1;
+            bool existingIsIndefinite = existing.turnsRemaining == -1;
 
-            if (newDuration > existingDuration)
+            if (newIsIndefinite && !existingIsIndefinite)
                 return true;
+            if (!newIsIndefinite && existingIsIndefinite)
+                return false;
 
-            return false;
+            return newEffect.baseDuration > existing.turnsRemaining;
         }
     }
 }

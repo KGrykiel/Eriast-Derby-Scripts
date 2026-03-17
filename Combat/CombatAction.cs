@@ -49,7 +49,25 @@ namespace Assets.Scripts.Combat
         public IEnumerable<StatusEffectEvent> GetStatusEffectEvents() 
             => Events.OfType<StatusEffectEvent>();
 
-        public IEnumerable<RestorationEvent> GetRestorationEvents() 
+        public IEnumerable<StatusEffectExpiredEvent> GetStatusExpiredEvents()
+            => Events.OfType<StatusEffectExpiredEvent>();
+
+        public IEnumerable<StatusEffectRefreshedEvent> GetStatusRefreshedEvents()
+            => Events.OfType<StatusEffectRefreshedEvent>();
+
+        public IEnumerable<StatusEffectIgnoredEvent> GetStatusIgnoredEvents()
+            => Events.OfType<StatusEffectIgnoredEvent>();
+
+        public IEnumerable<StatusEffectReplacedEvent> GetStatusReplacedEvents()
+            => Events.OfType<StatusEffectReplacedEvent>();
+
+        public IEnumerable<StatusEffectKeptStrongerEvent> GetStatusKeptStrongerEvents()
+            => Events.OfType<StatusEffectKeptStrongerEvent>();
+
+        public IEnumerable<StatusEffectStackLimitEvent> GetStatusStackLimitEvents()
+            => Events.OfType<StatusEffectStackLimitEvent>();
+
+        public IEnumerable<RestorationEvent> GetRestorationEvents()
             => Events.OfType<RestorationEvent>();
 
         public IEnumerable<AttackRollEvent> GetAttackRollEvents() 
