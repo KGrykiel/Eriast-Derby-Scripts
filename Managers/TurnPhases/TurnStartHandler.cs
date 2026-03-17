@@ -41,6 +41,8 @@
             if (vehicle.currentStage != null)
                 vehicle.currentStage.ProcessLaneTurnEffects(vehicle);
 
+            TurnEventBus.EmitTurnStarted(vehicle);
+
             if (context.IsPlayerTurn)
             {
                 context.PlayerController.ProcessPlayerMovement();

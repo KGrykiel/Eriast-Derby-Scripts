@@ -9,6 +9,9 @@
 
         public TurnPhase? Execute(TurnPhaseContext context)
         {
+            context.StateMachine.IncrementRound();
+            TurnEventBus.EmitRoundStarted(context.CurrentRound);
+
             return TurnPhase.TurnStart;
         }
     }

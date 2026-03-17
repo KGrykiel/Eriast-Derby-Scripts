@@ -25,6 +25,9 @@
 
             context.ShouldRefreshUI = true;
 
+            if (vehicle != null)
+                TurnEventBus.EmitTurnEnded(vehicle);
+
             bool newRound = context.StateMachine.AdvanceToNextTurn();
             return newRound ? TurnPhase.RoundEnd : TurnPhase.TurnStart;
         }

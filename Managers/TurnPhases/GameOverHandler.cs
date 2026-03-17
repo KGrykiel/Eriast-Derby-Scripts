@@ -12,6 +12,7 @@ namespace Assets.Scripts.Managers.TurnPhases
         public TurnPhase? Execute(TurnPhaseContext context)
         {
             Debug.Log("[GameOverHandler] Game Over - simulation stopped");
+            TurnEventBus.EmitGameOver();
             context.IsGameOver = true;
             context.ShouldRefreshUI = true;
             return null;  // Stop execution permanently

@@ -162,43 +162,9 @@ namespace Assets.Scripts.Managers
             Debug.Log($"[TurnStateMachine] {oldPhase} → {newPhase}");
 
             TurnEventBus.EmitPhaseChanged(oldPhase, newPhase);
-            ExecutePhaseEntry(newPhase);
         }
 
-        private void ExecutePhaseEntry(TurnPhase phase)
-        {
-            switch (phase)
-            {
-                case TurnPhase.RoundStart:
-                    currentRound++;
-                    TurnEventBus.EmitRoundStarted(currentRound);
-                    break;
-                    
-                case TurnPhase.TurnStart:
-                    var vehicle = CurrentVehicle;
-                    if (vehicle != null)
-                    {
-                        TurnEventBus.EmitTurnStarted(vehicle);
-                    }
-                    break;
-                    
-                case TurnPhase.TurnEnd:
-                    var endingVehicle = CurrentVehicle;
-                    if (endingVehicle != null)
-                    {
-                        TurnEventBus.EmitTurnEnded(endingVehicle);
-                    }
-                    break;
-                    
-                case TurnPhase.RoundEnd:
-                    TurnEventBus.EmitRoundEnded(currentRound);
-                    break;
-                    
-                case TurnPhase.GameOver:
-                    TurnEventBus.EmitGameOver();
-                    break;
-            }
-        }
+        public void IncrementRound() => currentRound++;
         
         // ==================== TURN ADVANCEMENT ====================
 
