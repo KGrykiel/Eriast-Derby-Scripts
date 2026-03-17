@@ -2,6 +2,7 @@
 using System.Linq;
 using System.Text;
 using Assets.Scripts.Combat.Damage;
+using Assets.Scripts.Combat.Restoration;
 using Assets.Scripts.Combat.Rolls;
 using Assets.Scripts.Combat.Rolls.RollSpecs.SpecTypes;
 using Assets.Scripts.Combat.Rolls.RollTypes.Attacks;
@@ -207,6 +208,46 @@ namespace Assets.Scripts.Combat.Logging
             return sb.ToString().Trim();
         }
 
+        public static string FormatRestorationDetailed(RestorationResult result)
+        {
+            if (result == null) return "No restoration";
+
+            var sb = new StringBuilder();
+            sb.AppendLine($"Restoration Breakdown ({result.ResourceType}):");
+
+            string diceNotation = BuildDiceNotation(result);
+            sb.AppendLine($"  Roll: {diceNotation} = {result.RawTotal}");
+            sb.AppendLine("  ─────────────");
+            sb.AppendLine($"  Requested: {result.RequestedChange:+0;-0}");
+            sb.AppendLine($"  Actual: {result.ActualChange:+0;-0}");
+            sb.AppendLine($"  Resource: {result.OldValue} → {result.NewValue} / {result.MaxValue}");
+            return sb.ToString();
+        }
+
+        public static string FormatCombinedRestorationDetailed(List<RestorationResult> results, string sourceName = null)
+        {
+            if (results == null || results.Count == 0) return "No restoration";
+            if (results.Count == 1) return FormatRestorationDetailed(results[0]);
+
+            var sb = new StringBuilder();
+            int totalChange = results.Sum(r => r.ActualChange);
+            sb.AppendLine($"Restoration Total: {totalChange:+0;-0}");
+
+            if (!string.IsNullOrEmpty(sourceName))
+            {
+                sb.AppendLine($"Restoration Source: {sourceName}");
+            }
+            sb.AppendLine();
+
+            foreach (var result in results)
+            {
+                string diceNotation = BuildDiceNotation(result);
+                sb.AppendLine($"{diceNotation} = {result.ActualChange:+0;-0} ({result.ResourceType})");
+            }
+
+            return sb.ToString().Trim();
+        }
+
         // ==================== STAT BREAKDOWN ====================
 
         public static string FormatStatBreakdown(
@@ -277,21 +318,27 @@ namespace Assets.Scripts.Combat.Logging
         // ==================== PRIVATE HELPERS ====================
 
         private static string BuildDiceNotation(DamageResult result)
+            => BuildDiceNotation(result.DiceCount, result.DieSize, result.Bonus);
+
+        private static string BuildDiceNotation(RestorationResult result)
+            => BuildDiceNotation(result.DiceCount, result.DieSize, result.Bonus);
+
+        private static string BuildDiceNotation(int diceCount, int dieSize, int bonus)
         {
-            if (result.DiceCount > 0 && result.DieSize > 0)
+            if (diceCount > 0 && dieSize > 0)
             {
-                string notation = $"({result.DiceCount}d{result.DieSize})";
-                if (result.Bonus != 0)
+                string notation = $"({diceCount}d{dieSize})";
+                if (bonus != 0)
                 {
-                    string sign = result.Bonus > 0 ? "+" : "";
-                    notation += $"{sign}{result.Bonus}";
+                    string sign = bonus > 0 ? "+" : "";
+                    notation += $"{sign}{bonus}";
                 }
                 return notation;
             }
-            if (result.Bonus != 0)
+            if (bonus != 0)
             {
-                string sign = result.Bonus > 0 ? "+" : "";
-                return $"{sign}{result.Bonus}";
+                string sign = bonus > 0 ? "+" : "";
+                return $"{sign}{bonus}";
             }
             return "0";
         }
@@ -377,12 +424,10 @@ namespace Assets.Scripts.Combat.Logging
 
             foreach (var periodic in effect.periodicEffects)
             {
-                string effectText = periodic.type switch
+                string effectText = periodic switch
                 {
-                    PeriodicEffectType.Damage => $"  • <color=#FF4444>{FormatFormulaNotation(periodic.damageFormula)} {periodic.damageFormula.damageType} damage per turn</color>",
-                    PeriodicEffectType.Healing => $"  • <color=#44FF44>{periodic.amount} healing per turn</color>",
-                    PeriodicEffectType.EnergyDrain => $"  • <color=#FF4444>-{periodic.amount} energy per turn</color>",
-                    PeriodicEffectType.EnergyRestore => $"  • <color=#88DDFF>+{periodic.amount} energy per turn</color>",
+                    PeriodicDamageEffect dmg => FormatPeriodicDamage(dmg),
+                    PeriodicRestorationEffect res => FormatPeriodicRestoration(res),
                     _ => null
                 };
                 if (effectText != null)
@@ -391,14 +436,35 @@ namespace Assets.Scripts.Combat.Logging
             sb.AppendLine();
         }
 
-        public static string FormatFormulaNotation(DamageFormula formula)
+        private static string FormatPeriodicDamage(PeriodicDamageEffect dmg)
         {
-            if (formula.baseDice <= 0)
-                return formula.bonus.ToString();
+            return $"  • <color=#FF4444>{FormatFormulaNotation(dmg.damageFormula)} {dmg.damageFormula.damageType} damage per turn</color>";
+        }
 
-            string notation = $"{formula.baseDice}d{formula.dieSize}";
-            if (formula.bonus != 0)
-                notation += $"{formula.bonus:+0;-0}";
+        private static string FormatPeriodicRestoration(PeriodicRestorationEffect res)
+        {
+            string notation = FormatRestorationNotation(res.formula);
+            string resourceName = res.formula.resourceType == ResourceType.Health ? "HP" : "energy";
+            bool isPositive = res.formula.baseDice > 0 || res.formula.bonus >= 0;
+            string color = isPositive ? "#44FF44" : "#FF4444";
+            string verb = isPositive ? "restores" : "drains";
+            return $"  • <color={color}>{verb} {notation} {resourceName} per turn</color>";
+        }
+
+        public static string FormatFormulaNotation(DamageFormula formula)
+            => FormatFormulaNotation(formula.baseDice, formula.dieSize, formula.bonus);
+
+        public static string FormatRestorationNotation(RestorationFormula formula)
+            => FormatFormulaNotation(formula.baseDice, formula.dieSize, System.Math.Abs(formula.bonus));
+
+        private static string FormatFormulaNotation(int baseDice, int dieSize, int bonus)
+        {
+            if (baseDice <= 0)
+                return bonus.ToString();
+
+            string notation = $"{baseDice}d{dieSize}";
+            if (bonus != 0)
+                notation += $"{bonus:+0;-0}";
             return notation;
         }
 

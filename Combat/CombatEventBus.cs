@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using UnityEngine;
 using Assets.Scripts.Combat.Damage;
+using Assets.Scripts.Combat.Restoration;
 using Assets.Scripts.StatusEffects;
 using Assets.Scripts.Combat.Logging;
 using Assets.Scripts.Combat.Rolls.RollTypes.Attacks;
@@ -97,12 +98,12 @@ namespace Assets.Scripts.Combat
         }
         
         public static void EmitRestoration(
-            RestorationBreakdown breakdown,
+            RestorationResult result,
             Entity source,
             Entity target,
             Object causalSource)
         {
-            Emit(new RestorationEvent(breakdown, source, target, causalSource));
+            Emit(new RestorationEvent(result, source, target, causalSource));
         }
         
         public static void EmitAttackRoll(

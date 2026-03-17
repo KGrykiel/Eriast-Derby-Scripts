@@ -11,7 +11,6 @@
         public int DiceCount { get; }
         public int DieSize { get; }
         public int Bonus { get; }
-        public int Rolled { get; }
         public bool IsCritical { get; }
         public int RawTotal { get; }
         public ResistanceLevel ResistanceLevel { get; }
@@ -22,7 +21,6 @@
             int diceCount,
             int dieSize,
             int bonus,
-            int rolled,
             bool isCritical,
             int rawTotal,
             ResistanceLevel resistanceLevel,
@@ -32,7 +30,6 @@
             DiceCount = diceCount;
             DieSize = dieSize;
             Bonus = bonus;
-            Rolled = rolled;
             IsCritical = isCritical;
             RawTotal = rawTotal;
             ResistanceLevel = resistanceLevel;

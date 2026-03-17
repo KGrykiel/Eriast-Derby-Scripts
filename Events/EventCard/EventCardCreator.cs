@@ -8,6 +8,7 @@ using Assets.Scripts.Combat.Rolls.RollSpecs.SpecTypes;
 using Assets.Scripts.Entities.Vehicle;
 using Assets.Scripts.Characters;
 using Assets.Scripts.Combat.Damage;
+using Assets.Scripts.Combat.Restoration;
 using StatusEffectTemplate = Assets.Scripts.StatusEffects.StatusEffect;
 
 namespace Assets.Scripts.Events.EventCard
@@ -225,14 +226,7 @@ namespace Assets.Scripts.Events.EventCard
             => new EffectInvocation
             {
                 target = target,
-                effect = new ResourceRestorationEffect { resourceType = ResourceRestorationEffect.ResourceType.Energy, amount = amount }
-            };
-
-        private static EffectInvocation Status(StatusEffectTemplate effect, EffectTarget target = EffectTarget.SourceVehicle)
-            => new EffectInvocation
-            {
-                target = target,
-                effect = new ApplyStatusEffect { statusEffect = effect }
+                effect = new ResourceRestorationEffect { formula = new RestorationFormula { resourceType = ResourceType.Energy, isDrain = false, bonus = amount } }
             };
 
         private static RollNode AlwaysApply(List<EffectInvocation> effects, string narrative = "")

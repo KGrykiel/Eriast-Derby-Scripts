@@ -63,6 +63,12 @@ public class EventEntryHover : MonoBehaviour, IPointerEnterHandler, IPointerExit
             sb.AppendLine(damageBreakdown);
         }
 
+        if (evt.metadata.ContainsKey("restorationBreakdown") && evt.metadata["restorationBreakdown"] is string restorationBreakdown)
+        {
+            if (sb.Length > 0) sb.AppendLine();
+            sb.AppendLine(restorationBreakdown);
+        }
+
         if (evt.metadata.ContainsKey("effectBreakdown") && evt.metadata["effectBreakdown"] is string effectBreakdown)
         {
             if (sb.Length > 0) sb.AppendLine();

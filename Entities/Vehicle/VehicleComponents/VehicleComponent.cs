@@ -123,7 +123,7 @@ public abstract class VehicleComponent : Entity
         }
     }
     
-    public virtual void RemoveProvidedModifiers(global::Vehicle vehicle)
+    public virtual void RemoveProvidedModifiers(Vehicle vehicle)
     {
         if (vehicle == null) return;
         
@@ -133,7 +133,7 @@ public abstract class VehicleComponent : Entity
         }
     }
     
-    private List<VehicleComponent> ResolveModifierTargets(global::Vehicle vehicle, ComponentModifierData modData)
+    private List<VehicleComponent> ResolveModifierTargets(Vehicle vehicle, ComponentModifierData modData)
     {
         var targets = new List<VehicleComponent>();
         

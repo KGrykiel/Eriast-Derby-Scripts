@@ -2,6 +2,7 @@
 using UnityEngine;
 using UnityEditor;
 using Assets.Scripts.Combat.Damage;
+using Assets.Scripts.Combat.Restoration;
 using System.Collections.Generic;
 using Assets.Scripts.Entities.Vehicle;
 using Assets.Scripts.Characters;
@@ -218,6 +219,7 @@ namespace Assets.Scripts.Skills
             RegenerateSkill(DefineRecoilCannon());
             RegenerateSkill(DefineRammingContest());
             RegenerateSkill(DefineAimedShot());
+            RegenerateSkill(DefineIncendiaryShot());
 
             AssetDatabase.SaveAssets();
             Debug.Log("[SkillCreator] All skills regenerated.");
@@ -316,6 +318,15 @@ namespace Assets.Scripts.Skills
                 TargetingMode.Enemy,
                 energyCost: 1);
 
+        // Pattern: attack with status effect — fire damage plus Burning DoT on hit.
+        private static Skill DefineIncendiaryShot()
+            => Make("Incendiary Shot",
+                Attack(FX(
+                    Dmg(1, 6, 2, DamageType.Fire, EffectTarget.SelectedTarget),
+                    Status(LoadStatus("Assets/Content/StatusEffects/Burning.asset"), EffectTarget.SelectedTarget))),
+                TargetingMode.EnemyComponent,
+                energyCost: 2);
+
         private static void RegenerateSkill(Skill definition)
         {
             string path = $"{SkillsFolder}/{definition.name}.asset";
@@ -361,14 +372,14 @@ namespace Assets.Scripts.Skills
             => new EffectInvocation
             {
                 target = target,
-                effect = new ResourceRestorationEffect { resourceType = ResourceRestorationEffect.ResourceType.Health, amount = amount }
+                effect = new ResourceRestorationEffect { formula = new RestorationFormula { resourceType = ResourceType.Health, isDrain = false, bonus = amount } }
             };
 
         private static EffectInvocation Energy(int amount, EffectTarget target = EffectTarget.SourceVehicle)
             => new EffectInvocation
             {
                 target = target,
-                effect = new ResourceRestorationEffect { resourceType = ResourceRestorationEffect.ResourceType.Energy, amount = amount }
+                effect = new ResourceRestorationEffect { formula = new RestorationFormula { resourceType = ResourceType.Energy, isDrain = false, bonus = amount } }
             };
 
         private static EffectInvocation Status(StatusEffectTemplate effect, EffectTarget target = EffectTarget.SelectedTarget)

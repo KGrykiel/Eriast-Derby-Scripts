@@ -7,6 +7,7 @@ using TMPro;
 using Assets.Scripts.Events.EventCard.EventCardTypes;
 using Assets.Scripts.Events.EventCard;
 using Assets.Scripts.Combat.Damage;
+using Assets.Scripts.Combat.Restoration;
 using Assets.Scripts.Combat.Rolls.RollSpecs.SpecTypes;
 
 namespace Assets.Scripts.UI.Components
@@ -45,7 +46,7 @@ namespace Assets.Scripts.UI.Components
             Hide();
         }
         public void ShowChoices(
-            Events.EventCard.EventCard card, 
+            EventCard card, 
             List<CardChoice> choices, 
             Action<CardChoice> onChoiceSelected)
         {
@@ -270,7 +271,9 @@ namespace Assets.Scripts.UI.Components
             }
             else if (invocation.effect is ResourceRestorationEffect restorationEffect)
             {
-                description = $"{(restorationEffect.amount > 0 ? "Restore" : "Drain")} {Mathf.Abs(restorationEffect.amount)} {restorationEffect.resourceType}";
+                string verb = restorationEffect.formula.isDrain ? "Drain" : "Restore";
+                int expectedAmount = Mathf.Abs(RestorationCalculator.Roll(restorationEffect.formula));
+                description = $"{verb} {expectedAmount} {restorationEffect.formula.resourceType}";
             }
             
             return description;

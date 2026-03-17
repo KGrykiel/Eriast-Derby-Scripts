@@ -4,6 +4,7 @@ using UnityEditor;
 using System.Collections.Generic;
 using Assets.Scripts.Entities;
 using Assets.Scripts.Combat.Damage;
+using Assets.Scripts.Combat.Restoration;
 using Assets.Scripts.Combat.Rolls.Advantage;
 
 namespace Assets.Scripts.StatusEffects
@@ -70,11 +71,11 @@ namespace Assets.Scripts.StatusEffects
         private static StatusEffect MakeBlankDoT()
             => Make("New DoT", baseDuration: 3,
                 periodicEffects: Periodics(
-                    Periodic(PeriodicEffectType.Damage, new DamageFormula { baseDice = 1, dieSize = 6, bonus = 0, damageType = DamageType.Fire })));
+                    DamagePeriodic(new DamageFormula { baseDice = 1, dieSize = 6, bonus = 0, damageType = DamageType.Fire })));
 
         private static StatusEffect MakeBlankHoT()
             => Make("New HoT", baseDuration: 3,
-                periodicEffects: Periodics(Periodic(PeriodicEffectType.Healing, 5)));
+                periodicEffects: Periodics(RestorationPeriodic(ResourceType.Health, 0, 6, 5)));
 
         #region named effect catalogue
         // ==================== NAMED STATUS EFFECT CATALOGUE ====================
@@ -109,15 +110,14 @@ namespace Assets.Scripts.StatusEffects
         // Pattern: DoT with feature requirement.
         private static StatusEffect DefineBurning()
             => Make("Burning", baseDuration: 3,
-                required: EntityFeature.IsFlammable,
                 periodicEffects: Periodics(
-                    Periodic(PeriodicEffectType.Damage, new DamageFormula { baseDice = 1, dieSize = 6, bonus = 0, damageType = DamageType.Fire })));
+                    DamagePeriodic(new DamageFormula { baseDice = 1, dieSize = 6, bonus = 0, damageType = DamageType.Fire })));
 
         // Pattern: DoT, no feature requirement.
         private static StatusEffect DefineBleeding()
             => Make("Bleeding", baseDuration: 3,
                 periodicEffects: Periodics(
-                    Periodic(PeriodicEffectType.Damage, new DamageFormula { baseDice = 1, dieSize = 4, bonus = 0, damageType = DamageType.Physical })));
+                    DamagePeriodic(new DamageFormula { baseDice = 1, dieSize = 4, bonus = 0, damageType = DamageType.Physical })));
 
         // Pattern: modifier + periodic drain, requires electronic.
         private static StatusEffect DefineOverheating()
@@ -127,7 +127,7 @@ namespace Assets.Scripts.StatusEffects
                     Mod(Attribute.MaxSpeed, ModifierType.Flat, -20f),
                     Mod(Attribute.EnergyRegen, ModifierType.Flat, -2f)),
                 periodicEffects: Periodics(
-                    Periodic(PeriodicEffectType.EnergyDrain, 3)));
+                    RestorationPeriodic(ResourceType.Energy, 0, 6, 3, isDrain: true)));
 
         // Pattern: behavioral — prevents all actions, short duration.
         private static StatusEffect DefineStunned()
@@ -173,7 +173,7 @@ namespace Assets.Scripts.StatusEffects
         private static StatusEffect DefineRegenerating()
             => Make("Regenerating", baseDuration: 3,
                 periodicEffects: Periodics(
-                    Periodic(PeriodicEffectType.Healing, 8)));
+                    RestorationPeriodic(ResourceType.Health, 0, 6, 8)));
 
         private static void RegenerateStatusEffect(StatusEffect definition)
         {
@@ -198,14 +198,24 @@ namespace Assets.Scripts.StatusEffects
         private static List<ModifierData> Mods(params ModifierData[] mods)
             => new List<ModifierData>(mods);
 
-        private static PeriodicEffectData Periodic(PeriodicEffectType type, DamageFormula formula)
-            => new PeriodicEffectData { type = type, damageFormula = formula };
+        private static IPeriodicEffect DamagePeriodic(DamageFormula formula)
+            => new PeriodicDamageEffect { damageFormula = formula };
 
-        private static PeriodicEffectData Periodic(PeriodicEffectType type, int amount)
-            => new PeriodicEffectData { type = type, amount = amount };
+        private static IPeriodicEffect RestorationPeriodic(ResourceType resourceType, int baseDice, int dieSize, int bonus, bool isDrain = false)
+            => new PeriodicRestorationEffect
+            {
+                formula = new RestorationFormula
+                {
+                    resourceType = resourceType,
+                    isDrain = isDrain,
+                    baseDice = baseDice,
+                    dieSize = dieSize,
+                    bonus = bonus
+                }
+            };
 
-        private static List<PeriodicEffectData> Periodics(params PeriodicEffectData[] effects)
-            => new List<PeriodicEffectData>(effects);
+        private static List<IPeriodicEffect> Periodics(params IPeriodicEffect[] effects)
+            => new List<IPeriodicEffect>(effects);
 
         private static BehavioralEffectData Behavioral(
             bool preventsActions = false,
@@ -232,7 +242,7 @@ namespace Assets.Scripts.StatusEffects
             EntityFeature required = EntityFeature.None,
             EntityFeature excluded = EntityFeature.None,
             List<ModifierData> modifiers = null,
-            List<PeriodicEffectData> periodicEffects = null,
+            List<IPeriodicEffect> periodicEffects = null,
             BehavioralEffectData behavioral = null,
             List<AdvantageGrant> advantageGrants = null)
         {
@@ -243,7 +253,7 @@ namespace Assets.Scripts.StatusEffects
             effect.requiredFeatures = required;
             effect.excludedFeatures = excluded;
             effect.modifiers = modifiers ?? new List<ModifierData>();
-            effect.periodicEffects = periodicEffects ?? new List<PeriodicEffectData>();
+            effect.periodicEffects = periodicEffects ?? new List<IPeriodicEffect>();
             effect.behavioralEffects = behavioral ?? new BehavioralEffectData();
             effect.advantageGrants = advantageGrants ?? new List<AdvantageGrant>();
             return effect;

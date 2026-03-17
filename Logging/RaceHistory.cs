@@ -8,10 +8,15 @@ namespace Assets.Scripts.Logging
     public class RaceHistory : MonoBehaviour
     {
         private static RaceHistory instance;
+        private static bool isQuitting;
+
         public static RaceHistory Instance
         {
             get
             {
+                if (isQuitting)
+                    return instance;
+
                 if (instance == null)
                 {
                     GameObject go = new("RaceHistory");
@@ -105,6 +110,17 @@ namespace Assets.Scripts.Logging
         {
             Instance.allEvents.Clear();
             Instance.vehicleEvents.Clear();
+        }
+
+        private void OnApplicationQuit()
+        {
+            isQuitting = true;
+        }
+
+        private void OnDestroy()
+        {
+            if (instance == this)
+                instance = null;
         }
     }
 }

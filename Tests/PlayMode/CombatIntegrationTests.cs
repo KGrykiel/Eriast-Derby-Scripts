@@ -467,7 +467,7 @@ namespace Assets.Scripts.Tests.PlayMode
             stunTemplate.effectName = "Stunned";
             stunTemplate.baseDuration = 2;
             stunTemplate.modifiers = new System.Collections.Generic.List<ModifierData>();
-            stunTemplate.periodicEffects = new System.Collections.Generic.List<PeriodicEffectData>();
+            stunTemplate.periodicEffects = new System.Collections.Generic.List<IPeriodicEffect>();
             stunTemplate.behavioralEffects = new BehavioralEffectData { preventsActions = true };
             cleanup.Add(stunTemplate);
 

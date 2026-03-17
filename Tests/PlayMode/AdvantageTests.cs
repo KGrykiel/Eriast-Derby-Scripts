@@ -43,7 +43,7 @@ namespace Assets.Scripts.Tests.PlayMode
             template.effectName = name;
             template.baseDuration = -1;
             template.modifiers = new List<ModifierData>();
-            template.periodicEffects = new List<PeriodicEffectData>();
+            template.periodicEffects = new List<IPeriodicEffect>();
             template.behavioralEffects = new BehavioralEffectData();
             template.advantageGrants = new List<AdvantageGrant>
             {

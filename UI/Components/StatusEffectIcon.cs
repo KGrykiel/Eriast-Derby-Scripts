@@ -116,25 +116,33 @@ namespace Assets.Scripts.UI.Components
             }
             
             bool hasPeriodicDamage = false;
-            bool hasPeriodicHealing = false;
-            
+            bool hasPeriodicRestoration = false;
+
             foreach (var periodic in statusEffect.periodicEffects)
             {
-                if (periodic.type == PeriodicEffectType.Damage)
-                    hasPeriodicDamage = true;
-                if (periodic.type == PeriodicEffectType.Healing)
-                    hasPeriodicHealing = true;
+                switch (periodic)
+                {
+                    case PeriodicDamageEffect:
+                        hasPeriodicDamage = true;
+                        break;
+                    case PeriodicRestorationEffect res:
+                        if (res.formula.isDrain)
+                            hasPeriodicDamage = true;
+                        else
+                            hasPeriodicRestoration = true;
+                        break;
+                }
             }
-            
+
             bool hasBehavioralRestrictions = statusEffect.behavioralEffects != null &&
                 (statusEffect.behavioralEffects.preventsActions ||
                  statusEffect.behavioralEffects.preventsMovement ||
                  statusEffect.behavioralEffects.damageAmplification > 1f);
-            
+
             if (hasPeriodicDamage || hasBehavioralRestrictions)
                 return false;
-            
-            if (hasPeriodicHealing || totalModifierValue > 0)
+
+            if (hasPeriodicRestoration || totalModifierValue > 0)
                 return true;
             
             return totalModifierValue >= 0;

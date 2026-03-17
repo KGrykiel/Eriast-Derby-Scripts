@@ -186,6 +186,7 @@ public class EventFeed : MonoBehaviour
 
         return evt.metadata.ContainsKey("rollBreakdown") ||
                evt.metadata.ContainsKey("damageBreakdown") ||
+               evt.metadata.ContainsKey("restorationBreakdown") ||
                evt.metadata.ContainsKey("effectBreakdown") ||        // Status effects
                evt.metadata.ContainsKey("dcBreakdown") ||            // Saving throw DC
                evt.metadata.ContainsKey("saveModifiersBreakdown") || // Save modifiers

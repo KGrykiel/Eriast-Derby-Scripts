@@ -3,7 +3,9 @@ using System.Collections.Generic;
 using UnityEngine;
 using Assets.Scripts.Entities;
 using Assets.Scripts.Combat.Damage;
+using Assets.Scripts.Combat.Restoration;
 using Assets.Scripts.Combat.Rolls.Advantage;
+using SerializeReferenceEditor;
 
 namespace Assets.Scripts.StatusEffects
 {
@@ -33,7 +35,8 @@ namespace Assets.Scripts.StatusEffects
         
         [Header("Periodic Effects")]
         [Tooltip("Effects that trigger at the start/end of each turn")]
-        public List<PeriodicEffectData> periodicEffects = new();
+        [SerializeReference, SR]
+        public List<IPeriodicEffect> periodicEffects = new();
         
         [Header("Behavioral Effects")]
         [Tooltip("Action/movement restrictions and other behavioral changes")]
@@ -72,28 +75,22 @@ namespace Assets.Scripts.StatusEffects
         public float value;
     }
 
+    public interface IPeriodicEffect { }
+
     [Serializable]
-    public class PeriodicEffectData
+    [SRName("Damage (DoT)")]
+    public class PeriodicDamageEffect : IPeriodicEffect
     {
-        [Tooltip("Type of periodic effect")]
-        public PeriodicEffectType type;
-
-        [Header("Damage (used when type = Damage)")]
-        [Tooltip("Damage formula and type (only used for Damage periodic effects)")]
-        public DamageFormula damageFormula = new() { baseDice = 0, dieSize = 6, bonus = 5, damageType = DamageType.Fire };
-
-        [Header("Restoration (used for Healing / Energy types)")]
-        [Tooltip("Flat amount to restore (positive) or drain (negative) per turn")]
-        //TODO: Change this to a dice formula for more interesting variability, like damage has. It's the DnD way.
-        public int amount = 5;
+        [Tooltip("Damage formula and type")]
+        public DamageFormula damageFormula = new() { baseDice = 1, dieSize = 6, bonus = 0, damageType = DamageType.Fire };
     }
 
-    public enum PeriodicEffectType
+    [Serializable]
+    [SRName("Restoration (HoT/Energy)")]
+    public class PeriodicRestorationEffect : IPeriodicEffect
     {
-        Damage,         // Deal damage (Burning, Poison, Bleeding)
-        Healing,        // Restore HP (Regeneration, Blessed)
-        EnergyDrain,    // Drain energy
-        EnergyRestore,  // Restore energy
+        [Tooltip("Restoration formula defining resource type, dice, and bonus")]
+        public RestorationFormula formula = new();
     }
 
     [Serializable]

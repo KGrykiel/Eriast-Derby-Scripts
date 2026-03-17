@@ -23,7 +23,7 @@ namespace Assets.Scripts.StatusEffects
             this.applier = applier;
             this.turnsRemaining = template.baseDuration;
         }
-        
+
         public void Activate()
         {
             foreach (var modData in template.modifiers)
@@ -40,13 +40,13 @@ namespace Assets.Scripts.StatusEffects
                 target.AddModifier(modifier);
             }
         }
-        
+
         public void OnTick()
         {
             foreach (var periodicEffect in template.periodicEffects)
                 ApplyPeriodicEffect(periodicEffect);
         }
-        
+
         public void Deactivate()
         {
             foreach (var modifier in createdModifiers)
@@ -54,57 +54,36 @@ namespace Assets.Scripts.StatusEffects
 
             createdModifiers.Clear();
         }
-        
+
         public void DecrementDuration()
         {
             if (IsIndefinite) return;
             turnsRemaining--;
         }
-        
-        private void ApplyPeriodicEffect(PeriodicEffectData periodicEffect)
+
+        private void ApplyPeriodicEffect(IPeriodicEffect periodic)
         {
-            switch (periodicEffect.type)
+            switch (periodic)
             {
-                case PeriodicEffectType.Damage:
-                    ApplyPeriodicDamage(periodicEffect);
+                case PeriodicDamageEffect dmg:
+                {
+                    var effect = new DamageEffect
+                    {
+                        formulaProvider = new StaticFormulaProvider { formula = dmg.damageFormula }
+                    };
+                    var context = new EffectContext { DamageSourceOverride = DamageSource.Effect };
+                    effect.Apply(target, context, template);
                     break;
-
-                case PeriodicEffectType.Healing:
-                    ApplyPeriodicRestoration(periodicEffect, ResourceRestorationEffect.ResourceType.Health, periodicEffect.amount);
+                }
+                case PeriodicRestorationEffect res:
+                {
+                    var effect = new ResourceRestorationEffect { formula = res.formula };
+                    effect.Apply(target, EffectContext.Default, template);
                     break;
-
-                case PeriodicEffectType.EnergyDrain:
-                    ApplyPeriodicRestoration(periodicEffect, ResourceRestorationEffect.ResourceType.Energy, -periodicEffect.amount);
-                    break;
-
-                case PeriodicEffectType.EnergyRestore:
-                    ApplyPeriodicRestoration(periodicEffect, ResourceRestorationEffect.ResourceType.Energy, periodicEffect.amount);
-                    break;
+                }
             }
         }
 
-        private void ApplyPeriodicDamage(PeriodicEffectData periodicEffect)
-        {
-            var effect = new DamageEffect
-            {
-                formulaProvider = new StaticFormulaProvider { formula = periodicEffect.damageFormula }
-            };
-
-            var context = new EffectContext { DamageSourceOverride = DamageSource.Effect };
-            effect.Apply(target, context, template);
-        }
-
-        private void ApplyPeriodicRestoration(PeriodicEffectData periodicEffect, ResourceRestorationEffect.ResourceType resourceType, int amount)
-        {
-            var effect = new ResourceRestorationEffect
-            {
-                resourceType = resourceType,
-                amount = amount
-            };
-
-            effect.Apply(target, EffectContext.Default, template);
-        }
-        
         public bool PreventsActions => template.behavioralEffects?.preventsActions ?? false;
         public bool PreventsMovement => template.behavioralEffects?.preventsMovement ?? false;
         public float DamageAmplification => template.behavioralEffects?.damageAmplification ?? 1f;

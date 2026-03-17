@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using Assets.Scripts.Combat.Restoration;
 using EventType = Assets.Scripts.Logging.EventType;
 using Assets.Scripts.Logging;
 using Assets.Scripts.Core;
@@ -394,8 +395,8 @@ namespace Assets.Scripts.Combat.Logging
             bool isSelf = CombatDisplayHelpers.IsSelfTarget(action.Actor, target, sourceVehicle, targetVehicle);
 
             var parts = new List<string>();
-            BuildRestorationPart(parts, restorations, ResourceRestorationEffect.ResourceType.Health, "HP", CombatFormatter.Colors.Health);
-            BuildRestorationPart(parts, restorations, ResourceRestorationEffect.ResourceType.Energy, "energy", CombatFormatter.Colors.Energy);
+            BuildRestorationPart(parts, restorations, ResourceType.Health, "HP", CombatFormatter.Colors.Health);
+            BuildRestorationPart(parts, restorations, ResourceType.Energy, "energy", CombatFormatter.Colors.Energy);
 
             if (parts.Count == 0) return;
 
@@ -415,8 +416,10 @@ namespace Assets.Scripts.Combat.Logging
                 targetVehicle != null ? targetVehicle.currentStage : null,
                 sourceVehicle, targetVehicle);
 
+            var results = restorations.Select(r => r.Result).ToList();
             logEvt.WithMetadata("skillName", action.SourceName)
-                  .WithMetadata("isSelfTarget", isSelf);
+                  .WithMetadata("isSelfTarget", isSelf)
+                  .WithMetadata("restorationBreakdown", CombatFormatter.FormatCombinedRestorationDetailed(results, action.SourceName));
         }
 
         private static void LogSingleRestoration(RestorationEvent evt)
@@ -426,11 +429,11 @@ namespace Assets.Scripts.Combat.Logging
 
             string targetName = CombatDisplayHelpers.FormatEntityWithVehicle(evt.Target, targetVehicle);
 
-            bool isHealth = evt.Breakdown.resourceType == ResourceRestorationEffect.ResourceType.Health;
+            bool isHealth = evt.Result.ResourceType == ResourceType.Health;
             string resourceName = isHealth ? "HP" : "energy";
             string color = isHealth ? CombatFormatter.Colors.Health : CombatFormatter.Colors.Energy;
-            string verb = evt.Breakdown.actualChange > 0 ? "restores" : "drains";
-            int absChange = Math.Abs(evt.Breakdown.actualChange);
+            string verb = evt.Result.ActualChange > 0 ? "restores" : "drains";
+            int absChange = Math.Abs(evt.Result.ActualChange);
 
             string message = $"{targetName} {verb} <color={color}>{absChange}</color> {resourceName}";
 
@@ -443,8 +446,9 @@ namespace Assets.Scripts.Combat.Logging
                 targetVehicle != null ? targetVehicle.currentStage : null,
                 sourceVehicle, targetVehicle);
 
-            logEvt.WithMetadata("resourceType", evt.Breakdown.resourceType.ToString())
-                  .WithMetadata("actualChange", evt.Breakdown.actualChange);
+            logEvt.WithMetadata("resourceType", evt.Result.ResourceType.ToString())
+                  .WithMetadata("actualChange", evt.Result.ActualChange)
+                  .WithMetadata("restorationBreakdown", CombatFormatter.FormatRestorationDetailed(evt.Result));
         }
 
         // ==================== PRIVATE HELPERS ====================
@@ -469,14 +473,14 @@ namespace Assets.Scripts.Combat.Logging
         private static void BuildRestorationPart(
             List<string> parts,
             List<RestorationEvent> restorations,
-            ResourceRestorationEffect.ResourceType resourceType,
+            ResourceType resourceType,
             string resourceName,
             string color)
         {
-            var filtered = restorations.Where(r => r.Breakdown.resourceType == resourceType).ToList();
+            var filtered = restorations.Where(r => r.Result.ResourceType == resourceType).ToList();
             if (filtered.Count == 0) return;
 
-            int total = filtered.Sum(r => r.Breakdown.actualChange);
+            int total = filtered.Sum(r => r.Result.ActualChange);
             if (total == 0) return;
 
             string verb = total > 0 ? "restores" : "drains";

@@ -43,9 +43,9 @@ public abstract class Entity : MonoBehaviour
     [SerializeField, HideInInspector]
     protected List<AttributeModifier> entityModifiers = new();
 
-    private EntityStatusEffectManager statusEffects;
+    private readonly EntityStatusEffectManager statusEffects;
 
-    protected virtual void Awake()
+    protected Entity()
     {
         statusEffects = new EntityStatusEffectManager(this);
     }
@@ -118,7 +118,7 @@ public abstract class Entity : MonoBehaviour
 
     protected virtual void OnDestroy()
     {
-        statusEffects?.Cleanup();
+        statusEffects.Cleanup();
     }
 
     public virtual void Heal(int amount)

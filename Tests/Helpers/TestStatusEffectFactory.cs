@@ -32,7 +32,7 @@ namespace Assets.Scripts.Tests.Helpers
             {
                 new() { attribute = attribute, type = ModifierType.Flat, value = value }
             };
-            template.periodicEffects = new System.Collections.Generic.List<PeriodicEffectData>();
+            template.periodicEffects = new System.Collections.Generic.List<IPeriodicEffect>();
             template.behavioralEffects = new BehavioralEffectData();
 
             cleanup?.Add(template);
@@ -58,10 +58,9 @@ namespace Assets.Scripts.Tests.Helpers
             template.effectName = name;
             template.baseDuration = duration;
             template.modifiers = new System.Collections.Generic.List<ModifierData>();
-            template.periodicEffects = new System.Collections.Generic.List<PeriodicEffectData>
+            template.periodicEffects = new System.Collections.Generic.List<IPeriodicEffect>
             {
-                new() {
-                    type = PeriodicEffectType.Damage,
+                new PeriodicDamageEffect {
                     damageFormula = new DamageFormula
                     {
                         baseDice = 0,
@@ -96,7 +95,7 @@ namespace Assets.Scripts.Tests.Helpers
             template.effectName = name;
             template.baseDuration = duration;
             template.modifiers = new System.Collections.Generic.List<ModifierData>();
-            template.periodicEffects = new System.Collections.Generic.List<PeriodicEffectData>();
+            template.periodicEffects = new System.Collections.Generic.List<IPeriodicEffect>();
             template.behavioralEffects = new BehavioralEffectData
             {
                 preventsActions = preventsActions,

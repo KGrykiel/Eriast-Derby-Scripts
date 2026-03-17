@@ -18,11 +18,7 @@
                 isCritical = true;
             }
 
-            int rolled = (diceCount > 0 && formula.dieSize > 0) 
-                ? RollUtility.RollDice(diceCount, formula.dieSize) 
-                : 0;
-
-            int rawTotal = rolled + formula.bonus;
+            int rawTotal = DiceCalculator.Roll(diceCount, formula.dieSize, formula.bonus);
             int finalDamage = ApplyResistance(rawTotal, resistance);
 
             return new DamageResult(
@@ -30,7 +26,6 @@
                 diceCount,
                 formula.dieSize,
                 formula.bonus,
-                rolled,
                 isCritical,
                 rawTotal,
                 resistance,

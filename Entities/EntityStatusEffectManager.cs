@@ -104,7 +104,7 @@ namespace Assets.Scripts.Entities
             }
         }
 
-        /// <summary>Deactivates all effects and clears the collection.</summary>
+        /// <summary>Deactivates all effects and clears the collection during owner teardown.</summary>
         public void Cleanup()
         {
             foreach (var effect in activeEffects)

@@ -1,4 +1,5 @@
 ﻿using System.Linq;
+using Assets.Scripts.Combat.Restoration;
 using Assets.Scripts.StatusEffects;
 
 namespace Assets.Scripts.Combat.Logging
@@ -105,19 +106,20 @@ namespace Assets.Scripts.Combat.Logging
         {
             float totalModifierValue = statusEffect.modifiers.Sum(m => m.value);
 
-            bool hasPeriodicDamage = statusEffect.periodicEffects.Any(p => p.type == PeriodicEffectType.Damage);
-            bool hasPeriodicHealing = statusEffect.periodicEffects.Any(p => p.type == PeriodicEffectType.Healing);
-            bool hasEnergyDrain = statusEffect.periodicEffects.Any(p => p.type == PeriodicEffectType.EnergyDrain);
-            bool hasEnergyRestore = statusEffect.periodicEffects.Any(p => p.type == PeriodicEffectType.EnergyRestore);
+            bool hasPeriodicDamage = statusEffect.periodicEffects.Any(p => p is PeriodicDamageEffect);
+            bool hasPeriodicRestoration = statusEffect.periodicEffects.Any(p =>
+                p is PeriodicRestorationEffect pr && (pr.formula.baseDice > 0 || pr.formula.bonus > 0));
+            bool hasPeriodicDrain = statusEffect.periodicEffects.Any(p =>
+                p is PeriodicRestorationEffect pr && pr.formula.baseDice == 0 && pr.formula.bonus < 0);
 
             bool hasBehavioralRestrictions = statusEffect.behavioralEffects != null &&
                 (statusEffect.behavioralEffects.preventsActions ||
                  statusEffect.behavioralEffects.preventsMovement ||
                  statusEffect.behavioralEffects.damageAmplification > 1f);
 
-            if (hasPeriodicDamage || hasEnergyDrain || hasBehavioralRestrictions)
+            if (hasPeriodicDamage || hasPeriodicDrain || hasBehavioralRestrictions)
                 return false;
-            if (hasPeriodicHealing || hasEnergyRestore || totalModifierValue > 0)
+            if (hasPeriodicRestoration || totalModifierValue > 0)
                 return true;
             return totalModifierValue >= 0;
         }

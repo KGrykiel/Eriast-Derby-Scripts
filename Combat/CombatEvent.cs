@@ -1,5 +1,6 @@
 ﻿using UnityEngine;
 using Assets.Scripts.Combat.Damage;
+using Assets.Scripts.Combat.Restoration;
 using Assets.Scripts.StatusEffects;
 using Assets.Scripts.Combat.Rolls.RollTypes.Attacks;
 using Assets.Scripts.Combat.Rolls.RollTypes.OpposedChecks;
@@ -78,15 +79,15 @@ namespace Assets.Scripts.Combat
     
     public class RestorationEvent : CombatEvent
     {
-        public RestorationBreakdown Breakdown { get; set; }
+        public RestorationResult Result { get; set; }
         
         public RestorationEvent(
-            RestorationBreakdown breakdown,
+            RestorationResult result,
             Entity source,
             Entity target,
             Object causalSource)
         {
-            Breakdown = breakdown;
+            Result = result;
             Source = source;
             Target = target;
             CausalSource = causalSource;
@@ -108,7 +109,7 @@ namespace Assets.Scripts.Combat
             AttackResult result,
             Entity source,
             Entity target,
-            UnityEngine.Object causalSource,
+            Object causalSource,
             bool isHit,
             string targetComponentName = null,
             bool isChassisFallback = false,
@@ -138,7 +139,7 @@ namespace Assets.Scripts.Combat
             SaveResult result,
             Entity source,
             Entity target,
-            UnityEngine.Object causalSource,
+            Object causalSource,
             bool succeeded,
             string targetComponentName = null,
             Character character = null)
@@ -164,7 +165,7 @@ namespace Assets.Scripts.Combat
         public SkillCheckEvent(
             SkillCheckResult result,
             Entity source,
-            UnityEngine.Object causalSource,
+            Object causalSource,
             bool succeeded,
             Character character = null)
         {
@@ -186,7 +187,7 @@ namespace Assets.Scripts.Combat
             OpposedCheckResult result,
             Entity attacker,
             Entity defender,
-            UnityEngine.Object causalSource)
+            Object causalSource)
         {
             Result = result;
             Source = attacker;
