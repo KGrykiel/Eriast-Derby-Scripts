@@ -90,6 +90,35 @@ namespace Assets.Scripts.Entities.Vehicle.VehicleComponents.ComponentTypes
             this.LogEnergyRegeneration(regenAmount, currentEnergy, maxCap);
         }
 
+        /// <summary>
+        /// Restores energy, clamped to max capacity. Returns actual amount restored.
+        /// </summary>
+        public int RestoreEnergy(int amount)
+        {
+            if (isDestroyed) return 0;
+
+            int maxCap = GetMaxEnergy();
+            int oldEnergy = currentEnergy;
+
+            currentEnergy = Mathf.Min(currentEnergy + amount, maxCap);
+
+            return currentEnergy - oldEnergy;
+        }
+
+        /// <summary>
+        /// Drains energy, clamped to zero. Returns actual amount drained (positive value).
+        /// </summary>
+        public int DrainEnergy(int amount)
+        {
+            if (isDestroyed) return 0;
+
+            int oldEnergy = currentEnergy;
+
+            currentEnergy = Mathf.Max(currentEnergy - amount, 0);
+
+            return oldEnergy - currentEnergy;
+        }
+
         public override List<VehicleComponentUI.DisplayStat> GetDisplayStats()
         {
             var stats = new List<VehicleComponentUI.DisplayStat>();

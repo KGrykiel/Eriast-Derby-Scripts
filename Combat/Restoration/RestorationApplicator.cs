@@ -58,10 +58,11 @@ namespace Assets.Scripts.Combat.Restoration
                 int oldValue = powerCore.currentEnergy;
                 int maxValue = powerCore.GetMaxEnergy();
 
-                powerCore.currentEnergy = Mathf.Clamp(powerCore.currentEnergy + amount, 0, maxValue);
+                int actualChange = amount >= 0 
+                    ? powerCore.RestoreEnergy(amount) 
+                    : -powerCore.DrainEnergy(-amount);
 
                 int newValue = powerCore.currentEnergy;
-                int actualChange = newValue - oldValue;
 
                 return new RestorationResult(
                     resourceType: formula.resourceType,
