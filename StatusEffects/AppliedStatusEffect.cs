@@ -91,6 +91,5 @@ namespace Assets.Scripts.StatusEffects
 
         public bool PreventsActions => template.behavioralEffects?.preventsActions ?? false;
         public bool PreventsMovement => template.behavioralEffects?.preventsMovement ?? false;
-        public float DamageAmplification => template.behavioralEffects?.damageAmplification ?? 1f;
     }
 }

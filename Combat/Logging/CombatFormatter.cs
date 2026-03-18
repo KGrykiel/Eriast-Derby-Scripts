@@ -483,14 +483,6 @@ namespace Assets.Scripts.Combat.Logging
                 sb.AppendLine("  • <color=#FF4444>Prevents movement</color>");
                 hasAny = true;
             }
-            if (effect.behavioralEffects.damageAmplification != 1f)
-            {
-                float percent = (effect.behavioralEffects.damageAmplification - 1f) * 100f;
-                string color = percent > 0 ? "#FF4444" : "#44FF44";
-                string sign = percent > 0 ? "+" : "";
-                sb.AppendLine($"  • <color={color}>{sign}{percent:F0}% damage taken</color>");
-                hasAny = true;
-            }
             if (hasAny)
                 sb.AppendLine();
         }

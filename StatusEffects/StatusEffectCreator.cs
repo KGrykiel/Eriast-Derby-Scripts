@@ -173,8 +173,7 @@ namespace Assets.Scripts.StatusEffects
         private static StatusEffect DefineVulnerable()
             => Make("Vulnerable", baseDuration: 2,
                 stackBehaviour: StackBehaviour.Stack,
-                maxStacks: 3,
-                behavioral: Behavioral(damageAmplification: 1.5f));
+                maxStacks: 3);
 
         // Pattern: HoT — periodic healing per turn.
         private static StatusEffect DefineRegenerating()
@@ -226,13 +225,11 @@ namespace Assets.Scripts.StatusEffects
 
         private static BehavioralEffectData Behavioral(
             bool preventsActions = false,
-            bool preventsMovement = false,
-            float damageAmplification = 1f)
+            bool preventsMovement = false)
             => new BehavioralEffectData
             {
                 preventsActions = preventsActions,
-                preventsMovement = preventsMovement,
-                damageAmplification = damageAmplification
+                preventsMovement = preventsMovement
             };
 
         private static AdvantageGrant AdvGrant(string label, RollMode type, params IAdvantageTarget[] targets)
