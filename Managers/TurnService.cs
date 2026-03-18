@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using Assets.Scripts.Managers;
 using Assets.Scripts.Stages;
+using Assets.Scripts.StatusEffects;
 
 /// <summary>Stateless utilities for vehicle operations during turns (movement, power, targeting).</summary>
 public class TurnService
@@ -92,6 +93,7 @@ public class TurnService
             int oldProgress = vehicle.progress;
             vehicle.ApplyMovement(distance);
             TurnEventBus.EmitMovementExecuted(vehicle, distance, drive.GetCurrentSpeed(), oldProgress, vehicle.progress);
+            vehicle.NotifyStatusEffectTrigger(RemovalTrigger.OnMovement);
         }
         else
         {

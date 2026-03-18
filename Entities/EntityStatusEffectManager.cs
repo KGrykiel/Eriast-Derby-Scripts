@@ -19,6 +19,7 @@ namespace Assets.Scripts.Entities
         public EntityStatusEffectManager(Entity owner)
         {
             this.owner = owner;
+            owner.OnDamaged += HandleOwnerDamaged;
         }
 
         // ==================== PUBLIC API ====================
@@ -67,11 +68,16 @@ namespace Assets.Scripts.Entities
         /// <summary>Ticks periodic effects, decrements durations, removes expired. Called by handler each turn.</summary>
         public void OnTurnStart()
         {
+            // 1. Remove effects that expire at turn start BEFORE they tick (D&D 5e timing)
+            ProcessRemovalTrigger(RemovalTrigger.OnTurnStart);
+
+            // 2. Tick periodic effects (DoT, HoT)
             foreach (var effect in activeEffects.ToList())
             {
                 effect.OnTick();
             }
 
+            // 3. Decrement durations and remove expired
             for (int i = activeEffects.Count - 1; i >= 0; i--)
             {
                 var effect = activeEffects[i];
@@ -90,11 +96,59 @@ namespace Assets.Scripts.Entities
         /// <summary>Deactivates all effects and clears the collection during owner teardown.</summary>
         public void Cleanup()
         {
+            owner.OnDamaged -= HandleOwnerDamaged;
+
             foreach (var effect in activeEffects)
             {
                 effect.Deactivate();
             }
             activeEffects.Clear();
+        }
+
+        /// <summary>Removes all effects matching the specified categories (skill-based dispel).</summary>
+        public void RemoveByCategory(EffectCategory categories)
+        {
+            var toRemove = activeEffects
+                .Where(e => (e.template.categories & categories) != 0)
+                .ToList();
+
+            foreach (var effect in toRemove)
+            {
+                Remove(effect);
+            }
+        }
+
+        /// <summary>Removes all instances of a specific template (targeted dispel).</summary>
+        public void RemoveByTemplate(StatusEffect template)
+        {
+            var toRemove = activeEffects
+                .Where(e => e.template == template)
+                .ToList();
+
+            foreach (var effect in toRemove)
+            {
+                Remove(effect);
+            }
+        }
+
+        /// <summary>Removes all effects matching the specified trigger flag. Called by Entity.NotifyStatusEffectTrigger and internally.</summary>
+        public void ProcessRemovalTrigger(RemovalTrigger trigger)
+        {
+            var toRemove = activeEffects
+                .Where(e => e.template.removalTriggers.HasFlag(trigger))
+                .ToList();
+
+            foreach (var effect in toRemove)
+            {
+                Remove(effect);
+            }
+        }
+
+        // ==================== EVENT HANDLERS ====================
+
+        private void HandleOwnerDamaged(int amount)
+        {
+            ProcessRemovalTrigger(RemovalTrigger.OnDamageTaken);
         }
 
         // ==================== PRIVATE HELPERS ====================

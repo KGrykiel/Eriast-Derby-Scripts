@@ -1,4 +1,5 @@
 ﻿using Assets.Scripts.Combat.Rolls.RollSpecs.SpecTypes;
+using Assets.Scripts.StatusEffects;
 using UnityEngine;
 
 namespace Assets.Scripts.Combat.Rolls.RollTypes.SkillChecks
@@ -34,6 +35,12 @@ namespace Assets.Scripts.Combat.Rolls.RollTypes.SkillChecks
                 result.Roll.Success,
                 result.Character);
 
+            // Step 4: Notify d20 roll trigger on roller
+            if (routing.CanAttempt && routing.Component != null)
+            {
+                routing.Component.NotifyStatusEffectTrigger(RemovalTrigger.OnD20Roll);
+            }
+
             return result;
         }
 
@@ -50,6 +57,8 @@ namespace Assets.Scripts.Combat.Rolls.RollTypes.SkillChecks
                 entity,
                 causalSource,
                 result.Roll.Success);
+
+            entity?.NotifyStatusEffectTrigger(RemovalTrigger.OnD20Roll);
 
             return result;
         }

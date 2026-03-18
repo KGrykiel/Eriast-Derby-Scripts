@@ -1,4 +1,6 @@
-﻿namespace Assets.Scripts.Combat.Rolls.RollTypes.OpposedChecks
+﻿using Assets.Scripts.StatusEffects;
+
+namespace Assets.Scripts.Combat.Rolls.RollTypes.OpposedChecks
 {
     /// <summary>
     /// Entry point for opposed checks. Routes both sides, computes, and emits events.
@@ -43,6 +45,15 @@
 
             CombatEventBus.EmitOpposedCheck(
                 result, attackerEntity, defenderEntity, ctx.CausalSource);
+
+            if (attackerRouting.CanAttempt && attackerRouting.Component != null)
+            {
+                attackerRouting.Component.NotifyStatusEffectTrigger(RemovalTrigger.OnD20Roll);
+            }
+            if (defenderRouting.CanAttempt && defenderRouting.Component != null)
+            {
+                defenderRouting.Component.NotifyStatusEffectTrigger(RemovalTrigger.OnD20Roll);
+            }
 
             return result;
         }

@@ -1,4 +1,7 @@
-﻿namespace Assets.Scripts.Combat.Rolls.RollTypes.Attacks
+﻿using Assets.Scripts.StatusEffects;
+using UnityEditor.Experimental.GraphView;
+
+namespace Assets.Scripts.Combat.Rolls.RollTypes.Attacks
 {
     /// <summary>
     /// Main entry for executing an attack roll. Created to handle any special rules in the future without polluting AttackCalculator.
@@ -10,11 +13,13 @@
         {
             // Roll against primary target, conclude if successful
             var primaryResult = AttackCalculator.Compute(ctx.Spec, ctx.Target, ctx.Attacker, ctx.Character);
+            ctx.Attacker.NotifyStatusEffectTrigger(RemovalTrigger.OnD20Roll);
 
             if (primaryResult.Roll.Success)
             {
                 var result = new AttackResult(primaryResult.Roll, hitTarget: ctx.Target);
                 EmitEvent(result, ctx, isFallback: false);
+                ctx.Attacker.NotifyStatusEffectTrigger(RemovalTrigger.OnAttackMade);
                 return result;
             }
 
@@ -28,9 +33,11 @@
             if (fallbackResult != null)
             {
                 EmitEvent(fallbackResult, ctx, isFallback: true);
+                ctx.Attacker.NotifyStatusEffectTrigger(RemovalTrigger.OnAttackMade);
                 return fallbackResult;
             }
 
+            ctx.Attacker.NotifyStatusEffectTrigger(RemovalTrigger.OnAttackMade);
             return missResult;
         }
 

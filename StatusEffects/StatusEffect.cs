@@ -61,6 +61,13 @@ namespace Assets.Scripts.StatusEffects
         [Tooltip("Maximum number of stacks allowed. ONLY USED IF stackBehaviour = Stack. 0 = unlimited stacks.")]
         public int maxStacks = 0;
 
+        [Header("Categorisation & Removal")]
+        [Tooltip("Effect categories for classification and removal filtering")]
+        public EffectCategory categories = EffectCategory.None;
+
+        [Tooltip("Automatic removal triggers (e.g., OnDamageTaken, OnTurnEnd)")]
+        public RemovalTrigger removalTriggers = RemovalTrigger.None;
+
         [Header("Targeting Validation")]
         [Tooltip("Entity must have ALL of these features to receive this effect")]
         public EntityFeature requiredFeatures = EntityFeature.None;
@@ -80,24 +87,6 @@ namespace Assets.Scripts.StatusEffects
         
         [Tooltip("Value of modification (e.g., +10 for flat, +50 for 50% increase)")]
         public float value;
-    }
-
-    public interface IPeriodicEffect { }
-
-    [Serializable]
-    [SRName("Damage (DoT)")]
-    public class PeriodicDamageEffect : IPeriodicEffect
-    {
-        [Tooltip("Damage formula and type")]
-        public DamageFormula damageFormula = new() { baseDice = 1, dieSize = 6, bonus = 0, damageType = DamageType.Fire };
-    }
-
-    [Serializable]
-    [SRName("Restoration (HoT/Energy)")]
-    public class PeriodicRestorationEffect : IPeriodicEffect
-    {
-        [Tooltip("Restoration formula defining resource type, dice, and bonus")]
-        public RestorationFormula formula = new();
     }
 
     [Serializable]

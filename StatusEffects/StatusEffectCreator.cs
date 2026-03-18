@@ -110,18 +110,21 @@ namespace Assets.Scripts.StatusEffects
         // Pattern: DoT with feature requirement.
         private static StatusEffect DefineBurning()
             => Make("Burning", baseDuration: 3,
+                categories: EffectCategory.Debuff | EffectCategory.DoT,
                 periodicEffects: Periodics(
                     DamagePeriodic(new DamageFormula { baseDice = 1, dieSize = 6, bonus = 0, damageType = DamageType.Fire })));
 
         // Pattern: DoT, no feature requirement.
         private static StatusEffect DefineBleeding()
             => Make("Bleeding", baseDuration: 3,
+                categories: EffectCategory.Debuff | EffectCategory.DoT,
                 periodicEffects: Periodics(
                     DamagePeriodic(new DamageFormula { baseDice = 1, dieSize = 4, bonus = 0, damageType = DamageType.Physical })));
 
         // Pattern: modifier + periodic drain, requires electronic.
         private static StatusEffect DefineOverheating()
             => Make("Overheating", baseDuration: 3,
+                categories: EffectCategory.Debuff | EffectCategory.DoT,
                 required: EntityFeature.IsElectronic,
                 modifiers: Mods(
                     Mod(Attribute.MaxSpeed, ModifierType.Flat, -20f),
@@ -133,6 +136,7 @@ namespace Assets.Scripts.StatusEffects
         private static StatusEffect DefineStunned()
             => Make("Stunned", baseDuration: 1,
                 stackBehaviour: StackBehaviour.Ignore,
+                categories: EffectCategory.Debuff | EffectCategory.CrowdControl,
                 behavioral: Behavioral(preventsActions: true));
 
         // Pattern: modifier — reduces speed and mobility.
@@ -140,6 +144,7 @@ namespace Assets.Scripts.StatusEffects
             => Make("Slowed", baseDuration: 2,
                 stackBehaviour: StackBehaviour.Stack,
                 maxStacks: 3,
+                categories: EffectCategory.Debuff | EffectCategory.CrowdControl,
                 modifiers: Mods(
                     Mod(Attribute.MaxSpeed, ModifierType.Multiplier, 0.5f),
                     Mod(Attribute.Mobility, ModifierType.Flat, -3f)));
@@ -148,6 +153,7 @@ namespace Assets.Scripts.StatusEffects
         private static StatusEffect DefineFortified()
             => Make("Fortified", baseDuration: 2,
                 stackBehaviour: StackBehaviour.Replace,
+                categories: EffectCategory.Buff | EffectCategory.AttributeModifier,
                 modifiers: Mods(
                     Mod(Attribute.ArmorClass, ModifierType.Flat, 3f),
                     Mod(Attribute.Integrity, ModifierType.Flat, 2f)));
@@ -155,6 +161,8 @@ namespace Assets.Scripts.StatusEffects
         // Pattern: advantage grant on character checks.
         private static StatusEffect DefineInspired()
             => Make("Inspired", baseDuration: 2,
+                categories: EffectCategory.Buff,
+                removalTriggers: RemovalTrigger.OnD20Roll,
                 advantageGrants: new List<AdvantageGrant>
                 {
                     AdvGrant("Inspired", RollMode.Advantage, new CharacterCheckAdvantage())
@@ -164,6 +172,7 @@ namespace Assets.Scripts.StatusEffects
         private static StatusEffect DefineBlinded()
             => Make("Blinded", baseDuration: 2,
                 stackBehaviour: StackBehaviour.Ignore,
+                categories: EffectCategory.Debuff | EffectCategory.CrowdControl,
                 advantageGrants: new List<AdvantageGrant>
                 {
                     AdvGrant("Blinded", RollMode.Disadvantage, new AttackAdvantage())
@@ -173,11 +182,13 @@ namespace Assets.Scripts.StatusEffects
         private static StatusEffect DefineVulnerable()
             => Make("Vulnerable", baseDuration: 2,
                 stackBehaviour: StackBehaviour.Stack,
-                maxStacks: 3);
+                maxStacks: 3,
+                categories: EffectCategory.Debuff);
 
         // Pattern: HoT — periodic healing per turn.
         private static StatusEffect DefineRegenerating()
             => Make("Regenerating", baseDuration: 3,
+                categories: EffectCategory.Buff | EffectCategory.HoT,
                 periodicEffects: Periodics(
                     RestorationPeriodic(ResourceType.Health, 0, 6, 8)));
 
@@ -245,6 +256,8 @@ namespace Assets.Scripts.StatusEffects
             int baseDuration = -1,
             StackBehaviour stackBehaviour = StackBehaviour.Refresh,
             int maxStacks = 0,
+            EffectCategory categories = EffectCategory.None,
+            RemovalTrigger removalTriggers = RemovalTrigger.None,
             EntityFeature required = EntityFeature.None,
             EntityFeature excluded = EntityFeature.None,
             List<ModifierData> modifiers = null,
@@ -258,6 +271,8 @@ namespace Assets.Scripts.StatusEffects
             effect.baseDuration = baseDuration;
             effect.stackBehaviour = stackBehaviour;
             effect.maxStacks = maxStacks;
+            effect.categories = categories;
+            effect.removalTriggers = removalTriggers;
             effect.requiredFeatures = required;
             effect.excludedFeatures = excluded;
             effect.modifiers = modifiers ?? new List<ModifierData>();

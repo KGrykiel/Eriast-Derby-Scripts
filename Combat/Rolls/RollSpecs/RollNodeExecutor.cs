@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using Assets.Scripts.Combat.Rolls.Advantage;
 using Assets.Scripts.Effects;
+using Assets.Scripts.StatusEffects;
 using UnityEngine;
 using Assets.Scripts.Combat.Rolls.RollTypes.Attacks;
 using Assets.Scripts.Combat.Rolls.RollTypes.OpposedChecks;
@@ -158,7 +159,10 @@ namespace Assets.Scripts.Combat.Rolls.RollSpecs
             // Wrap in a CombatEventBus action only when executing a skill (aggregates multi-effect logging).
             bool useEventBus = causalSource is Skill;
             if (useEventBus)
+            {
                 CombatEventBus.BeginAction(ctx.SourceEntity, causalSource as Skill, ctx.TargetVehicle, ctx.SourceVehicle, ctx.SourceCharacter);
+                ctx.SourceComponent?.NotifyStatusEffectTrigger(RemovalTrigger.OnSkillUsed);
+            }
 
             try
             {

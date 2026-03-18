@@ -104,6 +104,8 @@ namespace Assets.Scripts.Stages
                 if (stageStatusEffect != null)
                     RemoveStageStatusEffect(vehicle);
 
+                vehicle.NotifyStatusEffectTrigger(RemovalTrigger.OnStageExit);
+
                 StageLane currentLane = laneManager.GetVehicleLane(vehicle);
                 if (currentLane != null)
                 {

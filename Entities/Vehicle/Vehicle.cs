@@ -6,6 +6,7 @@ using Assets.Scripts.Entities.Vehicle;
 using Assets.Scripts.Managers;
 using Assets.Scripts.Stages;
 using Assets.Scripts.Stages.Lanes;
+using Assets.Scripts.StatusEffects;
 using RollContext = Assets.Scripts.Combat.Rolls.RollSpecs.RollContext;
 using Assets.Scripts.Combat.Rolls.RollSpecs;
 
@@ -167,6 +168,15 @@ public class Vehicle : MonoBehaviour
         foreach (var component in AllComponents)
         {
             component.UpdateStatusEffects();
+        }
+    }
+
+    /// <summary>Broadcasts a removal trigger to all vehicle components.</summary>
+    public void NotifyStatusEffectTrigger(RemovalTrigger trigger)
+    {
+        foreach (var component in AllComponents)
+        {
+            component.NotifyStatusEffectTrigger(trigger);
         }
     }
 

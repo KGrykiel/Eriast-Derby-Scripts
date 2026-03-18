@@ -1,4 +1,5 @@
 ﻿using Assets.Scripts.Combat.Rolls.RollSpecs.SpecTypes;
+using Assets.Scripts.StatusEffects;
 using UnityEngine;
 
 namespace Assets.Scripts.Combat.Rolls.RollTypes.Saves
@@ -37,6 +38,12 @@ namespace Assets.Scripts.Combat.Rolls.RollTypes.Saves
                 targetName,
                 result.Character);
 
+            // Step 4: Notify d20 roll trigger
+            if (routing.CanAttempt && routing.Component != null)
+            {
+                routing.Component.NotifyStatusEffectTrigger(RemovalTrigger.OnD20Roll);
+            }
+
             return result;
         }
 
@@ -57,6 +64,8 @@ namespace Assets.Scripts.Combat.Rolls.RollTypes.Saves
                 causalSource,
                 result.Roll.Success,
                 targetName);
+
+            entity?.NotifyStatusEffectTrigger(RemovalTrigger.OnD20Roll);
 
             return result;
         }

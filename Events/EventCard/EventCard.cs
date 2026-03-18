@@ -52,35 +52,6 @@ namespace Assets.Scripts.Events.EventCard
             }
         }
 
-        // ==================== HELPER METHODS ====================
-
-        protected void ApplyEffects(List<EffectInvocation> effects, Vehicle vehicle)
-        {
-            if (effects == null || effects.Count == 0) return;
-
-            foreach (var invocation in effects)
-            {
-                if (invocation.effect == null)
-                {
-                    Debug.LogWarning($"[EventCard] Null effect in {cardName} effect list");
-                    continue;
-                }
-
-                Entity targetEntity = vehicle.RouteEffectTarget(invocation.effect);
-
-                if (targetEntity == null)
-                {
-                    Debug.LogWarning($"[EventCard] Failed to route effect target for {cardName}");
-                    continue;
-                }
-
-                invocation.effect.Apply(
-                    target: targetEntity,
-                    context: EffectContext.Default,
-                    source: this);
-            }
-        }
-
         protected void LogCardEvent(Vehicle vehicle, CardResolutionResult result)
         {
             string logText = $"{vehicle.vehicleName}: {narrativeText}\n{result.narrativeOutcome}";

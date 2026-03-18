@@ -95,7 +95,7 @@ public abstract class Entity : MonoBehaviour
     }
 
     // ==================== DAMAGE & HEALING ====================
-    
+
     public virtual void TakeDamage(int amount)
     {
         if (isDestroyed) return;
@@ -104,6 +104,11 @@ public abstract class Entity : MonoBehaviour
         health = Mathf.Max(health - amount, 0);
 
         OnDamageTaken(amount, previousHealth, health);
+
+        if (amount > 0)
+        {
+            OnDamaged?.Invoke(amount);
+        }
 
         if (health <= 0 && !isDestroyed)
         {
@@ -152,6 +157,10 @@ public abstract class Entity : MonoBehaviour
 
     // ==================== STATUS EFFECT SYSTEM ====================
 
+    public event System.Action<int> OnDamaged;
+    public event System.Action OnAttackMade;
+    public event System.Action OnSkillUsed;
+
     /// <summary>Handles stacking rules and emits events. Returns null if feature requirements not met.</summary>
     public virtual AppliedStatusEffect ApplyStatusEffect(StatusEffect effect, Object applier)
     {
@@ -168,7 +177,25 @@ public abstract class Entity : MonoBehaviour
     {
         statusEffects.RemoveFromSource(source);
     }
-    
+
+    /// <summary>Removes all effects matching the specified categories (skill-based dispel).</summary>
+    public virtual void RemoveStatusEffectsByCategory(EffectCategory categories)
+    {
+        statusEffects.RemoveByCategory(categories);
+    }
+
+    /// <summary>Removes all instances of a specific template (targeted dispel).</summary>
+    public virtual void RemoveStatusEffectsByTemplate(StatusEffect template)
+    {
+        statusEffects.RemoveByTemplate(template);
+    }
+
+    /// <summary>Processes removal triggers for all active effects. Called by phase handlers and performers.</summary>
+    public virtual void NotifyStatusEffectTrigger(RemovalTrigger trigger)
+    {
+        statusEffects.ProcessRemovalTrigger(trigger);
+    }
+
     public virtual List<AppliedStatusEffect> GetActiveStatusEffects()
     {
         return statusEffects.GetActive();

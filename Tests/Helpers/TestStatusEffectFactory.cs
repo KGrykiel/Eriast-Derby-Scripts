@@ -27,6 +27,8 @@ namespace Assets.Scripts.Tests.Helpers
             int duration = -1,
             StackBehaviour stackBehaviour = StackBehaviour.Refresh,
             int maxStacks = 0,
+            EffectCategory categories = EffectCategory.None,
+            RemovalTrigger removalTriggers = RemovalTrigger.None,
             System.Collections.Generic.List<Object> cleanup = null)
         {
             var template = ScriptableObject.CreateInstance<StatusEffect>();
@@ -34,6 +36,8 @@ namespace Assets.Scripts.Tests.Helpers
             template.baseDuration = duration;
             template.stackBehaviour = stackBehaviour;
             template.maxStacks = maxStacks;
+            template.categories = categories;
+            template.removalTriggers = removalTriggers;
             template.modifiers = new System.Collections.Generic.List<ModifierData>
             {
                 new() { attribute = attribute, type = ModifierType.Flat, value = value }
@@ -62,6 +66,8 @@ namespace Assets.Scripts.Tests.Helpers
             int duration,
             StackBehaviour stackBehaviour = StackBehaviour.Refresh,
             int maxStacks = 0,
+            EffectCategory categories = EffectCategory.None,
+            RemovalTrigger removalTriggers = RemovalTrigger.None,
             System.Collections.Generic.List<Object> cleanup = null)
         {
             var template = ScriptableObject.CreateInstance<StatusEffect>();
@@ -69,6 +75,8 @@ namespace Assets.Scripts.Tests.Helpers
             template.baseDuration = duration;
             template.stackBehaviour = stackBehaviour;
             template.maxStacks = maxStacks;
+            template.categories = categories;
+            template.removalTriggers = removalTriggers;
             template.modifiers = new System.Collections.Generic.List<ModifierData>();
             template.periodicEffects = new System.Collections.Generic.List<IPeriodicEffect>
             {
@@ -105,6 +113,8 @@ namespace Assets.Scripts.Tests.Helpers
             int duration = 2,
             StackBehaviour stackBehaviour = StackBehaviour.Refresh,
             int maxStacks = 0,
+            EffectCategory categories = EffectCategory.None,
+            RemovalTrigger removalTriggers = RemovalTrigger.None,
             System.Collections.Generic.List<Object> cleanup = null)
         {
             var template = ScriptableObject.CreateInstance<StatusEffect>();
@@ -112,6 +122,8 @@ namespace Assets.Scripts.Tests.Helpers
             template.baseDuration = duration;
             template.stackBehaviour = stackBehaviour;
             template.maxStacks = maxStacks;
+            template.categories = categories;
+            template.removalTriggers = removalTriggers;
             template.modifiers = new System.Collections.Generic.List<ModifierData>();
             template.periodicEffects = new System.Collections.Generic.List<IPeriodicEffect>();
             template.behavioralEffects = new BehavioralEffectData

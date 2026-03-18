@@ -328,5 +328,527 @@ namespace Assets.Scripts.Tests.PlayMode
             Assert.AreEqual(0, entity.GetActiveStatusEffects().Count, "Effect should be removed");
             Assert.IsFalse(entity.GetModifiers().Any(m => m.Value == 5f), "Modifier should be cleaned up");
         }
+
+        // ==================== Removal Triggers ====================
+
+        [Test]
+        public void StatusEffect_RemovalTrigger_OnDamageTaken_RemovesEffect()
+        {
+            var template = TestStatusEffectFactory.CreateModifierEffect(
+                "Concentration", Attribute.ArmorClass, 2f,
+                removalTriggers: RemovalTrigger.OnDamageTaken, cleanup: cleanup);
+
+            entity.ApplyStatusEffect(template, entity);
+            Assert.AreEqual(1, entity.GetActiveStatusEffects().Count, "Should have 1 effect before damage");
+
+            entity.TakeDamage(5);
+
+            Assert.AreEqual(0, entity.GetActiveStatusEffects().Count, "Effect should be removed on damage");
+            Assert.IsFalse(entity.GetModifiers().Any(m => m.Value == 2f), "Modifiers should be cleaned up");
+        }
+
+        [Test]
+        public void StatusEffect_RemovalTrigger_OnDamageTaken_ZeroDamageDoesNotRemove()
+        {
+            var template = TestStatusEffectFactory.CreateModifierEffect(
+                "Concentration", Attribute.ArmorClass, 2f,
+                removalTriggers: RemovalTrigger.OnDamageTaken, cleanup: cleanup);
+
+            entity.ApplyStatusEffect(template, entity);
+
+            entity.TakeDamage(0);
+
+            Assert.AreEqual(1, entity.GetActiveStatusEffects().Count, "Zero damage should not trigger removal");
+        }
+
+        [Test]
+        public void StatusEffect_RemovalTrigger_OnD20Roll_RemovesEffect()
+        {
+            var template = TestStatusEffectFactory.CreateModifierEffect(
+                "Inspired", Attribute.ArmorClass, 1f,
+                removalTriggers: RemovalTrigger.OnD20Roll, cleanup: cleanup);
+
+            entity.ApplyStatusEffect(template, entity);
+            Assert.AreEqual(1, entity.GetActiveStatusEffects().Count);
+
+            entity.NotifyStatusEffectTrigger(RemovalTrigger.OnD20Roll);
+
+            Assert.AreEqual(0, entity.GetActiveStatusEffects().Count, "Should be removed after d20 roll");
+        }
+
+        [Test]
+        public void StatusEffect_RemovalTrigger_OnAttackMade_RemovesEffect()
+        {
+            var template = TestStatusEffectFactory.CreateModifierEffect(
+                "Ambush", Attribute.Mobility, 3f,
+                removalTriggers: RemovalTrigger.OnAttackMade, cleanup: cleanup);
+
+            entity.ApplyStatusEffect(template, entity);
+            Assert.AreEqual(1, entity.GetActiveStatusEffects().Count);
+
+            entity.NotifyStatusEffectTrigger(RemovalTrigger.OnAttackMade);
+
+            Assert.AreEqual(0, entity.GetActiveStatusEffects().Count, "Should be removed after attack");
+        }
+
+        [Test]
+        public void StatusEffect_RemovalTrigger_OnSkillUsed_RemovesEffect()
+        {
+            var template = TestStatusEffectFactory.CreateModifierEffect(
+                "Overcharge", Attribute.ArmorClass, 4f,
+                removalTriggers: RemovalTrigger.OnSkillUsed, cleanup: cleanup);
+
+            entity.ApplyStatusEffect(template, entity);
+            Assert.AreEqual(1, entity.GetActiveStatusEffects().Count);
+
+            entity.NotifyStatusEffectTrigger(RemovalTrigger.OnSkillUsed);
+
+            Assert.AreEqual(0, entity.GetActiveStatusEffects().Count, "Should be removed after skill use");
+        }
+
+        [Test]
+        public void StatusEffect_RemovalTrigger_OnMovement_RemovesEffect()
+        {
+            var template = TestStatusEffectFactory.CreateModifierEffect(
+                "Entrenched", Attribute.ArmorClass, 3f,
+                removalTriggers: RemovalTrigger.OnMovement, cleanup: cleanup);
+
+            entity.ApplyStatusEffect(template, entity);
+            Assert.AreEqual(1, entity.GetActiveStatusEffects().Count);
+
+            entity.NotifyStatusEffectTrigger(RemovalTrigger.OnMovement);
+
+            Assert.AreEqual(0, entity.GetActiveStatusEffects().Count, "Should be removed after movement");
+        }
+
+        [Test]
+        public void StatusEffect_RemovalTrigger_OnTurnEnd_RemovesEffect()
+        {
+            var template = TestStatusEffectFactory.CreateModifierEffect(
+                "QuickBuff", Attribute.Mobility, 2f,
+                removalTriggers: RemovalTrigger.OnTurnEnd, cleanup: cleanup);
+
+            entity.ApplyStatusEffect(template, entity);
+            Assert.AreEqual(1, entity.GetActiveStatusEffects().Count);
+
+            entity.NotifyStatusEffectTrigger(RemovalTrigger.OnTurnEnd);
+
+            Assert.AreEqual(0, entity.GetActiveStatusEffects().Count, "Should be removed at turn end");
+        }
+
+        [Test]
+        public void StatusEffect_RemovalTrigger_OnRoundEnd_RemovesEffect()
+        {
+            var template = TestStatusEffectFactory.CreateModifierEffect(
+                "RoundBuff", Attribute.ArmorClass, 1f,
+                removalTriggers: RemovalTrigger.OnRoundEnd, cleanup: cleanup);
+
+            entity.ApplyStatusEffect(template, entity);
+            Assert.AreEqual(1, entity.GetActiveStatusEffects().Count);
+
+            entity.NotifyStatusEffectTrigger(RemovalTrigger.OnRoundEnd);
+
+            Assert.AreEqual(0, entity.GetActiveStatusEffects().Count, "Should be removed at round end");
+        }
+
+        [Test]
+        public void StatusEffect_RemovalTrigger_OnTurnStart_RemovesBeforeTick()
+        {
+            var template = TestStatusEffectFactory.CreateModifierEffect(
+                "FadingBuff", Attribute.ArmorClass, 2f, duration: 5,
+                removalTriggers: RemovalTrigger.OnTurnStart, cleanup: cleanup);
+
+            entity.ApplyStatusEffect(template, entity);
+            Assert.AreEqual(1, entity.GetActiveStatusEffects().Count);
+
+            // UpdateStatusEffects calls OnTurnStart which processes triggers BEFORE tick/decrement
+            entity.UpdateStatusEffects();
+
+            Assert.AreEqual(0, entity.GetActiveStatusEffects().Count,
+                "OnTurnStart trigger should remove effect before tick, regardless of remaining duration");
+        }
+
+        [Test]
+        public void StatusEffect_RemovalTrigger_OnStageExit_RemovesEffect()
+        {
+            var template = TestStatusEffectFactory.CreateModifierEffect(
+                "EnvironmentalBuff", Attribute.ArmorClass, 3f,
+                removalTriggers: RemovalTrigger.OnStageExit, cleanup: cleanup);
+
+            entity.ApplyStatusEffect(template, entity);
+            Assert.AreEqual(1, entity.GetActiveStatusEffects().Count);
+
+            entity.NotifyStatusEffectTrigger(RemovalTrigger.OnStageExit);
+
+            Assert.AreEqual(0, entity.GetActiveStatusEffects().Count, "Should be removed on stage exit");
+        }
+
+        // ==================== Trigger Selectivity ====================
+
+        [Test]
+        public void StatusEffect_RemovalTrigger_DoesNotRemoveUnrelated()
+        {
+            var onDamage = TestStatusEffectFactory.CreateModifierEffect(
+                "Concentration", Attribute.ArmorClass, 2f,
+                removalTriggers: RemovalTrigger.OnDamageTaken, cleanup: cleanup);
+            var onMovement = TestStatusEffectFactory.CreateModifierEffect(
+                "Entrenched", Attribute.Mobility, 3f,
+                removalTriggers: RemovalTrigger.OnMovement, cleanup: cleanup);
+
+            entity.ApplyStatusEffect(onDamage, entity);
+            entity.ApplyStatusEffect(onMovement, entity);
+            Assert.AreEqual(2, entity.GetActiveStatusEffects().Count);
+
+            entity.NotifyStatusEffectTrigger(RemovalTrigger.OnMovement);
+
+            Assert.AreEqual(1, entity.GetActiveStatusEffects().Count, "Only OnMovement effect should be removed");
+            Assert.AreEqual("Concentration", entity.GetActiveStatusEffects()[0].template.effectName,
+                "OnDamageTaken effect should survive OnMovement trigger");
+        }
+
+        [Test]
+        public void StatusEffect_RemovalTrigger_NoTriggers_SurvivesAll()
+        {
+            var template = TestStatusEffectFactory.CreateModifierEffect(
+                "SteadyBuff", Attribute.ArmorClass, 2f,
+                removalTriggers: RemovalTrigger.None, cleanup: cleanup);
+
+            entity.ApplyStatusEffect(template, entity);
+
+            entity.NotifyStatusEffectTrigger(RemovalTrigger.OnDamageTaken);
+            entity.NotifyStatusEffectTrigger(RemovalTrigger.OnD20Roll);
+            entity.NotifyStatusEffectTrigger(RemovalTrigger.OnAttackMade);
+            entity.NotifyStatusEffectTrigger(RemovalTrigger.OnMovement);
+            entity.NotifyStatusEffectTrigger(RemovalTrigger.OnTurnEnd);
+            entity.NotifyStatusEffectTrigger(RemovalTrigger.OnRoundEnd);
+
+            Assert.AreEqual(1, entity.GetActiveStatusEffects().Count,
+                "Effect with no removal triggers should survive all trigger types");
+        }
+
+        [Test]
+        public void StatusEffect_RemovalTrigger_MultipleTriggers_FirstOneRemoves()
+        {
+            var template = TestStatusEffectFactory.CreateModifierEffect(
+                "Fragile", Attribute.ArmorClass, 1f,
+                removalTriggers: RemovalTrigger.OnDamageTaken | RemovalTrigger.OnMovement,
+                cleanup: cleanup);
+
+            entity.ApplyStatusEffect(template, entity);
+            Assert.AreEqual(1, entity.GetActiveStatusEffects().Count);
+
+            // Whichever fires first should remove the effect
+            entity.NotifyStatusEffectTrigger(RemovalTrigger.OnMovement);
+
+            Assert.AreEqual(0, entity.GetActiveStatusEffects().Count,
+                "Effect with multiple triggers should be removed by whichever fires first");
+        }
+
+        [Test]
+        public void StatusEffect_RemovalTrigger_MultipleTriggers_SecondAlsoWorks()
+        {
+            var template = TestStatusEffectFactory.CreateModifierEffect(
+                "Fragile", Attribute.ArmorClass, 1f,
+                removalTriggers: RemovalTrigger.OnDamageTaken | RemovalTrigger.OnMovement,
+                cleanup: cleanup);
+
+            entity.ApplyStatusEffect(template, entity);
+
+            entity.TakeDamage(1);
+
+            Assert.AreEqual(0, entity.GetActiveStatusEffects().Count,
+                "Either trigger should be sufficient for removal");
+        }
+
+        // ==================== Category Removal ====================
+
+        [Test]
+        public void StatusEffect_RemoveByCategory_RemovesMatchingEffects()
+        {
+            var buff = TestStatusEffectFactory.CreateModifierEffect(
+                "Fortified", Attribute.ArmorClass, 2f,
+                categories: EffectCategory.Buff, cleanup: cleanup);
+            var debuff = TestStatusEffectFactory.CreateModifierEffect(
+                "Weakened", Attribute.ArmorClass, -2f,
+                categories: EffectCategory.Debuff, cleanup: cleanup);
+
+            entity.ApplyStatusEffect(buff, entity);
+            entity.ApplyStatusEffect(debuff, entity);
+            Assert.AreEqual(2, entity.GetActiveStatusEffects().Count);
+
+            entity.RemoveStatusEffectsByCategory(EffectCategory.Buff);
+
+            Assert.AreEqual(1, entity.GetActiveStatusEffects().Count, "Should remove only buffs");
+            Assert.AreEqual("Weakened", entity.GetActiveStatusEffects()[0].template.effectName,
+                "Debuff should remain");
+        }
+
+        [Test]
+        public void StatusEffect_RemoveByCategory_RemovesMultiCategoryEffects()
+        {
+            var buffMod = TestStatusEffectFactory.CreateModifierEffect(
+                "Blessed", Attribute.ArmorClass, 3f,
+                categories: EffectCategory.Buff | EffectCategory.AttributeModifier, cleanup: cleanup);
+            var pureBuff = TestStatusEffectFactory.CreateModifierEffect(
+                "Lucky", Attribute.Mobility, 1f,
+                categories: EffectCategory.Buff, cleanup: cleanup);
+
+            entity.ApplyStatusEffect(buffMod, entity);
+            entity.ApplyStatusEffect(pureBuff, entity);
+
+            entity.RemoveStatusEffectsByCategory(EffectCategory.AttributeModifier);
+
+            Assert.AreEqual(1, entity.GetActiveStatusEffects().Count,
+                "Should remove effect that has AttributeModifier flag");
+            Assert.AreEqual("Lucky", entity.GetActiveStatusEffects()[0].template.effectName,
+                "Effect without AttributeModifier flag should survive");
+        }
+
+        [Test]
+        public void StatusEffect_RemoveByCategory_NoCategoryIsImmune()
+        {
+            var uncategorised = TestStatusEffectFactory.CreateModifierEffect(
+                "Environmental", Attribute.ArmorClass, 1f,
+                categories: EffectCategory.None, cleanup: cleanup);
+            var buff = TestStatusEffectFactory.CreateModifierEffect(
+                "Shield", Attribute.ArmorClass, 2f,
+                categories: EffectCategory.Buff, cleanup: cleanup);
+
+            entity.ApplyStatusEffect(uncategorised, entity);
+            entity.ApplyStatusEffect(buff, entity);
+
+            entity.RemoveStatusEffectsByCategory(EffectCategory.Buff);
+
+            Assert.AreEqual(1, entity.GetActiveStatusEffects().Count);
+            Assert.AreEqual("Environmental", entity.GetActiveStatusEffects()[0].template.effectName,
+                "Uncategorised effects should not be removed by category-based dispel");
+        }
+
+        [Test]
+        public void StatusEffect_RemoveByCategory_DebuffFlagRemovesAllDebuffs()
+        {
+            var dot = TestStatusEffectFactory.CreateModifierEffect(
+                "Burning", Attribute.ArmorClass, -1f,
+                categories: EffectCategory.Debuff | EffectCategory.DoT, cleanup: cleanup);
+            var cc = TestStatusEffectFactory.CreateBehavioralEffect(
+                "Stunned", preventsActions: true,
+                categories: EffectCategory.Debuff | EffectCategory.CrowdControl, cleanup: cleanup);
+            var buff = TestStatusEffectFactory.CreateModifierEffect(
+                "Shield", Attribute.ArmorClass, 2f,
+                categories: EffectCategory.Buff, cleanup: cleanup);
+
+            entity.ApplyStatusEffect(dot, entity);
+            entity.ApplyStatusEffect(cc, entity);
+            entity.ApplyStatusEffect(buff, entity);
+            Assert.AreEqual(3, entity.GetActiveStatusEffects().Count);
+
+            entity.RemoveStatusEffectsByCategory(EffectCategory.Debuff);
+
+            Assert.AreEqual(1, entity.GetActiveStatusEffects().Count, "Should remove both debuffs");
+            Assert.AreEqual("Shield", entity.GetActiveStatusEffects()[0].template.effectName,
+                "Buff should survive debuff purge");
+        }
+
+        // ==================== Template Removal ====================
+
+        [Test]
+        public void StatusEffect_RemoveByTemplate_RemovesSpecificEffect()
+        {
+            var burning = TestStatusEffectFactory.CreateModifierEffect(
+                "Burning", Attribute.ArmorClass, -1f, cleanup: cleanup);
+            var bleeding = TestStatusEffectFactory.CreateModifierEffect(
+                "Bleeding", Attribute.Mobility, -1f, cleanup: cleanup);
+
+            entity.ApplyStatusEffect(burning, entity);
+            entity.ApplyStatusEffect(bleeding, entity);
+            Assert.AreEqual(2, entity.GetActiveStatusEffects().Count);
+
+            entity.RemoveStatusEffectsByTemplate(burning);
+
+            Assert.AreEqual(1, entity.GetActiveStatusEffects().Count, "Should remove only Burning");
+            Assert.AreEqual("Bleeding", entity.GetActiveStatusEffects()[0].template.effectName,
+                "Bleeding should remain");
+        }
+
+        [Test]
+        public void StatusEffect_RemoveByTemplate_RemovesAllStacks()
+        {
+            var template = TestStatusEffectFactory.CreateModifierEffect(
+                "Slowed", Attribute.Mobility, -1f, duration: 3,
+                stackBehaviour: StackBehaviour.Stack, maxStacks: 5, cleanup: cleanup);
+
+            entity.ApplyStatusEffect(template, entity);
+            entity.ApplyStatusEffect(template, entity);
+            entity.ApplyStatusEffect(template, entity);
+            Assert.AreEqual(3, entity.GetActiveStatusEffects().Count, "Should have 3 stacks");
+
+            entity.RemoveStatusEffectsByTemplate(template);
+
+            Assert.AreEqual(0, entity.GetActiveStatusEffects().Count, "Should remove all stacks of the template");
+            Assert.IsFalse(entity.GetModifiers().Any(m => m.Attribute == Attribute.Mobility),
+                "All modifiers from stacks should be cleaned up");
+        }
+
+        // ==================== Source Removal ====================
+
+        [Test]
+        public void StatusEffect_RemoveFromSource_RemovesOnlyMatchingSource()
+        {
+            var template = TestStatusEffectFactory.CreateModifierEffect(
+                "Aura", Attribute.ArmorClass, 1f,
+                stackBehaviour: StackBehaviour.Stack, cleanup: cleanup);
+            var otherSource = ScriptableObject.CreateInstance<StatusEffect>();
+            cleanup.Add(otherSource);
+
+            entity.ApplyStatusEffect(template, entity);        // source = entity
+            entity.ApplyStatusEffect(template, otherSource);   // source = otherSource
+            Assert.AreEqual(2, entity.GetActiveStatusEffects().Count);
+
+            entity.RemoveStatusEffectsFromSource(otherSource);
+
+            Assert.AreEqual(1, entity.GetActiveStatusEffects().Count, "Should remove only effects from otherSource");
+            Assert.AreEqual(entity, entity.GetActiveStatusEffects()[0].applier,
+                "Remaining effect should be from entity");
+        }
+
+        // ==================== Edge Cases ====================
+
+        [Test]
+        public void StatusEffect_RemovalTrigger_DuringStack_RemovesAllMatchingStacks()
+        {
+            var template = TestStatusEffectFactory.CreateModifierEffect(
+                "FragileStack", Attribute.ArmorClass, -1f, duration: 5,
+                stackBehaviour: StackBehaviour.Stack, maxStacks: 5,
+                removalTriggers: RemovalTrigger.OnDamageTaken, cleanup: cleanup);
+
+            entity.ApplyStatusEffect(template, entity);
+            entity.ApplyStatusEffect(template, entity);
+            entity.ApplyStatusEffect(template, entity);
+            Assert.AreEqual(3, entity.GetActiveStatusEffects().Count, "Should have 3 stacks");
+
+            entity.TakeDamage(1);
+
+            Assert.AreEqual(0, entity.GetActiveStatusEffects().Count,
+                "All stacks with the trigger should be removed");
+        }
+
+        [Test]
+        public void StatusEffect_RemovalTrigger_WithDuration_TriggerRemovesBeforeExpiry()
+        {
+            var template = TestStatusEffectFactory.CreateModifierEffect(
+                "TimedFragile", Attribute.ArmorClass, 2f, duration: 10,
+                removalTriggers: RemovalTrigger.OnAttackMade, cleanup: cleanup);
+
+            entity.ApplyStatusEffect(template, entity);
+
+            entity.UpdateStatusEffects(); // Turn 1
+            entity.UpdateStatusEffects(); // Turn 2
+            Assert.AreEqual(1, entity.GetActiveStatusEffects().Count, "Should still be active mid-duration");
+            Assert.AreEqual(8, entity.GetActiveStatusEffects()[0].turnsRemaining, "Should have 8 turns left");
+
+            entity.NotifyStatusEffectTrigger(RemovalTrigger.OnAttackMade);
+
+            Assert.AreEqual(0, entity.GetActiveStatusEffects().Count,
+                "Trigger should remove effect despite having turns remaining");
+        }
+
+        [Test]
+        public void StatusEffect_RemovalTrigger_IndefiniteEffectCanBeTriggered()
+        {
+            var template = TestStatusEffectFactory.CreateModifierEffect(
+                "Sentinel", Attribute.ArmorClass, 5f, duration: -1,
+                removalTriggers: RemovalTrigger.OnD20Roll, cleanup: cleanup);
+
+            entity.ApplyStatusEffect(template, entity);
+
+            for (int i = 0; i < 10; i++)
+            {
+                entity.UpdateStatusEffects();
+            }
+            Assert.AreEqual(1, entity.GetActiveStatusEffects().Count, "Indefinite effect should survive ticks");
+
+            entity.NotifyStatusEffectTrigger(RemovalTrigger.OnD20Roll);
+
+            Assert.AreEqual(0, entity.GetActiveStatusEffects().Count,
+                "Trigger should remove even indefinite effects");
+        }
+
+        [Test]
+        public void StatusEffect_RemovalTrigger_AlreadyRemovedIsIdempotent()
+        {
+            var template = TestStatusEffectFactory.CreateModifierEffect(
+                "OneShot", Attribute.ArmorClass, 1f,
+                removalTriggers: RemovalTrigger.OnDamageTaken, cleanup: cleanup);
+
+            entity.ApplyStatusEffect(template, entity);
+
+            entity.TakeDamage(1);
+            Assert.AreEqual(0, entity.GetActiveStatusEffects().Count);
+
+            // Firing the same trigger again when no effects remain should not throw
+            entity.TakeDamage(1);
+            entity.NotifyStatusEffectTrigger(RemovalTrigger.OnDamageTaken);
+
+            Assert.AreEqual(0, entity.GetActiveStatusEffects().Count, "No errors on redundant trigger firing");
+        }
+
+        [Test]
+        public void StatusEffect_RemoveByCategory_CleansUpModifiers()
+        {
+            var template = TestStatusEffectFactory.CreateModifierEffect(
+                "Cursed", Attribute.ArmorClass, -3f,
+                categories: EffectCategory.Debuff, cleanup: cleanup);
+
+            entity.ApplyStatusEffect(template, entity);
+            Assert.IsTrue(entity.GetModifiers().Any(m => m.Value == -3f), "Modifier should exist after apply");
+
+            entity.RemoveStatusEffectsByCategory(EffectCategory.Debuff);
+
+            Assert.AreEqual(0, entity.GetActiveStatusEffects().Count, "Effect should be removed");
+            Assert.IsFalse(entity.GetModifiers().Any(m => m.Value == -3f),
+                "Category removal should clean up modifiers");
+        }
+
+        [Test]
+        public void StatusEffect_RemoveByTemplate_CleansUpModifiers()
+        {
+            var template = TestStatusEffectFactory.CreateModifierEffect(
+                "Hex", Attribute.Mobility, -4f, cleanup: cleanup);
+
+            entity.ApplyStatusEffect(template, entity);
+            Assert.IsTrue(entity.GetModifiers().Any(m => m.Value == -4f), "Modifier should exist after apply");
+
+            entity.RemoveStatusEffectsByTemplate(template);
+
+            Assert.AreEqual(0, entity.GetActiveStatusEffects().Count, "Effect should be removed");
+            Assert.IsFalse(entity.GetModifiers().Any(m => m.Value == -4f),
+                "Template removal should clean up modifiers");
+        }
+
+        [Test]
+        public void StatusEffect_MixedTriggerAndCategory_BothPathsWork()
+        {
+            var triggerable = TestStatusEffectFactory.CreateModifierEffect(
+                "Fragile", Attribute.ArmorClass, 1f,
+                categories: EffectCategory.Buff,
+                removalTriggers: RemovalTrigger.OnDamageTaken, cleanup: cleanup);
+            var persistent = TestStatusEffectFactory.CreateModifierEffect(
+                "Resilient", Attribute.ArmorClass, 2f,
+                categories: EffectCategory.Buff,
+                removalTriggers: RemovalTrigger.None, cleanup: cleanup);
+
+            entity.ApplyStatusEffect(triggerable, entity);
+            entity.ApplyStatusEffect(persistent, entity);
+            Assert.AreEqual(2, entity.GetActiveStatusEffects().Count);
+
+            // Trigger removes only the triggerable one
+            entity.TakeDamage(1);
+            Assert.AreEqual(1, entity.GetActiveStatusEffects().Count, "Only triggerable effect should be removed");
+            Assert.AreEqual("Resilient", entity.GetActiveStatusEffects()[0].template.effectName);
+
+            // Category removal still works for the remaining one
+            entity.RemoveStatusEffectsByCategory(EffectCategory.Buff);
+            Assert.AreEqual(0, entity.GetActiveStatusEffects().Count, "Category removal should get the rest");
+        }
     }
 }

@@ -1,4 +1,6 @@
-﻿namespace Assets.Scripts.Managers.TurnPhases
+﻿using Assets.Scripts.StatusEffects;
+
+namespace Assets.Scripts.Managers.TurnPhases
 {
     /// <summary>
     /// Any logic handled at the end of a vehicle's turn.
@@ -21,6 +23,8 @@
                 }
 
                 HandleStageTransitions(vehicle, context);
+
+                vehicle.NotifyStatusEffectTrigger(RemovalTrigger.OnTurnEnd);
             }
 
             context.ShouldRefreshUI = true;
