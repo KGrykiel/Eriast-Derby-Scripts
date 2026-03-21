@@ -2,10 +2,7 @@
 using Assets.Scripts.Combat.Damage;
 using Assets.Scripts.Combat.Restoration;
 using Assets.Scripts.StatusEffects;
-using Assets.Scripts.Combat.Rolls.RollTypes.Attacks;
-using Assets.Scripts.Combat.Rolls.RollTypes.OpposedChecks;
-using Assets.Scripts.Combat.Rolls.RollTypes.Saves;
-using Assets.Scripts.Combat.Rolls.RollTypes.SkillChecks;
+using Assets.Scripts.Combat.Rolls;
 
 namespace Assets.Scripts.Combat
 {
@@ -166,58 +163,61 @@ namespace Assets.Scripts.Combat
     /// <summary>Attack roll (hit or miss). Separate from damage — attack determines IF damage happens.</summary>
     public class AttackRollEvent : CombatEvent
     {
-        public AttackResult Result { get; set; }
+        public D20RollOutcome Roll { get; set; }
         public bool IsHit { get; set; }
         public string TargetComponentName { get; set; }
-        public bool IsChassisFallback { get; set; }
 
         /// <summary>Null for component-only or standalone entity attacks.</summary>
         public Character Character { get; set; }
-        
+
         public AttackRollEvent(
-            AttackResult result,
+            D20RollOutcome roll,
             Entity source,
             Entity target,
             Object causalSource,
             bool isHit,
             string targetComponentName = null,
-            bool isChassisFallback = false,
             Character character = null)
         {
-            Result = result;
+            Roll = roll;
             Source = source;
             Target = target;
             CausalSource = causalSource;
             IsHit = isHit;
             TargetComponentName = targetComponentName;
-            IsChassisFallback = isChassisFallback;
             Character = character;
         }
     }
     
     public class SavingThrowEvent : CombatEvent
     {
-        public SaveResult Result { get; set; }
+        public D20RollOutcome Roll { get; set; }
+        public string CheckName { get; set; }
         public bool Succeeded { get; set; }
+        public bool IsAutoFail { get; set; }
         public string TargetComponentName { get; set; }
 
         /// <summary>Null for vehicle-only saves.</summary>
         public Character Character { get; set; }
-        
+
         public SavingThrowEvent(
-            SaveResult result,
+            D20RollOutcome roll,
             Entity source,
             Entity target,
             Object causalSource,
             bool succeeded,
+            string checkName,
+            bool isAutoFail = false,
             string targetComponentName = null,
             Character character = null)
         {
-            Result = result;
+            Roll = roll;
             Source = source;
             Target = target;
             CausalSource = causalSource;
             Succeeded = succeeded;
+            CheckName = checkName;
+            IsAutoFail = isAutoFail;
             TargetComponentName = targetComponentName;
             Character = character;
         }
@@ -225,44 +225,59 @@ namespace Assets.Scripts.Combat
     
     public class SkillCheckEvent : CombatEvent
     {
-        public SkillCheckResult Result { get; set; }
+        public D20RollOutcome Roll { get; set; }
+        public string CheckName { get; set; }
         public bool Succeeded { get; set; }
+        public bool IsAutoFail { get; set; }
 
         /// <summary>Null for vehicle-only checks.</summary>
         public Character Character { get; set; }
 
         public SkillCheckEvent(
-            SkillCheckResult result,
+            D20RollOutcome roll,
             Entity source,
             Object causalSource,
             bool succeeded,
+            string checkName,
+            bool isAutoFail = false,
             Character character = null)
         {
-            Result = result;
+            Roll = roll;
             Source = source;
             Target = null; // Skill checks don't have a target
             CausalSource = causalSource;
             Succeeded = succeeded;
+            CheckName = checkName;
+            IsAutoFail = isAutoFail;
             Character = character;
         }
     }
 
     public class OpposedCheckEvent : CombatEvent
     {
-        public OpposedCheckResult Result { get; set; }
+        public D20RollOutcome Roll { get; set; }
+        public D20RollOutcome DefenderRoll { get; set; }
         public bool AttackerWins { get; set; }
+        public string AttackerCheckName { get; set; }
+        public string DefenderCheckName { get; set; }
 
         public OpposedCheckEvent(
-            OpposedCheckResult result,
+            D20RollOutcome roll,
+            D20RollOutcome defenderRoll,
             Entity attacker,
             Entity defender,
-            Object causalSource)
+            Object causalSource,
+            string attackerCheckName,
+            string defenderCheckName)
         {
-            Result = result;
+            Roll = roll;
+            DefenderRoll = defenderRoll;
             Source = attacker;
             Target = defender;
             CausalSource = causalSource;
-            AttackerWins = result.AttackerWins;
+            AttackerWins = roll.Success;
+            AttackerCheckName = attackerCheckName;
+            DefenderCheckName = defenderCheckName;
         }
     }
 }

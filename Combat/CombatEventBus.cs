@@ -4,10 +4,7 @@ using Assets.Scripts.Combat.Damage;
 using Assets.Scripts.Combat.Restoration;
 using Assets.Scripts.StatusEffects;
 using Assets.Scripts.Combat.Logging;
-using Assets.Scripts.Combat.Rolls.RollTypes.Attacks;
-using Assets.Scripts.Combat.Rolls.RollTypes.OpposedChecks;
-using Assets.Scripts.Combat.Rolls.RollTypes.Saves;
-using Assets.Scripts.Combat.Rolls.RollTypes.SkillChecks;
+using Assets.Scripts.Combat.Rolls;
 
 namespace Assets.Scripts.Combat
 {
@@ -132,47 +129,53 @@ namespace Assets.Scripts.Combat
         }
         
         public static void EmitAttackRoll(
-            AttackResult result,
+            D20RollOutcome roll,
             Entity source,
             Entity target,
             Object causalSource,
             bool isHit,
             string targetComponentName = null,
-            bool isChassisFallback = false,
             Character character = null)
         {
-            Emit(new AttackRollEvent(result, source, target, causalSource, isHit, targetComponentName, isChassisFallback, character));
+            Emit(new AttackRollEvent(roll, source, target, causalSource, isHit, targetComponentName, character));
         }
         
         public static void EmitSavingThrow(
-            SaveResult result,
+            D20RollOutcome roll,
             Entity source,
             Entity target,
             Object causalSource,
             bool succeeded,
+            string checkName,
+            bool isAutoFail = false,
             string targetComponentName = null,
             Character character = null)
         {
-            Emit(new SavingThrowEvent(result, source, target, causalSource, succeeded, targetComponentName, character));
+            Emit(new SavingThrowEvent(roll, source, target, causalSource, succeeded, checkName, isAutoFail, targetComponentName, character));
         }
         
         public static void EmitSkillCheck(
-            SkillCheckResult result,
+            D20RollOutcome roll,
             Entity source,
             Object causalSource,
             bool succeeded,
+            string checkName,
+            bool isAutoFail = false,
             Character character = null)
         {
-            Emit(new SkillCheckEvent(result, source, causalSource, succeeded, character));
+            Emit(new SkillCheckEvent(roll, source, causalSource, succeeded, checkName, isAutoFail, character));
         }
 
         public static void EmitOpposedCheck(
-            OpposedCheckResult result,
+            D20RollOutcome roll,
+            D20RollOutcome defenderRoll,
             Entity attacker,
             Entity defender,
-            Object causalSource)
+            Object causalSource,
+            string attackerCheckName,
+            string defenderCheckName)
         {
-            Emit(new OpposedCheckEvent(result, attacker, defender, causalSource));
+            Emit(new OpposedCheckEvent(roll, defenderRoll, attacker, defender, causalSource, attackerCheckName, defenderCheckName));
         }
 
         // ==================== UTILITY ====================

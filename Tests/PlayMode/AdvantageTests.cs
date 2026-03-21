@@ -59,92 +59,13 @@ namespace Assets.Scripts.Tests.PlayMode
             return template;
         }
 
-        // ==================== ResolveMode ====================
-
-        [Test]
-        public void ResolveMode_NoSources_ReturnsNormal()
-        {
-            var result = D20RollHelpers.ResolveMode(new AdvantageSource[0]);
-
-            Assert.AreEqual(RollMode.Normal, result);
-        }
-
-        [Test]
-        public void ResolveMode_NullSources_ReturnsNormal()
-        {
-            var result = D20RollHelpers.ResolveMode(null);
-
-            Assert.AreEqual(RollMode.Normal, result);
-        }
-
-        [Test]
-        public void ResolveMode_SingleAdvantage_ReturnsAdvantage()
-        {
-            var sources = new[] { new AdvantageSource("Bless", RollMode.Advantage) };
-
-            var result = D20RollHelpers.ResolveMode(sources);
-
-            Assert.AreEqual(RollMode.Advantage, result);
-        }
-
-        [Test]
-        public void ResolveMode_SingleDisadvantage_ReturnsDisadvantage()
-        {
-            var sources = new[] { new AdvantageSource("Curse", RollMode.Disadvantage) };
-
-            var result = D20RollHelpers.ResolveMode(sources);
-
-            Assert.AreEqual(RollMode.Disadvantage, result);
-        }
-
-        [Test]
-        public void ResolveMode_AdvantageAndDisadvantage_CancelToNormal()
-        {
-            var sources = new[]
-            {
-                new AdvantageSource("Bless", RollMode.Advantage),
-                new AdvantageSource("Curse", RollMode.Disadvantage)
-            };
-
-            var result = D20RollHelpers.ResolveMode(sources);
-
-            Assert.AreEqual(RollMode.Normal, result,
-                "Advantage + disadvantage should cancel to Normal (D&D 5e rule)");
-        }
-
-        [Test]
-        public void ResolveMode_MultipleAdvantageSources_StillAdvantage()
-        {
-            var sources = new[]
-            {
-                new AdvantageSource("Bless", RollMode.Advantage),
-                new AdvantageSource("Flanking", RollMode.Advantage)
-            };
-
-            var result = D20RollHelpers.ResolveMode(sources);
-
-            Assert.AreEqual(RollMode.Advantage, result);
-        }
-
-        [Test]
-        public void ResolveMode_NormalSourcesOnly_ReturnsNormal()
-        {
-            var sources = new[]
-            {
-                new AdvantageSource("NoOp", RollMode.Normal)
-            };
-
-            var result = D20RollHelpers.ResolveMode(sources);
-
-            Assert.AreEqual(RollMode.Normal, result);
-        }
-
         // ==================== D20Calculator Structural ====================
 
         [Test]
         public void Roll_Normal_NoDroppingRoll()
         {
-            var outcome = D20Calculator.Roll(new List<RollBonus>(), 10);
+            var gathered = new GatheredRoll(new List<RollBonus>(), null);
+            var outcome = D20Calculator.Roll(gathered, 10);
 
             Assert.AreEqual(RollMode.Normal, outcome.Advantage.Mode);
             Assert.IsNull(outcome.Advantage.DroppedRoll,
@@ -154,9 +75,10 @@ namespace Assets.Scripts.Tests.PlayMode
         [Test]
         public void Roll_Advantage_HasDroppedRoll()
         {
-            var sources = new[] { new AdvantageSource("Test", RollMode.Advantage) };
+            var sources = new List<AdvantageSource> { new AdvantageSource("Test", RollMode.Advantage) };
+            var gathered = new GatheredRoll(new List<RollBonus>(), sources);
 
-            var outcome = D20Calculator.Roll(new List<RollBonus>(), 10, sources);
+            var outcome = D20Calculator.Roll(gathered, 10);
 
             Assert.AreEqual(RollMode.Advantage, outcome.Advantage.Mode);
             Assert.IsNotNull(outcome.Advantage.DroppedRoll,
@@ -166,9 +88,10 @@ namespace Assets.Scripts.Tests.PlayMode
         [Test]
         public void Roll_Disadvantage_HasDroppedRoll()
         {
-            var sources = new[] { new AdvantageSource("Test", RollMode.Disadvantage) };
+            var sources = new List<AdvantageSource> { new AdvantageSource("Test", RollMode.Disadvantage) };
+            var gathered = new GatheredRoll(new List<RollBonus>(), sources);
 
-            var outcome = D20Calculator.Roll(new List<RollBonus>(), 10, sources);
+            var outcome = D20Calculator.Roll(gathered, 10);
 
             Assert.AreEqual(RollMode.Disadvantage, outcome.Advantage.Mode);
             Assert.IsNotNull(outcome.Advantage.DroppedRoll,
@@ -178,9 +101,10 @@ namespace Assets.Scripts.Tests.PlayMode
         [Test]
         public void Roll_Advantage_KeepsHigherRoll()
         {
-            var sources = new[] { new AdvantageSource("Test", RollMode.Advantage) };
+            var sources = new List<AdvantageSource> { new AdvantageSource("Test", RollMode.Advantage) };
+            var gathered = new GatheredRoll(new List<RollBonus>(), sources);
 
-            var outcome = D20Calculator.Roll(new List<RollBonus>(), 10, sources);
+            var outcome = D20Calculator.Roll(gathered, 10);
 
             Assert.GreaterOrEqual(outcome.BaseRoll, outcome.Advantage.DroppedRoll.Value,
                 "With advantage, the kept roll should be >= the dropped roll");
@@ -189,9 +113,10 @@ namespace Assets.Scripts.Tests.PlayMode
         [Test]
         public void Roll_Disadvantage_KeepsLowerRoll()
         {
-            var sources = new[] { new AdvantageSource("Test", RollMode.Disadvantage) };
+            var sources = new List<AdvantageSource> { new AdvantageSource("Test", RollMode.Disadvantage) };
+            var gathered = new GatheredRoll(new List<RollBonus>(), sources);
 
-            var outcome = D20Calculator.Roll(new List<RollBonus>(), 10, sources);
+            var outcome = D20Calculator.Roll(gathered, 10);
 
             Assert.LessOrEqual(outcome.BaseRoll, outcome.Advantage.DroppedRoll.Value,
                 "With disadvantage, the kept roll should be <= the dropped roll");
@@ -200,15 +125,16 @@ namespace Assets.Scripts.Tests.PlayMode
         [Test]
         public void Roll_SourcesPropagatedToOutcome()
         {
-            var sources = new[]
+            var sources = new List<AdvantageSource>
             {
                 new AdvantageSource("Bless", RollMode.Advantage),
                 new AdvantageSource("Flanking", RollMode.Advantage)
             };
+            var gathered = new GatheredRoll(new List<RollBonus>(), sources);
 
-            var outcome = D20Calculator.Roll(new List<RollBonus>(), 10, sources);
+            var outcome = D20Calculator.Roll(gathered, 10);
 
-            Assert.AreEqual(2, outcome.Advantage.Sources.Length);
+            Assert.AreEqual(2, outcome.Advantage.Sources.Count);
             Assert.AreEqual("Bless", outcome.Advantage.Sources[0].Label);
             Assert.AreEqual("Flanking", outcome.Advantage.Sources[1].Label);
         }
@@ -216,10 +142,11 @@ namespace Assets.Scripts.Tests.PlayMode
         [Test]
         public void Roll_NullSources_ProducesEmptyArray()
         {
-            var outcome = D20Calculator.Roll(new List<RollBonus>(), 10, null);
+            var gathered = new GatheredRoll(new List<RollBonus>(), null);
+            var outcome = D20Calculator.Roll(gathered, 10);
 
             Assert.IsNotNull(outcome.Advantage.Sources);
-            Assert.AreEqual(0, outcome.Advantage.Sources.Length);
+            Assert.AreEqual(0, outcome.Advantage.Sources.Count);
         }
 
         // ==================== GatherAdvantageSources ====================
@@ -229,9 +156,9 @@ namespace Assets.Scripts.Tests.PlayMode
         {
             var spec = SkillCheckSpec.ForCharacter(CharacterSkill.Piloting);
 
-            var sources = D20RollHelpers.GatherAdvantageSources(null, spec);
+            var sources = RollGatherer.GatherAdvantageSources(null, spec);
 
-            Assert.AreEqual(0, sources.Length);
+            Assert.AreEqual(0, sources.Count);
         }
 
         [Test]
@@ -240,9 +167,9 @@ namespace Assets.Scripts.Tests.PlayMode
             var spec = SkillCheckSpec.ForCharacter(CharacterSkill.Piloting);
             var granted = new AdvantageSource("Spec Grant", RollMode.Advantage);
 
-            var sources = D20RollHelpers.GatherAdvantageSources(null, spec, granted);
+            var sources = RollGatherer.GatherAdvantageSources(null, spec, granted);
 
-            Assert.AreEqual(1, sources.Length);
+            Assert.AreEqual(1, sources.Count);
             Assert.AreEqual("Spec Grant", sources[0].Label);
             Assert.AreEqual(RollMode.Advantage, sources[0].Type);
         }
@@ -252,9 +179,9 @@ namespace Assets.Scripts.Tests.PlayMode
         {
             var spec = SkillCheckSpec.ForCharacter(CharacterSkill.Piloting);
 
-            var sources = D20RollHelpers.GatherAdvantageSources(null, spec, default);
+            var sources = RollGatherer.GatherAdvantageSources(null, spec, default);
 
-            Assert.AreEqual(0, sources.Length,
+            Assert.AreEqual(0, sources.Count,
                 "Default AdvantageSource (Type=Normal) should not be added");
         }
 
@@ -285,9 +212,9 @@ namespace Assets.Scripts.Tests.PlayMode
             });
             yield return null;
 
-            Assert.AreEqual(RollMode.Advantage, result.Roll.Advantage.Mode,
+            Assert.AreEqual(RollMode.Advantage, result.Advantage.Mode,
                 "Character check advantage status effect should produce advantage mode");
-            Assert.IsNotNull(result.Roll.Advantage.DroppedRoll);
+            Assert.IsNotNull(result.Advantage.DroppedRoll);
         }
 
         [UnityTest]
@@ -315,9 +242,9 @@ namespace Assets.Scripts.Tests.PlayMode
             });
             yield return null;
 
-            Assert.AreEqual(RollMode.Normal, result.Roll.Advantage.Mode,
+            Assert.AreEqual(RollMode.Normal, result.Advantage.Mode,
                 "Attack advantage should not apply to skill checks");
-            Assert.IsNull(result.Roll.Advantage.DroppedRoll);
+            Assert.IsNull(result.Advantage.DroppedRoll);
         }
 
         [UnityTest]
@@ -348,7 +275,7 @@ namespace Assets.Scripts.Tests.PlayMode
             });
             yield return null;
 
-            Assert.AreEqual(RollMode.Normal, pilotResult.Roll.Advantage.Mode,
+            Assert.AreEqual(RollMode.Normal, pilotResult.Advantage.Mode,
                 "limitTo [Mechanics] should not apply to Piloting checks");
 
             var mechSpec = TestSkillFactory.CharacterSkillCheck(CharacterSkill.Mechanics, requiredComponent: ComponentType.Utility, dc: 10);
@@ -361,7 +288,7 @@ namespace Assets.Scripts.Tests.PlayMode
             });
             yield return null;
 
-            Assert.AreEqual(RollMode.Advantage, mechResult.Roll.Advantage.Mode,
+            Assert.AreEqual(RollMode.Advantage, mechResult.Advantage.Mode,
                 "limitTo [Mechanics] should apply to Mechanics checks");
         }
 
@@ -397,7 +324,7 @@ namespace Assets.Scripts.Tests.PlayMode
             });
             yield return null;
 
-            Assert.AreEqual(RollMode.Advantage, result.Roll.Advantage.Mode,
+            Assert.AreEqual(RollMode.Advantage, result.Advantage.Mode,
                 "Operational component advantage grant should be active");
         }
 
@@ -433,7 +360,7 @@ namespace Assets.Scripts.Tests.PlayMode
             });
             yield return null;
 
-            Assert.AreEqual(RollMode.Normal, result.Roll.Advantage.Mode,
+            Assert.AreEqual(RollMode.Normal, result.Advantage.Mode,
                 "Destroyed component's advantage grants should not apply");
         }
 
@@ -457,9 +384,9 @@ namespace Assets.Scripts.Tests.PlayMode
             });
             yield return null;
 
-            Assert.AreEqual(RollMode.Advantage, result.Roll.Advantage.Mode,
+            Assert.AreEqual(RollMode.Advantage, result.Advantage.Mode,
                 "Spec grantedMode should propagate to the roll");
-            Assert.IsNotNull(result.Roll.Advantage.DroppedRoll);
+            Assert.IsNotNull(result.Advantage.DroppedRoll);
         }
 
         [UnityTest]
@@ -480,8 +407,8 @@ namespace Assets.Scripts.Tests.PlayMode
             });
             yield return null;
 
-            Assert.AreEqual(RollMode.Disadvantage, result.Roll.Advantage.Mode);
-            Assert.IsNotNull(result.Roll.Advantage.DroppedRoll);
+            Assert.AreEqual(RollMode.Disadvantage, result.Advantage.Mode);
+            Assert.IsNotNull(result.Advantage.DroppedRoll);
         }
 
         // ==================== Cancellation Through Performer ====================
@@ -513,11 +440,11 @@ namespace Assets.Scripts.Tests.PlayMode
             });
             yield return null;
 
-            Assert.AreEqual(RollMode.Normal, result.Roll.Advantage.Mode,
+            Assert.AreEqual(RollMode.Normal, result.Advantage.Mode,
                 "Spec advantage + status disadvantage should cancel to Normal");
-            Assert.IsNull(result.Roll.Advantage.DroppedRoll,
+            Assert.IsNull(result.Advantage.DroppedRoll,
                 "Cancelled mode should not produce a dropped roll");
-            Assert.GreaterOrEqual(result.Roll.Advantage.Sources.Length, 2,
+            Assert.GreaterOrEqual(result.Advantage.Sources.Count, 2,
                 "Both sources should still be recorded");
         }
 
@@ -540,18 +467,18 @@ namespace Assets.Scripts.Tests.PlayMode
             var handlingSpec = SkillCheckSpec.ForVehicle(VehicleCheckAttribute.Mobility);
             handlingSpec.dc = 10;
 
-            var handlingSources = D20RollHelpers.GatherAdvantageSources(vehicle.chassis, handlingSpec);
+            var handlingSources = RollGatherer.GatherAdvantageSources(vehicle.chassis, handlingSpec);
 
-            Assert.AreEqual(1, handlingSources.Length,
+            Assert.AreEqual(1, handlingSources.Count,
                 "Should match vehicle check with Mobility attribute");
             Assert.AreEqual(RollMode.Advantage, handlingSources[0].Type);
 
             var speedSpec = SkillCheckSpec.ForVehicle(VehicleCheckAttribute.Stability);
             speedSpec.dc = 10;
 
-            var speedSources = D20RollHelpers.GatherAdvantageSources(vehicle.chassis, speedSpec);
+            var speedSources = RollGatherer.GatherAdvantageSources(vehicle.chassis, speedSpec);
 
-            Assert.AreEqual(0, speedSources.Length,
+            Assert.AreEqual(0, speedSources.Count,
                 "limitTo [Mobility] should not match Stability checks");
             yield return null;
         }

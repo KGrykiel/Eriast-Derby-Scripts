@@ -4,6 +4,7 @@ using UnityEngine;
 using UnityEngine.TestTools;
 using Assets.Scripts.Characters;
 using Assets.Scripts.Tests.Helpers;
+using Assets.Scripts.Combat.Rolls;
 using Assets.Scripts.Combat.Rolls.RollTypes.Saves;
 
 namespace Assets.Scripts.Tests.PlayMode
@@ -38,12 +39,11 @@ namespace Assets.Scripts.Tests.PlayMode
             yield return null;
 
             Assert.IsNotNull(result);
-            Assert.AreEqual(ada, result.Character, "Should route to Ada (controls targeted chassis)");
-            Assert.IsFalse(result.IsAutoFail);
+            Assert.AreNotEqual(0, result.BaseRoll, "Should not auto-fail");
 
             int expectedDexMod = CharacterFormulas.CalculateAttributeModifier(16);
             int expectedHalfLevel = CharacterFormulas.CalculateHalfLevelBonus(3);
-            Assert.AreEqual(expectedDexMod + expectedHalfLevel, result.Roll.TotalModifier,
+            Assert.AreEqual(expectedDexMod + expectedHalfLevel, result.TotalModifier,
                 $"Expected DEX({expectedDexMod}) + HalfLevel({expectedHalfLevel})");
         }
 
@@ -66,10 +66,9 @@ namespace Assets.Scripts.Tests.PlayMode
             yield return null;
 
             Assert.IsNotNull(result);
-            Assert.AreEqual(bob, result.Character, "Should route to Bob (best WIS save)");
 
             int bobSaveMod = CharacterFormulas.CalculateSaveModifier(bob, CharacterAttribute.Wisdom);
-            Assert.AreEqual(bobSaveMod, result.Roll.TotalModifier, $"Bob's save modifier should be {bobSaveMod}");
+            Assert.AreEqual(bobSaveMod, result.TotalModifier, $"Bob's save modifier should be {bobSaveMod}");
         }
 
         // ==================== Test 2C ====================
@@ -85,7 +84,7 @@ namespace Assets.Scripts.Tests.PlayMode
             yield return null;
 
             Assert.IsNotNull(result);
-            Assert.IsTrue(result.IsAutoFail, "Should auto-fail when required component missing");
+            Assert.AreEqual(0, result.BaseRoll, "Should auto-fail when required component missing");
         }
 
         // ==================== Test 2D ====================
@@ -104,11 +103,10 @@ namespace Assets.Scripts.Tests.PlayMode
             yield return null;
 
             Assert.IsNotNull(result);
-            Assert.IsFalse(result.IsAutoFail);
-            Assert.AreEqual(engineer, result.Character, "Should route to Engineer (controls PowerCore)");
+            Assert.AreNotEqual(0, result.BaseRoll, "Should not auto-fail");
 
             int expectedMod = CharacterFormulas.CalculateSaveModifier(engineer, CharacterAttribute.Intelligence);
-            Assert.AreEqual(expectedMod, result.Roll.TotalModifier, $"Engineer's save modifier should be {expectedMod}");
+            Assert.AreEqual(expectedMod, result.TotalModifier, $"Engineer's save modifier should be {expectedMod}");
         }
 
         // ==================== Test 2E ====================

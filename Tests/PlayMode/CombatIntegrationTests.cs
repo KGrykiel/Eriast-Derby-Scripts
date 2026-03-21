@@ -4,7 +4,10 @@ using NUnit.Framework;
 using UnityEngine;
 using UnityEngine.TestTools;
 using Assets.Scripts.Characters;
+using Assets.Scripts.Combat;
 using Assets.Scripts.Combat.Damage;
+using Assets.Scripts.Combat.Rolls;
+using Assets.Scripts.Combat.Rolls.Advantage;
 using Assets.Scripts.Stages.Lanes;
 using Assets.Scripts.StatusEffects;
 using Assets.Scripts.Tests.Helpers;
@@ -260,26 +263,27 @@ namespace Assets.Scripts.Tests.PlayMode
             pilotSpec.dc = 12;
             var pilotResult = SkillCheckPerformer.Execute(new SkillCheckExecutionContext { Vehicle = playerVehicle, Spec = pilotSpec, CausalSource = null, InitiatingCharacter = driver });
             yield return null;
-            Assert.AreEqual(driver, pilotResult.Character, "Piloting check should route to Driver");
-            Assert.IsFalse(pilotResult.IsAutoFail);
+            Assert.AreNotEqual(0, pilotResult.BaseRoll, "Should not auto-fail");
 
             // Test 2: Mechanics check routes to Engineer via PowerCore
             var mechanicsSpec = SkillCheckSpec.ForCharacter(CharacterSkill.Mechanics, ComponentType.PowerCore);
             mechanicsSpec.dc = 10;
             var mechResult = SkillCheckPerformer.Execute(new SkillCheckExecutionContext { Vehicle = playerVehicle, Spec = mechanicsSpec, CausalSource = null, InitiatingCharacter = engineer });
             yield return null;
-            Assert.AreEqual(engineer, mechResult.Character, "Mechanics check should route to Engineer");
+            Assert.AreNotEqual(0, mechResult.BaseRoll, "Should not auto-fail");
 
             // Test 3: Best Perception routes to character with highest WIS modifier
             var percSpec = SkillCheckSpec.ForCharacter(CharacterSkill.Perception);
             percSpec.dc = 14;
             var percResult = SkillCheckPerformer.Execute(new SkillCheckExecutionContext { Vehicle = playerVehicle, Spec = percSpec, CausalSource = null });
             yield return null;
-            Assert.IsNotNull(percResult.Character, "Perception check should find a character");
-            Assert.IsFalse(percResult.IsAutoFail);
+            Assert.IsNotNull(percResult);
+            Assert.AreNotEqual(0, percResult.BaseRoll, "Should not auto-fail");
 
             // Test 4: Attack bonuses stack correctly
-            var bonuses = AttackCalculator.GatherBonuses(playerVehicle.optionalComponents[0], gunner);
+            var attackSpec = new AttackSpec { grantedMode = RollMode.Normal };
+            var gathered = RollGatherer.ForAttack(attackSpec, playerVehicle.optionalComponents[0], gunner);
+            var bonuses = gathered.Bonuses;
             int totalMod = bonuses.Sum(b => b.Value);
             Assert.AreEqual(6, totalMod, "Attack bonus should be weapon(2) + character(4) = 6");
         }
@@ -367,13 +371,12 @@ namespace Assets.Scripts.Tests.PlayMode
 
             // Result should be valid
             Assert.IsNotNull(checkResult);
-            Assert.AreEqual(driver, checkResult.Character, "Should route to Driver for Piloting");
-            Assert.IsFalse(checkResult.IsAutoFail, "Should be able to attempt the check");
+            Assert.AreNotEqual(0, checkResult.BaseRoll, "Should be able to attempt the check");
 
             // Verify modifier is correct: DEX 18 (+4) + Prof level 5 (+3) = +7
             int expectedDexMod = CharacterFormulas.CalculateAttributeModifier(18);
             int expectedProf = CharacterFormulas.CalculateProficiencyBonus(5);
-            Assert.AreEqual(expectedDexMod + expectedProf, checkResult.Roll.TotalModifier,
+            Assert.AreEqual(expectedDexMod + expectedProf, checkResult.TotalModifier,
                 $"Modifier should be DEX({expectedDexMod}) + Prof({expectedProf})");
         }
 
@@ -484,7 +487,7 @@ namespace Assets.Scripts.Tests.PlayMode
             var result = SkillCheckPerformer.Execute(new SkillCheckExecutionContext { Vehicle = playerVehicle, Spec = spec, CausalSource = null, InitiatingCharacter = driver });
             yield return null;
 
-            Assert.IsTrue(result.IsAutoFail, "Should auto-fail when required component is stunned");
+            Assert.AreEqual(0, result.BaseRoll, "Should auto-fail when required component is stunned");
 
             // Wait 2 turns → stun expires → component operational again
             utilityComp.UpdateStatusEffects(); // Turn 1
@@ -494,7 +497,7 @@ namespace Assets.Scripts.Tests.PlayMode
             Assert.IsTrue(utilityComp.IsOperational, "Component should be operational after stun expires");
 
             var resultAfter = SkillCheckPerformer.Execute(new SkillCheckExecutionContext { Vehicle = playerVehicle, Spec = spec, CausalSource = null, InitiatingCharacter = driver });
-            Assert.IsFalse(resultAfter.IsAutoFail, "Should be able to attempt after stun expires");
+            Assert.AreNotEqual(0, resultAfter.BaseRoll, "Should be able to attempt after stun expires");
         }
 
         // ==================== COMPONENT DESTROYED → SKILL BLOCKED → HEAL → WORKS AGAIN ====================
@@ -518,7 +521,7 @@ namespace Assets.Scripts.Tests.PlayMode
             // Phase 1: Working normally
             var result1 = SkillCheckPerformer.Execute(new SkillCheckExecutionContext { Vehicle = playerVehicle, Spec = spec, CausalSource = null, InitiatingCharacter = engineer });
             yield return null;
-            Assert.IsFalse(result1.IsAutoFail, "Should work when component is healthy");
+            Assert.AreNotEqual(0, result1.BaseRoll, "Should work when component is healthy");
 
             // Phase 2: Destroy component via damage
             utility.TakeDamage(utility.GetCurrentHealth());
@@ -526,7 +529,7 @@ namespace Assets.Scripts.Tests.PlayMode
 
             var result2 = SkillCheckPerformer.Execute(new SkillCheckExecutionContext { Vehicle = playerVehicle, Spec = spec, CausalSource = null, InitiatingCharacter = engineer });
             yield return null;
-            Assert.IsTrue(result2.IsAutoFail, "Should auto-fail when component destroyed");
+            Assert.AreEqual(0, result2.BaseRoll, "Should auto-fail when component destroyed");
 
             // Phase 3: Restore component
             utility.isDestroyed = false;
@@ -535,7 +538,7 @@ namespace Assets.Scripts.Tests.PlayMode
 
             var result3 = SkillCheckPerformer.Execute(new SkillCheckExecutionContext { Vehicle = playerVehicle, Spec = spec, CausalSource = null, InitiatingCharacter = engineer });
             yield return null;
-            Assert.IsFalse(result3.IsAutoFail, "Should work again after component restored");
+            Assert.AreNotEqual(0, result3.BaseRoll, "Should work again after component restored");
         }
 
         // ==================== MULTIPLE MODIFIERS FROM DIFFERENT SOURCES STACK ====================

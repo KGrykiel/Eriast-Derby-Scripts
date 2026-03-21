@@ -59,7 +59,7 @@ namespace Assets.Scripts.Tests.PlayMode
             var result2 = SkillCheckPerformer.Execute(new SkillCheckExecutionContext { Vehicle = vehicle, Spec = spec, CausalSource = null, InitiatingCharacter = null });
             yield return null;
 
-            Assert.AreEqual(result1.Character, result2.Character, "Should deterministically select same character");
+            Assert.AreEqual(result1.TotalModifier, result2.TotalModifier, "Should deterministically select same character");
         }
 
         // ==================== Test 8C ====================
@@ -77,7 +77,7 @@ namespace Assets.Scripts.Tests.PlayMode
             yield return null;
 
             Assert.IsNotNull(result);
-            Assert.IsTrue(result.IsAutoFail, "Should auto-fail when no character controls the component");
+            Assert.AreEqual(0, result.BaseRoll, "Should auto-fail when no character controls the component");
         }
 
         // ==================== Test 8D ====================

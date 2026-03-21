@@ -42,7 +42,7 @@ namespace Assets.Scripts.Tests.PlayMode
             var spec = TestSkillFactory.CharacterSkillCheck(CharacterSkill.Mechanics, requiredComponent: ComponentType.Utility, dc: 10);
             var resultBefore = SkillCheckPerformer.Execute(new SkillCheckExecutionContext { Vehicle = vehicle, Spec = spec, CausalSource = null, InitiatingCharacter = character });
             yield return null;
-            Assert.IsFalse(resultBefore.IsAutoFail, "Should succeed before destruction");
+            Assert.AreNotEqual(0, resultBefore.BaseRoll, "Should succeed before destruction");
 
             // Destroy the utility component via TakeDamage
             utility.TakeDamage(utility.GetCurrentHealth());
@@ -51,7 +51,7 @@ namespace Assets.Scripts.Tests.PlayMode
             // Second attempt - should auto-fail
             var resultAfter = SkillCheckPerformer.Execute(new SkillCheckExecutionContext { Vehicle = vehicle, Spec = spec, CausalSource = null, InitiatingCharacter = character });
             yield return null;
-            Assert.IsTrue(resultAfter.IsAutoFail, "Should auto-fail after component destroyed");
+            Assert.AreEqual(0, resultAfter.BaseRoll, "Should auto-fail after component destroyed");
         }
 
         // ==================== Test 7B ====================
@@ -74,7 +74,7 @@ namespace Assets.Scripts.Tests.PlayMode
 
             var resultDestroyed = SkillCheckPerformer.Execute(new SkillCheckExecutionContext { Vehicle = vehicle, Spec = spec, CausalSource = null, InitiatingCharacter = character });
             yield return null;
-            Assert.IsTrue(resultDestroyed.IsAutoFail, "Should auto-fail when destroyed");
+            Assert.AreEqual(0, resultDestroyed.BaseRoll, "Should auto-fail when destroyed");
 
             // Restore - reset destroyed state and heal
             utility.isDestroyed = false;
@@ -85,7 +85,7 @@ namespace Assets.Scripts.Tests.PlayMode
 
             var resultRestored = SkillCheckPerformer.Execute(new SkillCheckExecutionContext { Vehicle = vehicle, Spec = spec, CausalSource = null, InitiatingCharacter = character });
             yield return null;
-            Assert.IsFalse(resultRestored.IsAutoFail, "Should work after component restored");
+            Assert.AreNotEqual(0, resultRestored.BaseRoll, "Should work after component restored");
         }
     }
 }

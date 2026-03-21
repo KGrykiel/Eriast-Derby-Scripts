@@ -10,33 +10,39 @@ namespace Assets.Scripts.Combat.Rolls.RollTypes.Saves
     /// </summary>
     public static class SavePerformer
     {
-        public static SaveResult Execute(SaveExecutionContext ctx)
+        public static D20RollOutcome Execute(SaveExecutionContext ctx)
         {
             // Step 1: Route (resolve who/what makes this save)
             var routing = CheckRouter.RouteSave(ctx.Vehicle, ctx.Spec, ctx.TargetComponent);
 
-            // Step 2: Compute
-            SaveResult result;
+            // Step 2: Gather and compute
+            D20RollOutcome roll;
+            bool isAutoFail;
             if (!routing.CanAttempt)
             {
-                result = SaveCalculator.AutoFail(ctx.Spec);
+                roll = D20Calculator.AutoFail(ctx.Spec.dc);
+                isAutoFail = true;
             }
             else
             {
-                result = SaveCalculator.Compute(ctx.Spec, routing.Component, routing.Character);
+                var gathered = RollGatherer.ForSave(ctx.Spec, routing.Component, routing.Character);
+                roll = D20Calculator.Roll(gathered, ctx.Spec.dc);
+                isAutoFail = false;
             }
 
             // Step 3: Emit event automatically
             Entity defenderEntity = routing.Component != null ? routing.Component : ctx.Vehicle.chassis;
             string targetName = ctx.TargetComponent != null ? ctx.TargetComponent.name : "Vehicle";
             CombatEventBus.EmitSavingThrow(
-                result,
+                roll,
                 ctx.AttackerEntity,
                 defenderEntity,
                 ctx.CausalSource,
-                result.Roll.Success,
+                roll.Success,
+                ctx.Spec.DisplayName,
+                isAutoFail,
                 targetName,
-                result.Character);
+                routing.Character);
 
             // Step 4: Notify d20 roll trigger
             if (routing.CanAttempt && routing.Component != null)
@@ -44,30 +50,33 @@ namespace Assets.Scripts.Combat.Rolls.RollTypes.Saves
                 routing.Component.NotifyStatusEffectTrigger(RemovalTrigger.OnD20Roll);
             }
 
-            return result;
+            return roll;
         }
 
         /// <summary>Standalone entity overload — no vehicle routing.</summary>
-        public static SaveResult ExecuteForEntity(
+        public static D20RollOutcome ExecuteForEntity(
             Entity entity,
             SaveSpec spec,
             Object causalSource,
             Entity attackerEntity = null)
         {
-            var result = SaveCalculator.Compute(spec, entity);
+            var gathered = RollGatherer.ForSave(spec, entity);
+            var roll = D20Calculator.Roll(gathered, spec.dc);
 
             string targetName = entity != null ? entity.name : "Target";
             CombatEventBus.EmitSavingThrow(
-                result,
+                roll,
                 attackerEntity,
                 entity,
                 causalSource,
-                result.Roll.Success,
+                roll.Success,
+                spec.DisplayName,
+                isAutoFail: false,
                 targetName);
 
             entity?.NotifyStatusEffectTrigger(RemovalTrigger.OnD20Roll);
 
-            return result;
+            return roll;
         }
     }
 }

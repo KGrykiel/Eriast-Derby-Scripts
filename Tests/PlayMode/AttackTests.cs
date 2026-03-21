@@ -4,7 +4,12 @@ using NUnit.Framework;
 using UnityEngine;
 using UnityEngine.TestTools;
 using Assets.Scripts.Tests.Helpers;
+using Assets.Scripts.Characters;
+using Assets.Scripts.Combat.Rolls;
+using Assets.Scripts.Combat.Rolls.Advantage;
+using Assets.Scripts.Combat.Rolls.RollSpecs.SpecTypes;
 using Assets.Scripts.Combat.Rolls.RollTypes.Attacks;
+using Assets.Scripts.Core;
 
 namespace Assets.Scripts.Tests.PlayMode
 {
@@ -51,7 +56,9 @@ namespace Assets.Scripts.Tests.PlayMode
             var target = targetObj.AddComponent<ChassisComponent>();
             target.SetHealth(100);
 
-            var bonuses = AttackCalculator.GatherBonuses(weapon, bob);
+            var spec = new AttackSpec { grantedMode = RollMode.Normal };
+            var gathered = RollGatherer.ForAttack(spec, weapon, bob);
+            var bonuses = gathered.Bonuses;
             yield return null;
 
             int totalMod = bonuses.Sum(b => b.Value);
@@ -69,7 +76,9 @@ namespace Assets.Scripts.Tests.PlayMode
         {
             var ada = TestCharacterFactory.CreateWithCleanup("Ada", baseAttackBonus: 2, cleanup: cleanup);
 
-            var bonuses = AttackCalculator.GatherBonuses(attacker: null, character: ada);
+            var spec = new AttackSpec { grantedMode = RollMode.Normal };
+            var gathered = RollGatherer.ForAttack(spec, attacker: null, character: ada);
+            var bonuses = gathered.Bonuses;
             yield return null;
 
             int totalMod = bonuses.Sum(b => b.Value);
@@ -101,7 +110,9 @@ namespace Assets.Scripts.Tests.PlayMode
                 displayNameOverride: "Blessed"
             ));
 
-            var bonuses = AttackCalculator.GatherBonuses(weapon, bob);
+            var spec = new AttackSpec { grantedMode = RollMode.Normal };
+            var gathered = RollGatherer.ForAttack(spec, weapon, bob);
+            var bonuses = gathered.Bonuses;
             yield return null;
 
             int totalMod = bonuses.Sum(b => b.Value);

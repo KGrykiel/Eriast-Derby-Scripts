@@ -80,7 +80,7 @@ namespace Assets.Scripts.Combat.Logging
 
             logEvt.WithMetadata("skillName", skillName)
                   .WithMetadata("result", evt.IsHit ? "hit" : "miss")
-                  .WithMetadata("rollBreakdown", evt.Result != null ? CombatFormatter.FormatAttackDetailed(evt.Result) : "");
+                  .WithMetadata("rollBreakdown", evt.Roll != null ? CombatFormatter.FormatAttackDetailed(evt.Roll) : "");
 
             if (evt.Target != null)
             {
@@ -109,12 +109,12 @@ namespace Assets.Scripts.Combat.Logging
 
             string targetName = CombatDisplayHelpers.FormatDefensiveSource(evt.Character, evt.Target, targetVehicle);
             string skillName = action?.SourceName ?? (evt.CausalSource != null ? evt.CausalSource.name : "effect");
-            string saveTypeName = evt.Result?.Spec.DisplayName ?? "Mobility";
+            string saveTypeName = evt.CheckName ?? "Mobility";
 
             string resultText;
             if (evt.Succeeded)
                 resultText = $"<color={CombatFormatter.Colors.Success}>Saved</color>";
-            else if (evt.Result?.IsAutoFail == true)
+            else if (evt.IsAutoFail)
                 resultText = $"<color={CombatFormatter.Colors.Failure}>Auto-Failed</color>";
             else
                 resultText = $"<color={CombatFormatter.Colors.Failure}>Failed</color>";
@@ -130,10 +130,10 @@ namespace Assets.Scripts.Combat.Logging
             logEvt.WithMetadata("skillName", skillName)
                   .WithMetadata("result", evt.Succeeded ? "saved" : "failed")
                   .WithMetadata("saveType", saveTypeName)
-                  .WithMetadata("rollBreakdown", evt.Result != null ? CombatFormatter.FormatSaveDetailed(evt.Result) : "");
+                  .WithMetadata("rollBreakdown", evt.Roll != null ? CombatFormatter.FormatSaveDetailed(evt.Roll, saveTypeName) : "");
 
-            if (evt.Result != null && evt.CausalSource is Skill skill)
-                logEvt.WithMetadata("dcBreakdown", CombatFormatter.FormatDCDetailed(evt.Result.Roll.TargetValue, skill.name, evt.Result.Spec));
+            if (evt.Roll != null && evt.CausalSource is Skill skill)
+                logEvt.WithMetadata("dcBreakdown", CombatFormatter.FormatDCDetailed(evt.Roll.TargetValue, skill.name, saveTypeName));
         }
 
         // ==================== SKILL CHECK LOGGING ====================
@@ -150,12 +150,12 @@ namespace Assets.Scripts.Combat.Logging
 
             string sourceName = CombatDisplayHelpers.FormatSource(evt.Character, evt.Source, sourceVehicle);
             string skillName = action?.SourceName ?? (evt.CausalSource != null ? evt.CausalSource.name : "task");
-            string checkTypeName = evt.Result?.Spec.DisplayName ?? "Mobility";
+            string checkTypeName = evt.CheckName ?? "Mobility";
 
             string resultText;
             if (evt.Succeeded)
                 resultText = $"<color={CombatFormatter.Colors.Success}>Success</color>";
-            else if (evt.Result?.IsAutoFail == true)
+            else if (evt.IsAutoFail)
                 resultText = $"<color={CombatFormatter.Colors.Failure}>Auto-Failed</color>";
             else
                 resultText = $"<color={CombatFormatter.Colors.Failure}>Failure</color>";
@@ -171,10 +171,10 @@ namespace Assets.Scripts.Combat.Logging
             logEvt.WithMetadata("skillName", skillName)
                   .WithMetadata("result", evt.Succeeded ? "success" : "failure")
                   .WithMetadata("checkType", checkTypeName)
-                  .WithMetadata("rollBreakdown", evt.Result != null ? CombatFormatter.FormatSkillCheckDetailed(evt.Result) : "");
+                  .WithMetadata("rollBreakdown", evt.Roll != null ? CombatFormatter.FormatSkillCheckDetailed(evt.Roll, checkTypeName) : "");
 
-            if (evt.Result != null && evt.CausalSource is Skill skill)
-                logEvt.WithMetadata("dcBreakdown", $"{checkTypeName} Check DC: {evt.Result.Roll.TargetValue} ({skill.name})");
+            if (evt.Roll != null && evt.CausalSource is Skill skill)
+                logEvt.WithMetadata("dcBreakdown", $"{checkTypeName} Check DC: {evt.Roll.TargetValue} ({skill.name})");
         }
 
         // ==================== OPPOSED CHECK LOGGING ====================
@@ -197,8 +197,8 @@ namespace Assets.Scripts.Combat.Logging
                 ? (defenderVehicle?.vehicleName ?? "Defender")
                 : (attackerVehicle?.vehicleName ?? "Attacker");
             string skillName = action?.SourceName ?? (evt.CausalSource != null ? evt.CausalSource.name : "contest");
-            int attackerTotal = evt.Result?.AttackerRoll?.Total ?? 0;
-            int defenderTotal = evt.Result?.DefenderRoll?.Total ?? 0;
+            int attackerTotal = evt.Roll?.Total ?? 0;
+            int defenderTotal = evt.Roll?.TargetValue ?? 0;
 
             string message = $"{winnerName} wins {skillName} against {loserName} ({attackerTotal} vs {defenderTotal}).";
 
@@ -209,7 +209,7 @@ namespace Assets.Scripts.Combat.Logging
 
             logEvt.WithMetadata("skillName", skillName)
                   .WithMetadata("result", evt.AttackerWins ? "attacker_wins" : "defender_wins")
-                  .WithMetadata("rollBreakdown", evt.Result != null ? CombatFormatter.FormatOpposedCheckDetailed(evt.Result) : "");
+                  .WithMetadata("rollBreakdown", evt.Roll != null ? CombatFormatter.FormatOpposedCheckDetailed(evt.Roll, evt.DefenderRoll, evt.AttackerCheckName, evt.DefenderCheckName) : "");
         }
 
         // ==================== DAMAGE LOGGING ====================

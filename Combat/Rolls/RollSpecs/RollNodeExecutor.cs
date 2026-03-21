@@ -70,7 +70,7 @@ namespace Assets.Scripts.Combat.Rolls.RollSpecs
             };
 
             var result = SkillCheckPerformer.Execute(checkCtx);
-            return result.Roll.Success;
+            return result.Success;
         }
 
         private static bool ResolveSavingThrow(SaveSpec spec, RollContext ctx, Object causalSource)
@@ -88,7 +88,7 @@ namespace Assets.Scripts.Combat.Rolls.RollSpecs
             };
 
             var result = SavePerformer.Execute(saveCtx);
-            return result.Roll.Success;
+            return result.Success;
         }
 
         private static (bool success, RollContext updatedCtx) ResolveAttack(AttackSpec spec, RollContext ctx, Object causalSource)
@@ -110,13 +110,9 @@ namespace Assets.Scripts.Combat.Rolls.RollSpecs
 
             var result = AttackPerformer.Execute(attackCtx);
 
-            // Propagate retargeting (component fallback) and crit status for downstream effects.
-            Entity finalTarget = result.HitTarget != null ? result.HitTarget : ctx.TargetEntity;
-            var updatedCtx = ctx
-                .WithTarget(finalTarget)
-                .WithCriticalHit(result.Roll.IsCriticalHit);
+            var updatedCtx = ctx.WithCriticalHit(result.IsCriticalHit);
 
-            return (result.HitTarget != null, updatedCtx);
+            return (result.Success, updatedCtx);
         }
 
         private static bool ResolveStateThreshold(StateThresholdSpec spec, RollContext ctx)
@@ -147,7 +143,7 @@ namespace Assets.Scripts.Combat.Rolls.RollSpecs
             };
 
             var result = OpposedCheckPerformer.Execute(checkCtx);
-            return result.AttackerWins;
+            return result.Success;
         }
 
         // ==================== EFFECT APPLICATION ====================

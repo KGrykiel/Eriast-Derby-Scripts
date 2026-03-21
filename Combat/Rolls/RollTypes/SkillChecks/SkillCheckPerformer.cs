@@ -10,30 +10,36 @@ namespace Assets.Scripts.Combat.Rolls.RollTypes.SkillChecks
     /// </summary>
     public static class SkillCheckPerformer
     {
-        public static SkillCheckResult Execute(SkillCheckExecutionContext ctx)
+        public static D20RollOutcome Execute(SkillCheckExecutionContext ctx)
         {
             // Step 1: Route (resolve who/what makes this check)
             var routing = CheckRouter.RouteSkillCheck(ctx.Vehicle, ctx.Spec, ctx.InitiatingCharacter);
 
-            // Step 2: Compute
-            SkillCheckResult result;
+            // Step 2: Gather bonuses and advantages
+            D20RollOutcome roll;
+            bool isAutoFail;
             if (!routing.CanAttempt)
             {
-                result = SkillCheckCalculator.AutoFail(ctx.Spec);
+                roll = D20Calculator.AutoFail(ctx.Spec.dc);
+                isAutoFail = true;
             }
             else
             {
-                result = SkillCheckCalculator.Compute(ctx.Spec, routing.Component, routing.Character);
+                var gathered = RollGatherer.ForSkillCheck(ctx.Spec, routing.Component, routing.Character);
+                roll = D20Calculator.Roll(gathered, ctx.Spec.dc);
+                isAutoFail = false;
             }
 
             // Step 3: Emit event automatically (WOTR-style)
             Entity sourceEntity = routing.Component != null ? routing.Component : ctx.Vehicle.chassis;
             CombatEventBus.EmitSkillCheck(
-                result,
+                roll,
                 sourceEntity,
                 ctx.CausalSource,
-                result.Roll.Success,
-                result.Character);
+                roll.Success,
+                ctx.Spec.DisplayName,
+                isAutoFail,
+                routing.Character);
 
             // Step 4: Notify d20 roll trigger on roller
             if (routing.CanAttempt && routing.Component != null)
@@ -41,26 +47,28 @@ namespace Assets.Scripts.Combat.Rolls.RollTypes.SkillChecks
                 routing.Component.NotifyStatusEffectTrigger(RemovalTrigger.OnD20Roll);
             }
 
-            return result;
+            return roll;
         }
 
         /// <summary>Standalone entity overload — no vehicle routing.</summary>
-        public static SkillCheckResult ExecuteForEntity(
+        public static D20RollOutcome ExecuteForEntity(
             Entity entity,
             SkillCheckSpec spec,
             Object causalSource)
         {
-            var result = SkillCheckCalculator.Compute(spec, entity);
+            var gathered = RollGatherer.ForSkillCheck(spec, entity);
+            var roll = D20Calculator.Roll(gathered, spec.dc);
 
             CombatEventBus.EmitSkillCheck(
-                result,
+                roll,
                 entity,
                 causalSource,
-                result.Roll.Success);
+                roll.Success,
+                spec.DisplayName);
 
             entity?.NotifyStatusEffectTrigger(RemovalTrigger.OnD20Roll);
 
-            return result;
+            return roll;
         }
     }
 }

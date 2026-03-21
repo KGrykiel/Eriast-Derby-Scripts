@@ -83,13 +83,13 @@ namespace Assets.Scripts.Combat.Rolls.Advantage
     {
         public RollMode Mode;
         public int? DroppedRoll;
-        public AdvantageSource[] Sources;
+        public List<AdvantageSource> Sources;
 
-        public AdvantageResult(RollMode mode, int? droppedRoll, AdvantageSource[] sources)
+        public AdvantageResult(RollMode mode, int? droppedRoll, List<AdvantageSource> sources)
         {
             Mode = mode;
             DroppedRoll = droppedRoll;
-            Sources = sources;
+            Sources = sources ?? new List<AdvantageSource>();
         }
     }
 }

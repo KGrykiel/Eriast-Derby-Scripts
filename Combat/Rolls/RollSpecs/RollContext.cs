@@ -18,16 +18,6 @@
         public readonly VehicleComponent TargetComponent => TargetEntity as VehicleComponent;
 
         /// <summary>
-        /// Helper to retarget. Used to handle component attack fallback.
-        /// </summary>
-        public readonly RollContext WithTarget(Entity newTarget)
-        {
-            var copy = this;
-            copy.TargetEntity = newTarget;
-            return copy;
-        }
-
-        /// <summary>
         /// Information about critical hits only available after resolution, so this is a helper to create a new context with the critical hit information.
         /// </summary>
         public readonly RollContext WithCriticalHit(bool isCrit)

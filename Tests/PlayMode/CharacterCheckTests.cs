@@ -5,6 +5,7 @@ using UnityEngine.TestTools;
 using Assets.Scripts.Characters;
 using Assets.Scripts.Tests.Helpers;
 using Assets.Scripts.Combat.Rolls.RollTypes.SkillChecks;
+using Assets.Scripts.Combat.Rolls;
 
 namespace Assets.Scripts.Tests.PlayMode
 {
@@ -40,14 +41,13 @@ namespace Assets.Scripts.Tests.PlayMode
             yield return null;
 
             Assert.IsNotNull(result);
-            Assert.AreEqual(ada, result.Character, "Should route to Ada");
-            Assert.IsFalse(result.IsAutoFail, "Should not auto-fail");
+            Assert.AreNotEqual(0, result.BaseRoll, "Should not auto-fail");
 
             int expectedDexMod = CharacterFormulas.CalculateAttributeModifier(16);
             int expectedProf = CharacterFormulas.CalculateProficiencyBonus(3);
-            Assert.AreEqual(expectedDexMod + expectedProf, result.Roll.TotalModifier,
+            Assert.AreEqual(expectedDexMod + expectedProf, result.TotalModifier,
                 $"Expected DEX({expectedDexMod}) + Prof({expectedProf})");
-            Assert.AreEqual(12, result.Roll.TargetValue);
+            Assert.AreEqual(12, result.TargetValue);
         }
 
         // ==================== Test 1B ====================
@@ -63,9 +63,8 @@ namespace Assets.Scripts.Tests.PlayMode
             yield return null;
 
             Assert.IsNotNull(result);
-            Assert.IsTrue(result.IsAutoFail, "Should auto-fail when component missing");
-            Assert.IsFalse(result.Roll.Success);
-            Assert.AreEqual(0, result.Roll.BaseRoll, "Base roll should be 0 for auto-fail");
+            Assert.AreEqual(0, result.BaseRoll, "Base roll should be 0 for auto-fail");
+            Assert.IsFalse(result.Success);
         }
 
         // ==================== Test 1C ====================
@@ -88,7 +87,7 @@ namespace Assets.Scripts.Tests.PlayMode
             yield return null;
 
             Assert.IsNotNull(result);
-            Assert.IsTrue(result.IsAutoFail, "Should auto-fail when component destroyed");
+            Assert.AreEqual(0, result.BaseRoll, "Should auto-fail when component destroyed");
         }
 
         // ==================== Test 1D ====================
@@ -111,11 +110,10 @@ namespace Assets.Scripts.Tests.PlayMode
             yield return null;
 
             Assert.IsNotNull(result);
-            Assert.AreEqual(bob, result.Character, "Should route to Bob (best Perception)");
-            Assert.IsFalse(result.IsAutoFail);
+            Assert.AreNotEqual(0, result.BaseRoll, "Should not auto-fail");
 
             int bobMod = CharacterFormulas.CalculateSkillCheckModifier(bob, CharacterSkill.Perception);
-            Assert.AreEqual(bobMod, result.Roll.TotalModifier, $"Bob's modifier should be {bobMod}");
+            Assert.AreEqual(bobMod, result.TotalModifier, $"Bob's modifier should be {bobMod}");
         }
 
         // ==================== Test 1E ====================
@@ -132,7 +130,7 @@ namespace Assets.Scripts.Tests.PlayMode
             yield return null;
 
             Assert.IsNotNull(result);
-            Assert.IsTrue(result.IsAutoFail, "Should auto-fail with no characters");
+            Assert.AreEqual(0, result.BaseRoll, "Should auto-fail with no characters");
         }
 
         // ==================== Test 1F ====================
@@ -156,7 +154,9 @@ namespace Assets.Scripts.Tests.PlayMode
             yield return null;
 
             Assert.IsNotNull(result);
-            Assert.AreEqual(bob, result.Character, "Should use Bob (initiating character), NOT Alice (best modifier)");
+            int bobMod = CharacterFormulas.CalculateSkillCheckModifier(bob, CharacterSkill.Mechanics);
+            Assert.AreEqual(bobMod, result.TotalModifier,
+                "Should use Bob's modifier (initiating character), NOT Alice's (best modifier)");
         }
 
         // ==================== Test 1G ====================

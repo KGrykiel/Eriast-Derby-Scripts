@@ -4,11 +4,6 @@ using System.Text;
 using Assets.Scripts.Combat.Damage;
 using Assets.Scripts.Combat.Restoration;
 using Assets.Scripts.Combat.Rolls;
-using Assets.Scripts.Combat.Rolls.RollSpecs.SpecTypes;
-using Assets.Scripts.Combat.Rolls.RollTypes.Attacks;
-using Assets.Scripts.Combat.Rolls.RollTypes.OpposedChecks;
-using Assets.Scripts.Combat.Rolls.RollTypes.Saves;
-using Assets.Scripts.Combat.Rolls.RollTypes.SkillChecks;
 using Assets.Scripts.Core;
 using Assets.Scripts.StatusEffects;
 
@@ -51,7 +46,7 @@ namespace Assets.Scripts.Combat.Logging
             else
                 sb.AppendLine($"  d20: {roll.BaseRoll}");
 
-            if (roll.Advantage.Sources != null && roll.Advantage.Sources.Length > 0)
+            if (roll.Advantage.Sources != null && roll.Advantage.Sources.Count > 0)
             {
                 foreach (var src in roll.Advantage.Sources)
                 {
@@ -82,54 +77,58 @@ namespace Assets.Scripts.Combat.Logging
         }
 
         // ==================== DOMAIN ROLL FORMATTERS ====================
-        public static string FormatAttackDetailed(AttackResult result)
+        public static string FormatAttackDetailed(D20RollOutcome roll)
         {
-            if (result == null) return "No roll data";
-            return FormatD20RollDetailed(result.Roll, "Attack Roll Breakdown", "AC", "HIT", "MISS");
+            if (roll == null) return "No roll data";
+            return FormatD20RollDetailed(roll, "Attack Roll Breakdown", "AC", "HIT", "MISS");
         }
 
-        public static string FormatSaveDetailed(SaveResult result)
+        public static string FormatSaveDetailed(D20RollOutcome roll, string checkName)
         {
-            if (result == null) return "No roll data";
-            return FormatD20RollDetailed(result.Roll, $"{result.Spec.DisplayName} Save", "DC", "SAVED", "FAILED");
+            if (roll == null) return "No roll data";
+            return FormatD20RollDetailed(roll, $"{checkName} Save", "DC", "SAVED", "FAILED");
         }
 
-        public static string FormatSkillCheckDetailed(SkillCheckResult result)
+        public static string FormatSkillCheckDetailed(D20RollOutcome roll, string checkName)
         {
-            if (result == null) return "No roll data";
-            return FormatD20RollDetailed(result.Roll, $"{result.Spec.DisplayName} Check", "DC", "SUCCESS", "FAILURE");
+            if (roll == null) return "No roll data";
+            return FormatD20RollDetailed(roll, $"{checkName} Check", "DC", "SUCCESS", "FAILURE");
         }
 
-        public static string FormatOpposedCheckDetailed(OpposedCheckResult result)
+        public static string FormatOpposedCheckDetailed(D20RollOutcome roll, D20RollOutcome defenderRoll, string attackerCheckName, string defenderCheckName)
         {
-            if (result == null) return "No roll data";
+            if (roll == null) return "No roll data";
 
-            string winner = result.AttackerWins ? "Attacker wins" : "Defender wins";
-            string winnerColor = result.AttackerWins ? Colors.Success : Colors.Failure;
+            string winner = roll.Success ? "Attacker wins" : "Defender wins";
+            string winnerColor = roll.Success ? Colors.Success : Colors.Failure;
 
             var sb = new StringBuilder();
-            sb.AppendLine($"<color={winnerColor}>{winner}</color> — {result.AttackerRoll.Total} vs {result.DefenderRoll.Total}");
+            sb.AppendLine($"<color={winnerColor}>{winner}</color> — {roll.Total} vs {roll.TargetValue}");
             sb.AppendLine();
             sb.Append(FormatD20RollDetailed(
-                result.AttackerRoll,
-                $"Attacker ({result.AttackerSpec.DisplayName})",
-                "Opponent", "WINS", "LOSES",
-                showResult: false));
-            sb.AppendLine();
-            sb.Append(FormatD20RollDetailed(
-                result.DefenderRoll,
-                $"Defender ({result.DefenderSpec.DisplayName})",
-                "Opponent", "WINS", "LOSES",
-                showResult: false));
+                roll,
+                $"Attacker ({attackerCheckName})",
+                $"Defender ({defenderCheckName})", "WINS", "LOSES"));
+
+            if (defenderRoll != null)
+            {
+                sb.AppendLine();
+                sb.Append(FormatD20RollDetailed(
+                    defenderRoll,
+                    $"Defender ({defenderCheckName})",
+                    "Opponent", "WINS", "LOSES",
+                    showResult: false));
+            }
+
             return sb.ToString();
         }
 
         // ==================== DC / DEFENSE FORMATTING ====================
 
-        public static string FormatDCDetailed(int dc, string skillName, SaveSpec saveSpec)
+        public static string FormatDCDetailed(int dc, string skillName, string saveTypeName)
         {
             var sb = new StringBuilder();
-            sb.AppendLine($"{saveSpec.DisplayName} Save DC Breakdown:");
+            sb.AppendLine($"{saveTypeName} Save DC Breakdown:");
             sb.AppendLine($"  Base DC: {dc} ({skillName})");
             sb.AppendLine("  ─────────────");
             sb.AppendLine($"  Total DC: {dc}");
