@@ -114,7 +114,7 @@ namespace Assets.Scripts.Combat.Logging
             string resultText;
             if (evt.Roll.Success)
                 resultText = $"<color={CombatFormatter.Colors.Success}>Saved</color>";
-            else if (evt.IsAutoFail)
+            else if (evt.Roll.IsAutoFail)
                 resultText = $"<color={CombatFormatter.Colors.Failure}>Auto-Failed</color>";
             else
                 resultText = $"<color={CombatFormatter.Colors.Failure}>Failed</color>";
@@ -155,7 +155,7 @@ namespace Assets.Scripts.Combat.Logging
             string resultText;
             if (evt.Roll.Success)
                 resultText = $"<color={CombatFormatter.Colors.Success}>Success</color>";
-            else if (evt.IsAutoFail)
+            else if (evt.Roll.IsAutoFail)
                 resultText = $"<color={CombatFormatter.Colors.Failure}>Auto-Failed</color>";
             else
                 resultText = $"<color={CombatFormatter.Colors.Failure}>Failure</color>";

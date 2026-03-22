@@ -51,7 +51,8 @@ namespace Assets.Scripts.Combat.Rolls
                 targetValue: targetValue,
                 success: false,
                 isCriticalHit: false,
-                isFumble: false);
+                isFumble: false,
+                isAutoFail: true);
         }
 
         /// <summary>Synthetic successful roll — e.g. the opposing side cannot attempt.</summary>

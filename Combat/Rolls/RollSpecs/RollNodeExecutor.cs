@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using Assets.Scripts.Combat;
 using Assets.Scripts.Effects;
 using Assets.Scripts.StatusEffects;
 using UnityEngine;
@@ -65,12 +66,13 @@ namespace Assets.Scripts.Combat.Rolls.RollSpecs
 
         private static D20RollOutcome ResolveSkillCheck(SkillCheckSpec spec, RollContext ctx, string causalSource)
         {
+            var routing = CheckRouter.RouteSkillCheck(ctx.SourceVehicle, spec, ctx.SourceActor);
             var checkCtx = new SkillCheckExecutionContext
             {
                 Vehicle = ctx.SourceVehicle,
                 Spec = spec,
                 CausalSource = causalSource,
-                InitiatingCharacter = ctx.SourceActor != null ? ctx.SourceActor.GetCharacter() : null
+                Routing = routing
             };
 
             return SkillCheckPerformer.Execute(checkCtx);
@@ -82,13 +84,15 @@ namespace Assets.Scripts.Combat.Rolls.RollSpecs
             Vehicle targetVehicle = EntityHelpers.GetParentVehicle(ctx.TargetEntity);
             Vehicle roller = targetVehicle != null ? targetVehicle : ctx.SourceVehicle;
 
+            var routing = CheckRouter.RouteSave(roller, spec, ctx.TargetEntity as VehicleComponent);
+
             var saveCtx = new SaveExecutionContext
             {
                 Vehicle = roller,
                 Spec = spec,
                 CausalSource = causalSource,
-                TargetComponent = ctx.TargetEntity as VehicleComponent,
-                AttackerEntity = ctx.SourceActor != null ? ctx.SourceActor.GetEntity() : null
+                AttackerEntity = ctx.SourceActor?.GetEntity(),
+                Routing = routing
             };
 
             return SavePerformer.Execute(saveCtx);
@@ -132,13 +136,17 @@ namespace Assets.Scripts.Combat.Rolls.RollSpecs
                 return D20Calculator.AutoFail(0);
             }
 
+            var attackerRouting = CheckRouter.RouteSkillCheck(ctx.SourceVehicle, spec.attackerSpec, ctx.SourceActor);
+            var defenderRouting = CheckRouter.RouteSkillCheck(targetVehicle, spec.defenderSpec);
+
             var checkCtx = new OpposedCheckExecutionContext
             {
                 AttackerVehicle = ctx.SourceVehicle,
                 DefenderVehicle = targetVehicle,
                 Spec = spec,
                 CausalSource = causalSource,
-                AttackerCharacter = ctx.SourceActor != null ? ctx.SourceActor.GetCharacter() : null
+                AttackerRouting = attackerRouting,
+                DefenderRouting = defenderRouting
             };
 
             return OpposedCheckPerformer.Execute(checkCtx);

@@ -4,6 +4,7 @@ using UnityEngine;
 using UnityEngine.TestTools;
 using Assets.Scripts.Characters;
 using Assets.Scripts.Tests.Helpers;
+using Assets.Scripts.Combat;
 using Assets.Scripts.Combat.Rolls;
 using Assets.Scripts.Combat.Rolls.RollTypes.Saves;
 
@@ -35,7 +36,7 @@ namespace Assets.Scripts.Tests.PlayMode
             vehicle = TestVehicleBuilder.CreateWithChassis(ada);
 
             var spec = TestSkillFactory.CharacterSave(CharacterAttribute.Dexterity, dc: 15);
-            var result = SavePerformer.Execute(new SaveExecutionContext { Vehicle = vehicle, Spec = spec, CausalSource = null, TargetComponent = vehicle.chassis });
+            var result = SavePerformer.Execute(new SaveExecutionContext { Vehicle = vehicle, Spec = spec, CausalSource = null, Routing = CheckRouter.RouteSave(vehicle, spec, vehicle.chassis) });
             yield return null;
 
             Assert.IsNotNull(result);
@@ -62,7 +63,7 @@ namespace Assets.Scripts.Tests.PlayMode
                 .Build();
 
             var spec = TestSkillFactory.CharacterSave(CharacterAttribute.Wisdom, dc: 13);
-            var result = SavePerformer.Execute(new SaveExecutionContext { Vehicle = vehicle, Spec = spec, CausalSource = null });
+            var result = SavePerformer.Execute(new SaveExecutionContext { Vehicle = vehicle, Spec = spec, CausalSource = null, Routing = CheckRouter.RouteSave(vehicle, spec) });
             yield return null;
 
             Assert.IsNotNull(result);
@@ -80,7 +81,7 @@ namespace Assets.Scripts.Tests.PlayMode
             vehicle = TestVehicleBuilder.CreateWithChassis(character);
 
             var spec = TestSkillFactory.CharacterSave(CharacterAttribute.Intelligence, requiredComponent: ComponentType.PowerCore, dc: 15);
-            var result = SavePerformer.Execute(new SaveExecutionContext { Vehicle = vehicle, Spec = spec, CausalSource = null });
+            var result = SavePerformer.Execute(new SaveExecutionContext { Vehicle = vehicle, Spec = spec, CausalSource = null, Routing = CheckRouter.RouteSave(vehicle, spec) });
             yield return null;
 
             Assert.IsNotNull(result);
@@ -99,7 +100,7 @@ namespace Assets.Scripts.Tests.PlayMode
                 .Build();
 
             var spec = TestSkillFactory.CharacterSave(CharacterAttribute.Intelligence, requiredComponent: ComponentType.PowerCore);
-            var result = SavePerformer.Execute(new SaveExecutionContext { Vehicle = vehicle, Spec = spec, CausalSource = null });
+            var result = SavePerformer.Execute(new SaveExecutionContext { Vehicle = vehicle, Spec = spec, CausalSource = null, Routing = CheckRouter.RouteSave(vehicle, spec) });
             yield return null;
 
             Assert.IsNotNull(result);

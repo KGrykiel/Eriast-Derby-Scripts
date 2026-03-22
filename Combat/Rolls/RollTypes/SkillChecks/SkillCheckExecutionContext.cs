@@ -1,4 +1,5 @@
-﻿using Assets.Scripts.Combat.Rolls.RollSpecs.SpecTypes;
+﻿using Assets.Scripts.Combat;
+using Assets.Scripts.Combat.Rolls.RollSpecs.SpecTypes;
 
 namespace Assets.Scripts.Combat.Rolls.RollTypes.SkillChecks
 {
@@ -18,7 +19,7 @@ namespace Assets.Scripts.Combat.Rolls.RollTypes.SkillChecks
         /// <summary>What triggered this check (Skill, EventCard, LaneTurnEffect, etc.). Used for logging.</summary>
         public string CausalSource;
 
-        /// <summary>Specific character initiating the check (for skills). Null for event cards/lane effects (routes to best modifier).</summary>
-        public Character InitiatingCharacter;
+        /// <summary>Pre-resolved routing result. Must not be null.</summary>
+        public CheckRouter.RoutingResult Routing;
     }
 }

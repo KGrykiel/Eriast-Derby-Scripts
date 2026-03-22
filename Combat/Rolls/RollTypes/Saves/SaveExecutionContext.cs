@@ -1,4 +1,5 @@
-﻿using Assets.Scripts.Combat.Rolls.RollSpecs.SpecTypes;
+﻿using Assets.Scripts.Combat;
+using Assets.Scripts.Combat.Rolls.RollSpecs.SpecTypes;
 
 namespace Assets.Scripts.Combat.Rolls.RollTypes.Saves
 {
@@ -18,8 +19,8 @@ namespace Assets.Scripts.Combat.Rolls.RollTypes.Saves
         /// <summary>What triggered this save (Skill, EventCard, StatusEffect, etc.). Used for logging.</summary>
         public string CausalSource;
 
-        /// <summary>Specific component being targeted (for routing). Null for vehicle-wide saves.</summary>
-        public VehicleComponent TargetComponent;
+        /// <summary>Pre-resolved routing result. Must not be null.</summary>
+        public CheckRouter.RoutingResult Routing;
 
         /// <summary>Entity that triggered the save (e.g., attacking weapon). Used for logging. Null if environmental.</summary>
         public Entity AttackerEntity;

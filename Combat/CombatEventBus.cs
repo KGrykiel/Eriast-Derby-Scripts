@@ -140,20 +140,18 @@ namespace Assets.Scripts.Combat
             Entity source,
             RollActor defender,
             string causalSource,
-            string checkName,
-            bool isAutoFail = false)
+            string checkName)
         {
-            Emit(new SavingThrowEvent(roll, source, defender, causalSource, checkName, isAutoFail));
+            Emit(new SavingThrowEvent(roll, source, defender, causalSource, checkName));
         }
         
         public static void EmitSkillCheck(
             D20RollOutcome roll,
             RollActor actor,
             string causalSource,
-            string checkName,
-            bool isAutoFail = false)
+            string checkName)
         {
-            Emit(new SkillCheckEvent(roll, actor, causalSource, checkName, isAutoFail));
+            Emit(new SkillCheckEvent(roll, actor, causalSource, checkName));
         }
 
         public static void EmitOpposedCheck(

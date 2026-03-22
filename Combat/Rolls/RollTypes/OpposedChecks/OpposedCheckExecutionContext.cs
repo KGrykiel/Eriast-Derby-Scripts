@@ -1,4 +1,5 @@
-﻿using Assets.Scripts.Combat.Rolls.RollSpecs.SpecTypes;
+﻿using Assets.Scripts.Combat;
+using Assets.Scripts.Combat.Rolls.RollSpecs.SpecTypes;
 
 namespace Assets.Scripts.Combat.Rolls.RollTypes.OpposedChecks
 {
@@ -21,7 +22,10 @@ namespace Assets.Scripts.Combat.Rolls.RollTypes.OpposedChecks
         /// <summary>What triggered this check (Skill, EventCard, etc.). Used for logging.</summary>
         public string CausalSource;
 
-        /// <summary>Specific character initiating the check (for skills). Null for event cards/lane effects.</summary>
-        public Character AttackerCharacter;
+        /// <summary>Pre-resolved routing for the attacker. Must not be null.</summary>
+        public CheckRouter.RoutingResult AttackerRouting;
+
+        /// <summary>Pre-resolved routing for the defender. Must not be null.</summary>
+        public CheckRouter.RoutingResult DefenderRouting;
     }
 }

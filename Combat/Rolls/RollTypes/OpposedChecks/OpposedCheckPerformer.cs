@@ -11,37 +11,31 @@ namespace Assets.Scripts.Combat.Rolls.RollTypes.OpposedChecks
     {
         public static D20RollOutcome Execute(OpposedCheckExecutionContext ctx)
         {
-            var attackerRouting = CheckRouter.RouteSkillCheck(
-                ctx.AttackerVehicle, ctx.Spec.attackerSpec, ctx.AttackerCharacter);
-
-            var defenderRouting = CheckRouter.RouteSkillCheck(
-                ctx.DefenderVehicle, ctx.Spec.defenderSpec);
-
             D20RollOutcome result;
             D20RollOutcome defenderRoll = null;
 
-            if (!attackerRouting.CanAttempt)
+            if (!ctx.AttackerRouting.CanAttempt)
             {
                 result = D20Calculator.AutoFail(0);
             }
-            else if (!defenderRouting.CanAttempt)
+            else if (!ctx.DefenderRouting.CanAttempt)
             {
                 result = D20Calculator.AutoSuccess(0);
             }
             else
             {
                 var defenderGathered = RollGatherer.ForSkillCheck(
-                    ctx.Spec.defenderSpec, defenderRouting.Actor);
+                    ctx.Spec.defenderSpec, ctx.DefenderRouting.Actor);
                 defenderRoll = D20Calculator.Roll(defenderGathered, 0);
 
                 var attackerGathered = RollGatherer.ForSkillCheck(
-                    ctx.Spec.attackerSpec, attackerRouting.Actor);
+                    ctx.Spec.attackerSpec, ctx.AttackerRouting.Actor);
                 result = D20Calculator.Roll(attackerGathered, defenderRoll.Total);
             }
 
-            RollActor attackerActor = attackerRouting.Actor
+            RollActor attackerActor = ctx.AttackerRouting.Actor
                 ?? (ctx.AttackerVehicle != null ? new ComponentActor(ctx.AttackerVehicle.chassis) : null);
-            RollActor defenderActor = defenderRouting.Actor
+            RollActor defenderActor = ctx.DefenderRouting.Actor
                 ?? (ctx.DefenderVehicle != null ? new ComponentActor(ctx.DefenderVehicle.chassis) : null);
 
             CombatEventBus.EmitOpposedCheck(
@@ -50,11 +44,11 @@ namespace Assets.Scripts.Combat.Rolls.RollTypes.OpposedChecks
 
             Entity attackerEntity = attackerActor?.GetEntity();
             Entity defenderEntity = defenderActor?.GetEntity();
-            if (attackerRouting.CanAttempt && attackerEntity != null)
+            if (ctx.AttackerRouting.CanAttempt && attackerEntity != null)
             {
                 attackerEntity.NotifyStatusEffectTrigger(RemovalTrigger.OnD20Roll);
             }
-            if (defenderRouting.CanAttempt && defenderEntity != null)
+            if (ctx.DefenderRouting.CanAttempt && defenderEntity != null)
             {
                 defenderEntity.NotifyStatusEffectTrigger(RemovalTrigger.OnD20Roll);
             }

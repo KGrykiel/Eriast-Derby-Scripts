@@ -11,37 +11,28 @@ namespace Assets.Scripts.Combat.Rolls.RollTypes.Saves
     {
         public static D20RollOutcome Execute(SaveExecutionContext ctx)
         {
-            // Step 1: Route (resolve who/what makes this save)
-            var routing = CheckRouter.RouteSave(ctx.Vehicle, ctx.Spec, ctx.TargetComponent);
-
-            // Step 2: Gather and compute
+            // Step 1: Gather and compute
             D20RollOutcome roll;
-            bool isAutoFail;
-            if (!routing.CanAttempt)
-            {
+            if (!ctx.Routing.CanAttempt)
                 roll = D20Calculator.AutoFail(ctx.Spec.dc);
-                isAutoFail = true;
-            }
             else
             {
-                var gathered = RollGatherer.ForSave(ctx.Spec, routing.Actor);
+                var gathered = RollGatherer.ForSave(ctx.Spec, ctx.Routing.Actor);
                 roll = D20Calculator.Roll(gathered, ctx.Spec.dc);
-                isAutoFail = false;
             }
 
-            // Step 3: Emit event automatically
-            RollActor defender = routing.Actor ?? new ComponentActor(ctx.Vehicle.chassis);
+            // Step 2: Emit event automatically
+            RollActor defender = ctx.Routing.Actor ?? new ComponentActor(ctx.Vehicle.chassis);
             CombatEventBus.EmitSavingThrow(
                 roll,
                 ctx.AttackerEntity,
                 defender,
                 ctx.CausalSource,
-                ctx.Spec.DisplayName,
-                isAutoFail);
+                ctx.Spec.DisplayName);
 
-            // Step 4: Notify d20 roll trigger
+            // Step 3: Notify d20 roll trigger
             Entity actorEntity = defender.GetEntity();
-            if (routing.CanAttempt && actorEntity != null)
+            if (ctx.Routing.CanAttempt && actorEntity != null)
             {
                 actorEntity.NotifyStatusEffectTrigger(RemovalTrigger.OnD20Roll);
             }

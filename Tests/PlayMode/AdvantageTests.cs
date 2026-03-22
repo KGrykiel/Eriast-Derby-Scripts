@@ -4,6 +4,7 @@ using NUnit.Framework;
 using UnityEngine;
 using UnityEngine.TestTools;
 using Assets.Scripts.Characters;
+using Assets.Scripts.Combat;
 using Assets.Scripts.Combat.Rolls;
 using Assets.Scripts.Combat.Rolls.Advantage;
 using Assets.Scripts.Combat.Rolls.RollSpecs.SpecTypes;
@@ -208,7 +209,7 @@ namespace Assets.Scripts.Tests.PlayMode
                 Vehicle = vehicle,
                 Spec = spec,
                 CausalSource = null,
-                InitiatingCharacter = character
+                Routing = CheckRouter.RouteSkillCheck(vehicle, spec)
             });
             yield return null;
 
@@ -238,7 +239,7 @@ namespace Assets.Scripts.Tests.PlayMode
                 Vehicle = vehicle,
                 Spec = spec,
                 CausalSource = null,
-                InitiatingCharacter = character
+                Routing = CheckRouter.RouteSkillCheck(vehicle, spec)
             });
             yield return null;
 
@@ -271,7 +272,7 @@ namespace Assets.Scripts.Tests.PlayMode
                 Vehicle = vehicle,
                 Spec = pilotSpec,
                 CausalSource = null,
-                InitiatingCharacter = character
+                Routing = CheckRouter.RouteSkillCheck(vehicle, pilotSpec)
             });
             yield return null;
 
@@ -284,7 +285,7 @@ namespace Assets.Scripts.Tests.PlayMode
                 Vehicle = vehicle,
                 Spec = mechSpec,
                 CausalSource = null,
-                InitiatingCharacter = character
+                Routing = CheckRouter.RouteSkillCheck(vehicle, mechSpec)
             });
             yield return null;
 
@@ -320,7 +321,7 @@ namespace Assets.Scripts.Tests.PlayMode
                 Vehicle = vehicle,
                 Spec = spec,
                 CausalSource = null,
-                InitiatingCharacter = character
+                Routing = CheckRouter.RouteSkillCheck(vehicle, spec)
             });
             yield return null;
 
@@ -356,7 +357,7 @@ namespace Assets.Scripts.Tests.PlayMode
                 Vehicle = vehicle,
                 Spec = spec,
                 CausalSource = null,
-                InitiatingCharacter = character
+                Routing = CheckRouter.RouteSkillCheck(vehicle, spec)
             });
             yield return null;
 
@@ -380,7 +381,7 @@ namespace Assets.Scripts.Tests.PlayMode
                 Vehicle = vehicle,
                 Spec = spec,
                 CausalSource = null,
-                InitiatingCharacter = character
+                Routing = CheckRouter.RouteSkillCheck(vehicle, spec)
             });
             yield return null;
 
@@ -403,7 +404,7 @@ namespace Assets.Scripts.Tests.PlayMode
                 Vehicle = vehicle,
                 Spec = spec,
                 CausalSource = null,
-                InitiatingCharacter = character
+                Routing = CheckRouter.RouteSkillCheck(vehicle, spec)
             });
             yield return null;
 
@@ -436,7 +437,7 @@ namespace Assets.Scripts.Tests.PlayMode
                 Vehicle = vehicle,
                 Spec = spec,
                 CausalSource = null,
-                InitiatingCharacter = character
+                Routing = CheckRouter.RouteSkillCheck(vehicle, spec)
             });
             yield return null;
 

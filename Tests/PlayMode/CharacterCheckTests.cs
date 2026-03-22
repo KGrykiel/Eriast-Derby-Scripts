@@ -3,6 +3,7 @@ using NUnit.Framework;
 using UnityEngine;
 using UnityEngine.TestTools;
 using Assets.Scripts.Characters;
+using Assets.Scripts.Combat;
 using Assets.Scripts.Tests.Helpers;
 using Assets.Scripts.Combat.Rolls.RollTypes.SkillChecks;
 using Assets.Scripts.Combat.Rolls;
@@ -37,7 +38,7 @@ namespace Assets.Scripts.Tests.PlayMode
             vehicle = TestVehicleBuilder.CreateWithChassis(ada);
 
             var spec = TestSkillFactory.CharacterSkillCheck(CharacterSkill.Piloting, requiredComponent: ComponentType.Chassis, dc: 12);
-            var result = SkillCheckPerformer.Execute(new SkillCheckExecutionContext { Vehicle = vehicle, Spec = spec, CausalSource = null, InitiatingCharacter = ada });
+            var result = SkillCheckPerformer.Execute(new SkillCheckExecutionContext { Vehicle = vehicle, Spec = spec, CausalSource = null, Routing = CheckRouter.RouteSkillCheck(vehicle, spec) });
             yield return null;
 
             Assert.IsNotNull(result);
@@ -59,7 +60,7 @@ namespace Assets.Scripts.Tests.PlayMode
             vehicle = TestVehicleBuilder.CreateWithChassis(character);
 
             var spec = TestSkillFactory.CharacterSkillCheck(CharacterSkill.Mechanics, requiredComponent: ComponentType.Utility, dc: 15);
-            var result = SkillCheckPerformer.Execute(new SkillCheckExecutionContext { Vehicle = vehicle, Spec = spec, CausalSource = null, InitiatingCharacter = character });
+            var result = SkillCheckPerformer.Execute(new SkillCheckExecutionContext { Vehicle = vehicle, Spec = spec, CausalSource = null, Routing = CheckRouter.RouteSkillCheck(vehicle, spec) });
             yield return null;
 
             Assert.IsNotNull(result);
@@ -83,7 +84,7 @@ namespace Assets.Scripts.Tests.PlayMode
             utility.TakeDamage(utility.GetCurrentHealth());
 
             var spec = TestSkillFactory.CharacterSkillCheck(CharacterSkill.Mechanics, requiredComponent: ComponentType.Utility, dc: 15);
-            var result = SkillCheckPerformer.Execute(new SkillCheckExecutionContext { Vehicle = vehicle, Spec = spec, CausalSource = null, InitiatingCharacter = character });
+            var result = SkillCheckPerformer.Execute(new SkillCheckExecutionContext { Vehicle = vehicle, Spec = spec, CausalSource = null, Routing = CheckRouter.RouteSkillCheck(vehicle, spec) });
             yield return null;
 
             Assert.IsNotNull(result);
@@ -106,7 +107,7 @@ namespace Assets.Scripts.Tests.PlayMode
                 .Build();
 
             var spec = TestSkillFactory.CharacterSkillCheck(CharacterSkill.Perception, dc: 14);
-            var result = SkillCheckPerformer.Execute(new SkillCheckExecutionContext { Vehicle = vehicle, Spec = spec, CausalSource = null, InitiatingCharacter = null });
+            var result = SkillCheckPerformer.Execute(new SkillCheckExecutionContext { Vehicle = vehicle, Spec = spec, CausalSource = null, Routing = CheckRouter.RouteSkillCheck(vehicle, spec) });
             yield return null;
 
             Assert.IsNotNull(result);
@@ -126,7 +127,7 @@ namespace Assets.Scripts.Tests.PlayMode
                 .Build();
 
             var spec = TestSkillFactory.CharacterSkillCheck(CharacterSkill.Perception, dc: 14);
-            var result = SkillCheckPerformer.Execute(new SkillCheckExecutionContext { Vehicle = vehicle, Spec = spec, CausalSource = null, InitiatingCharacter = null });
+            var result = SkillCheckPerformer.Execute(new SkillCheckExecutionContext { Vehicle = vehicle, Spec = spec, CausalSource = null, Routing = CheckRouter.RouteSkillCheck(vehicle, spec) });
             yield return null;
 
             Assert.IsNotNull(result);
@@ -150,7 +151,7 @@ namespace Assets.Scripts.Tests.PlayMode
                 .Build();
 
             var spec = TestSkillFactory.CharacterSkillCheck(CharacterSkill.Mechanics, dc: 12);
-            var result = SkillCheckPerformer.Execute(new SkillCheckExecutionContext { Vehicle = vehicle, Spec = spec, CausalSource = null, InitiatingCharacter = bob });
+            var result = SkillCheckPerformer.Execute(new SkillCheckExecutionContext { Vehicle = vehicle, Spec = spec, CausalSource = null, Routing = CheckRouter.RouteSkillCheck(vehicle, spec, new CharacterActor(bob)) });
             yield return null;
 
             Assert.IsNotNull(result);

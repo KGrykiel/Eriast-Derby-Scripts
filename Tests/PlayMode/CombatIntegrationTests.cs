@@ -257,21 +257,21 @@ namespace Assets.Scripts.Tests.PlayMode
             // Test 1: Piloting check routes to Driver
             var pilotSpec = SkillCheckSpec.ForCharacter(CharacterSkill.Piloting, ComponentType.Chassis);
             pilotSpec.dc = 12;
-            var pilotResult = SkillCheckPerformer.Execute(new SkillCheckExecutionContext { Vehicle = playerVehicle, Spec = pilotSpec, CausalSource = null, InitiatingCharacter = driver });
+            var pilotResult = SkillCheckPerformer.Execute(new SkillCheckExecutionContext { Vehicle = playerVehicle, Spec = pilotSpec, CausalSource = null, Routing = CheckRouter.RouteSkillCheck(playerVehicle, pilotSpec) });
             yield return null;
             Assert.AreNotEqual(0, pilotResult.BaseRoll, "Should not auto-fail");
 
             // Test 2: Mechanics check routes to Engineer via PowerCore
             var mechanicsSpec = SkillCheckSpec.ForCharacter(CharacterSkill.Mechanics, ComponentType.PowerCore);
             mechanicsSpec.dc = 10;
-            var mechResult = SkillCheckPerformer.Execute(new SkillCheckExecutionContext { Vehicle = playerVehicle, Spec = mechanicsSpec, CausalSource = null, InitiatingCharacter = engineer });
+            var mechResult = SkillCheckPerformer.Execute(new SkillCheckExecutionContext { Vehicle = playerVehicle, Spec = mechanicsSpec, CausalSource = null, Routing = CheckRouter.RouteSkillCheck(playerVehicle, mechanicsSpec) });
             yield return null;
             Assert.AreNotEqual(0, mechResult.BaseRoll, "Should not auto-fail");
 
             // Test 3: Best Perception routes to character with highest WIS modifier
             var percSpec = SkillCheckSpec.ForCharacter(CharacterSkill.Perception);
             percSpec.dc = 14;
-            var percResult = SkillCheckPerformer.Execute(new SkillCheckExecutionContext { Vehicle = playerVehicle, Spec = percSpec, CausalSource = null });
+            var percResult = SkillCheckPerformer.Execute(new SkillCheckExecutionContext { Vehicle = playerVehicle, Spec = percSpec, CausalSource = null, Routing = CheckRouter.RouteSkillCheck(playerVehicle, percSpec) });
             yield return null;
             Assert.IsNotNull(percResult);
             Assert.AreNotEqual(0, percResult.BaseRoll, "Should not auto-fail");
@@ -354,7 +354,8 @@ namespace Assets.Scripts.Tests.PlayMode
             {
                 Vehicle = playerVehicle,
                 Spec = checkSpec,
-                CausalSource = null
+                CausalSource = null,
+                Routing = CheckRouter.RouteSkillCheck(playerVehicle, checkSpec)
             });
             yield return null;
 
@@ -473,7 +474,7 @@ namespace Assets.Scripts.Tests.PlayMode
             // Skill requiring Utility should auto-fail
             var spec = SkillCheckSpec.ForCharacter(CharacterSkill.Mechanics, ComponentType.Utility);
             spec.dc = 10;
-            var result = SkillCheckPerformer.Execute(new SkillCheckExecutionContext { Vehicle = playerVehicle, Spec = spec, CausalSource = null, InitiatingCharacter = driver });
+            var result = SkillCheckPerformer.Execute(new SkillCheckExecutionContext { Vehicle = playerVehicle, Spec = spec, CausalSource = null, Routing = CheckRouter.RouteSkillCheck(playerVehicle, spec) });
             yield return null;
 
             Assert.AreEqual(0, result.BaseRoll, "Should auto-fail when required component is stunned");
@@ -485,7 +486,7 @@ namespace Assets.Scripts.Tests.PlayMode
 
             Assert.IsTrue(utilityComp.IsOperational, "Component should be operational after stun expires");
 
-            var resultAfter = SkillCheckPerformer.Execute(new SkillCheckExecutionContext { Vehicle = playerVehicle, Spec = spec, CausalSource = null, InitiatingCharacter = driver });
+            var resultAfter = SkillCheckPerformer.Execute(new SkillCheckExecutionContext { Vehicle = playerVehicle, Spec = spec, CausalSource = null, Routing = CheckRouter.RouteSkillCheck(playerVehicle, spec) });
             Assert.AreNotEqual(0, resultAfter.BaseRoll, "Should be able to attempt after stun expires");
         }
 
@@ -508,7 +509,7 @@ namespace Assets.Scripts.Tests.PlayMode
             spec.dc = 10;
 
             // Phase 1: Working normally
-            var result1 = SkillCheckPerformer.Execute(new SkillCheckExecutionContext { Vehicle = playerVehicle, Spec = spec, CausalSource = null, InitiatingCharacter = engineer });
+            var result1 = SkillCheckPerformer.Execute(new SkillCheckExecutionContext { Vehicle = playerVehicle, Spec = spec, CausalSource = null, Routing = CheckRouter.RouteSkillCheck(playerVehicle, spec) });
             yield return null;
             Assert.AreNotEqual(0, result1.BaseRoll, "Should work when component is healthy");
 
@@ -516,7 +517,7 @@ namespace Assets.Scripts.Tests.PlayMode
             utility.TakeDamage(utility.GetCurrentHealth());
             Assert.IsTrue(utility.isDestroyed, "Component should be destroyed");
 
-            var result2 = SkillCheckPerformer.Execute(new SkillCheckExecutionContext { Vehicle = playerVehicle, Spec = spec, CausalSource = null, InitiatingCharacter = engineer });
+            var result2 = SkillCheckPerformer.Execute(new SkillCheckExecutionContext { Vehicle = playerVehicle, Spec = spec, CausalSource = null, Routing = CheckRouter.RouteSkillCheck(playerVehicle, spec) });
             yield return null;
             Assert.AreEqual(0, result2.BaseRoll, "Should auto-fail when component destroyed");
 
@@ -525,7 +526,7 @@ namespace Assets.Scripts.Tests.PlayMode
             utility.SetHealth(utility.GetMaxHealth());
             Assert.IsTrue(utility.IsOperational, "Component should be operational after restoration");
 
-            var result3 = SkillCheckPerformer.Execute(new SkillCheckExecutionContext { Vehicle = playerVehicle, Spec = spec, CausalSource = null, InitiatingCharacter = engineer });
+            var result3 = SkillCheckPerformer.Execute(new SkillCheckExecutionContext { Vehicle = playerVehicle, Spec = spec, CausalSource = null, Routing = CheckRouter.RouteSkillCheck(playerVehicle, spec) });
             yield return null;
             Assert.AreNotEqual(0, result3.BaseRoll, "Should work again after component restored");
         }

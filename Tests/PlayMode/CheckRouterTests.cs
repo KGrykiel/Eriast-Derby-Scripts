@@ -4,6 +4,7 @@ using UnityEngine;
 using UnityEngine.TestTools;
 using Assets.Scripts.Characters;
 using Assets.Scripts.Combat;
+using Assets.Scripts.Combat.Rolls;
 using Assets.Scripts.Tests.Helpers;
 using Assets.Scripts.Combat.Rolls.RollSpecs.SpecTypes;
 
@@ -106,7 +107,7 @@ namespace Assets.Scripts.Tests.PlayMode
                 .Build();
 
             var spec = SkillCheckSpec.ForCharacter(CharacterSkill.Mechanics);
-            var result = CheckRouter.RouteSkillCheck(vehicle, spec, initiatingCharacter: bob);
+            var result = CheckRouter.RouteSkillCheck(vehicle, spec, actorHint: new CharacterActor(bob));
             yield return null;
 
             Assert.IsTrue(result.CanAttempt);

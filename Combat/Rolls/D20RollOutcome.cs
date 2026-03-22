@@ -20,6 +20,9 @@ namespace Assets.Scripts.Combat.Rolls
         public bool IsFumble { get; }
         public AdvantageResult Advantage { get; }
 
+        /// <summary>True when the roll was never made — no eligible actor existed to attempt it.</summary>
+        public bool IsAutoFail { get; }
+
         public D20RollOutcome(
             int baseRoll,
             List<RollBonus> bonuses,
@@ -29,7 +32,8 @@ namespace Assets.Scripts.Combat.Rolls
             bool success,
             bool isCriticalHit,
             bool isFumble,
-            AdvantageResult advantage = default)
+            AdvantageResult advantage = default,
+            bool isAutoFail = false)
         {
             BaseRoll = baseRoll;
             Bonuses = bonuses;
@@ -40,6 +44,7 @@ namespace Assets.Scripts.Combat.Rolls
             IsCriticalHit = isCriticalHit;
             IsFumble = isFumble;
             Advantage = advantage;
+            IsAutoFail = isAutoFail;
         }
     }
 }

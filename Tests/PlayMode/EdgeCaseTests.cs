@@ -3,6 +3,7 @@ using NUnit.Framework;
 using UnityEngine;
 using UnityEngine.TestTools;
 using Assets.Scripts.Characters;
+using Assets.Scripts.Combat;
 using Assets.Scripts.Tests.Helpers;
 using Assets.Scripts.Combat.Rolls.RollTypes.SkillChecks;
 
@@ -54,9 +55,9 @@ namespace Assets.Scripts.Tests.PlayMode
 
             var spec = TestSkillFactory.CharacterSkillCheck(CharacterSkill.Mechanics, requiredComponent: ComponentType.Weapon, dc: 10);
 
-            var result1 = SkillCheckPerformer.Execute(new SkillCheckExecutionContext { Vehicle = vehicle, Spec = spec, CausalSource = null, InitiatingCharacter = null });
+            var result1 = SkillCheckPerformer.Execute(new SkillCheckExecutionContext { Vehicle = vehicle, Spec = spec, CausalSource = null, Routing = CheckRouter.RouteSkillCheck(vehicle, spec) });
             yield return null;
-            var result2 = SkillCheckPerformer.Execute(new SkillCheckExecutionContext { Vehicle = vehicle, Spec = spec, CausalSource = null, InitiatingCharacter = null });
+            var result2 = SkillCheckPerformer.Execute(new SkillCheckExecutionContext { Vehicle = vehicle, Spec = spec, CausalSource = null, Routing = CheckRouter.RouteSkillCheck(vehicle, spec) });
             yield return null;
 
             Assert.AreEqual(result1.TotalModifier, result2.TotalModifier, "Should deterministically select same character");
@@ -73,7 +74,7 @@ namespace Assets.Scripts.Tests.PlayMode
                 .Build();
 
             var spec = TestSkillFactory.CharacterSkillCheck(CharacterSkill.Mechanics, requiredComponent: ComponentType.Utility, dc: 10);
-            var result = SkillCheckPerformer.Execute(new SkillCheckExecutionContext { Vehicle = vehicle, Spec = spec, CausalSource = null, InitiatingCharacter = null });
+            var result = SkillCheckPerformer.Execute(new SkillCheckExecutionContext { Vehicle = vehicle, Spec = spec, CausalSource = null, Routing = CheckRouter.RouteSkillCheck(vehicle, spec) });
             yield return null;
 
             Assert.IsNotNull(result);

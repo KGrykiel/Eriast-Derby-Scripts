@@ -5,42 +5,33 @@ namespace Assets.Scripts.Combat.Rolls.RollTypes.SkillChecks
 {
     /// <summary>
     /// Entry point for skill checks from all sources — skills, event cards, maybe more in the future.
-    /// different methods for vehicles that need routing vs standalone entities that don't (objects, monsters etc).
+    /// different methods for vehicles that need ctx.Routing vs standalone entities that don't (objects, monsters etc).
     /// </summary>
     public static class SkillCheckPerformer
     {
         public static D20RollOutcome Execute(SkillCheckExecutionContext ctx)
         {
-            // Step 1: Route (resolve who/what makes this check)
-            var routing = CheckRouter.RouteSkillCheck(ctx.Vehicle, ctx.Spec, ctx.InitiatingCharacter);
-
-            // Step 2: Gather bonuses and advantages
+            // Step 1: Gather bonuses and advantages
             D20RollOutcome roll;
-            bool isAutoFail;
-            if (!routing.CanAttempt)
-            {
+            if (!ctx.Routing.CanAttempt)
                 roll = D20Calculator.AutoFail(ctx.Spec.dc);
-                isAutoFail = true;
-            }
             else
             {
-                var gathered = RollGatherer.ForSkillCheck(ctx.Spec, routing.Actor);
+                var gathered = RollGatherer.ForSkillCheck(ctx.Spec, ctx.Routing.Actor);
                 roll = D20Calculator.Roll(gathered, ctx.Spec.dc);
-                isAutoFail = false;
             }
 
-            // Step 3: Emit event automatically (WOTR-style)
-            RollActor actor = routing.Actor ?? new ComponentActor(ctx.Vehicle.chassis);
+            // Step 2: Emit event automatically
+            RollActor actor = ctx.Routing.Actor ?? new ComponentActor(ctx.Vehicle.chassis);
             CombatEventBus.EmitSkillCheck(
                 roll,
                 actor,
                 ctx.CausalSource,
-                ctx.Spec.DisplayName,
-                isAutoFail);
+                ctx.Spec.DisplayName);
 
-            // Step 4: Notify d20 roll trigger on roller
+            // Step 3: Notify d20 roll trigger on roller
             Entity actorEntity = actor.GetEntity();
-            if (routing.CanAttempt && actorEntity != null)
+            if (ctx.Routing.CanAttempt && actorEntity != null)
             {
                 actorEntity.NotifyStatusEffectTrigger(RemovalTrigger.OnD20Roll);
             }

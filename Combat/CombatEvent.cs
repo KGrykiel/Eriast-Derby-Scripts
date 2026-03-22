@@ -176,15 +176,13 @@ namespace Assets.Scripts.Combat
         public D20RollOutcome Roll { get; set; }
         public RollActor Defender { get; set; }
         public string CheckName { get; set; }
-        public bool IsAutoFail { get; set; }
 
         public SavingThrowEvent(
             D20RollOutcome roll,
             Entity source,
             RollActor defender,
             string causalSource,
-            string checkName,
-            bool isAutoFail = false)
+            string checkName)
         {
             Roll = roll;
             Defender = defender;
@@ -192,7 +190,6 @@ namespace Assets.Scripts.Combat
             Target = defender?.GetEntity();
             CausalSource = causalSource;
             CheckName = checkName;
-            IsAutoFail = isAutoFail;
         }
     }
     
@@ -201,14 +198,12 @@ namespace Assets.Scripts.Combat
         public D20RollOutcome Roll { get; set; }
         public RollActor Actor { get; set; }
         public string CheckName { get; set; }
-        public bool IsAutoFail { get; set; }
 
         public SkillCheckEvent(
             D20RollOutcome roll,
             RollActor actor,
             string causalSource,
-            string checkName,
-            bool isAutoFail = false)
+            string checkName)
         {
             Roll = roll;
             Actor = actor;
@@ -216,7 +211,6 @@ namespace Assets.Scripts.Combat
             Target = null; // Skill checks don't have a target
             CausalSource = causalSource;
             CheckName = checkName;
-            IsAutoFail = isAutoFail;
         }
     }
 
