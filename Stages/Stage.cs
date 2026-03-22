@@ -101,17 +101,11 @@ namespace Assets.Scripts.Stages
             {
                 vehicle.previousStage = this;
 
-                if (stageStatusEffect != null)
-                    RemoveStageStatusEffect(vehicle);
-
                 vehicle.NotifyStatusEffectTrigger(RemovalTrigger.OnStageExit);
 
                 StageLane currentLane = laneManager.GetVehicleLane(vehicle);
                 if (currentLane != null)
                 {
-                    if (currentLane.laneStatusEffect != null)
-                        laneManager.RemoveLaneStatusEffect(vehicle, currentLane);
-
                     currentLane.vehiclesInLane.Remove(vehicle);
                 }
 
@@ -127,15 +121,6 @@ namespace Assets.Scripts.Stages
             {
                 if (component != null)
                     component.ApplyStatusEffect(stageStatusEffect, this);
-            }
-        }
-
-        private void RemoveStageStatusEffect(Vehicle vehicle)
-        {
-            foreach (var component in vehicle.AllComponents)
-            {
-                if (component != null)
-                    component.RemoveStatusEffectsFromSource(this);
             }
         }
 

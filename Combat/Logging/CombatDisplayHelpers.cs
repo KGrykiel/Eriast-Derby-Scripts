@@ -1,5 +1,5 @@
 ﻿using System.Linq;
-using Assets.Scripts.Combat.Restoration;
+using Assets.Scripts.Combat.Rolls;
 using Assets.Scripts.StatusEffects;
 
 namespace Assets.Scripts.Combat.Logging
@@ -88,7 +88,29 @@ namespace Assets.Scripts.Combat.Logging
 
         public static string FormatActionSource(CombatAction action)
         {
-            return FormatSource(action.SourceCharacter, action.Actor, action.ActorVehicle);
+            return FormatRollActor(action.SourceActor, action.ActorVehicle);
+        }
+
+        // ==================== ROLL ACTOR FORMATTERS ====================
+
+        /// <summary>
+        /// Universal formatter for an active RollActor (attacker, skill user).
+        /// Resolves Character + Entity from the actor and delegates to FormatSource.
+        /// </summary>
+        public static string FormatRollActor(RollActor actor, Vehicle vehicle = null)
+        {
+            if (actor == null) return vehicle?.vehicleName ?? "Unknown";
+            return FormatSource(actor.GetCharacter(), actor.GetEntity(), vehicle);
+        }
+
+        /// <summary>
+        /// Universal formatter for a defensive RollActor (save target).
+        /// Resolves Character + Entity from the actor and delegates to FormatDefensiveSource.
+        /// </summary>
+        public static string FormatRollActorDefensive(RollActor actor, Vehicle vehicle = null)
+        {
+            if (actor == null) return vehicle?.vehicleName ?? "Unknown";
+            return FormatDefensiveSource(actor.GetCharacter(), actor.GetEntity(), vehicle);
         }
 
         // ==================== COMBAT LOGIC HELPERS ====================

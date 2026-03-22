@@ -13,10 +13,10 @@ public class ResourceRestorationEffect : EffectBase
     [Tooltip("Formula defining resource type, dice, and bonus for restoration/drain")]
     public RestorationFormula formula = new();
 
-    public override void Apply(Entity target, EffectContext context, Object source = null)
+    public override void Apply(Entity target, EffectContext context)
     {
         int amount = RestorationCalculator.Roll(formula);
-        RestorationApplicator.Apply(formula, amount, target, context.SourceEntity, source);
+        RestorationApplicator.Apply(formula, amount, target, context.SourceEntity);
     }
 }
 

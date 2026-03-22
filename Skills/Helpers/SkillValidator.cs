@@ -36,13 +36,15 @@ namespace Assets.Scripts.Skills.Helpers
                 return false;
             }
 
-            if (ctx.TargetComponent != null)
+            VehicleComponent targetComponent = targetEntity as VehicleComponent;
+            if (targetComponent != null)
             {
-                bool isSelfTargeting = ctx.SourceVehicle == ctx.TargetVehicle;
-                if (!isSelfTargeting && !ctx.TargetVehicle.IsComponentAccessible(ctx.TargetComponent))
+                Vehicle targetVehicle = targetComponent.ParentVehicle;
+                bool isSelfTargeting = ctx.SourceVehicle == targetVehicle;
+                if (!isSelfTargeting && !targetVehicle.IsComponentAccessible(targetComponent))
                 {
-                    string reason = ctx.TargetVehicle.GetInaccessibilityReason(ctx.TargetComponent);
-                    Debug.LogWarning($"[SkillValidator] {ctx.SourceVehicle.vehicleName} cannot target inaccessible component {ctx.TargetComponent.name}: {reason}");
+                    string reason = targetVehicle.GetInaccessibilityReason(targetComponent);
+                    Debug.LogWarning($"[SkillValidator] {ctx.SourceVehicle.vehicleName} cannot target inaccessible component {targetComponent.name}: {reason}");
                     return false;
                 }
             }

@@ -689,28 +689,6 @@ namespace Assets.Scripts.Tests.PlayMode
                 "All modifiers from stacks should be cleaned up");
         }
 
-        // ==================== Source Removal ====================
-
-        [Test]
-        public void StatusEffect_RemoveFromSource_RemovesOnlyMatchingSource()
-        {
-            var template = TestStatusEffectFactory.CreateModifierEffect(
-                "Aura", Attribute.ArmorClass, 1f,
-                stackBehaviour: StackBehaviour.Stack, cleanup: cleanup);
-            var otherSource = ScriptableObject.CreateInstance<StatusEffect>();
-            cleanup.Add(otherSource);
-
-            entity.ApplyStatusEffect(template, entity);        // source = entity
-            entity.ApplyStatusEffect(template, otherSource);   // source = otherSource
-            Assert.AreEqual(2, entity.GetActiveStatusEffects().Count);
-
-            entity.RemoveStatusEffectsFromSource(otherSource);
-
-            Assert.AreEqual(1, entity.GetActiveStatusEffects().Count, "Should remove only effects from otherSource");
-            Assert.AreEqual(entity, entity.GetActiveStatusEffects()[0].applier,
-                "Remaining effect should be from entity");
-        }
-
         // ==================== Edge Cases ====================
 
         [Test]

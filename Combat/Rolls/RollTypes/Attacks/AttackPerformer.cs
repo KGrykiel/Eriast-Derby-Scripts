@@ -9,24 +9,23 @@ namespace Assets.Scripts.Combat.Rolls.RollTypes.Attacks
     {
         public static D20RollOutcome Execute(AttackExecutionContext ctx)
         {
-            var gathered = RollGatherer.ForAttack(ctx.Spec, ctx.Attacker, ctx.Character);
+            var gathered = RollGatherer.ForAttack(ctx.Spec, ctx.Attacker);
             int defenseValue = ctx.Target.GetArmorClass();
             var result = D20Calculator.Roll(gathered, defenseValue);
 
-            ctx.Attacker.NotifyStatusEffectTrigger(RemovalTrigger.OnD20Roll);
+            Entity attackerEntity = ctx.Attacker?.GetEntity();
 
-            string targetCompName = ctx.Target != null ? ctx.Target.name : null;
+            if (attackerEntity != null)
+                attackerEntity.NotifyStatusEffectTrigger(RemovalTrigger.OnD20Roll);
 
             CombatEventBus.EmitAttackRoll(
                 result,
                 ctx.Attacker,
                 ctx.Target,
-                ctx.CausalSource,
-                result.Success,
-                targetCompName,
-                ctx.Character);
+                ctx.CausalSource);
 
-            ctx.Attacker.NotifyStatusEffectTrigger(RemovalTrigger.OnAttackMade);
+            if (attackerEntity != null)
+                attackerEntity.NotifyStatusEffectTrigger(RemovalTrigger.OnAttackMade);
             return result;
         }
     }

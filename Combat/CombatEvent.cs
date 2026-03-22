@@ -1,5 +1,4 @@
-﻿using UnityEngine;
-using Assets.Scripts.Combat.Damage;
+﻿using Assets.Scripts.Combat.Damage;
 using Assets.Scripts.Combat.Restoration;
 using Assets.Scripts.StatusEffects;
 using Assets.Scripts.Combat.Rolls;
@@ -14,7 +13,7 @@ namespace Assets.Scripts.Combat
     {
         public Entity Source { get; set; }
         public Entity Target { get; set; }
-        public Object CausalSource { get; set; }
+        public string CausalSource { get; set; }
     }
     
     public class DamageEvent : CombatEvent
@@ -26,7 +25,7 @@ namespace Assets.Scripts.Combat
             DamageResult result,
             Entity source,
             Entity target,
-            Object causalSource,
+            string causalSource,
             DamageSource sourceType = DamageSource.Ability)
         {
             Result = result;
@@ -49,7 +48,7 @@ namespace Assets.Scripts.Combat
             AppliedStatusEffect applied,
             Entity source,
             Entity target,
-            Object causalSource,
+            string causalSource,
             bool wasReplacement = false)
         {
             Applied = applied;
@@ -70,7 +69,6 @@ namespace Assets.Scripts.Combat
             Expired = expired;
             Target = target;
             Source = null;
-            CausalSource = expired?.template;
         }
     }
 
@@ -83,7 +81,6 @@ namespace Assets.Scripts.Combat
             Refreshed = refreshed;
             Target = target;
             Source = null;
-            CausalSource = refreshed?.template;
         }
     }
 
@@ -96,7 +93,6 @@ namespace Assets.Scripts.Combat
             Existing = existing;
             Target = target;
             Source = null;
-            CausalSource = existing?.template;
         }
     }
 
@@ -111,7 +107,6 @@ namespace Assets.Scripts.Combat
             Target = target;
             OldDuration = oldDuration;
             Source = null;
-            CausalSource = newEffect?.template;
         }
     }
 
@@ -124,7 +119,6 @@ namespace Assets.Scripts.Combat
             Kept = kept;
             Target = target;
             Source = null;
-            CausalSource = kept?.template;
         }
     }
 
@@ -139,7 +133,6 @@ namespace Assets.Scripts.Combat
             Target = target;
             MaxStacks = maxStacks;
             Source = null;
-            CausalSource = template;
         }
     }
 
@@ -150,13 +143,11 @@ namespace Assets.Scripts.Combat
         public RestorationEvent(
             RestorationResult result,
             Entity source,
-            Entity target,
-            Object causalSource)
+            Entity target)
         {
             Result = result;
             Source = source;
             Target = target;
-            CausalSource = causalSource;
         }
     }
     
@@ -164,92 +155,68 @@ namespace Assets.Scripts.Combat
     public class AttackRollEvent : CombatEvent
     {
         public D20RollOutcome Roll { get; set; }
-        public bool IsHit { get; set; }
-        public string TargetComponentName { get; set; }
-
-        /// <summary>Null for component-only or standalone entity attacks.</summary>
-        public Character Character { get; set; }
+        public RollActor Actor { get; set; }
 
         public AttackRollEvent(
             D20RollOutcome roll,
-            Entity source,
+            RollActor actor,
             Entity target,
-            Object causalSource,
-            bool isHit,
-            string targetComponentName = null,
-            Character character = null)
+            string causalSource)
         {
             Roll = roll;
-            Source = source;
+            Actor = actor;
+            Source = actor?.GetEntity();
             Target = target;
             CausalSource = causalSource;
-            IsHit = isHit;
-            TargetComponentName = targetComponentName;
-            Character = character;
         }
     }
     
     public class SavingThrowEvent : CombatEvent
     {
         public D20RollOutcome Roll { get; set; }
+        public RollActor Defender { get; set; }
         public string CheckName { get; set; }
-        public bool Succeeded { get; set; }
         public bool IsAutoFail { get; set; }
-        public string TargetComponentName { get; set; }
-
-        /// <summary>Null for vehicle-only saves.</summary>
-        public Character Character { get; set; }
 
         public SavingThrowEvent(
             D20RollOutcome roll,
             Entity source,
-            Entity target,
-            Object causalSource,
-            bool succeeded,
+            RollActor defender,
+            string causalSource,
             string checkName,
-            bool isAutoFail = false,
-            string targetComponentName = null,
-            Character character = null)
+            bool isAutoFail = false)
         {
             Roll = roll;
+            Defender = defender;
             Source = source;
-            Target = target;
+            Target = defender?.GetEntity();
             CausalSource = causalSource;
-            Succeeded = succeeded;
             CheckName = checkName;
             IsAutoFail = isAutoFail;
-            TargetComponentName = targetComponentName;
-            Character = character;
         }
     }
     
     public class SkillCheckEvent : CombatEvent
     {
         public D20RollOutcome Roll { get; set; }
+        public RollActor Actor { get; set; }
         public string CheckName { get; set; }
-        public bool Succeeded { get; set; }
         public bool IsAutoFail { get; set; }
-
-        /// <summary>Null for vehicle-only checks.</summary>
-        public Character Character { get; set; }
 
         public SkillCheckEvent(
             D20RollOutcome roll,
-            Entity source,
-            Object causalSource,
-            bool succeeded,
+            RollActor actor,
+            string causalSource,
             string checkName,
-            bool isAutoFail = false,
-            Character character = null)
+            bool isAutoFail = false)
         {
             Roll = roll;
-            Source = source;
+            Actor = actor;
+            Source = actor?.GetEntity();
             Target = null; // Skill checks don't have a target
             CausalSource = causalSource;
-            Succeeded = succeeded;
             CheckName = checkName;
             IsAutoFail = isAutoFail;
-            Character = character;
         }
     }
 
@@ -257,25 +224,27 @@ namespace Assets.Scripts.Combat
     {
         public D20RollOutcome Roll { get; set; }
         public D20RollOutcome DefenderRoll { get; set; }
-        public bool AttackerWins { get; set; }
+        public RollActor AttackerActor { get; set; }
+        public RollActor DefenderActor { get; set; }
         public string AttackerCheckName { get; set; }
         public string DefenderCheckName { get; set; }
 
         public OpposedCheckEvent(
             D20RollOutcome roll,
             D20RollOutcome defenderRoll,
-            Entity attacker,
-            Entity defender,
-            Object causalSource,
+            RollActor attackerActor,
+            RollActor defenderActor,
+            string causalSource,
             string attackerCheckName,
             string defenderCheckName)
         {
             Roll = roll;
             DefenderRoll = defenderRoll;
-            Source = attacker;
-            Target = defender;
+            AttackerActor = attackerActor;
+            DefenderActor = defenderActor;
+            Source = attackerActor?.GetEntity();
+            Target = defenderActor?.GetEntity();
             CausalSource = causalSource;
-            AttackerWins = roll.Success;
             AttackerCheckName = attackerCheckName;
             DefenderCheckName = defenderCheckName;
         }

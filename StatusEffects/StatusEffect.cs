@@ -2,8 +2,6 @@
 using System.Collections.Generic;
 using UnityEngine;
 using Assets.Scripts.Entities;
-using Assets.Scripts.Combat.Damage;
-using Assets.Scripts.Combat.Restoration;
 using Assets.Scripts.Combat.Rolls.Advantage;
 using SerializeReferenceEditor;
 

@@ -14,7 +14,7 @@ public class DamageEffect : EffectBase
     [Tooltip("Strategy for resolving damage formula. StaticFormulaProvider for fixed damage, WeaponFormulaProvider for weapon-based attacks.")]
     public IFormulaProvider formulaProvider = new StaticFormulaProvider();
 
-    public override void Apply(Entity target, EffectContext context, Object source = null)
+    public override void Apply(Entity target, EffectContext context)
     {
         Entity user = context.SourceEntity;
         var formulaContext = new FormulaContext(user);
@@ -37,7 +37,7 @@ public class DamageEffect : EffectBase
             result: result,
             target: target,
             attacker: user,
-            causalSource: source != null ? source : user,
+            causalSource: context.CausalSource ?? user?.name,
             sourceType: sourceType
         );
     }

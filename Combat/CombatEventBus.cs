@@ -19,13 +19,12 @@ namespace Assets.Scripts.Combat
         private static readonly Stack<CombatAction> actionStack = new();
 
         public static CombatAction BeginAction(
-            Entity actor,
-            Object source,
+            RollActor sourceActor,
+            string source,
             Vehicle primaryTarget = null,
-            Vehicle sourceVehicle = null,
-            Character sourceCharacter = null)
+            Vehicle sourceVehicle = null)
         {
-            var action = new CombatAction(actor, source, primaryTarget, sourceVehicle, sourceCharacter);
+            var action = new CombatAction(sourceActor, source, primaryTarget, sourceVehicle);
             actionStack.Push(action);
             return action;
         }
@@ -73,7 +72,7 @@ namespace Assets.Scripts.Combat
             DamageResult result,
             Entity source,
             Entity target,
-            Object causalSource,
+            string causalSource,
             DamageSource sourceType = DamageSource.Ability)
         {
             Emit(new DamageEvent(result, source, target, causalSource, sourceType));
@@ -83,7 +82,7 @@ namespace Assets.Scripts.Combat
             AppliedStatusEffect applied,
             Entity source,
             Entity target,
-            Object causalSource,
+            string causalSource,
             bool wasReplacement = false)
         {
             Emit(new StatusEffectEvent(applied, source, target, causalSource, wasReplacement));
@@ -122,56 +121,47 @@ namespace Assets.Scripts.Combat
         public static void EmitRestoration(
             RestorationResult result,
             Entity source,
-            Entity target,
-            Object causalSource)
+            Entity target)
         {
-            Emit(new RestorationEvent(result, source, target, causalSource));
+            Emit(new RestorationEvent(result, source, target));
         }
         
         public static void EmitAttackRoll(
             D20RollOutcome roll,
-            Entity source,
+            RollActor actor,
             Entity target,
-            Object causalSource,
-            bool isHit,
-            string targetComponentName = null,
-            Character character = null)
+            string causalSource)
         {
-            Emit(new AttackRollEvent(roll, source, target, causalSource, isHit, targetComponentName, character));
+            Emit(new AttackRollEvent(roll, actor, target, causalSource));
         }
         
         public static void EmitSavingThrow(
             D20RollOutcome roll,
             Entity source,
-            Entity target,
-            Object causalSource,
-            bool succeeded,
+            RollActor defender,
+            string causalSource,
             string checkName,
-            bool isAutoFail = false,
-            string targetComponentName = null,
-            Character character = null)
+            bool isAutoFail = false)
         {
-            Emit(new SavingThrowEvent(roll, source, target, causalSource, succeeded, checkName, isAutoFail, targetComponentName, character));
+            Emit(new SavingThrowEvent(roll, source, defender, causalSource, checkName, isAutoFail));
         }
         
         public static void EmitSkillCheck(
             D20RollOutcome roll,
-            Entity source,
-            Object causalSource,
-            bool succeeded,
+            RollActor actor,
+            string causalSource,
             string checkName,
-            bool isAutoFail = false,
-            Character character = null)
+            bool isAutoFail = false)
         {
-            Emit(new SkillCheckEvent(roll, source, causalSource, succeeded, checkName, isAutoFail, character));
+            Emit(new SkillCheckEvent(roll, actor, causalSource, checkName, isAutoFail));
         }
 
         public static void EmitOpposedCheck(
             D20RollOutcome roll,
             D20RollOutcome defenderRoll,
-            Entity attacker,
-            Entity defender,
-            Object causalSource,
+            RollActor attacker,
+            RollActor defender,
+            string causalSource,
             string attackerCheckName,
             string defenderCheckName)
         {

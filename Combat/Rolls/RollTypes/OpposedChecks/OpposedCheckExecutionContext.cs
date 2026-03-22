@@ -1,5 +1,4 @@
 ﻿using Assets.Scripts.Combat.Rolls.RollSpecs.SpecTypes;
-using UnityEngine;
 
 namespace Assets.Scripts.Combat.Rolls.RollTypes.OpposedChecks
 {
@@ -20,7 +19,7 @@ namespace Assets.Scripts.Combat.Rolls.RollTypes.OpposedChecks
         public OpposedCheckRollSpec Spec;
 
         /// <summary>What triggered this check (Skill, EventCard, etc.). Used for logging.</summary>
-        public Object CausalSource;
+        public string CausalSource;
 
         /// <summary>Specific character initiating the check (for skills). Null for event cards/lane effects.</summary>
         public Character AttackerCharacter;

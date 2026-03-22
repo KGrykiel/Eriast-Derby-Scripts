@@ -1,5 +1,4 @@
 ﻿using Assets.Scripts.Combat.Rolls.RollSpecs.SpecTypes;
-using UnityEngine;
 
 namespace Assets.Scripts.Combat.Rolls.RollTypes.Saves
 {
@@ -17,7 +16,7 @@ namespace Assets.Scripts.Combat.Rolls.RollTypes.Saves
         public SaveSpec Spec;
 
         /// <summary>What triggered this save (Skill, EventCard, StatusEffect, etc.). Used for logging.</summary>
-        public Object CausalSource;
+        public string CausalSource;
 
         /// <summary>Specific component being targeted (for routing). Null for vehicle-wide saves.</summary>
         public VehicleComponent TargetComponent;

@@ -247,7 +247,8 @@ public class Vehicle : MonoBehaviour
         }
 
         // Resource consumption
-        if (!ConsumeSkillCost(skill, ctx.SourceComponent))
+        VehicleComponent sourceComponent = ctx.SourceActor?.GetEntity() as VehicleComponent;
+        if (!ConsumeSkillCost(skill, sourceComponent))
         {
             Debug.LogError($"[Vehicle] {vehicleName} failed to consume resources for {skill.name}");
             return false;
@@ -258,7 +259,7 @@ public class Vehicle : MonoBehaviour
             return false;
 
         // Execute via RollNodeExecutor
-        return RollNodeExecutor.Execute(skill.rollNode, ctx, skill);
+        return RollNodeExecutor.Execute(skill.rollNode, ctx, skill.name, scopeAsAction: true);
     }
 
     private bool CanAffordSkill(Skill skill)

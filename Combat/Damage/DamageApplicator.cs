@@ -1,6 +1,4 @@
-﻿using UnityEngine;
-
-namespace Assets.Scripts.Combat.Damage
+﻿namespace Assets.Scripts.Combat.Damage
 {
     /// <summary>
     /// Single entry point for ALL damage in the game — skills, DoT, hazards, event cards, maybe more in the future.
@@ -16,7 +14,7 @@ namespace Assets.Scripts.Combat.Damage
             DamageResult result,
             Entity target,
             Entity attacker = null,
-            Object causalSource = null,
+            string causalSource = null,
             DamageSource sourceType = DamageSource.Ability)
         {
             // ALWAYS emit event for logging, even if damage is 0

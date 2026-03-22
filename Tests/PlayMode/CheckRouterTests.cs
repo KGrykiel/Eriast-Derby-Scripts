@@ -39,8 +39,8 @@ namespace Assets.Scripts.Tests.PlayMode
             yield return null;
 
             Assert.IsTrue(result.CanAttempt, "Should be able to attempt");
-            Assert.AreEqual(driver, result.Character, "Should route to Driver");
-            Assert.IsNotNull(result.Component, "Should return chassis component");
+            Assert.AreEqual(driver, result.Actor.GetCharacter(), "Should route to Driver");
+            Assert.IsNotNull(result.Actor.GetEntity(), "Should return chassis component");
         }
 
         [UnityTest]
@@ -110,7 +110,7 @@ namespace Assets.Scripts.Tests.PlayMode
             yield return null;
 
             Assert.IsTrue(result.CanAttempt);
-            Assert.AreEqual(bob, result.Character, "Should use Bob (initiating), not Alice (better modifier)");
+            Assert.AreEqual(bob, result.Actor.GetCharacter(), "Should use Bob (initiating), not Alice (better modifier)");
         }
 
         [UnityTest]
@@ -136,7 +136,7 @@ namespace Assets.Scripts.Tests.PlayMode
             yield return null;
 
             Assert.IsTrue(result.CanAttempt);
-            Assert.AreEqual(driver, result.Character, "Should route to Driver (operates chassis)");
+            Assert.AreEqual(driver, result.Actor.GetCharacter(), "Should route to Driver (operates chassis)");
         }
 
         [UnityTest]
@@ -156,7 +156,7 @@ namespace Assets.Scripts.Tests.PlayMode
             yield return null;
 
             Assert.IsTrue(result.CanAttempt);
-            Assert.AreEqual(bob, result.Character, "Should route to Bob (best WIS)");
+            Assert.AreEqual(bob, result.Actor.GetCharacter(), "Should route to Bob (best WIS)");
         }
     }
 }

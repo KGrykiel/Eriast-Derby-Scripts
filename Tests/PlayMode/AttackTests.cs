@@ -57,7 +57,7 @@ namespace Assets.Scripts.Tests.PlayMode
             target.SetHealth(100);
 
             var spec = new AttackSpec { grantedMode = RollMode.Normal };
-            var gathered = RollGatherer.ForAttack(spec, weapon, bob);
+            var gathered = RollGatherer.ForAttack(spec, new CharacterWithToolActor(bob, weapon));
             var bonuses = gathered.Bonuses;
             yield return null;
 
@@ -77,7 +77,7 @@ namespace Assets.Scripts.Tests.PlayMode
             var ada = TestCharacterFactory.CreateWithCleanup("Ada", baseAttackBonus: 2, cleanup: cleanup);
 
             var spec = new AttackSpec { grantedMode = RollMode.Normal };
-            var gathered = RollGatherer.ForAttack(spec, attacker: null, character: ada);
+            var gathered = RollGatherer.ForAttack(spec, new CharacterActor(ada));
             var bonuses = gathered.Bonuses;
             yield return null;
 
@@ -111,7 +111,7 @@ namespace Assets.Scripts.Tests.PlayMode
             ));
 
             var spec = new AttackSpec { grantedMode = RollMode.Normal };
-            var gathered = RollGatherer.ForAttack(spec, weapon, bob);
+            var gathered = RollGatherer.ForAttack(spec, new CharacterWithToolActor(bob, weapon));
             var bonuses = gathered.Bonuses;
             yield return null;
 

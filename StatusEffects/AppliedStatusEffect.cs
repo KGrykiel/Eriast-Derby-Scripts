@@ -76,14 +76,14 @@ namespace Assets.Scripts.StatusEffects
                     {
                         formulaProvider = new StaticFormulaProvider { formula = dmg.damageFormula }
                     };
-                    var context = new EffectContext { DamageSourceOverride = DamageSource.Effect };
-                    effect.Apply(target, context, template);
+                    var context = new EffectContext { DamageSourceOverride = DamageSource.Effect, CausalSource = template.name };
+                    effect.Apply(target, context);
                     break;
                 }
                 case PeriodicRestorationEffect res:
                 {
                     var effect = new ResourceRestorationEffect { formula = res.formula };
-                    effect.Apply(target, EffectContext.Default, template);
+                    effect.Apply(target, EffectContext.Default);
                     break;
                 }
             }

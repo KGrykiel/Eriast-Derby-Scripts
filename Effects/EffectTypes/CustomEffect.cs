@@ -22,7 +22,7 @@ public class CustomEffect : EffectBase
     [Range(-1, 100)]
     public int intParameter = -1;
 
-    public override void Apply(Entity target, EffectContext context, UnityEngine.Object source = null)
+    public override void Apply(Entity target, EffectContext context)
     {
         // Prefer command pattern (works with prefabs)
         if (command != null)

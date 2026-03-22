@@ -16,22 +16,21 @@ namespace Assets.Scripts.Combat.Rolls
     {
         // ==================== SKILL CHECKS ====================
 
-        public static GatheredRoll ForSkillCheck(
-            SkillCheckSpec spec,
-            Entity entity = null,
-            Character character = null)
+        public static GatheredRoll ForSkillCheck(SkillCheckSpec spec, RollActor actor = null)
         {
             var bonuses = new List<RollBonus>();
+            Entity entity = GetContextEntity(actor);
 
-            if (entity != null && spec.IsVehicleCheck)
+            if (spec is VehicleSkillCheckSpec vehicleSpec && actor is ComponentActor componentActor)
             {
-                string label = entity.name ?? spec.DisplayName;
-                bonuses.AddRange(GatherComponentBonuses(entity, spec.vehicleAttribute, label));
+                string label = componentActor.Component.name ?? vehicleSpec.DisplayName;
+                bonuses.AddRange(GatherComponentBonuses(componentActor.Component, vehicleSpec.vehicleAttribute, label));
             }
-
-            if (character != null && spec.IsCharacterCheck)
+            else if (spec is CharacterSkillCheckSpec charSpec)
             {
-                bonuses.AddRange(GatherCharacterSkillBonuses(character, spec.characterSkill));
+                Character character = actor != null ? actor.GetCharacter() : null;
+                if (character != null)
+                    bonuses.AddRange(GatherCharacterSkillBonuses(character, charSpec.characterSkill));
             }
 
             var grantedSource = ResolveGrantedSource(spec.grantedMode, spec.DisplayName);
@@ -69,22 +68,21 @@ namespace Assets.Scripts.Combat.Rolls
 
         // ==================== SAVES ====================
 
-        public static GatheredRoll ForSave(
-            SaveSpec spec,
-            Entity entity = null,
-            Character character = null)
+        public static GatheredRoll ForSave(SaveSpec spec, RollActor actor = null)
         {
             var bonuses = new List<RollBonus>();
+            Entity entity = GetContextEntity(actor);
 
-            if (entity != null && spec.IsVehicleSave)
+            if (spec is VehicleSaveSpec vehicleSpec && actor is ComponentActor componentActor)
             {
-                string label = entity.name ?? spec.DisplayName;
-                bonuses.AddRange(GatherComponentBonuses(entity, spec.vehicleAttribute, label));
+                string label = componentActor.Component.name ?? vehicleSpec.DisplayName;
+                bonuses.AddRange(GatherComponentBonuses(componentActor.Component, vehicleSpec.vehicleAttribute, label));
             }
-
-            if (character != null && spec.IsCharacterSave)
+            else if (spec is CharacterSaveSpec charSpec)
             {
-                bonuses.AddRange(GatherCharacterSaveBonuses(character, spec.characterAttribute));
+                Character character = actor != null ? actor.GetCharacter() : null;
+                if (character != null)
+                    bonuses.AddRange(GatherCharacterSaveBonuses(character, charSpec.characterAttribute));
             }
 
             var grantedSource = ResolveGrantedSource(spec.grantedMode, spec.DisplayName);
@@ -117,18 +115,17 @@ namespace Assets.Scripts.Combat.Rolls
 
         // ==================== ATTACKS ====================
 
-        public static GatheredRoll ForAttack(
-            AttackSpec spec,
-            Entity attacker = null,
-            Character character = null)
+        public static GatheredRoll ForAttack(AttackSpec spec, RollActor actor = null)
         {
             var bonuses = new List<RollBonus>();
+            Entity entity = GetContextEntity(actor);
 
-            if (attacker is WeaponComponent weapon)
+            if (entity is WeaponComponent weapon)
             {
                 bonuses.AddRange(GatherWeaponBonuses(weapon));
             }
 
+            Character character = actor != null ? actor.GetCharacter() : null;
             if (character != null)
             {
                 int charBonus = CharacterFormulas.CalculateAttackBonus(character);
@@ -139,7 +136,7 @@ namespace Assets.Scripts.Combat.Rolls
             }
 
             var grantedSource = ResolveGrantedSource(spec.grantedMode, "Attack");
-            var advantageSources = GatherAdvantageSources(attacker, spec, grantedSource);
+            var advantageSources = GatherAdvantageSources(entity, spec, grantedSource);
 
             return new GatheredRoll(bonuses, advantageSources);
         }
@@ -169,6 +166,11 @@ namespace Assets.Scripts.Combat.Rolls
         }
 
         // ==================== GATHERING HELPERS ====================
+
+        private static Entity GetContextEntity(RollActor actor)
+        {
+            return actor != null ? actor.GetEntity() : null;
+        }
 
         private static AdvantageSource ResolveGrantedSource(RollMode grantedMode, string label)
         {
@@ -235,26 +237,32 @@ namespace Assets.Scripts.Combat.Rolls
 
             foreach (var target in grant.targets)
             {
-                if (spec is SkillCheckSpec check)
+                if (spec is VehicleSkillCheckSpec vCheck)
                 {
-                    if (check.IsVehicleCheck && target is VehicleCheckAdvantage vca
+                    if (target is VehicleCheckAdvantage vca
                         && (vca.limitTo == null || vca.limitTo.Count == 0
-                            || vca.limitTo.Contains(check.vehicleAttribute)))
-                        return true;
-                    if (check.IsCharacterCheck && target is CharacterCheckAdvantage cca
-                        && (cca.limitTo == null || cca.limitTo.Count == 0
-                            || cca.limitTo.Contains(check.characterSkill)))
+                            || vca.limitTo.Contains(vCheck.vehicleAttribute)))
                         return true;
                 }
-                else if (spec is SaveSpec save)
+                else if (spec is CharacterSkillCheckSpec cCheck)
                 {
-                    if (save.IsVehicleSave && target is VehicleSaveAdvantage vsa
-                        && (vsa.limitTo == null || vsa.limitTo.Count == 0
-                            || vsa.limitTo.Contains(save.vehicleAttribute)))
+                    if (target is CharacterCheckAdvantage cca
+                        && (cca.limitTo == null || cca.limitTo.Count == 0
+                            || cca.limitTo.Contains(cCheck.characterSkill)))
                         return true;
-                    if (save.IsCharacterSave && target is CharacterSaveAdvantage csa
+                }
+                else if (spec is VehicleSaveSpec vSave)
+                {
+                    if (target is VehicleSaveAdvantage vsa
+                        && (vsa.limitTo == null || vsa.limitTo.Count == 0
+                            || vsa.limitTo.Contains(vSave.vehicleAttribute)))
+                        return true;
+                }
+                else if (spec is CharacterSaveSpec cSave)
+                {
+                    if (target is CharacterSaveAdvantage csa
                         && (csa.limitTo == null || csa.limitTo.Count == 0
-                            || csa.limitTo.Contains(save.characterAttribute)))
+                            || csa.limitTo.Contains(cSave.characterAttribute)))
                         return true;
                 }
                 else if (spec is AttackSpec && target is AttackAdvantage)

@@ -1,6 +1,4 @@
-﻿using Assets.Scripts.Effects;
-using System.Collections.Generic;
-using UnityEngine;
+﻿using UnityEngine;
 
 namespace Assets.Scripts.Events.EventCard
 {

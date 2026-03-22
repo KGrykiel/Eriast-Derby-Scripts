@@ -1,6 +1,5 @@
 ﻿using Assets.Scripts.Combat.Rolls.RollSpecs.SpecTypes;
 using Assets.Scripts.StatusEffects;
-using UnityEngine;
 
 namespace Assets.Scripts.Combat.Rolls.RollTypes.SkillChecks
 {
@@ -25,26 +24,25 @@ namespace Assets.Scripts.Combat.Rolls.RollTypes.SkillChecks
             }
             else
             {
-                var gathered = RollGatherer.ForSkillCheck(ctx.Spec, routing.Component, routing.Character);
+                var gathered = RollGatherer.ForSkillCheck(ctx.Spec, routing.Actor);
                 roll = D20Calculator.Roll(gathered, ctx.Spec.dc);
                 isAutoFail = false;
             }
 
             // Step 3: Emit event automatically (WOTR-style)
-            Entity sourceEntity = routing.Component != null ? routing.Component : ctx.Vehicle.chassis;
+            RollActor actor = routing.Actor ?? new ComponentActor(ctx.Vehicle.chassis);
             CombatEventBus.EmitSkillCheck(
                 roll,
-                sourceEntity,
+                actor,
                 ctx.CausalSource,
-                roll.Success,
                 ctx.Spec.DisplayName,
-                isAutoFail,
-                routing.Character);
+                isAutoFail);
 
             // Step 4: Notify d20 roll trigger on roller
-            if (routing.CanAttempt && routing.Component != null)
+            Entity actorEntity = actor.GetEntity();
+            if (routing.CanAttempt && actorEntity != null)
             {
-                routing.Component.NotifyStatusEffectTrigger(RemovalTrigger.OnD20Roll);
+                actorEntity.NotifyStatusEffectTrigger(RemovalTrigger.OnD20Roll);
             }
 
             return roll;
@@ -54,16 +52,16 @@ namespace Assets.Scripts.Combat.Rolls.RollTypes.SkillChecks
         public static D20RollOutcome ExecuteForEntity(
             Entity entity,
             SkillCheckSpec spec,
-            Object causalSource)
+            string causalSource)
         {
-            var gathered = RollGatherer.ForSkillCheck(spec, entity);
+            var actor = new ComponentActor(entity);
+            var gathered = RollGatherer.ForSkillCheck(spec, actor);
             var roll = D20Calculator.Roll(gathered, spec.dc);
 
             CombatEventBus.EmitSkillCheck(
                 roll,
-                entity,
+                actor,
                 causalSource,
-                roll.Success,
                 spec.DisplayName);
 
             entity?.NotifyStatusEffectTrigger(RemovalTrigger.OnD20Roll);

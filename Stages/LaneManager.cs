@@ -81,9 +81,6 @@ namespace Assets.Scripts.Stages
 
             StageLane currentLane = GetVehicleLane(vehicle);
 
-            if (currentLane != null && currentLane != targetLane && currentLane.laneStatusEffect != null)
-                RemoveLaneStatusEffect(vehicle, currentLane);
-
             if (currentLane != null && currentLane != targetLane)
                 currentLane.vehiclesInLane.Remove(vehicle);
 
@@ -164,17 +161,6 @@ namespace Assets.Scripts.Stages
             }
         }
 
-        public void RemoveLaneStatusEffect(Vehicle vehicle, StageLane lane)
-        {
-            if (lane == null) return;
-
-            foreach (var component in vehicle.AllComponents)
-            {
-                if (component != null)
-                    component.RemoveStatusEffectsFromSource(lane);
-            }
-        }
-
         // ==================== LANE TURN EFFECTS ====================
 
         public void ProcessLaneTurnEffects(Vehicle vehicle)
@@ -195,7 +181,7 @@ namespace Assets.Scripts.Stages
         private void ResolveLaneTurnEffect(Vehicle vehicle, StageLane lane, LaneTurnEffect effect)
         {
             var ctx = new RollContext { SourceVehicle = vehicle };
-            bool success = RollNodeExecutor.Execute(effect.rollNode, ctx, causalSource: stage);
+            bool success = RollNodeExecutor.Execute(effect.rollNode, ctx, stage.name);
             stage.LogLaneTurnEffect(vehicle, lane, effect, success);
         }
     }

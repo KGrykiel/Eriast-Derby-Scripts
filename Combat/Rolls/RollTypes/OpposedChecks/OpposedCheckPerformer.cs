@@ -31,28 +31,32 @@ namespace Assets.Scripts.Combat.Rolls.RollTypes.OpposedChecks
             else
             {
                 var defenderGathered = RollGatherer.ForSkillCheck(
-                    ctx.Spec.defenderSpec, defenderRouting.Component, defenderRouting.Character);
+                    ctx.Spec.defenderSpec, defenderRouting.Actor);
                 defenderRoll = D20Calculator.Roll(defenderGathered, 0);
 
                 var attackerGathered = RollGatherer.ForSkillCheck(
-                    ctx.Spec.attackerSpec, attackerRouting.Component, attackerRouting.Character);
+                    ctx.Spec.attackerSpec, attackerRouting.Actor);
                 result = D20Calculator.Roll(attackerGathered, defenderRoll.Total);
             }
 
-            Entity attackerEntity = attackerRouting.Component ?? ctx.AttackerVehicle?.chassis;
-            Entity defenderEntity = defenderRouting.Component ?? ctx.DefenderVehicle?.chassis;
+            RollActor attackerActor = attackerRouting.Actor
+                ?? (ctx.AttackerVehicle != null ? new ComponentActor(ctx.AttackerVehicle.chassis) : null);
+            RollActor defenderActor = defenderRouting.Actor
+                ?? (ctx.DefenderVehicle != null ? new ComponentActor(ctx.DefenderVehicle.chassis) : null);
 
             CombatEventBus.EmitOpposedCheck(
-                result, defenderRoll, attackerEntity, defenderEntity, ctx.CausalSource,
+                result, defenderRoll, attackerActor, defenderActor, ctx.CausalSource,
                 ctx.Spec.attackerSpec.DisplayName, ctx.Spec.defenderSpec.DisplayName);
 
-            if (attackerRouting.CanAttempt && attackerRouting.Component != null)
+            Entity attackerEntity = attackerActor?.GetEntity();
+            Entity defenderEntity = defenderActor?.GetEntity();
+            if (attackerRouting.CanAttempt && attackerEntity != null)
             {
-                attackerRouting.Component.NotifyStatusEffectTrigger(RemovalTrigger.OnD20Roll);
+                attackerEntity.NotifyStatusEffectTrigger(RemovalTrigger.OnD20Roll);
             }
-            if (defenderRouting.CanAttempt && defenderRouting.Component != null)
+            if (defenderRouting.CanAttempt && defenderEntity != null)
             {
-                defenderRouting.Component.NotifyStatusEffectTrigger(RemovalTrigger.OnD20Roll);
+                defenderEntity.NotifyStatusEffectTrigger(RemovalTrigger.OnD20Roll);
             }
 
             return result;

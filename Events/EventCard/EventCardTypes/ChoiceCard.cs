@@ -62,7 +62,7 @@ namespace Assets.Scripts.Events.EventCard.EventCardTypes
         private CardResolutionResult ResolveChoice(CardChoice choice, Vehicle vehicle)
         {
             var ctx = new RollContext { SourceVehicle = vehicle };
-            bool success = RollNodeExecutor.Execute(choice.rollNode, ctx, causalSource: this);
+            bool success = RollNodeExecutor.Execute(choice.rollNode, ctx, this.name);
 
             string narrative = success ? choice.rollNode?.successNarrative : choice.rollNode?.failureNarrative;
             if (string.IsNullOrEmpty(narrative))

@@ -13,8 +13,7 @@ namespace Assets.Scripts.Combat.Restoration
             RestorationFormula formula,
             int rolledAmount,
             Entity target,
-            Entity source = null,
-            Object causalSource = null)
+            Entity source = null)
         {
             var result = formula.resourceType switch
             {
@@ -23,7 +22,7 @@ namespace Assets.Scripts.Combat.Restoration
                 _ => BuildNoChangeResult(formula, rolledAmount)
             };
 
-            CombatEventBus.EmitRestoration(result, source, target, causalSource);
+            CombatEventBus.EmitRestoration(result, source, target);
             return result;
         }
 

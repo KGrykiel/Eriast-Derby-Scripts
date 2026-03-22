@@ -1,5 +1,6 @@
 ﻿using System;
 using SerializeReferenceEditor;
+using UnityEngine;
 
 namespace Assets.Scripts.Combat.Rolls.RollSpecs.SpecTypes
 {
@@ -8,7 +9,10 @@ namespace Assets.Scripts.Combat.Rolls.RollSpecs.SpecTypes
     [SRName("Opposed Check")]
     public class OpposedCheckRollSpec : IRollSpec
     {
+        [SerializeReference, SR]
         public SkillCheckSpec attackerSpec;
+
+        [SerializeReference, SR]
         public SkillCheckSpec defenderSpec;
     }
 }

@@ -1,4 +1,5 @@
 ﻿using Assets.Scripts.Characters;
+using Assets.Scripts.Combat.Rolls;
 using Assets.Scripts.Combat.Rolls.RollSpecs.SpecTypes;
 using Assets.Scripts.Entities.Vehicle;
 
@@ -17,24 +18,20 @@ namespace Assets.Scripts.Combat
         /// </summary>
         public class RoutingResult
         {
-            /// <summary>The component involved (for base value + applied modifiers). Null if none.</summary>
-            public Entity Component;
-            
-            /// <summary>The character making the check (for attr mod + proficiency). Null for vehicle-only checks.</summary>
-            public Character Character;
-            
+            /// <summary>Who or what makes the roll.</summary>
+            public RollActor Actor;
+
             /// <summary>Whether the check can be attempted at all.</summary>
             public bool CanAttempt;
-            
+
             /// <summary>Why the check can't be attempted (for UI/narrative). Null if CanAttempt is true.</summary>
             public string FailureReason;
-            
-            public static RoutingResult Success(Entity component, Character character = null)
+
+            public static RoutingResult Success(RollActor actor)
             {
                 return new RoutingResult
                 {
-                    Component = component,
-                    Character = character,
+                    Actor = actor,
                     CanAttempt = true
                 };
             }
@@ -57,10 +54,13 @@ namespace Assets.Scripts.Combat
             if (vehicle == null)
                 return RoutingResult.Failure("No vehicle");
 
-            if (spec.IsCharacterCheck)
-                return RouteCharacterSkillCheck(vehicle, spec, initiatingCharacter);
+            if (spec is CharacterSkillCheckSpec charSpec)
+                return RouteCharacterSkillCheck(vehicle, charSpec, initiatingCharacter);
 
-            return RouteVehicleCheck(vehicle, spec);
+            if (spec is VehicleSkillCheckSpec vehicleSpec)
+                return RouteVehicleCheck(vehicle, vehicleSpec);
+
+            return RoutingResult.Failure("Unknown skill check spec type");
         }
 
         public static RoutingResult RouteSave(
@@ -71,35 +71,38 @@ namespace Assets.Scripts.Combat
             if (vehicle == null)
                 return RoutingResult.Failure("No vehicle");
 
-            if (spec.IsCharacterSave)
-                return RouteCharacterSave(vehicle, spec, targetComponent);
+            if (spec is CharacterSaveSpec charSpec)
+                return RouteCharacterSave(vehicle, charSpec, targetComponent);
 
-            return RouteVehicleSave(vehicle, spec);
+            if (spec is VehicleSaveSpec vehicleSpec)
+                return RouteVehicleSave(vehicle, vehicleSpec);
+
+            return RoutingResult.Failure("Unknown save spec type");
         }
 
         // ==================== VEHICLE CHECK ROUTING ====================
 
-        private static RoutingResult RouteVehicleCheck(Vehicle vehicle, SkillCheckSpec spec)
+        private static RoutingResult RouteVehicleCheck(Vehicle vehicle, VehicleSkillCheckSpec spec)
         {
             Entity component = GetComponentForVehicleAttribute(vehicle, spec.vehicleAttribute);
             if (component == null)
                 return RoutingResult.Failure($"No component available for {spec.DisplayName}");
 
-            return RoutingResult.Success(component);
+            return RoutingResult.Success(new ComponentActor(component));
         }
 
-        private static RoutingResult RouteVehicleSave(Vehicle vehicle, SaveSpec spec)
+        private static RoutingResult RouteVehicleSave(Vehicle vehicle, VehicleSaveSpec spec)
         {
             Entity component = GetComponentForVehicleAttribute(vehicle, spec.vehicleAttribute);
             if (component == null)
                 return RoutingResult.Failure($"No component available for {spec.DisplayName} save");
 
-            return RoutingResult.Success(component);
+            return RoutingResult.Success(new ComponentActor(component));
         }
 
         // ==================== CHARACTER CHECK ROUTING ====================
 
-        private static RoutingResult RouteCharacterSkillCheck(Vehicle vehicle, SkillCheckSpec spec, Character initiatingCharacter)
+        private static RoutingResult RouteCharacterSkillCheck(Vehicle vehicle, CharacterSkillCheckSpec spec, Character initiatingCharacter)
         {
             // If check requires a specific component type, validate it and find operator
             if (spec.RequiresComponent)
@@ -110,20 +113,20 @@ namespace Assets.Scripts.Combat
             // Priority 1: Specific character initiated this skill (character-initiated skills)
             if (initiatingCharacter != null)
             {
-                return RoutingResult.Success(null, initiatingCharacter);
+                return RoutingResult.Success(new CharacterActor(initiatingCharacter));
             }
 
             // Priority 2: No specific character - use character with best modifier (event cards, lane effects)
             Character bestCharacter = GetCharacterWithBestSkillModifier(vehicle, spec.characterSkill);
             if (bestCharacter != null)
-                return RoutingResult.Success(null, bestCharacter);
+                return RoutingResult.Success(new CharacterActor(bestCharacter));
 
             return RoutingResult.Failure($"No character available for {spec.DisplayName}");
         }
 
         private static RoutingResult RouteCharacterSave(
             Vehicle vehicle,
-            SaveSpec spec,
+            CharacterSaveSpec spec,
             VehicleComponent targetComponent)
         {
             // If save requires a specific component type, validate it and find operator
@@ -138,20 +141,20 @@ namespace Assets.Scripts.Combat
             if (targetComponent != null && targetComponent.IsOperational)
             {
                 var seat = vehicle.GetSeatForComponent(targetComponent);
-                Character character = seat?.assignedCharacter;
+                Character character = seat != null ? seat.assignedCharacter : null;
                 if (character != null)
-                    return RoutingResult.Success(targetComponent, character);
+                    return RoutingResult.Success(new CharacterWithToolActor(character, targetComponent));
             }
 
             // Priority 2: Best modifier for the save attribute
             Character bestCharacter = GetCharacterWithBestSaveModifier(vehicle, spec.characterAttribute);
             if (bestCharacter != null)
-                return RoutingResult.Success(null, bestCharacter);
+                return RoutingResult.Success(new CharacterActor(bestCharacter));
 
             // Priority 3: First assigned character (fallback)
             Character fallbackCharacter = GetFirstAssignedCharacter(vehicle);
             if (fallbackCharacter != null)
-                return RoutingResult.Success(null, fallbackCharacter);
+                return RoutingResult.Success(new CharacterActor(fallbackCharacter));
 
             return RoutingResult.Failure("No character available for save");
         }
@@ -255,7 +258,7 @@ namespace Assets.Scripts.Combat
             if (character == null)
                 return RoutingResult.Failure($"{seat.seatName} has no assigned character");
 
-            return RoutingResult.Success(component, character);
+            return RoutingResult.Success(new CharacterWithToolActor(character, component));
         }
     }
 }

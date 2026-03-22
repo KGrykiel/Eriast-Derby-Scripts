@@ -1,10 +1,8 @@
 using UnityEngine;
 using System.Collections.Generic;
 using Assets.Scripts.Combat.Damage;
-using System.Linq;
 using Assets.Scripts.StatusEffects;
 using Assets.Scripts.Entities;
-using Assets.Scripts.Combat;
 using Assets.Scripts.Core;
 
 /// <summary>
@@ -170,12 +168,6 @@ public abstract class Entity : MonoBehaviour
     public virtual void RemoveStatusEffect(AppliedStatusEffect statusEffect)
     {
         statusEffects.Remove(statusEffect);
-    }
-
-    /// <summary>Removes all effects from a specific source (e.g. leaving a lane).</summary>
-    public virtual void RemoveStatusEffectsFromSource(Object source)
-    {
-        statusEffects.RemoveFromSource(source);
     }
 
     /// <summary>Removes all effects matching the specified categories (skill-based dispel).</summary>

@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
-using UnityEngine;
+using Assets.Scripts.Combat.Rolls;
 
 namespace Assets.Scripts.Combat
 {
@@ -10,30 +10,28 @@ namespace Assets.Scripts.Combat
     /// </summary>
     public class CombatAction
     {
-        public Entity Actor { get; set; }
-        public Object Source { get; set; }
+        public RollActor SourceActor { get; set; }
+        public string Source { get; set; }
         public Vehicle PrimaryTarget { get; set; }
 
         /// <summary>Stored, not derived from Actor. Null for standalone entities.</summary>
         public Vehicle SourceVehicle { get; set; }
 
-        /// <summary>Null for component-only or standalone actions. Enables "CharacterName uses Skill" logging.</summary>
-        public Character SourceCharacter { get; set; }
+        /// <summary>Derived from SourceActor for generic event handling.</summary>
+        public Entity Actor => SourceActor?.GetEntity();
 
         public List<CombatEvent> Events { get; } = new List<CombatEvent>();
 
         public CombatAction(
-            Entity actor,
-            Object source,
+            RollActor sourceActor,
+            string source,
             Vehicle primaryTarget = null,
-            Vehicle sourceVehicle = null,
-            Character sourceCharacter = null)
+            Vehicle sourceVehicle = null)
         {
-            Actor = actor;
+            SourceActor = sourceActor;
             Source = source;
             PrimaryTarget = primaryTarget;
             SourceVehicle = sourceVehicle;
-            SourceCharacter = sourceCharacter;
         }
 
         public void AddEvent(CombatEvent evt)
@@ -97,7 +95,7 @@ namespace Assets.Scripts.Combat
         }
 
         public bool HasEvents => Events.Count > 0;
-        public string SourceName => Source != null ? (Source.name ?? "Unknown") : "Unknown";
+        public string SourceName => Source ?? "Unknown";
 
         /// <summary>Prefers stored SourceVehicle, falls back to entity derivation.</summary>
         public Vehicle ActorVehicle => SourceVehicle ?? EntityHelpers.GetParentVehicle(Actor);

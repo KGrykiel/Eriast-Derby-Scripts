@@ -12,15 +12,17 @@ namespace Assets.Scripts.Effects
         public bool IsCriticalHit;
         public Entity SourceEntity;
         public DamageSource? DamageSourceOverride;
+        public string CausalSource;
 
         public static EffectContext Default => new();
 
-        public static EffectContext FromRollContext(RollContext ctx)
+        public static EffectContext FromRollContext(RollContext ctx, bool isCriticalHit = false)
         {
+            Entity sourceEntity = ctx.SourceActor?.GetEntity();
             return new EffectContext
             {
-                IsCriticalHit = ctx.IsCriticalHit,
-                SourceEntity = ctx.SourceEntity
+                IsCriticalHit = isCriticalHit,
+                SourceEntity = sourceEntity
             };
         }
     }

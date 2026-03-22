@@ -1,6 +1,5 @@
 ﻿using Assets.Scripts.Combat.Rolls.RollSpecs.SpecTypes;
 using Assets.Scripts.StatusEffects;
-using UnityEngine;
 
 namespace Assets.Scripts.Combat.Rolls.RollTypes.Saves
 {
@@ -25,29 +24,26 @@ namespace Assets.Scripts.Combat.Rolls.RollTypes.Saves
             }
             else
             {
-                var gathered = RollGatherer.ForSave(ctx.Spec, routing.Component, routing.Character);
+                var gathered = RollGatherer.ForSave(ctx.Spec, routing.Actor);
                 roll = D20Calculator.Roll(gathered, ctx.Spec.dc);
                 isAutoFail = false;
             }
 
             // Step 3: Emit event automatically
-            Entity defenderEntity = routing.Component != null ? routing.Component : ctx.Vehicle.chassis;
-            string targetName = ctx.TargetComponent != null ? ctx.TargetComponent.name : "Vehicle";
+            RollActor defender = routing.Actor ?? new ComponentActor(ctx.Vehicle.chassis);
             CombatEventBus.EmitSavingThrow(
                 roll,
                 ctx.AttackerEntity,
-                defenderEntity,
+                defender,
                 ctx.CausalSource,
-                roll.Success,
                 ctx.Spec.DisplayName,
-                isAutoFail,
-                targetName,
-                routing.Character);
+                isAutoFail);
 
             // Step 4: Notify d20 roll trigger
-            if (routing.CanAttempt && routing.Component != null)
+            Entity actorEntity = defender.GetEntity();
+            if (routing.CanAttempt && actorEntity != null)
             {
-                routing.Component.NotifyStatusEffectTrigger(RemovalTrigger.OnD20Roll);
+                actorEntity.NotifyStatusEffectTrigger(RemovalTrigger.OnD20Roll);
             }
 
             return roll;
@@ -57,22 +53,19 @@ namespace Assets.Scripts.Combat.Rolls.RollTypes.Saves
         public static D20RollOutcome ExecuteForEntity(
             Entity entity,
             SaveSpec spec,
-            Object causalSource,
+            string causalSource,
             Entity attackerEntity = null)
         {
-            var gathered = RollGatherer.ForSave(spec, entity);
+            var defender = new ComponentActor(entity);
+            var gathered = RollGatherer.ForSave(spec, defender);
             var roll = D20Calculator.Roll(gathered, spec.dc);
 
-            string targetName = entity != null ? entity.name : "Target";
             CombatEventBus.EmitSavingThrow(
                 roll,
                 attackerEntity,
-                entity,
+                defender,
                 causalSource,
-                roll.Success,
-                spec.DisplayName,
-                isAutoFail: false,
-                targetName);
+                spec.DisplayName);
 
             entity?.NotifyStatusEffectTrigger(RemovalTrigger.OnD20Roll);
 

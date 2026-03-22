@@ -1,5 +1,4 @@
 ﻿using UnityEngine;
-using Assets.Scripts.Effects;
 using Assets.Scripts.StatusEffects;
 using StatusEffectTemplate = Assets.Scripts.StatusEffects.StatusEffect;
 
@@ -19,7 +18,7 @@ namespace Assets.Scripts.Effects.EffectTypes
         [Tooltip("Optional: remove only this specific status effect template. Takes priority over categories.")]
         public StatusEffectTemplate specificTemplate;
 
-        public override void Apply(Entity target, EffectContext context, Object source = null)
+        public override void Apply(Entity target, EffectContext context)
         {
             if (specificTemplate != null)
             {

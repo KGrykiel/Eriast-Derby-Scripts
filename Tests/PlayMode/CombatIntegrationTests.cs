@@ -77,8 +77,7 @@ namespace Assets.Scripts.Tests.PlayMode
             var ctx = new RollContext
             {
                 SourceVehicle = playerVehicle,
-                SourceEntity = playerVehicle.optionalComponents[0],
-                SourceCharacter = bob,
+                SourceActor = new CharacterWithToolActor(bob, playerVehicle.optionalComponents[0]),
                 TargetEntity = enemyVehicle.chassis
             };
             playerVehicle.ExecuteSkill(ctx, cannonShot);
@@ -114,8 +113,7 @@ namespace Assets.Scripts.Tests.PlayMode
             var ctx = new RollContext
             {
                 SourceVehicle = playerVehicle,
-                SourceEntity = playerVehicle.optionalComponents[0],
-                SourceCharacter = gunner,
+                SourceActor = new CharacterWithToolActor(gunner, playerVehicle.optionalComponents[0]),
                 TargetEntity = enemyVehicle.chassis
             };
             bool executed = playerVehicle.ExecuteSkill(ctx, expensiveSkill);
@@ -158,8 +156,7 @@ namespace Assets.Scripts.Tests.PlayMode
             var ctx = new RollContext
             {
                 SourceVehicle = playerVehicle,
-                SourceEntity = playerVehicle.powerCore,
-                SourceCharacter = engineer,
+                SourceActor = new CharacterWithToolActor(engineer, playerVehicle.powerCore),
                 TargetEntity = playerVehicle.chassis
             };
             playerVehicle.ExecuteSkill(ctx, reinforceSkill);
@@ -209,8 +206,7 @@ namespace Assets.Scripts.Tests.PlayMode
             var ctx = new RollContext
             {
                 SourceVehicle = playerVehicle,
-                SourceEntity = playerVehicle.optionalComponents[0],
-                SourceCharacter = pyro,
+                SourceActor = new CharacterWithToolActor(pyro, playerVehicle.optionalComponents[0]),
                 TargetEntity = enemyVehicle.chassis
             };
             playerVehicle.ExecuteSkill(ctx, flameThrower);
@@ -282,7 +278,7 @@ namespace Assets.Scripts.Tests.PlayMode
 
             // Test 4: Attack bonuses stack correctly
             var attackSpec = new AttackSpec { grantedMode = RollMode.Normal };
-            var gathered = RollGatherer.ForAttack(attackSpec, playerVehicle.optionalComponents[0], gunner);
+            var gathered = RollGatherer.ForAttack(attackSpec, new CharacterWithToolActor(gunner, playerVehicle.optionalComponents[0]));
             var bonuses = gathered.Bonuses;
             int totalMod = bonuses.Sum(b => b.Value);
             Assert.AreEqual(6, totalMod, "Attack bonus should be weapon(2) + character(4) = 6");
@@ -322,13 +318,6 @@ namespace Assets.Scripts.Tests.PlayMode
             var effects = playerVehicle.chassis.GetActiveStatusEffects();
             Assert.AreEqual(1, effects.Count);
             Assert.AreEqual("Cliff Edge", effects[0].template.effectName);
-
-            // Remove lane effect (vehicle leaves lane)
-            playerVehicle.chassis.RemoveStatusEffectsFromSource(cliffLane);
-            yield return null;
-
-            int acRestored = playerVehicle.chassis.GetArmorClass();
-            Assert.AreEqual(acBefore, acRestored, "AC should restore after leaving lane");
         }
 
         // ==================== LANE WITH TURN EFFECT: SKILL CHECK OR TAKE DAMAGE ====================
@@ -436,7 +425,7 @@ namespace Assets.Scripts.Tests.PlayMode
             var ctx = new RollContext
             {
                 SourceVehicle = enemyVehicle,
-                SourceCharacter = enemyCaster,
+                SourceActor = new CharacterActor(enemyCaster),
                 TargetEntity = playerVehicle.chassis
             };
             enemyVehicle.ExecuteSkill(ctx, psychicScream);
@@ -644,8 +633,7 @@ namespace Assets.Scripts.Tests.PlayMode
                     var playerCtx = new RollContext
                     {
                         SourceVehicle = playerVehicle,
-                        SourceEntity = playerVehicle.optionalComponents[0],
-                        SourceCharacter = pGunner,
+                        SourceActor = new CharacterWithToolActor(pGunner, playerVehicle.optionalComponents[0]),
                         TargetEntity = enemyVehicle.chassis
                     };
                     playerVehicle.ExecuteSkill(playerCtx, playerAttack);
@@ -657,8 +645,7 @@ namespace Assets.Scripts.Tests.PlayMode
                     var enemyCtx = new RollContext
                     {
                         SourceVehicle = enemyVehicle,
-                        SourceEntity = enemyVehicle.optionalComponents[0],
-                        SourceCharacter = eGunner,
+                        SourceActor = new CharacterWithToolActor(eGunner, enemyVehicle.optionalComponents[0]),
                         TargetEntity = playerVehicle.chassis
                     };
                     enemyVehicle.ExecuteSkill(enemyCtx, enemyAttack);
@@ -684,51 +671,5 @@ namespace Assets.Scripts.Tests.PlayMode
             Assert.IsNotNull(enemyVehicle.chassis);
         }
 
-        // ==================== LANE TRANSITION: EFFECTS SWAP WHEN CHANGING LANES ====================
-
-        [UnityTest]
-        public IEnumerator LaneTransition_EffectsSwapCorrectly()
-        {
-            var driver = TestCharacterFactory.CreateWithCleanup("Driver", cleanup: cleanup);
-            playerVehicle = TestVehicleBuilder.CreateWithChassis(driver);
-
-            // Lane A: +2 AC (cover)
-            var coverEffect = TestStatusEffectFactory.CreateModifierEffect("Cover", Attribute.ArmorClass, 2f, cleanup: cleanup);
-            // Lane B: -2 AC (exposed)
-            var exposedEffect = TestStatusEffectFactory.CreateModifierEffect("Exposed", Attribute.ArmorClass, -2f, cleanup: cleanup);
-
-            var stage = TestStageFactory.CreateStage("Two Lane Stage", out stageObj);
-            var laneA = TestStageFactory.CreateLane("Covered Lane", stage, stageObj, coverEffect);
-            var laneB = TestStageFactory.CreateLane("Exposed Lane", stage, stageObj, exposedEffect);
-
-            int baseAC = playerVehicle.chassis.GetArmorClass();
-
-            // Enter Lane A
-            playerVehicle.currentLane = laneA;
-            laneA.vehiclesInLane.Add(playerVehicle);
-            playerVehicle.chassis.ApplyStatusEffect(coverEffect, laneA);
-            yield return null;
-
-            Assert.AreEqual(baseAC + 2, playerVehicle.chassis.GetArmorClass(),
-                "Should have +2 AC in Covered Lane");
-
-            // Switch to Lane B: remove old lane effects, apply new
-            playerVehicle.chassis.RemoveStatusEffectsFromSource(laneA);
-            laneA.vehiclesInLane.Remove(playerVehicle);
-            playerVehicle.currentLane = laneB;
-            laneB.vehiclesInLane.Add(playerVehicle);
-            playerVehicle.chassis.ApplyStatusEffect(exposedEffect, laneB);
-            yield return null;
-
-            Assert.AreEqual(baseAC - 2, playerVehicle.chassis.GetArmorClass(),
-                "Should have -2 AC in Exposed Lane");
-
-            // Leave lane entirely
-            playerVehicle.chassis.RemoveStatusEffectsFromSource(laneB);
-            yield return null;
-
-            Assert.AreEqual(baseAC, playerVehicle.chassis.GetArmorClass(),
-                "AC should return to base after leaving all lanes");
+            }
         }
-    }
-}

@@ -16,19 +16,19 @@ public class AttributeModifierEffect : EffectBase
     public ModifierType type;
     public float value;
 
-    public AttributeModifier ToRuntimeModifier(UnityEngine.Object source)
+    public AttributeModifier ToRuntimeModifier()
     {
         return new AttributeModifier(
             attribute,
             type,
             value,
-            source,
+            null,
             ModifierCategory.Other
         );
     }
 
-    public override void Apply(Entity target, EffectContext context, UnityEngine.Object source = null)
+    public override void Apply(Entity target, EffectContext context)
     {
-        target.AddModifier(ToRuntimeModifier(source));
+        target.AddModifier(ToRuntimeModifier());
     }
 }

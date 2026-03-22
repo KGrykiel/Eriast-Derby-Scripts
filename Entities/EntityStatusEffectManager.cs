@@ -51,18 +51,6 @@ namespace Assets.Scripts.Entities
             }
         }
 
-        /// <summary>Removes all effects from a specific source (e.g. leaving a lane).</summary>
-        public void RemoveFromSource(Object source)
-        {
-            if (source == null) return;
-
-            var toRemove = activeEffects.Where(e => e.applier == source).ToList();
-            foreach (var effect in toRemove)
-            {
-                Remove(effect);
-            }
-        }
-
         public List<AppliedStatusEffect> GetActive() => activeEffects;
 
         /// <summary>Ticks periodic effects, decrements durations, removes expired. Called by handler each turn.</summary>
@@ -245,7 +233,7 @@ namespace Assets.Scripts.Entities
             activeEffects.Add(applied);
 
             Entity sourceEntity = applier as Entity;
-            CombatEventBus.EmitStatusEffect(applied, sourceEntity, owner, applier, wasReplacement);
+            CombatEventBus.EmitStatusEffect(applied, sourceEntity, owner, applier?.name, wasReplacement);
 
             return applied;
         }

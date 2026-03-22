@@ -1,5 +1,4 @@
 ﻿using Assets.Scripts.Combat.Rolls.RollSpecs.SpecTypes;
-using UnityEngine;
 
 namespace Assets.Scripts.Combat.Rolls.RollTypes.Attacks
 {
@@ -16,12 +15,9 @@ namespace Assets.Scripts.Combat.Rolls.RollTypes.Attacks
         public Entity Target;
 
         /// <summary>What triggered this attack (Skill, EventCard, StatusEffect, etc.). Used for logging.</summary>
-        public Object CausalSource;
+        public string CausalSource;
 
-        /// <summary>Entity making the attack (weapon component, turret). Provides weapon bonuses. Null for personal abilities.</summary>
-        public Entity Attacker;
-
-        /// <summary>Character making the attack. Provides attack bonus. Null for non-crew attacks.</summary>
-        public Character Character;
+        /// <summary>Who or what is making the attack. Provides weapon bonuses (if component) and/or attack bonus (if character).</summary>
+        public RollActor Attacker;
     }
 }
