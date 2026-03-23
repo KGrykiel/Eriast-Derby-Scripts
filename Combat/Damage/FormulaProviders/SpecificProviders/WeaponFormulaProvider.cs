@@ -1,6 +1,6 @@
 ﻿using UnityEngine;
 
-namespace Assets.Scripts.Combat.Damage
+namespace Assets.Scripts.Combat.Damage.FormulaProviders.SpecificProviders
 {
     /// <summary>
     /// Dynamic formula that uses weapon stats at runtime.

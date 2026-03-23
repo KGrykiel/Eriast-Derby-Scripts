@@ -1,7 +1,10 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
+using Assets.Scripts.Characters;
+using Assets.Scripts.Conditions;
+using Assets.Scripts.Conditions.CharacterConditions;
 
 namespace Assets.Scripts.Entities.Vehicle
 {
@@ -24,12 +27,12 @@ namespace Assets.Scripts.Entities.Vehicle
         [Header("Character Assignment")]
         [Tooltip("Character currently occupying this seat. Drag PlayerCharacter ScriptableObject here. " +
                  "Leave empty for uncrewed/AI-controlled seats.")]
-        public Character assignedCharacter;
+        [SerializeField] private Character assignedCharacter;
 
         // ==================== TURN STATE ====================
-        
+
         [NonSerialized]
-        public bool hasActedThisTurn = false;
+        private bool _hasActedThisTurn = false;
 
         // ==================== ROLE QUERIES ====================
 
@@ -48,29 +51,6 @@ namespace Assets.Scripts.Entities.Vehicle
             return roles;
         }
 
-        public bool HasRole(RoleType role)
-        {
-            if (role == RoleType.None) return false;
-            return (GetEnabledRoles() & role) != 0;
-        }
-
-        /// <summary>For multi-role penalties (jack of all trades).</summary>
-        public int CountEnabledRoles()
-        {
-            int count = 0;
-            RoleType roles = GetEnabledRoles();
-
-            foreach (RoleType role in Enum.GetValues(typeof(RoleType)))
-            {
-                if (role != RoleType.None && (roles & role) == role)
-                {
-                    count++;
-                }
-            }
-
-            return count;
-        }
-
         // ==================== COMPONENT QUERIES ====================
 
         public IEnumerable<VehicleComponent> GetOperationalComponents()
@@ -85,6 +65,9 @@ namespace Assets.Scripts.Entities.Vehicle
             if (assignedCharacter == null)
                 return false;
 
+            if (HasConditionPreventingActions())
+                return false;
+
             return GetOperationalComponents().Any();
         }
 
@@ -94,6 +77,9 @@ namespace Assets.Scripts.Entities.Vehicle
             if (assignedCharacter == null)
                 return "No character assigned";
 
+            if (HasConditionPreventingActions())
+                return "Character is incapacitated";
+
             if (!GetOperationalComponents().Any())
                 return "All controlled components destroyed or disabled";
 
@@ -102,24 +88,63 @@ namespace Assets.Scripts.Entities.Vehicle
 
         public bool HasActedThisTurn()
         {
-            return hasActedThisTurn;
+            return _hasActedThisTurn;
         }
 
         public void MarkAsActed()
         {
-            hasActedThisTurn = true;
+            _hasActedThisTurn = true;
         }
 
         public void ResetTurnState()
         {
-            hasActedThisTurn = false;
+            _hasActedThisTurn = false;
         }
+
+        public void NotifyStatusEffectTrigger(RemovalTrigger trigger)
+        {
+            ConditionManager.ProcessRemovalTrigger(trigger);
+        }
+
+        // ==================== CONDITION MANAGEMENT ====================
+
+        [NonSerialized]
+        private CharacterConditionManager _conditionManager;
+
+        [NonSerialized]
+        private readonly List<CharacterModifier> _characterModifiers = new();
+
+        private CharacterConditionManager ConditionManager
+        {
+            get
+            {
+                if (_conditionManager == null)
+                    _conditionManager = new CharacterConditionManager(this);
+                return _conditionManager;
+            }
+        }
+
+        public AppliedCharacterCondition ApplyCondition(CharacterCondition condition, UnityEngine.Object applier)
+            => ConditionManager.Apply(condition, applier);
+
+        public List<AppliedCharacterCondition> GetActiveConditions()
+            => ConditionManager.GetActive();
+
+        public void UpdateConditions()
+            => ConditionManager.OnTurnStart();
+
+        public bool HasConditionPreventingActions()
+            => ConditionManager.GetActive().Any(c => c.PreventsActions);
+
+        public void AddCharacterModifier(CharacterModifier modifier) => _characterModifiers.Add(modifier);
+        public void RemoveCharacterModifier(CharacterModifier modifier) => _characterModifiers.Remove(modifier);
+        public List<CharacterModifier> GetCharacterModifiers() => _characterModifiers;
 
         /// <summary>Returns null for character personal skills (not from a component).</summary>
         public VehicleComponent GetComponentForSkill(Skill skill)
         {
             if (skill == null) return null;
-            
+
             // Check each operational component
             foreach (var component in GetOperationalComponents())
             {
@@ -128,9 +153,48 @@ namespace Assets.Scripts.Entities.Vehicle
                     return component;
                 }
             }
-            
+
             // Not from a component - must be character personal skill (or not found)
             return null;
+        }
+
+        // ==================== CHARACTER DATA ====================
+
+        public void Assign(Character character) { assignedCharacter = character; }
+
+        public bool IsAssigned => assignedCharacter != null;
+
+        public bool IsAssignedTo(Character character) => assignedCharacter == character;
+
+        public string GetDisplayName() => assignedCharacter?.characterName;
+
+        public List<Skill> GetPersonalAbilities()
+        {
+            if (assignedCharacter == null) return new List<Skill>();
+            return assignedCharacter.GetPersonalAbilities();
+        }
+
+        public int GetAttributeScore(CharacterAttribute attribute)
+        {
+            if (assignedCharacter == null) return 0;
+            return assignedCharacter.GetAttributeScore(attribute);
+        }
+
+        public bool IsProficientIn(CharacterSkill skill)
+        {
+            return assignedCharacter != null && assignedCharacter.IsProficient(skill);
+        }
+
+        public int GetLevel()
+        {
+            if (assignedCharacter == null) return 0;
+            return assignedCharacter.level;
+        }
+
+        public int GetBaseAttackBonus()
+        {
+            if (assignedCharacter == null) return 0;
+            return assignedCharacter.baseAttackBonus;
         }
     }
 }

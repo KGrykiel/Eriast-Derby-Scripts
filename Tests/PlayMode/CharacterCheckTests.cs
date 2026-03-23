@@ -1,9 +1,10 @@
-﻿using System.Collections;
+using System.Collections;
 using NUnit.Framework;
 using UnityEngine;
 using UnityEngine.TestTools;
 using Assets.Scripts.Characters;
 using Assets.Scripts.Combat;
+using Assets.Scripts.Core;
 using Assets.Scripts.Tests.Helpers;
 using Assets.Scripts.Combat.Rolls.RollTypes.SkillChecks;
 using Assets.Scripts.Combat.Rolls;
@@ -44,8 +45,8 @@ namespace Assets.Scripts.Tests.PlayMode
             Assert.IsNotNull(result);
             Assert.AreNotEqual(0, result.BaseRoll, "Should not auto-fail");
 
-            int expectedDexMod = CharacterFormulas.CalculateAttributeModifier(16);
-            int expectedProf = CharacterFormulas.CalculateProficiencyBonus(3);
+            int expectedDexMod = CharacterStatCalculator.CalculateAttributeModifier(16);
+            int expectedProf = CharacterStatCalculator.CalculateProficiencyBonus(3);
             Assert.AreEqual(expectedDexMod + expectedProf, result.TotalModifier,
                 $"Expected DEX({expectedDexMod}) + Prof({expectedProf})");
             Assert.AreEqual(12, result.TargetValue);
@@ -113,8 +114,10 @@ namespace Assets.Scripts.Tests.PlayMode
             Assert.IsNotNull(result);
             Assert.AreNotEqual(0, result.BaseRoll, "Should not auto-fail");
 
-            int bobMod = CharacterFormulas.CalculateSkillCheckModifier(bob, CharacterSkill.Perception);
-            Assert.AreEqual(bobMod, result.TotalModifier, $"Bob's modifier should be {bobMod}");
+            int expectedWisMod = CharacterStatCalculator.CalculateAttributeModifier(16);
+            int expectedProf = CharacterStatCalculator.CalculateProficiencyBonus(3);
+            Assert.AreEqual(expectedWisMod + expectedProf, result.TotalModifier,
+                $"Expected WIS({expectedWisMod}) + Prof({expectedProf})");
         }
 
         // ==================== Test 1E ====================
@@ -151,12 +154,12 @@ namespace Assets.Scripts.Tests.PlayMode
                 .Build();
 
             var spec = TestSkillFactory.CharacterSkillCheck(CharacterSkill.Mechanics, dc: 12);
-            var result = SkillCheckPerformer.Execute(new SkillCheckExecutionContext { Vehicle = vehicle, Spec = spec, CausalSource = null, Routing = CheckRouter.RouteSkillCheck(vehicle, spec, new CharacterActor(bob)) });
+            var result = SkillCheckPerformer.Execute(new SkillCheckExecutionContext { Vehicle = vehicle, Spec = spec, CausalSource = null, Routing = CheckRouter.RouteSkillCheck(vehicle, spec, new CharacterActor(vehicle.GetSeatForCharacter(bob))) });
             yield return null;
 
             Assert.IsNotNull(result);
-            int bobMod = CharacterFormulas.CalculateSkillCheckModifier(bob, CharacterSkill.Mechanics);
-            Assert.AreEqual(bobMod, result.TotalModifier,
+            int expectedIntMod = CharacterStatCalculator.CalculateAttributeModifier(10);
+            Assert.AreEqual(expectedIntMod, result.TotalModifier,
                 "Should use Bob's modifier (initiating character), NOT Alice's (best modifier)");
         }
 
@@ -171,7 +174,7 @@ namespace Assets.Scripts.Tests.PlayMode
         [TestCase(20, 6)]
         public void Test1G_ProficiencyBonus_AllLevels(int level, int expectedProf)
         {
-            int actual = CharacterFormulas.CalculateProficiencyBonus(level);
+            int actual = CharacterStatCalculator.CalculateProficiencyBonus(level);
             Assert.AreEqual(expectedProf, actual, $"Level {level} should have proficiency +{expectedProf}");
         }
     }

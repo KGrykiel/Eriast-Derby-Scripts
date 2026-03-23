@@ -10,8 +10,9 @@ using Assets.Scripts.Combat.Rolls.Advantage;
 using Assets.Scripts.Combat.Rolls.RollSpecs.SpecTypes;
 using Assets.Scripts.Combat.Rolls.RollTypes.SkillChecks;
 using Assets.Scripts.Entities.Vehicle;
-using Assets.Scripts.StatusEffects;
+using Assets.Scripts.Conditions;
 using Assets.Scripts.Tests.Helpers;
+using Assets.Scripts.Conditions.EntityConditions;
 
 namespace Assets.Scripts.Tests.PlayMode
 {
@@ -34,16 +35,16 @@ namespace Assets.Scripts.Tests.PlayMode
 
         // ==================== HELPERS ====================
 
-        private StatusEffect CreateAdvantageStatusEffect(
+        private EntityCondition CreateAdvantageStatusEffect(
             string name,
             RollMode mode,
             List<IAdvantageTarget> targets,
             string grantLabel = null)
         {
-            var template = ScriptableObject.CreateInstance<StatusEffect>();
+            var template = ScriptableObject.CreateInstance<EntityCondition>();
             template.effectName = name;
             template.baseDuration = -1;
-            template.modifiers = new List<ModifierData>();
+            template.modifiers = new List<EntityModifierData>();
             template.periodicEffects = new List<IPeriodicEffect>();
             template.behavioralEffects = new BehavioralEffectData();
             template.advantageGrants = new List<AdvantageGrant>
@@ -157,7 +158,7 @@ namespace Assets.Scripts.Tests.PlayMode
         {
             var spec = SkillCheckSpec.ForCharacter(CharacterSkill.Piloting);
 
-            var sources = RollGatherer.GatherAdvantageSources(null, spec);
+            var sources = RollGatherer.GatherAdvantageSources(null, null, spec, default);
 
             Assert.AreEqual(0, sources.Count);
         }
@@ -168,7 +169,7 @@ namespace Assets.Scripts.Tests.PlayMode
             var spec = SkillCheckSpec.ForCharacter(CharacterSkill.Piloting);
             var granted = new AdvantageSource("Spec Grant", RollMode.Advantage);
 
-            var sources = RollGatherer.GatherAdvantageSources(null, spec, granted);
+            var sources = RollGatherer.GatherAdvantageSources(null, null, spec, granted);
 
             Assert.AreEqual(1, sources.Count);
             Assert.AreEqual("Spec Grant", sources[0].Label);
@@ -180,7 +181,7 @@ namespace Assets.Scripts.Tests.PlayMode
         {
             var spec = SkillCheckSpec.ForCharacter(CharacterSkill.Piloting);
 
-            var sources = RollGatherer.GatherAdvantageSources(null, spec, default);
+            var sources = RollGatherer.GatherAdvantageSources(null, null, spec, default);
 
             Assert.AreEqual(0, sources.Count,
                 "Default AdvantageSource (Type=Normal) should not be added");
@@ -468,7 +469,7 @@ namespace Assets.Scripts.Tests.PlayMode
             var handlingSpec = SkillCheckSpec.ForVehicle(VehicleCheckAttribute.Mobility);
             handlingSpec.dc = 10;
 
-            var handlingSources = RollGatherer.GatherAdvantageSources(vehicle.chassis, handlingSpec);
+            var handlingSources = RollGatherer.GatherAdvantageSources(vehicle.chassis, null, handlingSpec, default);
 
             Assert.AreEqual(1, handlingSources.Count,
                 "Should match vehicle check with Mobility attribute");
@@ -477,7 +478,7 @@ namespace Assets.Scripts.Tests.PlayMode
             var speedSpec = SkillCheckSpec.ForVehicle(VehicleCheckAttribute.Stability);
             speedSpec.dc = 10;
 
-            var speedSources = RollGatherer.GatherAdvantageSources(vehicle.chassis, speedSpec);
+            var speedSources = RollGatherer.GatherAdvantageSources(vehicle.chassis, null, speedSpec, default);
 
             Assert.AreEqual(0, speedSources.Count,
                 "limitTo [Mobility] should not match Stability checks");

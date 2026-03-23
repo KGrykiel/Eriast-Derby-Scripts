@@ -1,9 +1,10 @@
-﻿using System.Collections;
+using System.Collections;
 using NUnit.Framework;
 using UnityEngine;
 using UnityEngine.TestTools;
 using Assets.Scripts.Characters;
 using Assets.Scripts.Combat;
+using Assets.Scripts.Core;
 using Assets.Scripts.Tests.Helpers;
 using Assets.Scripts.Combat.Rolls.RollTypes.SkillChecks;
 
@@ -32,10 +33,10 @@ namespace Assets.Scripts.Tests.PlayMode
         public void Test8A_NegativeModifiers_CalculateCorrectly()
         {
             // C# integer division truncates toward zero: (3-10)/2 = -7/2 = -3
-            int modifier = CharacterFormulas.CalculateAttributeModifier(3);
+            int modifier = CharacterStatCalculator.CalculateAttributeModifier(3);
             Assert.AreEqual(-3, modifier, "Attribute 3 should give -3 modifier");
 
-            int modifier8 = CharacterFormulas.CalculateAttributeModifier(8);
+            int modifier8 = CharacterStatCalculator.CalculateAttributeModifier(8);
             Assert.AreEqual(-1, modifier8, "Attribute 8 should give -1 modifier");
         }
 
@@ -86,7 +87,7 @@ namespace Assets.Scripts.Tests.PlayMode
         [Test]
         public void Test8D_HighLevel_Level20_ProficiencyCorrect()
         {
-            int proficiency = CharacterFormulas.CalculateProficiencyBonus(20);
+            int proficiency = CharacterStatCalculator.CalculateProficiencyBonus(20);
             Assert.AreEqual(6, proficiency, "Level 20 should have +6 proficiency");
         }
 
@@ -95,10 +96,10 @@ namespace Assets.Scripts.Tests.PlayMode
         [Test]
         public void Test8E_LowLevel_Level1_BoundaryCorrect()
         {
-            int proficiency = CharacterFormulas.CalculateProficiencyBonus(1);
+            int proficiency = CharacterStatCalculator.CalculateProficiencyBonus(1);
             Assert.AreEqual(2, proficiency, "Level 1 should have +2 proficiency");
 
-            int halfLevel = CharacterFormulas.CalculateHalfLevelBonus(1);
+            int halfLevel = CharacterStatCalculator.CalculateHalfLevelBonus(1);
             Assert.AreEqual(0, halfLevel, "Level 1 should have 0 half-level bonus");
         }
     }

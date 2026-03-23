@@ -1,4 +1,4 @@
-namespace Assets.Scripts.StatusEffects
+namespace Assets.Scripts.Conditions
 {
     /// <summary>
     /// Determines how a status effect behaves when reapplied to a target that already has it active.

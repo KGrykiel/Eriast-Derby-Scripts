@@ -219,13 +219,12 @@ public class PlayerController : MonoBehaviour
 
         Vehicle target = selectedTarget != null ? selectedTarget : vehicle;
         Entity targetEntity = selectedTargetComponent != null ? selectedTargetComponent : target.chassis;
-        Character character = currentSeat != null ? currentSeat.assignedCharacter : null;
 
         RollActor sourceActor = null;
-        if (character != null && selectedSkillSourceComponent != null)
-            sourceActor = new CharacterWithToolActor(character, selectedSkillSourceComponent);
-        else if (character != null)
-            sourceActor = new CharacterActor(character);
+        if (currentSeat != null && selectedSkillSourceComponent != null)
+            sourceActor = new CharacterWithToolActor(currentSeat, selectedSkillSourceComponent);
+        else if (currentSeat != null)
+            sourceActor = new CharacterActor(currentSeat);
         else if (selectedSkillSourceComponent != null)
             sourceActor = new ComponentActor(selectedSkillSourceComponent);
 

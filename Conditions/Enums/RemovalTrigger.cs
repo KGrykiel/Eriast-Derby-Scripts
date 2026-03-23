@@ -1,4 +1,4 @@
-namespace Assets.Scripts.StatusEffects
+namespace Assets.Scripts.Conditions
 {
     [System.Flags]
     public enum RemovalTrigger

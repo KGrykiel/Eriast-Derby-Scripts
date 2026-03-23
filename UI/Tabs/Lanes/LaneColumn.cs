@@ -5,6 +5,7 @@ using UnityEngine.UI;
 using TMPro;
 using Assets.Scripts.Stages;
 using Assets.Scripts.Stages.Lanes;
+using Assets.Scripts.Conditions.EntityConditions;
 
 namespace Assets.Scripts.UI.Tabs.Lanes
 {
@@ -76,15 +77,16 @@ namespace Assets.Scripts.UI.Tabs.Lanes
                 {
                     foreach (var mod in lane.laneStatusEffect.modifiers)
                     {
-                        string sign = mod.value >= 0 ? "+" : "";
-                        string attrShort = mod.attribute switch
+                        if (mod is not EntityModifierData entityMod) continue;
+                        string sign = entityMod.value >= 0 ? "+" : "";
+                        string attrShort = entityMod.attribute switch
                         {
                             Attribute.ArmorClass => "AC",
                             Attribute.MaxSpeed => "Spd",
                             Attribute.MaxHealth => "HP",
-                            _ => mod.attribute.ToString().Substring(0, 3)
+                            _ => entityMod.attribute.ToString().Substring(0, 3)
                         };
-                        parts.Add($"{attrShort}{sign}{mod.value}");
+                        parts.Add($"{attrShort}{sign}{entityMod.value}");
                     }
                 }
             }
@@ -111,9 +113,10 @@ namespace Assets.Scripts.UI.Tabs.Lanes
             {
                 foreach (var mod in lane.laneStatusEffect.modifiers)
                 {
-                    if (mod.attribute == Attribute.MaxSpeed && mod.value > 0)
+                    if (mod is not EntityModifierData entityMod) continue;
+                    if (entityMod.attribute == Attribute.MaxSpeed && entityMod.value > 0)
                         hasSpeedBoost = true;
-                    if (mod.attribute == Attribute.ArmorClass && mod.value > 0)
+                    if (entityMod.attribute == Attribute.ArmorClass && entityMod.value > 0)
                         hasDefenseBoost = true;
                 }
             }

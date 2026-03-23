@@ -2,6 +2,7 @@
 using Assets.Scripts.Characters;
 using Assets.Scripts.Combat.Rolls;
 using Assets.Scripts.Combat.Rolls.RollSpecs.SpecTypes;
+using Assets.Scripts.Core;
 using Assets.Scripts.Entities.Vehicle;
 
 namespace Assets.Scripts.Combat
@@ -115,9 +116,9 @@ namespace Assets.Scripts.Combat
             }
 
             // Priority 2: No specific character - use character with best modifier (event cards, lane effects)
-            Character bestCharacter = GetCharacterWithBestSkillModifier(vehicle, spec.characterSkill);
-            if (bestCharacter != null)
-                return RoutingResult.Success(new CharacterActor(bestCharacter));
+            VehicleSeat bestSeat = GetSeatWithBestSkillModifier(vehicle, spec.characterSkill);
+            if (bestSeat != null)
+                return RoutingResult.Success(new CharacterActor(bestSeat));
 
             return RoutingResult.Failure($"No character available for {spec.DisplayName}");
         }
@@ -139,15 +140,14 @@ namespace Assets.Scripts.Combat
             if (targetComponent != null && targetComponent.IsOperational)
             {
                 var seat = vehicle.GetSeatForComponent(targetComponent);
-                Character character = seat != null ? seat.assignedCharacter : null;
-                if (character != null)
-                    return RoutingResult.Success(new CharacterWithToolActor(character, targetComponent));
+                if (seat != null && seat.IsAssigned)
+                    return RoutingResult.Success(new CharacterWithToolActor(seat, targetComponent));
             }
 
             // Priority 2: Best modifier for the save attribute
-            Character bestCharacter = GetCharacterWithBestSaveModifier(vehicle, spec.characterAttribute);
-            if (bestCharacter != null)
-                return RoutingResult.Success(new CharacterActor(bestCharacter));
+            VehicleSeat bestSeat = GetSeatWithBestSaveModifier(vehicle, spec.characterAttribute);
+            if (bestSeat != null)
+                return RoutingResult.Success(new CharacterActor(bestSeat));
 
             return RoutingResult.Failure("No character available for save");
         }
@@ -167,26 +167,25 @@ namespace Assets.Scripts.Combat
         
         // ==================== CHARACTER HELPERS ====================
 
-        private static Character GetCharacterWithBestSkillModifier(Vehicle vehicle, CharacterSkill skill)
-            => GetCharacterWithBestModifier(vehicle, c => CharacterFormulas.CalculateSkillCheckModifier(c, skill));
+        private static VehicleSeat GetSeatWithBestSkillModifier(Vehicle vehicle, CharacterSkill skill)
+            => GetSeatWithBestModifier(vehicle, seat => CharacterStatCalculator.GatherSkillValue(seat, skill));
 
-        private static Character GetCharacterWithBestSaveModifier(Vehicle vehicle, CharacterAttribute attribute)
-            => GetCharacterWithBestModifier(vehicle, c => CharacterFormulas.CalculateSaveModifier(c, attribute));
+        private static VehicleSeat GetSeatWithBestSaveModifier(Vehicle vehicle, CharacterAttribute attribute)
+            => GetSeatWithBestModifier(vehicle, seat => CharacterStatCalculator.GatherSaveValue(seat, attribute));
 
-        private static Character GetCharacterWithBestModifier(Vehicle vehicle, Func<Character, int> getModifier)
+        private static VehicleSeat GetSeatWithBestModifier(Vehicle vehicle, Func<VehicleSeat, int> getModifier)
         {
-            Character best = null;
+            VehicleSeat best = null;
             int bestModifier = int.MinValue;
 
             foreach (var seat in vehicle.seats)
             {
-                var character = seat?.assignedCharacter;
-                if (character == null) continue;
+                if (seat == null || !seat.IsAssigned) continue;
 
-                int modifier = getModifier(character);
+                int modifier = getModifier(seat);
                 if (modifier > bestModifier)
                 {
-                    best = character;
+                    best = seat;
                     bestModifier = modifier;
                 }
             }
@@ -218,11 +217,10 @@ namespace Assets.Scripts.Combat
             if (seat == null)
                 return RoutingResult.Failure($"No seat controls {component.name}");
 
-            Character character = seat.assignedCharacter;
-            if (character == null)
+            if (!seat.IsAssigned)
                 return RoutingResult.Failure($"{seat.seatName} has no assigned character");
 
-            return RoutingResult.Success(new CharacterWithToolActor(character, component));
+            return RoutingResult.Success(new CharacterWithToolActor(seat, component));
         }
     }
 }

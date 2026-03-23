@@ -26,10 +26,10 @@ namespace Assets.Scripts.Entities.Vehicle
     
     public static class VehicleSizeModifiers
     {
-        public static List<AttributeModifier> GetModifiers(VehicleSizeCategory size, UnityEngine.Object source)
+        public static List<AttributeModifier> GetModifiers(VehicleSizeCategory size)
         {
             var modifiers = new List<AttributeModifier>();
-            
+
             // AC Modifier for chassis
             // Large vehicles are easier to hit (bigger target)
             int acMod = size switch
@@ -41,16 +41,15 @@ namespace Assets.Scripts.Entities.Vehicle
                 VehicleSizeCategory.Huge => -4,
                 _ => 0
             };
-            
+
             if (acMod != 0)
             {
                 modifiers.Add(new AttributeModifier(
                     Attribute.ArmorClass,
                     ModifierType.Flat,
                     acMod,
-                    source: source,
-                    category: ModifierCategory.Equipment,
-                    displayNameOverride: $"Size: {size}"
+                    $"Size: {size}",
+                    ModifierCategory.Equipment
                 ));
             }
             
@@ -72,9 +71,8 @@ namespace Assets.Scripts.Entities.Vehicle
                     Attribute.Mobility,
                     ModifierType.Flat,
                     mobilityMod,
-                    source: source,
-                    category: ModifierCategory.Equipment,
-                    displayNameOverride: $"Size: {size}"
+                    $"Size: {size}",
+                    ModifierCategory.Equipment
                 ));
             }
             return modifiers;

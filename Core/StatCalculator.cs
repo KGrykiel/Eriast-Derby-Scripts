@@ -1,6 +1,5 @@
 ﻿using System.Collections.Generic;
 using Assets.Scripts.Modifiers.DynamicModifiers;
-using UnityEngine;
 
 namespace Assets.Scripts.Core
 {
@@ -24,7 +23,7 @@ namespace Assets.Scripts.Core
             allModifiers.AddRange(entityModifiers);
             allModifiers.AddRange(dynamicModifiers);
 
-            int total = CalculateTotal(baseValue, allModifiers);
+            int total = ModifierCalculator.CalculateTotal(baseValue, allModifiers);
 
             return (total, baseValue, allModifiers);
         }
@@ -42,9 +41,9 @@ namespace Assets.Scripts.Core
         {
             return GatherAttributeValueWithBreakdown(target, Attribute.ArmorClass);
         }
-        
+
         // ==================== PRIVATE ====================
-        
+
         /// <summary>
         /// Gather matching modifiers from an entity's modifier list.
         /// Returns a new list — does not mutate the entity.
@@ -52,7 +51,7 @@ namespace Assets.Scripts.Core
         private static List<AttributeModifier> GatherEntityModifiers(Entity entity, Attribute attribute)
         {
             var modifiers = new List<AttributeModifier>();
-            
+
             foreach (var mod in entity.GetModifiers())
             {
                 if (mod.Attribute == attribute && mod.Value != 0)
@@ -60,31 +59,8 @@ namespace Assets.Scripts.Core
                     modifiers.Add(mod);
                 }
             }
-            
+
             return modifiers;
-        }
-        
-        /// <summary>
-        /// Calculate total value from base + modifiers.
-        /// Application order: base → flat modifiers → multiplier modifiers → round once.
-        /// </summary>
-        private static int CalculateTotal(int baseValue, List<AttributeModifier> modifiers)
-        {
-            float total = baseValue;
-            
-            foreach (var mod in modifiers)
-            {
-                if (mod.Type == ModifierType.Flat)
-                    total += mod.Value;
-            }
-            
-            foreach (var mod in modifiers)
-            {
-                if (mod.Type == ModifierType.Multiplier)
-                    total *= mod.Value;
-            }
-            
-            return Mathf.RoundToInt(total);
         }
     }
 }

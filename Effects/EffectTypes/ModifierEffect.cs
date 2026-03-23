@@ -16,14 +16,16 @@ public class AttributeModifierEffect : EffectBase
     public ModifierType type;
     public float value;
 
+    [Tooltip("Label shown in logs and tooltips for this modifier")]
+    public string label = "Effect Modifier";
+
     public AttributeModifier ToRuntimeModifier()
     {
         return new AttributeModifier(
             attribute,
             type,
             value,
-            null,
-            ModifierCategory.Other
+            string.IsNullOrEmpty(label) ? "Effect Modifier" : label
         );
     }
 

@@ -27,7 +27,7 @@ namespace Assets.Scripts.Logging
         /// Status effect applications (buffs, debuffs, conditions with duration).
         /// Examples: Haste, Burning, Stunned, Blessed.
         /// </summary>
-        StatusEffect,
+        Condition,
         
         /// <summary>
         /// Skill usage (separate from combat for non-attack skills).

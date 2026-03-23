@@ -327,8 +327,8 @@ namespace Assets.Scripts.Managers.Logging
             if (vehicle.seats.Count == 0) return;
             
             var crewList = vehicle.seats
-                .Where(s => s != null && s.assignedCharacter != null)
-                .Select(s => $"{s.assignedCharacter.characterName} ({s.seatName})")
+                .Where(s => s != null && s.IsAssigned)
+                .Select(s => $"{s.GetDisplayName()} ({s.seatName})")
                 .ToList();
             
             if (crewList.Count > 0)

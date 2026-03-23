@@ -1,8 +1,8 @@
 ﻿using UnityEngine;
 using Assets.Scripts.Stages;
 using Assets.Scripts.Stages.Lanes;
-using Assets.Scripts.StatusEffects;
 using Assets.Scripts.Combat.Rolls.RollSpecs;
+using Assets.Scripts.Conditions.EntityConditions;
 
 namespace Assets.Scripts.Tests.Helpers
 {
@@ -37,7 +37,7 @@ namespace Assets.Scripts.Tests.Helpers
             string name,
             Stage stage,
             GameObject stageObject,
-            StatusEffect laneStatusEffect = null)
+            EntityCondition laneStatusEffect = null)
         {
             var laneObj = new GameObject(name);
             laneObj.transform.SetParent(stageObject.transform);

@@ -46,7 +46,7 @@ namespace Assets.Scripts.Managers.PlayerUI
                     else
                         statusIcon = "[ ]";
 
-                    string characterName = seat.assignedCharacter != null ? seat.assignedCharacter.characterName : null ?? "Unassigned";
+                    string characterName = seat.GetDisplayName() ?? "Unassigned";
                     string tabText = $"{statusIcon} {seat.seatName} ({characterName})";
 
                     seatTabButtons[i].GetComponentInChildren<TextMeshProUGUI>().text = tabText;
@@ -67,7 +67,7 @@ namespace Assets.Scripts.Managers.PlayerUI
         {
             if (ui.currentRoleText == null || currentSeat == null) return;
             
-            string characterName = currentSeat.assignedCharacter != null ? currentSeat.assignedCharacter.characterName : null ?? "Unassigned";
+            string characterName = currentSeat.GetDisplayName() ?? "Unassigned";
             string status = currentSeat.HasActedThisTurn() ? "- ACTED" : "- Ready";
             ui.currentRoleText.text = $"<b>{currentSeat.seatName}</b> ({characterName}) {status}";
         }
@@ -81,12 +81,7 @@ namespace Assets.Scripts.Managers.PlayerUI
             foreach (var component in currentSeat.GetOperationalComponents())
                 availableSkills.AddRange(component.GetAllSkills());
 
-            if (currentSeat.assignedCharacter != null)
-            {
-                var personalSkills = currentSeat.assignedCharacter.GetPersonalAbilities();
-                if (personalSkills != null)
-                    availableSkills.AddRange(personalSkills);
-            }
+            availableSkills.AddRange(currentSeat.GetPersonalAbilities());
 
             if (availableSkills.Count == 0)
             {
@@ -148,15 +143,8 @@ namespace Assets.Scripts.Managers.PlayerUI
                 availableSkills.AddRange(component.GetAllSkills());
             }
 
-            if (currentSeat.assignedCharacter != null)
-            {
-                var personalSkills = currentSeat.assignedCharacter.GetPersonalAbilities();
-                if (personalSkills != null)
-                {
-                    availableSkills.AddRange(personalSkills);
-                }
-            }
-            
+            availableSkills.AddRange(currentSeat.GetPersonalAbilities());
+
             return availableSkills;
         }
     }

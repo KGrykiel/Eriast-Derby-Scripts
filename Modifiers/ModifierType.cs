@@ -16,31 +16,31 @@ public enum ModifierCategory
     /// Removed when component disabled or destroyed.
     /// </summary>
     Equipment,
-    
+
     /// <summary>
     /// Temporary modifier from status effects (buffs/debuffs).
     /// </summary>
-    StatusEffect,
-    
+    Condition,
+
     /// <summary>
     /// Dynamic modifier calculated from other attributes.
     /// Not stored on entity - evaluated on-demand during stat calculation.
     /// e.g. speed to AC (fast vehicles harder to hit)
     /// </summary>
     Dynamic,
-    
+
     /// <summary>
     /// Modifier from nearby entities (auras, leadership bonuses).
     /// Future enhancement - not yet implemented.
     /// </summary>
     Aura,
-    
+
     /// <summary>
     /// One-time bonus from skill use (not from status effect).
     /// Future enhancement - not yet implemented.
     /// </summary>
     Skill,
-    
+
     /// <summary>
     /// Other/unknown source.
     /// Fallback category for edge cases.
@@ -49,23 +49,36 @@ public enum ModifierCategory
 }
 
 /// <summary>
+/// Shared base for all modifier types (entity and character).
+/// Data only — calculation logic lives in ModifierCalculator.
+/// </summary>
+public abstract class ModifierBase
+{
+    public ModifierType Type;
+    public float Value;
+    public string Label;
+
+    protected ModifierBase(ModifierType type, float value, string label)
+    {
+        Type = type;
+        Value = value;
+        Label = label;
+    }
+}
+
+/// <summary>
 /// Flat modifiers are additive, Multiplier modifiers are multiplicative.
 /// Application order (D&D standard): base -> all Flat -> all Multiplier.
 /// </summary>
 [Serializable]
-public class AttributeModifier
+public class AttributeModifier : ModifierBase
 {
     public Attribute Attribute;
-    public ModifierType Type;
-    public float Value;
-    public UnityEngine.Object Source;
     public ModifierCategory Category;
-    public string DisplayNameOverride;
 
-    public string SourceDisplayName => DisplayNameOverride ?? (Source != null ? Source.name : "Unknown");
-    public bool IsDispellable => Category == ModifierCategory.StatusEffect || Category == ModifierCategory.Aura;
+    public bool IsDispellable => Category == ModifierCategory.Condition || Category == ModifierCategory.Aura;
     public bool IsPermanent => Category == ModifierCategory.Equipment;
-    public bool IsTemporary => Category == ModifierCategory.StatusEffect || 
+    public bool IsTemporary => Category == ModifierCategory.Condition || 
                               Category == ModifierCategory.Aura || 
                               Category == ModifierCategory.Skill;
 
@@ -73,17 +86,12 @@ public class AttributeModifier
         Attribute attribute,
         ModifierType type,
         float value,
-        UnityEngine.Object source = null,
-        ModifierCategory category = ModifierCategory.Other,
-        string displayNameOverride = null
-    )
+        string label,
+        ModifierCategory category = ModifierCategory.Other
+    ) : base(type, value, label)
     {
         Attribute = attribute;
-        Type = type;
-        Value = value;
-        Source = source;
         Category = category;
-        DisplayNameOverride = displayNameOverride;
     }
 }
 

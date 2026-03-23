@@ -44,26 +44,47 @@ namespace Assets.Scripts.Combat
         public IEnumerable<DamageEvent> GetDamageEvents() 
             => Events.OfType<DamageEvent>();
 
-        public IEnumerable<StatusEffectEvent> GetStatusEffectEvents() 
-            => Events.OfType<StatusEffectEvent>();
+        public IEnumerable<EntityConditionEvent> GetEntityConditionEvents() 
+            => Events.OfType<EntityConditionEvent>();
 
-        public IEnumerable<StatusEffectExpiredEvent> GetStatusExpiredEvents()
-            => Events.OfType<StatusEffectExpiredEvent>();
+        public IEnumerable<EntityConditionExpiredEvent> GetEntityConditionExpiredEvents()
+            => Events.OfType<EntityConditionExpiredEvent>();
 
-        public IEnumerable<StatusEffectRefreshedEvent> GetStatusRefreshedEvents()
-            => Events.OfType<StatusEffectRefreshedEvent>();
+        public IEnumerable<EntityConditionRefreshedEvent> GetEntityConditionRefreshedEvents()
+            => Events.OfType<EntityConditionRefreshedEvent>();
 
-        public IEnumerable<StatusEffectIgnoredEvent> GetStatusIgnoredEvents()
-            => Events.OfType<StatusEffectIgnoredEvent>();
+        public IEnumerable<EntityConditionIgnoredEvent> GetEntityConditionIgnoredEvents()
+            => Events.OfType<EntityConditionIgnoredEvent>();
 
-        public IEnumerable<StatusEffectReplacedEvent> GetStatusReplacedEvents()
-            => Events.OfType<StatusEffectReplacedEvent>();
+        public IEnumerable<EntityConditionReplacedEvent> GetEntityConditionReplacedEvents()
+            => Events.OfType<EntityConditionReplacedEvent>();
 
-        public IEnumerable<StatusEffectKeptStrongerEvent> GetStatusKeptStrongerEvents()
-            => Events.OfType<StatusEffectKeptStrongerEvent>();
+        public IEnumerable<EntityConditionKeptStrongerEvent> GetEntityConditionKeptStrongerEvents()
+            => Events.OfType<EntityConditionKeptStrongerEvent>();
 
-        public IEnumerable<StatusEffectStackLimitEvent> GetStatusStackLimitEvents()
-            => Events.OfType<StatusEffectStackLimitEvent>();
+        public IEnumerable<EntityConditionStackLimitEvent> GetEntityConditionStackLimitEvents()
+            => Events.OfType<EntityConditionStackLimitEvent>();
+
+        public IEnumerable<CharacterConditionEvent> GetCharacterConditionEvents()
+            => Events.OfType<CharacterConditionEvent>();
+
+        public IEnumerable<CharacterConditionExpiredEvent> GetCharacterConditionExpiredEvents()
+            => Events.OfType<CharacterConditionExpiredEvent>();
+
+        public IEnumerable<CharacterConditionRefreshedEvent> GetCharacterConditionRefreshedEvents()
+            => Events.OfType<CharacterConditionRefreshedEvent>();
+
+        public IEnumerable<CharacterConditionIgnoredEvent> GetCharacterConditionIgnoredEvents()
+            => Events.OfType<CharacterConditionIgnoredEvent>();
+
+        public IEnumerable<CharacterConditionReplacedEvent> GetCharacterConditionReplacedEvents()
+            => Events.OfType<CharacterConditionReplacedEvent>();
+
+        public IEnumerable<CharacterConditionKeptStrongerEvent> GetCharacterConditionKeptStrongerEvents()
+            => Events.OfType<CharacterConditionKeptStrongerEvent>();
+
+        public IEnumerable<CharacterConditionStackLimitEvent> GetCharacterConditionStackLimitEvents()
+            => Events.OfType<CharacterConditionStackLimitEvent>();
 
         public IEnumerable<RestorationEvent> GetRestorationEvents()
             => Events.OfType<RestorationEvent>();

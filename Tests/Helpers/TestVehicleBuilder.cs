@@ -103,9 +103,9 @@ namespace Assets.Scripts.Tests.Helpers
             var seat = new VehicleSeat
             {
                 seatName = seatName,
-                assignedCharacter = character,
                 controlledComponents = new List<VehicleComponent>()
             };
+            seat.Assign(character);
             seatList.Add(seat);
             return seat;
         }

@@ -1,4 +1,4 @@
-﻿using Assets.Scripts.StatusEffects;
+﻿using Assets.Scripts.Conditions;
 
 namespace Assets.Scripts.Combat.Rolls.RollTypes.Attacks
 {

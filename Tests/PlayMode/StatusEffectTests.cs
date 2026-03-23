@@ -2,7 +2,7 @@
 using NUnit.Framework;
 using UnityEngine;
 using Assets.Scripts.Tests.Helpers;
-using Assets.Scripts.StatusEffects;
+using Assets.Scripts.Conditions;
 
 namespace Assets.Scripts.Tests.PlayMode
 {
@@ -567,16 +567,16 @@ namespace Assets.Scripts.Tests.PlayMode
         {
             var buff = TestStatusEffectFactory.CreateModifierEffect(
                 "Fortified", Attribute.ArmorClass, 2f,
-                categories: EffectCategory.Buff, cleanup: cleanup);
+                categories: ConditionCategory.Buff, cleanup: cleanup);
             var debuff = TestStatusEffectFactory.CreateModifierEffect(
                 "Weakened", Attribute.ArmorClass, -2f,
-                categories: EffectCategory.Debuff, cleanup: cleanup);
+                categories: ConditionCategory.Debuff, cleanup: cleanup);
 
             entity.ApplyStatusEffect(buff, entity);
             entity.ApplyStatusEffect(debuff, entity);
             Assert.AreEqual(2, entity.GetActiveStatusEffects().Count);
 
-            entity.RemoveStatusEffectsByCategory(EffectCategory.Buff);
+            entity.RemoveStatusEffectsByCategory(ConditionCategory.Buff);
 
             Assert.AreEqual(1, entity.GetActiveStatusEffects().Count, "Should remove only buffs");
             Assert.AreEqual("Weakened", entity.GetActiveStatusEffects()[0].template.effectName,
@@ -588,15 +588,15 @@ namespace Assets.Scripts.Tests.PlayMode
         {
             var buffMod = TestStatusEffectFactory.CreateModifierEffect(
                 "Blessed", Attribute.ArmorClass, 3f,
-                categories: EffectCategory.Buff | EffectCategory.AttributeModifier, cleanup: cleanup);
+                categories: ConditionCategory.Buff | ConditionCategory.AttributeModifier, cleanup: cleanup);
             var pureBuff = TestStatusEffectFactory.CreateModifierEffect(
                 "Lucky", Attribute.Mobility, 1f,
-                categories: EffectCategory.Buff, cleanup: cleanup);
+                categories: ConditionCategory.Buff, cleanup: cleanup);
 
             entity.ApplyStatusEffect(buffMod, entity);
             entity.ApplyStatusEffect(pureBuff, entity);
 
-            entity.RemoveStatusEffectsByCategory(EffectCategory.AttributeModifier);
+            entity.RemoveStatusEffectsByCategory(ConditionCategory.AttributeModifier);
 
             Assert.AreEqual(1, entity.GetActiveStatusEffects().Count,
                 "Should remove effect that has AttributeModifier flag");
@@ -609,15 +609,15 @@ namespace Assets.Scripts.Tests.PlayMode
         {
             var uncategorised = TestStatusEffectFactory.CreateModifierEffect(
                 "Environmental", Attribute.ArmorClass, 1f,
-                categories: EffectCategory.None, cleanup: cleanup);
+                categories: ConditionCategory.None, cleanup: cleanup);
             var buff = TestStatusEffectFactory.CreateModifierEffect(
                 "Shield", Attribute.ArmorClass, 2f,
-                categories: EffectCategory.Buff, cleanup: cleanup);
+                categories: ConditionCategory.Buff, cleanup: cleanup);
 
             entity.ApplyStatusEffect(uncategorised, entity);
             entity.ApplyStatusEffect(buff, entity);
 
-            entity.RemoveStatusEffectsByCategory(EffectCategory.Buff);
+            entity.RemoveStatusEffectsByCategory(ConditionCategory.Buff);
 
             Assert.AreEqual(1, entity.GetActiveStatusEffects().Count);
             Assert.AreEqual("Environmental", entity.GetActiveStatusEffects()[0].template.effectName,
@@ -629,20 +629,20 @@ namespace Assets.Scripts.Tests.PlayMode
         {
             var dot = TestStatusEffectFactory.CreateModifierEffect(
                 "Burning", Attribute.ArmorClass, -1f,
-                categories: EffectCategory.Debuff | EffectCategory.DoT, cleanup: cleanup);
+                categories: ConditionCategory.Debuff | ConditionCategory.DoT, cleanup: cleanup);
             var cc = TestStatusEffectFactory.CreateBehavioralEffect(
                 "Stunned", preventsActions: true,
-                categories: EffectCategory.Debuff | EffectCategory.CrowdControl, cleanup: cleanup);
+                categories: ConditionCategory.Debuff | ConditionCategory.CrowdControl, cleanup: cleanup);
             var buff = TestStatusEffectFactory.CreateModifierEffect(
                 "Shield", Attribute.ArmorClass, 2f,
-                categories: EffectCategory.Buff, cleanup: cleanup);
+                categories: ConditionCategory.Buff, cleanup: cleanup);
 
             entity.ApplyStatusEffect(dot, entity);
             entity.ApplyStatusEffect(cc, entity);
             entity.ApplyStatusEffect(buff, entity);
             Assert.AreEqual(3, entity.GetActiveStatusEffects().Count);
 
-            entity.RemoveStatusEffectsByCategory(EffectCategory.Debuff);
+            entity.RemoveStatusEffectsByCategory(ConditionCategory.Debuff);
 
             Assert.AreEqual(1, entity.GetActiveStatusEffects().Count, "Should remove both debuffs");
             Assert.AreEqual("Shield", entity.GetActiveStatusEffects()[0].template.effectName,
@@ -775,12 +775,12 @@ namespace Assets.Scripts.Tests.PlayMode
         {
             var template = TestStatusEffectFactory.CreateModifierEffect(
                 "Cursed", Attribute.ArmorClass, -3f,
-                categories: EffectCategory.Debuff, cleanup: cleanup);
+                categories: ConditionCategory.Debuff, cleanup: cleanup);
 
             entity.ApplyStatusEffect(template, entity);
             Assert.IsTrue(entity.GetModifiers().Any(m => m.Value == -3f), "Modifier should exist after apply");
 
-            entity.RemoveStatusEffectsByCategory(EffectCategory.Debuff);
+            entity.RemoveStatusEffectsByCategory(ConditionCategory.Debuff);
 
             Assert.AreEqual(0, entity.GetActiveStatusEffects().Count, "Effect should be removed");
             Assert.IsFalse(entity.GetModifiers().Any(m => m.Value == -3f),
@@ -808,11 +808,11 @@ namespace Assets.Scripts.Tests.PlayMode
         {
             var triggerable = TestStatusEffectFactory.CreateModifierEffect(
                 "Fragile", Attribute.ArmorClass, 1f,
-                categories: EffectCategory.Buff,
+                categories: ConditionCategory.Buff,
                 removalTriggers: RemovalTrigger.OnDamageTaken, cleanup: cleanup);
             var persistent = TestStatusEffectFactory.CreateModifierEffect(
                 "Resilient", Attribute.ArmorClass, 2f,
-                categories: EffectCategory.Buff,
+                categories: ConditionCategory.Buff,
                 removalTriggers: RemovalTrigger.None, cleanup: cleanup);
 
             entity.ApplyStatusEffect(triggerable, entity);
@@ -825,7 +825,7 @@ namespace Assets.Scripts.Tests.PlayMode
             Assert.AreEqual("Resilient", entity.GetActiveStatusEffects()[0].template.effectName);
 
             // Category removal still works for the remaining one
-            entity.RemoveStatusEffectsByCategory(EffectCategory.Buff);
+            entity.RemoveStatusEffectsByCategory(ConditionCategory.Buff);
             Assert.AreEqual(0, entity.GetActiveStatusEffects().Count, "Category removal should get the rest");
         }
     }

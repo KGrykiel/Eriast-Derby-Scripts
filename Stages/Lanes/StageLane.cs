@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 using UnityEngine;
-using Assets.Scripts.StatusEffects;
+using Assets.Scripts.Conditions.EntityConditions;
 
 namespace Assets.Scripts.Stages.Lanes
 {
@@ -20,7 +20,7 @@ namespace Assets.Scripts.Stages.Lanes
         
         [Header("Lane Modifiers")]
         [Tooltip("StatusEffect applied to ALL vehicle components while in this lane.\n")]
-        public StatusEffect laneStatusEffect;
+        public EntityCondition laneStatusEffect;
         
         // ==================== TURN EFFECTS ====================
         

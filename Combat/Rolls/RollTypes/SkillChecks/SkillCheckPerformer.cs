@@ -1,5 +1,5 @@
 ﻿using Assets.Scripts.Combat.Rolls.RollSpecs.SpecTypes;
-using Assets.Scripts.StatusEffects;
+using Assets.Scripts.Conditions;
 
 namespace Assets.Scripts.Combat.Rolls.RollTypes.SkillChecks
 {
@@ -30,10 +30,15 @@ namespace Assets.Scripts.Combat.Rolls.RollTypes.SkillChecks
                 ctx.Spec.DisplayName);
 
             // Step 3: Notify d20 roll trigger on roller
-            Entity actorEntity = actor.GetEntity();
-            if (ctx.Routing.CanAttempt && actorEntity != null)
+            if (ctx.Routing.CanAttempt)
             {
-                actorEntity.NotifyStatusEffectTrigger(RemovalTrigger.OnD20Roll);
+                Entity actorEntity = actor.GetEntity();
+                if (actorEntity != null)
+                    actorEntity.NotifyStatusEffectTrigger(RemovalTrigger.OnD20Roll);
+
+                var actorSeat = actor.GetSeat();
+                if (actorSeat != null)
+                    actorSeat.NotifyStatusEffectTrigger(RemovalTrigger.OnD20Roll);
             }
 
             return roll;

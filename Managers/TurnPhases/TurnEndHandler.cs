@@ -1,4 +1,4 @@
-﻿using Assets.Scripts.StatusEffects;
+﻿using Assets.Scripts.Conditions;
 
 namespace Assets.Scripts.Managers.TurnPhases
 {

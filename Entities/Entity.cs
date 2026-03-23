@@ -1,9 +1,10 @@
 using UnityEngine;
 using System.Collections.Generic;
 using Assets.Scripts.Combat.Damage;
-using Assets.Scripts.StatusEffects;
 using Assets.Scripts.Entities;
 using Assets.Scripts.Core;
+using Assets.Scripts.Conditions.EntityConditions;
+using Assets.Scripts.Conditions;
 
 /// <summary>
 /// Base class for anything with HP that can be damaged/targeted.
@@ -41,11 +42,11 @@ public abstract class Entity : MonoBehaviour
     [SerializeField, HideInInspector]
     protected List<AttributeModifier> entityModifiers = new();
 
-    private readonly EntityStatusEffectManager statusEffects;
+    private readonly StatusEffectManager statusEffects;
 
     protected Entity()
     {
-        statusEffects = new EntityStatusEffectManager(this);
+        statusEffects = new StatusEffectManager(this);
     }
 
     // ==================== STAT ACCESSORS ====================
@@ -106,6 +107,7 @@ public abstract class Entity : MonoBehaviour
         if (amount > 0)
         {
             OnDamaged?.Invoke(amount);
+            NotifyStatusEffectTrigger(RemovalTrigger.OnDamageTaken);
         }
 
         if (health <= 0 && !isDestroyed)
@@ -160,24 +162,24 @@ public abstract class Entity : MonoBehaviour
     public event System.Action OnSkillUsed;
 
     /// <summary>Handles stacking rules and emits events. Returns null if feature requirements not met.</summary>
-    public virtual AppliedStatusEffect ApplyStatusEffect(StatusEffect effect, Object applier)
+    public virtual AppliedEntityCondition ApplyStatusEffect(EntityCondition effect, Object applier)
     {
         return statusEffects.Apply(effect, applier);
     }
     
-    public virtual void RemoveStatusEffect(AppliedStatusEffect statusEffect)
+    public virtual void RemoveStatusEffect(AppliedEntityCondition statusEffect)
     {
         statusEffects.Remove(statusEffect);
     }
 
     /// <summary>Removes all effects matching the specified categories (skill-based dispel).</summary>
-    public virtual void RemoveStatusEffectsByCategory(EffectCategory categories)
+    public virtual void RemoveStatusEffectsByCategory(ConditionCategory categories)
     {
         statusEffects.RemoveByCategory(categories);
     }
 
     /// <summary>Removes all instances of a specific template (targeted dispel).</summary>
-    public virtual void RemoveStatusEffectsByTemplate(StatusEffect template)
+    public virtual void RemoveStatusEffectsByTemplate(EntityCondition template)
     {
         statusEffects.RemoveByTemplate(template);
     }
@@ -188,7 +190,7 @@ public abstract class Entity : MonoBehaviour
         statusEffects.ProcessRemovalTrigger(trigger);
     }
 
-    public virtual List<AppliedStatusEffect> GetActiveStatusEffects()
+    public virtual List<AppliedEntityCondition> GetActiveStatusEffects()
     {
         return statusEffects.GetActive();
     }

@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
 using Assets.Scripts.Combat;
 using Assets.Scripts.Effects;
-using Assets.Scripts.StatusEffects;
+using Assets.Scripts.Conditions;
 using UnityEngine;
 using Assets.Scripts.Combat.Rolls.RollTypes.Attacks;
 using Assets.Scripts.Combat.Rolls.RollTypes.OpposedChecks;

@@ -1,8 +1,8 @@
 ﻿using System.Collections.Generic;
 using UnityEngine;
 using Assets.Scripts.Stages.Lanes;
-using Assets.Scripts.StatusEffects;
 using Assets.Scripts.Combat.Rolls.RollSpecs;
+using Assets.Scripts.Conditions.EntityConditions;
 
 namespace Assets.Scripts.Stages
 {
@@ -152,7 +152,7 @@ namespace Assets.Scripts.Stages
 
         // ==================== LANE STATUS EFFECTS ====================
 
-        private void ApplyLaneStatusEffect(Vehicle vehicle, StatusEffect laneEffect, StageLane lane)
+        private void ApplyLaneStatusEffect(Vehicle vehicle, EntityCondition laneEffect, StageLane lane)
         {
             foreach (var component in vehicle.AllComponents)
             {

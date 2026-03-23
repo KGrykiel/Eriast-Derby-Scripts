@@ -1,7 +1,9 @@
 ﻿using Assets.Scripts.Combat.Damage;
 using Assets.Scripts.Combat.Restoration;
-using Assets.Scripts.StatusEffects;
 using Assets.Scripts.Combat.Rolls;
+using Assets.Scripts.Conditions.EntityConditions;
+using Assets.Scripts.Conditions.CharacterConditions;
+using Assets.Scripts.Entities.Vehicle;
 
 namespace Assets.Scripts.Combat
 {
@@ -33,106 +35,6 @@ namespace Assets.Scripts.Combat
             Target = target;
             CausalSource = causalSource;
             SourceType = sourceType;
-        }
-    }
-    
-    public class StatusEffectEvent : CombatEvent
-    {
-        public AppliedStatusEffect Applied { get; set; }
-        public bool WasReplacement { get; set; }
-
-        /// <summary>True if requirements not met or better effect exists.</summary>
-        public bool WasBlocked { get; set; }
-        
-        public StatusEffectEvent(
-            AppliedStatusEffect applied,
-            Entity source,
-            Entity target,
-            string causalSource,
-            bool wasReplacement = false)
-        {
-            Applied = applied;
-            Source = source;
-            Target = target;
-            CausalSource = causalSource;
-            WasReplacement = wasReplacement;
-            WasBlocked = applied == null;
-        }
-    }
-    
-    public class StatusEffectExpiredEvent : CombatEvent
-    {
-        public AppliedStatusEffect Expired { get; set; }
-
-        public StatusEffectExpiredEvent(AppliedStatusEffect expired, Entity target)
-        {
-            Expired = expired;
-            Target = target;
-            Source = null;
-        }
-    }
-
-    public class StatusEffectRefreshedEvent : CombatEvent
-    {
-        public AppliedStatusEffect Refreshed { get; set; }
-
-        public StatusEffectRefreshedEvent(AppliedStatusEffect refreshed, Entity target)
-        {
-            Refreshed = refreshed;
-            Target = target;
-            Source = null;
-        }
-    }
-
-    public class StatusEffectIgnoredEvent : CombatEvent
-    {
-        public AppliedStatusEffect Existing { get; set; }
-
-        public StatusEffectIgnoredEvent(AppliedStatusEffect existing, Entity target)
-        {
-            Existing = existing;
-            Target = target;
-            Source = null;
-        }
-    }
-
-    public class StatusEffectReplacedEvent : CombatEvent
-    {
-        public AppliedStatusEffect NewEffect { get; set; }
-        public int OldDuration { get; set; }
-
-        public StatusEffectReplacedEvent(AppliedStatusEffect newEffect, Entity target, int oldDuration)
-        {
-            NewEffect = newEffect;
-            Target = target;
-            OldDuration = oldDuration;
-            Source = null;
-        }
-    }
-
-    public class StatusEffectKeptStrongerEvent : CombatEvent
-    {
-        public AppliedStatusEffect Kept { get; set; }
-
-        public StatusEffectKeptStrongerEvent(AppliedStatusEffect kept, Entity target)
-        {
-            Kept = kept;
-            Target = target;
-            Source = null;
-        }
-    }
-
-    public class StatusEffectStackLimitEvent : CombatEvent
-    {
-        public StatusEffect Template { get; set; }
-        public int MaxStacks { get; set; }
-
-        public StatusEffectStackLimitEvent(StatusEffect template, Entity target, int maxStacks)
-        {
-            Template = template;
-            Target = target;
-            MaxStacks = maxStacks;
-            Source = null;
         }
     }
 
@@ -241,6 +143,216 @@ namespace Assets.Scripts.Combat
             CausalSource = causalSource;
             AttackerCheckName = attackerCheckName;
             DefenderCheckName = defenderCheckName;
+        }
+    }
+
+
+    public class EntityConditionEvent : CombatEvent
+    {
+        public AppliedEntityCondition Applied { get; set; }
+        public bool WasReplacement { get; set; }
+
+        /// <summary>True if requirements not met or better effect exists.</summary>
+        public bool WasBlocked { get; set; }
+
+        public EntityConditionEvent(
+            AppliedEntityCondition applied,
+            Entity source,
+            Entity target,
+            string causalSource,
+            bool wasReplacement = false)
+        {
+            Applied = applied;
+            Source = source;
+            Target = target;
+            CausalSource = causalSource;
+            WasReplacement = wasReplacement;
+            WasBlocked = applied == null;
+        }
+    }
+
+    public class EntityConditionExpiredEvent : CombatEvent
+    {
+        public AppliedEntityCondition Expired { get; set; }
+
+        public EntityConditionExpiredEvent(AppliedEntityCondition expired, Entity target)
+        {
+            Expired = expired;
+            Target = target;
+            Source = null;
+        }
+    }
+
+    public class EntityConditionRefreshedEvent : CombatEvent
+    {
+        public AppliedEntityCondition Refreshed { get; set; }
+
+        public EntityConditionRefreshedEvent(AppliedEntityCondition refreshed, Entity target)
+        {
+            Refreshed = refreshed;
+            Target = target;
+            Source = null;
+        }
+    }
+
+    public class EntityConditionIgnoredEvent : CombatEvent
+    {
+        public AppliedEntityCondition Existing { get; set; }
+
+        public EntityConditionIgnoredEvent(AppliedEntityCondition existing, Entity target)
+        {
+            Existing = existing;
+            Target = target;
+            Source = null;
+        }
+    }
+
+    public class EntityConditionReplacedEvent : CombatEvent
+    {
+        public AppliedEntityCondition NewEffect { get; set; }
+        public int OldDuration { get; set; }
+
+        public EntityConditionReplacedEvent(AppliedEntityCondition newEffect, Entity target, int oldDuration)
+        {
+            NewEffect = newEffect;
+            Target = target;
+            OldDuration = oldDuration;
+            Source = null;
+        }
+    }
+
+    public class EntityConditionKeptStrongerEvent : CombatEvent
+    {
+        public AppliedEntityCondition Kept { get; set; }
+
+        public EntityConditionKeptStrongerEvent(AppliedEntityCondition kept, Entity target)
+        {
+            Kept = kept;
+            Target = target;
+            Source = null;
+        }
+    }
+
+    public class EntityConditionStackLimitEvent : CombatEvent
+    {
+        public EntityCondition Template { get; set; }
+        public int MaxStacks { get; set; }
+
+        public EntityConditionStackLimitEvent(EntityCondition template, Entity target, int maxStacks)
+        {
+            Template = template;
+            Target = target;
+            MaxStacks = maxStacks;
+            Source = null;
+        }
+    }
+
+    // ==================== CHARACTER CONDITION EVENTS ====================
+
+    public class CharacterConditionEvent : CombatEvent
+    {
+        public AppliedCharacterCondition Applied { get; set; }
+        public VehicleSeat TargetSeat { get; set; }
+
+        public CharacterConditionEvent(
+            AppliedCharacterCondition applied,
+            Entity source,
+            VehicleSeat targetSeat,
+            string causalSource)
+        {
+            Applied = applied;
+            Source = source;
+            Target = null;
+            TargetSeat = targetSeat;
+            CausalSource = causalSource;
+        }
+    }
+
+    public class CharacterConditionExpiredEvent : CombatEvent
+    {
+        public AppliedCharacterCondition Expired { get; set; }
+        public VehicleSeat TargetSeat { get; set; }
+
+        public CharacterConditionExpiredEvent(AppliedCharacterCondition expired, VehicleSeat targetSeat)
+        {
+            Expired = expired;
+            TargetSeat = targetSeat;
+            Source = null;
+            Target = null;
+        }
+    }
+
+    public class CharacterConditionRefreshedEvent : CombatEvent
+    {
+        public AppliedCharacterCondition Refreshed { get; set; }
+        public VehicleSeat TargetSeat { get; set; }
+
+        public CharacterConditionRefreshedEvent(AppliedCharacterCondition refreshed, VehicleSeat targetSeat)
+        {
+            Refreshed = refreshed;
+            TargetSeat = targetSeat;
+            Source = null;
+            Target = null;
+        }
+    }
+
+    public class CharacterConditionIgnoredEvent : CombatEvent
+    {
+        public AppliedCharacterCondition Existing { get; set; }
+        public VehicleSeat TargetSeat { get; set; }
+
+        public CharacterConditionIgnoredEvent(AppliedCharacterCondition existing, VehicleSeat targetSeat)
+        {
+            Existing = existing;
+            TargetSeat = targetSeat;
+            Source = null;
+            Target = null;
+        }
+    }
+
+    public class CharacterConditionReplacedEvent : CombatEvent
+    {
+        public AppliedCharacterCondition NewCondition { get; set; }
+        public int OldDuration { get; set; }
+        public VehicleSeat TargetSeat { get; set; }
+
+        public CharacterConditionReplacedEvent(AppliedCharacterCondition newCondition, VehicleSeat targetSeat, int oldDuration)
+        {
+            NewCondition = newCondition;
+            TargetSeat = targetSeat;
+            OldDuration = oldDuration;
+            Source = null;
+            Target = null;
+        }
+    }
+
+    public class CharacterConditionKeptStrongerEvent : CombatEvent
+    {
+        public AppliedCharacterCondition Kept { get; set; }
+        public VehicleSeat TargetSeat { get; set; }
+
+        public CharacterConditionKeptStrongerEvent(AppliedCharacterCondition kept, VehicleSeat targetSeat)
+        {
+            Kept = kept;
+            TargetSeat = targetSeat;
+            Source = null;
+            Target = null;
+        }
+    }
+
+    public class CharacterConditionStackLimitEvent : CombatEvent
+    {
+        public CharacterCondition Template { get; set; }
+        public int MaxStacks { get; set; }
+        public VehicleSeat TargetSeat { get; set; }
+
+        public CharacterConditionStackLimitEvent(CharacterCondition template, VehicleSeat targetSeat, int maxStacks)
+        {
+            Template = template;
+            TargetSeat = targetSeat;
+            MaxStacks = maxStacks;
+            Source = null;
+            Target = null;
         }
     }
 }

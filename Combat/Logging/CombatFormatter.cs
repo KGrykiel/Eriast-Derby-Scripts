@@ -4,8 +4,10 @@ using System.Text;
 using Assets.Scripts.Combat.Damage;
 using Assets.Scripts.Combat.Restoration;
 using Assets.Scripts.Combat.Rolls;
+using Assets.Scripts.Conditions;
+using Assets.Scripts.Conditions.EntityConditions;
+using Assets.Scripts.Conditions.CharacterConditions;
 using Assets.Scripts.Core;
-using Assets.Scripts.StatusEffects;
 
 namespace Assets.Scripts.Combat.Logging
 {
@@ -147,7 +149,7 @@ namespace Assets.Scripts.Combat.Logging
             foreach (var mod in modifiers)
             {
                 string sign = mod.Value >= 0 ? "+" : "";
-                sb.AppendLine($"  {mod.SourceDisplayName}: {sign}{(int)mod.Value} ({mod.Category})");
+                sb.AppendLine($"  {mod.Label}: {sign}{(int)mod.Value} ({mod.Category})");
             }
 
             sb.AppendLine("  ─────────────");
@@ -283,7 +285,7 @@ namespace Assets.Scripts.Combat.Logging
 
         // ==================== STATUS EFFECT FORMATTING ====================
 
-        public static string FormatStatusEffectTooltip(AppliedStatusEffect appliedEffect)
+        public static string FormatEntityConditionTooltip(AppliedEntityCondition appliedEffect)
         {
             if (appliedEffect == null || appliedEffect.template == null)
                 return "Unknown status effect";
@@ -312,6 +314,59 @@ namespace Assets.Scripts.Combat.Logging
 
             sb.AppendLine("═══════════════════════════════");
             return sb.ToString().TrimEnd();
+        }
+
+        public static string FormatCharacterConditionTooltip(AppliedCharacterCondition applied)
+        {
+            if (applied == null || applied.template == null)
+                return "Unknown character condition";
+
+            var condition = applied.template;
+            var sb = new StringBuilder();
+
+            sb.AppendLine($"{condition.effectName}");
+            sb.AppendLine("═══════════════════════════════");
+
+            string durationStr = applied.IsIndefinite
+                ? "Indefinite (∞)"
+                : $"{applied.turnsRemaining} turns remaining";
+            sb.AppendLine($"Duration: {durationStr}");
+            sb.AppendLine();
+
+            AppendCharacterModifiers(sb, condition);
+            AppendBehavioralEffects(sb, condition);
+
+            if (!string.IsNullOrEmpty(condition.description))
+            {
+                sb.AppendLine(condition.description);
+                sb.AppendLine();
+            }
+
+            sb.AppendLine("═══════════════════════════════");
+            return sb.ToString().TrimEnd();
+        }
+
+        private static void AppendCharacterModifiers(StringBuilder sb, CharacterCondition condition)
+        {
+            if (condition.modifiers == null || condition.modifiers.Count == 0) return;
+
+            sb.AppendLine("Effects:");
+            foreach (var mod in condition.modifiers)
+            {
+                string color = mod.value >= 0 ? "#44FF44" : "#FF4444";
+                string valueStr = mod.type == ModifierType.Multiplier
+                    ? $"×{mod.value}"
+                    : $"{(mod.value >= 0 ? "+" : "")}{mod.value}";
+
+                string target = mod switch
+                {
+                    CharacterSkillModifierData skillData => skillData.skill.ToString(),
+                    CharacterAttributeModifierData attrData => attrData.attribute.ToString(),
+                    _ => "Unknown"
+                };
+                sb.AppendLine($"  • <color={color}>{valueStr} {target}</color>");
+            }
+            sb.AppendLine();
         }
 
         // ==================== PRIVATE HELPERS ====================
@@ -368,7 +423,7 @@ namespace Assets.Scripts.Combat.Logging
             {
                 string key = mod.Category switch
                 {
-                    ModifierCategory.StatusEffect => "Status Effects",
+                    ModifierCategory.Condition => "Status Effects",
                     ModifierCategory.Equipment => "Equipment",
                     ModifierCategory.Aura => "Auras",
                     ModifierCategory.Skill => "Skills",
@@ -397,11 +452,11 @@ namespace Assets.Scripts.Combat.Logging
             string color = mod.Value >= 0 ? Colors.Success : Colors.Failure;
 
             if (mod.Type == ModifierType.Multiplier)
-                return $"  <color={color}>{mod.SourceDisplayName,-25} {typeStr}{mod.Value}  {attribute}</color>";
-            return $"  <color={color}>{mod.SourceDisplayName,-25} {sign}{mod.Value}  {attribute}</color>";
+                return $"  <color={color}>{mod.Label,-25} {typeStr}{mod.Value}  {attribute}</color>";
+            return $"  <color={color}>{mod.Label,-25} {sign}{mod.Value}  {attribute}</color>";
         }
 
-        private static void AppendStatusModifiers(StringBuilder sb, StatusEffect effect)
+        private static void AppendStatusModifiers(StringBuilder sb, EntityCondition effect)
         {
             if (effect.modifiers == null || effect.modifiers.Count == 0) return;
 
@@ -417,7 +472,7 @@ namespace Assets.Scripts.Combat.Logging
             sb.AppendLine();
         }
 
-        private static void AppendPeriodicEffects(StringBuilder sb, StatusEffect effect)
+        private static void AppendPeriodicEffects(StringBuilder sb, EntityCondition effect)
         {
             if (effect.periodicEffects == null || effect.periodicEffects.Count == 0) return;
 
@@ -467,7 +522,7 @@ namespace Assets.Scripts.Combat.Logging
             return notation;
         }
 
-        private static void AppendBehavioralEffects(StringBuilder sb, StatusEffect effect)
+        private static void AppendBehavioralEffects(StringBuilder sb, ConditionBase effect)
         {
             if (effect.behavioralEffects == null) return;
 

@@ -1,4 +1,6 @@
-﻿namespace Assets.Scripts.Combat.Rolls
+﻿using Assets.Scripts.Entities.Vehicle;
+
+namespace Assets.Scripts.Combat.Rolls
 {
     /// <summary>
     /// Sealed hierarchy representing who or what makes a roll.
@@ -7,7 +9,7 @@
     public abstract class RollActor
     {
         public abstract Entity GetEntity();
-        public abstract Character GetCharacter();
+        public abstract VehicleSeat GetSeat();
     }
 
     /// <summary>A vehicle component making the roll (vehicle checks, vehicle saves).</summary>
@@ -18,29 +20,29 @@
         public ComponentActor(Entity component) { Component = component; }
 
         public override Entity GetEntity() => Component;
-        public override Character GetCharacter() => null;
+        public override VehicleSeat GetSeat() => null;
     }
 
     /// <summary>A character making the roll without a specific tool (character-only checks).</summary>
     public sealed class CharacterActor : RollActor
     {
-        public readonly Character Character;
+        public readonly VehicleSeat Seat;
 
-        public CharacterActor(Character character) { Character = character; }
+        public CharacterActor(VehicleSeat seat) { Seat = seat; }
 
         public override Entity GetEntity() => null;
-        public override Character GetCharacter() => Character;
+        public override VehicleSeat GetSeat() => Seat;
     }
 
     /// <summary>A character making the roll through a tool component (e.g. gunner via weapon, engineer via power core).</summary>
     public sealed class CharacterWithToolActor : RollActor
     {
-        public readonly Character Character;
+        public readonly VehicleSeat Seat;
         public readonly Entity Tool;
 
-        public CharacterWithToolActor(Character character, Entity tool) { Character = character; Tool = tool; }
+        public CharacterWithToolActor(VehicleSeat seat, Entity tool) { Seat = seat; Tool = tool; }
 
         public override Entity GetEntity() => Tool;
-        public override Character GetCharacter() => Character;
+        public override VehicleSeat GetSeat() => Seat;
     }
 }

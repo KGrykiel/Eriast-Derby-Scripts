@@ -1,4 +1,4 @@
-﻿namespace Assets.Scripts.Combat.Damage
+﻿namespace Assets.Scripts.Combat.Damage.FormulaProviders
 {
     /// <summary>
     /// Strategy interface for resolving damage formulas.

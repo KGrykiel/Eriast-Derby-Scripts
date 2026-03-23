@@ -1,8 +1,9 @@
-﻿using System.Collections;
+using System.Collections;
 using NUnit.Framework;
 using UnityEngine;
 using UnityEngine.TestTools;
 using Assets.Scripts.Characters;
+using Assets.Scripts.Core;
 using Assets.Scripts.Tests.Helpers;
 using Assets.Scripts.Combat;
 using Assets.Scripts.Combat.Rolls;
@@ -42,8 +43,8 @@ namespace Assets.Scripts.Tests.PlayMode
             Assert.IsNotNull(result);
             Assert.AreNotEqual(0, result.BaseRoll, "Should not auto-fail");
 
-            int expectedDexMod = CharacterFormulas.CalculateAttributeModifier(16);
-            int expectedHalfLevel = CharacterFormulas.CalculateHalfLevelBonus(3);
+            int expectedDexMod = CharacterStatCalculator.CalculateAttributeModifier(16);
+            int expectedHalfLevel = CharacterStatCalculator.CalculateHalfLevelBonus(3);
             Assert.AreEqual(expectedDexMod + expectedHalfLevel, result.TotalModifier,
                 $"Expected DEX({expectedDexMod}) + HalfLevel({expectedHalfLevel})");
         }
@@ -68,8 +69,10 @@ namespace Assets.Scripts.Tests.PlayMode
 
             Assert.IsNotNull(result);
 
-            int bobSaveMod = CharacterFormulas.CalculateSaveModifier(bob, CharacterAttribute.Wisdom);
-            Assert.AreEqual(bobSaveMod, result.TotalModifier, $"Bob's save modifier should be {bobSaveMod}");
+            int expectedWisMod = CharacterStatCalculator.CalculateAttributeModifier(16);
+            int expectedHalfLevel = CharacterStatCalculator.CalculateHalfLevelBonus(3);
+            Assert.AreEqual(expectedWisMod + expectedHalfLevel, result.TotalModifier,
+                $"Expected WIS({expectedWisMod}) + HalfLevel({expectedHalfLevel})");
         }
 
         // ==================== Test 2C ====================
@@ -106,8 +109,10 @@ namespace Assets.Scripts.Tests.PlayMode
             Assert.IsNotNull(result);
             Assert.AreNotEqual(0, result.BaseRoll, "Should not auto-fail");
 
-            int expectedMod = CharacterFormulas.CalculateSaveModifier(engineer, CharacterAttribute.Intelligence);
-            Assert.AreEqual(expectedMod, result.TotalModifier, $"Engineer's save modifier should be {expectedMod}");
+            int expectedIntMod = CharacterStatCalculator.CalculateAttributeModifier(14);
+            int expectedHalfLevel = CharacterStatCalculator.CalculateHalfLevelBonus(4);
+            Assert.AreEqual(expectedIntMod + expectedHalfLevel, result.TotalModifier,
+                $"Expected INT({expectedIntMod}) + HalfLevel({expectedHalfLevel})");
         }
 
         // ==================== Test 2E ====================
@@ -121,7 +126,7 @@ namespace Assets.Scripts.Tests.PlayMode
         [TestCase(20, 10)]
         public void Test2E_HalfLevelBonus_IntegerDivision(int level, int expectedHalfLevel)
         {
-            int actual = CharacterFormulas.CalculateHalfLevelBonus(level);
+            int actual = CharacterStatCalculator.CalculateHalfLevelBonus(level);
             Assert.AreEqual(expectedHalfLevel, actual, $"Level {level} should have half-level {expectedHalfLevel}");
         }
     }

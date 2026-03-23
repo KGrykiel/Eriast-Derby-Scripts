@@ -639,9 +639,8 @@ public class VehicleInspectorPanel : MonoBehaviour
                 if (showRoleInfo)
                 {
                     var seat = selectedVehicle.GetSeatForComponent(component);
-                    var character = seat?.assignedCharacter;
-                    characterName.text = character != null 
-                        ? $"({character.characterName})" 
+                    characterName.text = seat != null && seat.IsAssigned
+                        ? $"({seat.GetDisplayName()})"
                         : "(Unassigned)";
                 }
             }
@@ -732,8 +731,7 @@ public class VehicleInspectorPanel : MonoBehaviour
             if (seat == null) continue;
             foreach (var component in seat.GetOperationalComponents())
                 totalSkills += component.GetAllSkills().Count;
-            if (seat.assignedCharacter != null)
-                totalSkills += seat.assignedCharacter.GetPersonalAbilities().Count;
+            totalSkills += seat.GetPersonalAbilities().Count;
         }
         
         string info = $"<b>CREW & SKILLS ({seats.Count} seats, {totalSkills} skills):</b>\n";
@@ -766,7 +764,7 @@ public class VehicleInspectorPanel : MonoBehaviour
                     statusColor = "#66FF66";
                 }
                 
-                string characterName = seat.assignedCharacter != null ? seat.assignedCharacter.characterName : null ?? "<color=#FF6666>Unassigned</color>";
+                string characterName = seat.GetDisplayName() ?? "<color=#FF6666>Unassigned</color>";
 
                 RoleType roles = seat.GetEnabledRoles();
                 string roleText = roles != RoleType.None ? $" [{roles}]" : "";
@@ -785,10 +783,7 @@ public class VehicleInspectorPanel : MonoBehaviour
                 {
                     seatSkills.AddRange(component.GetAllSkills());
                 }
-                if (seat.assignedCharacter != null)
-                {
-                    seatSkills.AddRange(seat.assignedCharacter.GetPersonalAbilities());
-                }
+                seatSkills.AddRange(seat.GetPersonalAbilities());
                 
                 if (seatSkills.Count > 0)
                 {
@@ -887,8 +882,8 @@ public class VehicleInspectorPanel : MonoBehaviour
     
     private string BuildSizeTooltip(VehicleSizeCategory size)
     {
-        var modifiers = VehicleSizeModifiers.GetModifiers(size, null);
-        
+        var modifiers = VehicleSizeModifiers.GetModifiers(size);
+
         string tooltip = $"<b>{size} Vehicle</b>\n\n";
         
         if (modifiers.Count == 0)

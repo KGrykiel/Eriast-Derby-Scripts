@@ -107,7 +107,7 @@ namespace Assets.Scripts.Tests.PlayMode
             yield return null;
 
             Assert.IsNotNull(seat, "Should find seat controlling chassis");
-            Assert.AreEqual(driver, seat.assignedCharacter, "Seat should have driver assigned");
+            Assert.IsTrue(seat.IsAssignedTo(driver), "Seat should have driver assigned");
         }
 
         [UnityTest]

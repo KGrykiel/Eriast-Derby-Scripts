@@ -1,6 +1,6 @@
 ﻿using UnityEngine;
-using Assets.Scripts.StatusEffects;
-using StatusEffectTemplate = Assets.Scripts.StatusEffects.StatusEffect;
+using StatusEffectTemplate = Assets.Scripts.Conditions.EntityConditions.EntityCondition;
+using Assets.Scripts.Conditions;
 
 namespace Assets.Scripts.Effects.EffectTypes
 {
@@ -13,7 +13,7 @@ namespace Assets.Scripts.Effects.EffectTypes
     {
         [Header("Removal Filter")]
         [Tooltip("Categories to remove (e.g., DoT removes all burning/bleeding). Leave None to use specific template.")]
-        public EffectCategory categoriesToRemove = EffectCategory.None;
+        public ConditionCategory categoriesToRemove = ConditionCategory.None;
 
         [Tooltip("Optional: remove only this specific status effect template. Takes priority over categories.")]
         public StatusEffectTemplate specificTemplate;
@@ -24,7 +24,7 @@ namespace Assets.Scripts.Effects.EffectTypes
             {
                 target.RemoveStatusEffectsByTemplate(specificTemplate);
             }
-            else if (categoriesToRemove != EffectCategory.None)
+            else if (categoriesToRemove != ConditionCategory.None)
             {
                 target.RemoveStatusEffectsByCategory(categoriesToRemove);
             }

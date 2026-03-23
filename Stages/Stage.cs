@@ -1,8 +1,9 @@
 ﻿using System.Collections.Generic;
 using UnityEngine;
 using Assets.Scripts.Stages.Lanes;
-using Assets.Scripts.StatusEffects;
+using Assets.Scripts.Conditions;
 using EventCard = Assets.Scripts.Events.EventCard.EventCard;
+using Assets.Scripts.Conditions.EntityConditions;
 
 namespace Assets.Scripts.Stages
 {
@@ -24,7 +25,7 @@ namespace Assets.Scripts.Stages
 
         [Header("Stage Effects")]
         [Tooltip("StatusEffect applied to all vehicle components when entering stage (e.g., sandstorm, freezing winds)")]
-        public StatusEffect stageStatusEffect;
+        public EntityCondition stageStatusEffect;
 
         [Header("Event Cards")]
         [Tooltip("Random events that can occur in this stage")]

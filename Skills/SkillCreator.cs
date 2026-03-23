@@ -3,10 +3,11 @@ using UnityEngine;
 using UnityEditor;
 using Assets.Scripts.Combat.Damage;
 using Assets.Scripts.Combat.Restoration;
+using Assets.Scripts.Combat.Damage.FormulaProviders.SpecificProviders;
 using System.Collections.Generic;
 using Assets.Scripts.Entities.Vehicle;
 using Assets.Scripts.Characters;
-using StatusEffectTemplate = Assets.Scripts.StatusEffects.StatusEffect;
+using Assets.Scripts.Conditions.EntityConditions;
 using Assets.Scripts.Combat.Rolls.RollSpecs;
 using Assets.Scripts.Combat.Rolls.RollSpecs.SpecTypes;
 using Assets.Scripts.Combat.Rolls.Advantage;
@@ -169,7 +170,7 @@ namespace Assets.Scripts.Skills
             return new List<EffectInvocation>
             {
                 new() {
-                    effect = new ApplyStatusEffect(),
+                    effect = new ApplyConditionEffect(),
                     target = EffectTarget.SourceVehicle
                 }
             };
@@ -180,7 +181,7 @@ namespace Assets.Scripts.Skills
             return new List<EffectInvocation>
             {
                 new() {
-                    effect = new ApplyStatusEffect(),
+                    effect = new ApplyConditionEffect(),
                     target = EffectTarget.SelectedTarget
                 }
             };
@@ -353,8 +354,8 @@ namespace Assets.Scripts.Skills
         }
 
         /// <summary>Load a StatusEffect asset by project path for use in skill definitions.</summary>
-        private static StatusEffectTemplate LoadStatus(string assetPath)
-            => AssetDatabase.LoadAssetAtPath<StatusEffectTemplate>(assetPath);
+        private static EntityCondition LoadStatus(string assetPath)
+            => AssetDatabase.LoadAssetAtPath<EntityCondition>(assetPath);
 
         // ==================== BUILDER METHODS ====================
         // Mirrors TestSkillFactory — kept private here to avoid an editor→test assembly dependency.
@@ -392,11 +393,11 @@ namespace Assets.Scripts.Skills
                 effect = new ResourceRestorationEffect { formula = new RestorationFormula { resourceType = ResourceType.Energy, isDrain = false, bonus = amount } }
             };
 
-        private static EffectInvocation Status(StatusEffectTemplate effect, EffectTarget target = EffectTarget.SelectedTarget)
+        private static EffectInvocation Status(EntityCondition effect, EffectTarget target = EffectTarget.SelectedTarget)
             => new EffectInvocation
             {
                 target = target,
-                effect = new ApplyStatusEffect { statusEffect = effect }
+                effect = new ApplyConditionEffect { condition = effect }
             };
 
         private static RollNode AlwaysApply(List<EffectInvocation> effects)

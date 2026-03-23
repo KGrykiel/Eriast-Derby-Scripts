@@ -1,20 +1,23 @@
-﻿using System.Collections;
+using System.Collections;
 using System.Linq;
 using NUnit.Framework;
 using UnityEngine;
 using UnityEngine.TestTools;
 using Assets.Scripts.Characters;
 using Assets.Scripts.Combat;
+using Assets.Scripts.Core;
 using Assets.Scripts.Combat.Damage;
 using Assets.Scripts.Combat.Rolls;
 using Assets.Scripts.Combat.Rolls.Advantage;
 using Assets.Scripts.Stages.Lanes;
-using Assets.Scripts.StatusEffects;
+using Assets.Scripts.Conditions;
 using Assets.Scripts.Tests.Helpers;
 using Assets.Scripts.Combat.Rolls.RollTypes.Attacks;
 using Assets.Scripts.Combat.Rolls.RollTypes.SkillChecks;
 using Assets.Scripts.Combat.Rolls.RollSpecs;
 using Assets.Scripts.Combat.Rolls.RollSpecs.SpecTypes;
+using Assets.Scripts.Conditions.EntityConditions;
+using Assets.Scripts.Combat.Damage.FormulaProviders.SpecificProviders;
 
 namespace Assets.Scripts.Tests.PlayMode
 {
@@ -77,7 +80,7 @@ namespace Assets.Scripts.Tests.PlayMode
             var ctx = new RollContext
             {
                 SourceVehicle = playerVehicle,
-                SourceActor = new CharacterWithToolActor(bob, playerVehicle.optionalComponents[0]),
+                SourceActor = new CharacterWithToolActor(playerVehicle.GetSeatForCharacter(bob), playerVehicle.optionalComponents[0]),
                 TargetEntity = enemyVehicle.chassis
             };
             playerVehicle.ExecuteSkill(ctx, cannonShot);
@@ -88,7 +91,7 @@ namespace Assets.Scripts.Tests.PlayMode
                 "Should consume 3 energy regardless of hit/miss");
         }
 
-        // ==================== NOT ENOUGH ENERGY → SKILL BLOCKED ====================
+        // ==================== NOT ENOUGH ENERGY ? SKILL BLOCKED ====================
 
         [UnityTest]
         public IEnumerator SkillExecution_NotEnoughEnergy_Blocked()
@@ -113,7 +116,7 @@ namespace Assets.Scripts.Tests.PlayMode
             var ctx = new RollContext
             {
                 SourceVehicle = playerVehicle,
-                SourceActor = new CharacterWithToolActor(gunner, playerVehicle.optionalComponents[0]),
+                SourceActor = new CharacterWithToolActor(playerVehicle.GetSeatForCharacter(gunner), playerVehicle.optionalComponents[0]),
                 TargetEntity = enemyVehicle.chassis
             };
             bool executed = playerVehicle.ExecuteSkill(ctx, expensiveSkill);
@@ -126,7 +129,7 @@ namespace Assets.Scripts.Tests.PlayMode
                 "Energy should not be consumed");
         }
 
-        // ==================== BUFF SKILL: NO-ROLL MODIFIER → TARGET COMPONENT STATS CHANGE ====================
+        // ==================== BUFF SKILL: NO-ROLL MODIFIER ? TARGET COMPONENT STATS CHANGE ====================
 
         [UnityTest]
         public IEnumerator BuffSkill_AppliesStatusEffect_ModifiesStat()
@@ -138,13 +141,13 @@ namespace Assets.Scripts.Tests.PlayMode
                 .Build();
             playerVehicle.powerCore.currentEnergy = 20;
 
-            // Buff: "Reinforce Hull" → +3 AC to chassis for 3 turns
+            // Buff: "Reinforce Hull" ? +3 AC to chassis for 3 turns
             var reinforceTemplate = TestStatusEffectFactory.CreateModifierEffect("Reinforced", Attribute.ArmorClass, 3f, duration: 3, cleanup: cleanup);
             var reinforceSkill = TestSkillFactory.CreateNoRollSkill("Reinforce Hull",
                 new System.Collections.Generic.List<EffectInvocation>
                 {
                     new() {
-                        effect = new ApplyStatusEffect { statusEffect = reinforceTemplate },
+                        effect = new ApplyConditionEffect { condition = reinforceTemplate },
                         target = EffectTarget.SelectedTarget
                     }
                 },
@@ -156,7 +159,7 @@ namespace Assets.Scripts.Tests.PlayMode
             var ctx = new RollContext
             {
                 SourceVehicle = playerVehicle,
-                SourceActor = new CharacterWithToolActor(engineer, playerVehicle.powerCore),
+                SourceActor = new CharacterWithToolActor(playerVehicle.GetSeatForCharacter(engineer), playerVehicle.powerCore),
                 TargetEntity = playerVehicle.chassis
             };
             playerVehicle.ExecuteSkill(ctx, reinforceSkill);
@@ -195,7 +198,7 @@ namespace Assets.Scripts.Tests.PlayMode
                 new System.Collections.Generic.List<EffectInvocation>
                 {
                     new() {
-                        effect = new ApplyStatusEffect { statusEffect = burningTemplate },
+                        effect = new ApplyConditionEffect { condition = burningTemplate },
                         target = EffectTarget.SelectedTarget
                     }
                 },
@@ -206,7 +209,7 @@ namespace Assets.Scripts.Tests.PlayMode
             var ctx = new RollContext
             {
                 SourceVehicle = playerVehicle,
-                SourceActor = new CharacterWithToolActor(pyro, playerVehicle.optionalComponents[0]),
+                SourceActor = new CharacterWithToolActor(playerVehicle.GetSeatForCharacter(pyro), playerVehicle.optionalComponents[0]),
                 TargetEntity = enemyVehicle.chassis
             };
             playerVehicle.ExecuteSkill(ctx, flameThrower);
@@ -278,7 +281,7 @@ namespace Assets.Scripts.Tests.PlayMode
 
             // Test 4: Attack bonuses stack correctly
             var attackSpec = new AttackSpec { grantedMode = RollMode.Normal };
-            var gathered = RollGatherer.ForAttack(attackSpec, new CharacterWithToolActor(gunner, playerVehicle.optionalComponents[0]));
+            var gathered = RollGatherer.ForAttack(attackSpec, new CharacterWithToolActor(playerVehicle.GetSeatForCharacter(gunner), playerVehicle.optionalComponents[0]));
             var bonuses = gathered.Bonuses;
             int totalMod = bonuses.Sum(b => b.Value);
             Assert.AreEqual(6, totalMod, "Attack bonus should be weapon(2) + character(4) = 6");
@@ -300,7 +303,7 @@ namespace Assets.Scripts.Tests.PlayMode
 
             int acBefore = playerVehicle.chassis.GetArmorClass();
 
-            // Simulate vehicle entering lane → apply lane status effect
+            // Simulate vehicle entering lane ? apply lane status effect
             cliffLane.vehiclesInLane.Add(playerVehicle);
             playerVehicle.currentLane = cliffLane;
 
@@ -364,8 +367,8 @@ namespace Assets.Scripts.Tests.PlayMode
             Assert.AreNotEqual(0, checkResult.BaseRoll, "Should be able to attempt the check");
 
             // Verify modifier is correct: DEX 18 (+4) + Prof level 5 (+3) = +7
-            int expectedDexMod = CharacterFormulas.CalculateAttributeModifier(18);
-            int expectedProf = CharacterFormulas.CalculateProficiencyBonus(5);
+            int expectedDexMod = CharacterStatCalculator.CalculateAttributeModifier(18);
+            int expectedProf = CharacterStatCalculator.CalculateProficiencyBonus(5);
             Assert.AreEqual(expectedDexMod + expectedProf, checkResult.TotalModifier,
                 $"Modifier should be DEX({expectedDexMod}) + Prof({expectedProf})");
         }
@@ -381,12 +384,13 @@ namespace Assets.Scripts.Tests.PlayMode
                 .WithChassis()
                 .WithPowerCore()
                 .Build();
-            playerVehicle.seats.Add(new Assets.Scripts.Entities.Vehicle.VehicleSeat
+            var driverSeat = new Assets.Scripts.Entities.Vehicle.VehicleSeat
             {
                 seatName = "Driver",
-                assignedCharacter = driver,
                 controlledComponents = new System.Collections.Generic.List<VehicleComponent> { playerVehicle.chassis }
-            });
+            };
+            driverSeat.Assign(driver);
+            playerVehicle.seats.Add(driverSeat);
 
             // Enemy vehicle
             var enemyCaster = TestCharacterFactory.CreateWithCleanup("EnemyCaster", cleanup: cleanup);
@@ -426,7 +430,7 @@ namespace Assets.Scripts.Tests.PlayMode
             var ctx = new RollContext
             {
                 SourceVehicle = enemyVehicle,
-                SourceActor = new CharacterActor(enemyCaster),
+                SourceActor = new CharacterActor(enemyVehicle.GetSeatForCharacter(enemyCaster)),
                 TargetEntity = playerVehicle.chassis
             };
             enemyVehicle.ExecuteSkill(ctx, psychicScream);
@@ -441,7 +445,7 @@ namespace Assets.Scripts.Tests.PlayMode
             // and that the save used the correct character
         }
 
-        // ==================== STUN → COMPONENT NOT OPERATIONAL → AUTO-FAIL ====================
+        // ==================== STUN ? COMPONENT NOT OPERATIONAL ? AUTO-FAIL ====================
 
         [UnityTest]
         public IEnumerator StunEffect_PreventsActions_CausesAutoFail()
@@ -456,10 +460,10 @@ namespace Assets.Scripts.Tests.PlayMode
                 .Build();
 
             // Stun the Utility component
-            var stunTemplate = ScriptableObject.CreateInstance<StatusEffect>();
+            var stunTemplate = ScriptableObject.CreateInstance<EntityCondition>();
             stunTemplate.effectName = "Stunned";
             stunTemplate.baseDuration = 2;
-            stunTemplate.modifiers = new System.Collections.Generic.List<ModifierData>();
+            stunTemplate.modifiers = new System.Collections.Generic.List<EntityModifierData>();
             stunTemplate.periodicEffects = new System.Collections.Generic.List<IPeriodicEffect>();
             stunTemplate.behavioralEffects = new BehavioralEffectData { preventsActions = true };
             cleanup.Add(stunTemplate);
@@ -479,9 +483,9 @@ namespace Assets.Scripts.Tests.PlayMode
 
             Assert.AreEqual(0, result.BaseRoll, "Should auto-fail when required component is stunned");
 
-            // Wait 2 turns → stun expires → component operational again
+            // Wait 2 turns ? stun expires ? component operational again
             utilityComp.UpdateStatusEffects(); // Turn 1
-            utilityComp.UpdateStatusEffects(); // Turn 2 → expires
+            utilityComp.UpdateStatusEffects(); // Turn 2 ? expires
             yield return null;
 
             Assert.IsTrue(utilityComp.IsOperational, "Component should be operational after stun expires");
@@ -490,7 +494,7 @@ namespace Assets.Scripts.Tests.PlayMode
             Assert.AreNotEqual(0, resultAfter.BaseRoll, "Should be able to attempt after stun expires");
         }
 
-        // ==================== COMPONENT DESTROYED → SKILL BLOCKED → HEAL → WORKS AGAIN ====================
+        // ==================== COMPONENT DESTROYED ? SKILL BLOCKED ? HEAL ? WORKS AGAIN ====================
 
         [UnityTest]
         public IEnumerator ComponentLifecycle_Destroy_Heal_ResumeFunction()
@@ -546,9 +550,7 @@ namespace Assets.Scripts.Tests.PlayMode
             // Source 1: Equipment modifier (+2 AC)
             playerVehicle.chassis.AddModifier(new AttributeModifier(
                 Attribute.ArmorClass, ModifierType.Flat, 2f,
-                source: playerVehicle.chassis,
-                category: ModifierCategory.Equipment,
-                displayNameOverride: "Armor Plating"));
+                "Armor Plating", ModifierCategory.Equipment));
 
             // Source 2: Status effect (+3 AC from buff skill)
             var shieldBuff = TestStatusEffectFactory.CreateModifierEffect("Shield", Attribute.ArmorClass, 3f, duration: 5, cleanup: cleanup);
@@ -557,9 +559,7 @@ namespace Assets.Scripts.Tests.PlayMode
             // Source 3: Direct modifier (+1 AC from event card)
             playerVehicle.chassis.AddModifier(new AttributeModifier(
                 Attribute.ArmorClass, ModifierType.Flat, 1f,
-                source: playerVehicle.chassis,
-                category: ModifierCategory.Other,
-                displayNameOverride: "Lucky Break"));
+                "Lucky Break"));
 
             yield return null;
 
@@ -570,10 +570,10 @@ namespace Assets.Scripts.Tests.PlayMode
             // Verify breakdown shows all sources
             var (total, bv, modifiers) = Assets.Scripts.Core.StatCalculator.GatherAttributeValueWithBreakdown(
                 playerVehicle.chassis, Attribute.ArmorClass);
-            Assert.IsTrue(modifiers.Any(m => m.DisplayNameOverride == "Armor Plating"), "Should show Armor Plating");
-            Assert.IsTrue(modifiers.Any(m => m.DisplayNameOverride == "Lucky Break"), "Should show Lucky Break");
+            Assert.IsTrue(modifiers.Any(m => m.Label == "Armor Plating"), "Should show Armor Plating");
+            Assert.IsTrue(modifiers.Any(m => m.Label == "Lucky Break"), "Should show Lucky Break");
 
-            // Remove status effect → AC should drop by 3
+            // Remove status effect ? AC should drop by 3
             var applied = playerVehicle.chassis.GetActiveStatusEffects()[0];
             playerVehicle.chassis.RemoveStatusEffect(applied);
             yield return null;
@@ -634,7 +634,7 @@ namespace Assets.Scripts.Tests.PlayMode
                     var playerCtx = new RollContext
                     {
                         SourceVehicle = playerVehicle,
-                        SourceActor = new CharacterWithToolActor(pGunner, playerVehicle.optionalComponents[0]),
+                        SourceActor = new CharacterWithToolActor(playerVehicle.GetSeatForCharacter(pGunner), playerVehicle.optionalComponents[0]),
                         TargetEntity = enemyVehicle.chassis
                     };
                     playerVehicle.ExecuteSkill(playerCtx, playerAttack);
@@ -646,7 +646,7 @@ namespace Assets.Scripts.Tests.PlayMode
                     var enemyCtx = new RollContext
                     {
                         SourceVehicle = enemyVehicle,
-                        SourceActor = new CharacterWithToolActor(eGunner, enemyVehicle.optionalComponents[0]),
+                        SourceActor = new CharacterWithToolActor(enemyVehicle.GetSeatForCharacter(eGunner), enemyVehicle.optionalComponents[0]),
                         TargetEntity = playerVehicle.chassis
                     };
                     enemyVehicle.ExecuteSkill(enemyCtx, enemyAttack);

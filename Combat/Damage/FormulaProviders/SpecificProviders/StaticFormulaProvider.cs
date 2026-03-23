@@ -1,6 +1,6 @@
 ﻿using UnityEngine;
 
-namespace Assets.Scripts.Combat.Damage
+namespace Assets.Scripts.Combat.Damage.FormulaProviders.SpecificProviders
 {
     /// <summary>
     /// Fixed damage formula that doesn't depend on context.

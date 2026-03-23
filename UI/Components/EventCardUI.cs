@@ -9,6 +9,7 @@ using Assets.Scripts.Events.EventCard;
 using Assets.Scripts.Combat.Damage;
 using Assets.Scripts.Combat.Restoration;
 using Assets.Scripts.Combat.Rolls.RollSpecs.SpecTypes;
+using Assets.Scripts.Combat.Damage.FormulaProviders.SpecificProviders;
 
 namespace Assets.Scripts.UI.Components
 {
@@ -265,9 +266,9 @@ namespace Assets.Scripts.UI.Components
             {
                 description = "Damage (Weapon)";
             }
-            else if (invocation.effect is ApplyStatusEffect statusEffect && statusEffect.statusEffect != null)
+            else if (invocation.effect is ApplyConditionEffect statusEffect && statusEffect.condition != null)
             {
-                description = $"Apply: {statusEffect.statusEffect.effectName}";
+                description = $"Apply: {statusEffect.condition.effectName}";
             }
             else if (invocation.effect is ResourceRestorationEffect restorationEffect)
             {

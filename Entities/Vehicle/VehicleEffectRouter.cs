@@ -30,16 +30,16 @@ namespace Assets.Scripts.Entities.Vehicle
                 return component != null ? component : vehicle.chassis;
             }
 
-            if (effect is ApplyStatusEffect statusEffect)
+            if (effect is ApplyConditionEffect appliedCondition)
             {
-                if (statusEffect.statusEffect != null && 
-                    statusEffect.statusEffect.modifiers != null && 
-                    statusEffect.statusEffect.modifiers.Count > 0)
+                if (appliedCondition.condition != null && 
+                    appliedCondition.condition.modifiers != null && 
+                    appliedCondition.condition.modifiers.Count > 0)
                 {
                     //TODO: this is a bit of a band-aid solution. For status effects with multiple modifiers,
                     //we should ideally be applying each modifier to the correct component instead of just routing based on the first modifier's attribute.
                     //For now, we'll just route based on the first modifier.
-                    var firstModifier = statusEffect.statusEffect.modifiers[0];
+                    var firstModifier = appliedCondition.condition.modifiers[0];
                     VehicleComponent component = ResolveModifierTarget(firstModifier.attribute);
                     return component != null ? component : vehicle.chassis;
                 }

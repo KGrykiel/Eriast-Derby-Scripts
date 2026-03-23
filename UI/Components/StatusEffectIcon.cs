@@ -2,8 +2,9 @@
 using UnityEngine.UI;
 using UnityEngine.EventSystems;
 using TMPro;
-using Assets.Scripts.StatusEffects;
+using Assets.Scripts.Conditions;
 using Assets.Scripts.Combat.Logging;
+using Assets.Scripts.Conditions.EntityConditions;
 
 namespace Assets.Scripts.UI.Components
 {
@@ -34,7 +35,7 @@ namespace Assets.Scripts.UI.Components
         [Tooltip("Background color for neutral effects (only used if tintIconByEffectType is true)")]
         public Color neutralColor = new(0.5f, 0.5f, 0.5f, 0.8f);
         
-        private AppliedStatusEffect appliedEffect;
+        private AppliedEntityCondition appliedEffect;
         private RectTransform rectTransform;
 
         void Awake()
@@ -48,7 +49,7 @@ namespace Assets.Scripts.UI.Components
                 durationText = GetComponentInChildren<TextMeshProUGUI>();
         }
         
-        public void Initialize(AppliedStatusEffect effect)
+        public void Initialize(AppliedEntityCondition effect)
         {
             appliedEffect = effect;
             UpdateDisplay();
@@ -107,7 +108,7 @@ namespace Assets.Scripts.UI.Components
             return isBuff ? buffColor : debuffColor;
         }
 
-        private bool DetermineIfBuff(StatusEffect statusEffect)
+        private bool DetermineIfBuff(EntityCondition statusEffect)
         {
             float totalModifierValue = 0f;
             foreach (var mod in statusEffect.modifiers)
@@ -151,7 +152,7 @@ namespace Assets.Scripts.UI.Components
         {
             if (appliedEffect == null || appliedEffect.template == null) return;
 
-            string tooltipContent = CombatFormatter.FormatStatusEffectTooltip(appliedEffect);
+            string tooltipContent = CombatFormatter.FormatEntityConditionTooltip(appliedEffect);
             RollTooltip.ShowNow(tooltipContent, rectTransform);
         }
 

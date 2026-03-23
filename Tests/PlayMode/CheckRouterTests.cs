@@ -40,7 +40,7 @@ namespace Assets.Scripts.Tests.PlayMode
             yield return null;
 
             Assert.IsTrue(result.CanAttempt, "Should be able to attempt");
-            Assert.AreEqual(driver, result.Actor.GetCharacter(), "Should route to Driver");
+            Assert.IsTrue(result.Actor.GetSeat()?.IsAssignedTo(driver) == true, "Should route to Driver");
             Assert.IsNotNull(result.Actor.GetEntity(), "Should return chassis component");
         }
 
@@ -107,11 +107,11 @@ namespace Assets.Scripts.Tests.PlayMode
                 .Build();
 
             var spec = SkillCheckSpec.ForCharacter(CharacterSkill.Mechanics);
-            var result = CheckRouter.RouteSkillCheck(vehicle, spec, actorHint: new CharacterActor(bob));
+            var result = CheckRouter.RouteSkillCheck(vehicle, spec, actorHint: new CharacterActor(vehicle.GetSeatForCharacter(bob)));
             yield return null;
 
             Assert.IsTrue(result.CanAttempt);
-            Assert.AreEqual(bob, result.Actor.GetCharacter(), "Should use Bob (initiating), not Alice (better modifier)");
+            Assert.IsTrue(result.Actor.GetSeat()?.IsAssignedTo(bob) == true, "Should use Bob (initiating), not Alice (better modifier)");
         }
 
         [UnityTest]
@@ -137,7 +137,7 @@ namespace Assets.Scripts.Tests.PlayMode
             yield return null;
 
             Assert.IsTrue(result.CanAttempt);
-            Assert.AreEqual(driver, result.Actor.GetCharacter(), "Should route to Driver (operates chassis)");
+            Assert.IsTrue(result.Actor.GetSeat()?.IsAssignedTo(driver) == true, "Should route to Driver (operates chassis)");
         }
 
         [UnityTest]
@@ -157,7 +157,7 @@ namespace Assets.Scripts.Tests.PlayMode
             yield return null;
 
             Assert.IsTrue(result.CanAttempt);
-            Assert.AreEqual(bob, result.Actor.GetCharacter(), "Should route to Bob (best WIS)");
+            Assert.IsTrue(result.Actor.GetSeat()?.IsAssignedTo(bob) == true, "Should route to Bob (best WIS)");
         }
     }
 }

@@ -9,7 +9,8 @@ using Assets.Scripts.Entities.Vehicle;
 using Assets.Scripts.Characters;
 using Assets.Scripts.Combat.Damage;
 using Assets.Scripts.Combat.Restoration;
-using StatusEffectTemplate = Assets.Scripts.StatusEffects.StatusEffect;
+using Assets.Scripts.Combat.Damage.FormulaProviders.SpecificProviders;
+using StatusEffectTemplate = Assets.Scripts.Conditions.EntityConditions.EntityCondition;
 
 namespace Assets.Scripts.Events.EventCard
 {

@@ -84,7 +84,7 @@ namespace Assets.Scripts.Logging
                 EventType.Movement => "[MOVE]",
                 EventType.StageHazard => "[WARN]",
                 EventType.Modifier => "[MOD]",
-                EventType.StatusEffect => "[STATUS]",
+                EventType.Condition => "[STATUS]",
                 EventType.SkillUse => "[SKILL]",
                 EventType.Destruction => "[DEAD]",
                 EventType.FinishLine => "[FINISH]",

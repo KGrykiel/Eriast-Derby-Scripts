@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
-using Assets.Scripts.StatusEffects;
+using Assets.Scripts.Conditions.EntityConditions;
 
 namespace Assets.Scripts.UI.Components
 {
@@ -91,7 +91,7 @@ namespace Assets.Scripts.UI.Components
             }
         }
         
-        private void CreateIcon(AppliedStatusEffect statusEffect)
+        private void CreateIcon(AppliedEntityCondition statusEffect)
         {
             if (iconPrefab == null)
             {

@@ -2,6 +2,8 @@ using UnityEngine;
 using Assets.Scripts.Combat.Damage;
 using Assets.Scripts.Effects;
 using SerializeReferenceEditor;
+using Assets.Scripts.Combat.Damage.FormulaProviders;
+using Assets.Scripts.Combat.Damage.FormulaProviders.SpecificProviders;
 
 /// <summary>
 /// The effect for applying damage to an entity target.

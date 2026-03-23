@@ -125,7 +125,7 @@ namespace Assets.Scripts.Tests.PlayMode
 
             var statusTemplate = TestStatusEffectFactory.CreateModifierEffect("TestBuff", Attribute.ArmorClass, 2f, cleanup: cleanup);
 
-            var applyEffect = new ApplyStatusEffect { statusEffect = statusTemplate };
+            var applyEffect = new ApplyConditionEffect { condition = statusTemplate };
             var result = vehicle.RouteEffectTarget(applyEffect);
             yield return null;
 

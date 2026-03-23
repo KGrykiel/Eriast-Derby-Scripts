@@ -1,6 +1,7 @@
 ﻿using UnityEngine;
-using Assets.Scripts.StatusEffects;
+using Assets.Scripts.Conditions;
 using Assets.Scripts.Combat.Damage;
+using Assets.Scripts.Conditions.EntityConditions;
 
 namespace Assets.Scripts.Tests.Helpers
 {
@@ -20,27 +21,27 @@ namespace Assets.Scripts.Tests.Helpers
         /// <param name="stackBehaviour">How this effect stacks when reapplied</param>
         /// <param name="maxStacks">Maximum stacks allowed (only for Stack behaviour)</param>
         /// <param name="cleanup">Cleanup list to track for disposal</param>
-        public static StatusEffect CreateModifierEffect(
+        public static EntityCondition CreateModifierEffect(
             string name,
             Attribute attribute,
             float value,
             int duration = -1,
             StackBehaviour stackBehaviour = StackBehaviour.Refresh,
             int maxStacks = 0,
-            EffectCategory categories = EffectCategory.None,
+            ConditionCategory categories = ConditionCategory.None,
             RemovalTrigger removalTriggers = RemovalTrigger.None,
             System.Collections.Generic.List<Object> cleanup = null)
         {
-            var template = ScriptableObject.CreateInstance<StatusEffect>();
+            var template = ScriptableObject.CreateInstance<EntityCondition>();
             template.effectName = name;
             template.baseDuration = duration;
             template.stackBehaviour = stackBehaviour;
             template.maxStacks = maxStacks;
             template.categories = categories;
             template.removalTriggers = removalTriggers;
-            template.modifiers = new System.Collections.Generic.List<ModifierData>
+            template.modifiers = new System.Collections.Generic.List<EntityModifierData>
             {
-                new() { attribute = attribute, type = ModifierType.Flat, value = value }
+                new EntityModifierData { attribute = attribute, type = ModifierType.Flat, value = value }
             };
             template.periodicEffects = new System.Collections.Generic.List<IPeriodicEffect>();
             template.behavioralEffects = new BehavioralEffectData();
@@ -59,25 +60,25 @@ namespace Assets.Scripts.Tests.Helpers
         /// <param name="stackBehaviour">How this effect stacks when reapplied</param>
         /// <param name="maxStacks">Maximum stacks allowed (only for Stack behaviour)</param>
         /// <param name="cleanup">Cleanup list to track for disposal</param>
-        public static StatusEffect CreateDoTEffect(
+        public static EntityCondition CreateDoTEffect(
             string name,
             int damage,
             DamageType damageType,
             int duration,
             StackBehaviour stackBehaviour = StackBehaviour.Refresh,
             int maxStacks = 0,
-            EffectCategory categories = EffectCategory.None,
+            ConditionCategory categories = ConditionCategory.None,
             RemovalTrigger removalTriggers = RemovalTrigger.None,
             System.Collections.Generic.List<Object> cleanup = null)
         {
-            var template = ScriptableObject.CreateInstance<StatusEffect>();
+            var template = ScriptableObject.CreateInstance<EntityCondition>();
             template.effectName = name;
             template.baseDuration = duration;
             template.stackBehaviour = stackBehaviour;
             template.maxStacks = maxStacks;
             template.categories = categories;
             template.removalTriggers = removalTriggers;
-            template.modifiers = new System.Collections.Generic.List<ModifierData>();
+            template.modifiers = new System.Collections.Generic.List<EntityModifierData>();
             template.periodicEffects = new System.Collections.Generic.List<IPeriodicEffect>
             {
                 new PeriodicDamageEffect {
@@ -106,25 +107,25 @@ namespace Assets.Scripts.Tests.Helpers
         /// <param name="stackBehaviour">How this effect stacks when reapplied</param>
         /// <param name="maxStacks">Maximum stacks allowed (only for Stack behaviour)</param>
         /// <param name="cleanup">Cleanup list to track for disposal</param>
-        public static StatusEffect CreateBehavioralEffect(
+        public static EntityCondition CreateBehavioralEffect(
             string name,
             bool preventsActions = false,
             bool preventsMovement = false,
             int duration = 2,
             StackBehaviour stackBehaviour = StackBehaviour.Refresh,
             int maxStacks = 0,
-            EffectCategory categories = EffectCategory.None,
+            ConditionCategory categories = ConditionCategory.None,
             RemovalTrigger removalTriggers = RemovalTrigger.None,
             System.Collections.Generic.List<Object> cleanup = null)
         {
-            var template = ScriptableObject.CreateInstance<StatusEffect>();
+            var template = ScriptableObject.CreateInstance<EntityCondition>();
             template.effectName = name;
             template.baseDuration = duration;
             template.stackBehaviour = stackBehaviour;
             template.maxStacks = maxStacks;
             template.categories = categories;
             template.removalTriggers = removalTriggers;
-            template.modifiers = new System.Collections.Generic.List<ModifierData>();
+            template.modifiers = new System.Collections.Generic.List<EntityModifierData>();
             template.periodicEffects = new System.Collections.Generic.List<IPeriodicEffect>();
             template.behavioralEffects = new BehavioralEffectData
             {

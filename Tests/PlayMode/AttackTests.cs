@@ -10,6 +10,7 @@ using Assets.Scripts.Combat.Rolls.Advantage;
 using Assets.Scripts.Combat.Rolls.RollSpecs.SpecTypes;
 using Assets.Scripts.Combat.Rolls.RollTypes.Attacks;
 using Assets.Scripts.Core;
+using Assets.Scripts.Entities.Vehicle;
 
 namespace Assets.Scripts.Tests.PlayMode
 {
@@ -57,7 +58,7 @@ namespace Assets.Scripts.Tests.PlayMode
             target.SetHealth(100);
 
             var spec = new AttackSpec { grantedMode = RollMode.Normal };
-            var gathered = RollGatherer.ForAttack(spec, new CharacterWithToolActor(bob, weapon));
+            var gathered = RollGatherer.ForAttack(spec, new CharacterWithToolActor(vehicle.GetSeatForCharacter(bob), weapon));
             var bonuses = gathered.Bonuses;
             yield return null;
 
@@ -77,7 +78,9 @@ namespace Assets.Scripts.Tests.PlayMode
             var ada = TestCharacterFactory.CreateWithCleanup("Ada", baseAttackBonus: 2, cleanup: cleanup);
 
             var spec = new AttackSpec { grantedMode = RollMode.Normal };
-            var gathered = RollGatherer.ForAttack(spec, new CharacterActor(ada));
+            var attackSeat = new VehicleSeat();
+            attackSeat.Assign(ada);
+            var gathered = RollGatherer.ForAttack(spec, new CharacterActor(attackSeat));
             var bonuses = gathered.Bonuses;
             yield return null;
 
@@ -105,13 +108,12 @@ namespace Assets.Scripts.Tests.PlayMode
                 Attribute.AttackBonus,
                 ModifierType.Flat,
                 2f,
-                source: weapon,
-                category: ModifierCategory.StatusEffect,
-                displayNameOverride: "Blessed"
+                "Blessed",
+                ModifierCategory.Condition
             ));
 
             var spec = new AttackSpec { grantedMode = RollMode.Normal };
-            var gathered = RollGatherer.ForAttack(spec, new CharacterWithToolActor(bob, weapon));
+            var gathered = RollGatherer.ForAttack(spec, new CharacterWithToolActor(vehicle.GetSeatForCharacter(bob), weapon));
             var bonuses = gathered.Bonuses;
             yield return null;
 

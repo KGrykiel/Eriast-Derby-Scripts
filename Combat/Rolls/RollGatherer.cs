@@ -16,10 +16,11 @@ namespace Assets.Scripts.Combat.Rolls
     {
         // ==================== SKILL CHECKS ====================
 
-        public static GatheredRoll ForSkillCheck(SkillCheckSpec spec, RollActor actor = null)
+        public static GatheredRoll ForSkillCheck(SkillCheckSpec spec, RollActor actor)
         {
             var bonuses = new List<RollBonus>();
             Entity entity = GetContextEntity(actor);
+            VehicleSeat seat = null;
 
             if (spec is VehicleSkillCheckSpec vehicleSpec && actor is ComponentActor componentActor)
             {
@@ -28,50 +29,45 @@ namespace Assets.Scripts.Combat.Rolls
             }
             else if (spec is CharacterSkillCheckSpec charSpec)
             {
-                Character character = actor != null ? actor.GetCharacter() : null;
-                if (character != null)
-                    bonuses.AddRange(GatherCharacterSkillBonuses(character, charSpec.characterSkill));
+                seat = actor.GetSeat();
+                if (seat != null)
+                    bonuses.AddRange(GatherCharacterSkillBonuses(seat, charSpec.characterSkill));
             }
 
             var grantedSource = ResolveGrantedSource(spec.grantedMode, spec.DisplayName);
-            var advantageSources = GatherAdvantageSources(entity, spec, grantedSource);
+            var advantageSources = GatherAdvantageSources(entity, seat, spec, grantedSource);
 
             return new GatheredRoll(bonuses, advantageSources);
         }
 
         private static List<RollBonus> GatherCharacterSkillBonuses(
-            Character character,
+            VehicleSeat seat,
             CharacterSkill skill)
         {
             var bonuses = new List<RollBonus>();
+            var (_, attrBonus, profBonus, directMods) = CharacterStatCalculator.GatherSkillBonusWithBreakdown(seat, skill);
 
             CharacterAttribute attribute = CharacterSkillHelper.GetPrimaryAttribute(skill);
+            if (attrBonus != 0)
+                bonuses.Add(new RollBonus($"{attribute} Modifier", attrBonus));
 
-            int attributeScore = character.GetAttributeScore(attribute);
-            int attrMod = CharacterFormulas.CalculateAttributeModifier(attributeScore);
-            if (attrMod != 0)
-            {
-                bonuses.Add(new RollBonus($"{attribute} Modifier", attrMod));
-            }
+            if (profBonus != 0)
+                bonuses.Add(new RollBonus("Proficiency", profBonus));
 
-            if (character.IsProficient(skill))
-            {
-                int proficiency = CharacterFormulas.CalculateProficiencyBonus(character.level);
-                if (proficiency != 0)
-                {
-                    bonuses.Add(new RollBonus("Proficiency", proficiency));
-                }
-            }
+            foreach (var mod in directMods)
+                if (mod.Value != 0)
+                    bonuses.Add(new RollBonus(mod.Label, (int)mod.Value));
 
             return bonuses;
         }
 
         // ==================== SAVES ====================
 
-        public static GatheredRoll ForSave(SaveSpec spec, RollActor actor = null)
+        public static GatheredRoll ForSave(SaveSpec spec, RollActor actor)
         {
             var bonuses = new List<RollBonus>();
             Entity entity = GetContextEntity(actor);
+            VehicleSeat seat = null;
 
             if (spec is VehicleSaveSpec vehicleSpec && actor is ComponentActor componentActor)
             {
@@ -80,42 +76,36 @@ namespace Assets.Scripts.Combat.Rolls
             }
             else if (spec is CharacterSaveSpec charSpec)
             {
-                Character character = actor != null ? actor.GetCharacter() : null;
-                if (character != null)
-                    bonuses.AddRange(GatherCharacterSaveBonuses(character, charSpec.characterAttribute));
+                seat = actor.GetSeat();
+                if (seat != null)
+                    bonuses.AddRange(GatherCharacterSaveBonuses(seat, charSpec.characterAttribute));
             }
 
             var grantedSource = ResolveGrantedSource(spec.grantedMode, spec.DisplayName);
-            var advantageSources = GatherAdvantageSources(entity, spec, grantedSource);
+            var advantageSources = GatherAdvantageSources(entity, seat, spec, grantedSource);
 
             return new GatheredRoll(bonuses, advantageSources);
         }
 
         private static List<RollBonus> GatherCharacterSaveBonuses(
-            Character character,
+            VehicleSeat seat,
             CharacterAttribute attribute)
         {
             var bonuses = new List<RollBonus>();
+            var (_, attrBonus, levelBonus) = CharacterStatCalculator.GatherSaveBonusWithBreakdown(seat, attribute);
 
-            int attributeScore = character.GetAttributeScore(attribute);
-            int attrMod = CharacterFormulas.CalculateAttributeModifier(attributeScore);
-            if (attrMod != 0)
-            {
-                bonuses.Add(new RollBonus($"{attribute} Modifier", attrMod));
-            }
+            if (attrBonus != 0)
+                bonuses.Add(new RollBonus($"{attribute} Modifier", attrBonus));
 
-            int halfLevel = CharacterFormulas.CalculateHalfLevelBonus(character.level);
-            if (halfLevel != 0)
-            {
-                bonuses.Add(new RollBonus("Half Level", halfLevel));
-            }
+            if (levelBonus != 0)
+                bonuses.Add(new RollBonus("Half Level", levelBonus));
 
             return bonuses;
         }
 
         // ==================== ATTACKS ====================
 
-        public static GatheredRoll ForAttack(AttackSpec spec, RollActor actor = null)
+        public static GatheredRoll ForAttack(AttackSpec spec, RollActor actor)
         {
             var bonuses = new List<RollBonus>();
             Entity entity = GetContextEntity(actor);
@@ -125,18 +115,18 @@ namespace Assets.Scripts.Combat.Rolls
                 bonuses.AddRange(GatherWeaponBonuses(weapon));
             }
 
-            Character character = actor != null ? actor.GetCharacter() : null;
-            if (character != null)
+            VehicleSeat seat = actor.GetSeat();
+            if (seat != null && seat.IsAssigned)
             {
-                int charBonus = CharacterFormulas.CalculateAttackBonus(character);
+                int charBonus = CharacterStatCalculator.CalculateAttackBonus(seat.GetBaseAttackBonus());
                 if (charBonus != 0)
                 {
-                    bonuses.Add(new RollBonus(character.characterName, charBonus));
+                    bonuses.Add(new RollBonus(seat.GetDisplayName(), charBonus));
                 }
             }
 
             var grantedSource = ResolveGrantedSource(spec.grantedMode, "Attack");
-            var advantageSources = GatherAdvantageSources(entity, spec, grantedSource);
+            var advantageSources = GatherAdvantageSources(entity, seat, spec, grantedSource);
 
             return new GatheredRoll(bonuses, advantageSources);
         }
@@ -160,7 +150,7 @@ namespace Assets.Scripts.Combat.Rolls
                 bonuses.AddRange(GatherComponentBonuses(entity, attribute, label));
             }
 
-            var advantageSources = GatherAdvantageSources(entity, spec, default);
+            var advantageSources = GatherAdvantageSources(entity, null, spec, default);
 
             return new GatheredRoll(bonuses, advantageSources);
         }
@@ -169,7 +159,7 @@ namespace Assets.Scripts.Combat.Rolls
 
         private static Entity GetContextEntity(RollActor actor)
         {
-            return actor != null ? actor.GetEntity() : null;
+            return actor.GetEntity();
         }
 
         private static AdvantageSource ResolveGrantedSource(RollMode grantedMode, string label)
@@ -180,7 +170,7 @@ namespace Assets.Scripts.Combat.Rolls
         }
 
         public static List<AdvantageSource> GatherAdvantageSources(
-            Entity entity, IRollSpec spec, AdvantageSource grantedSource = default)
+            Entity entity, VehicleSeat seat, IRollSpec spec, AdvantageSource grantedSource)
         {
             var sources = new List<AdvantageSource>();
 
@@ -189,6 +179,29 @@ namespace Assets.Scripts.Combat.Rolls
 
             if (entity != null)
                 sources.AddRange(GatherEntityAdvantageSources(entity, spec));
+
+            if (seat != null)
+                sources.AddRange(GatherSeatConditionAdvantages(seat, spec));
+
+            return sources;
+        }
+
+        private static List<AdvantageSource> GatherSeatConditionAdvantages(VehicleSeat seat, IRollSpec spec)
+        {
+            var sources = new List<AdvantageSource>();
+
+            foreach (var applied in seat.GetActiveConditions())
+            {
+                foreach (var grant in applied.template.advantageGrants)
+                {
+                    if (GrantMatchesSpec(grant, spec))
+                    {
+                        string label = !string.IsNullOrEmpty(grant.label)
+                            ? grant.label : applied.template.effectName;
+                        sources.Add(new AdvantageSource(label, grant.type));
+                    }
+                }
+            }
 
             return sources;
         }
@@ -295,7 +308,6 @@ namespace Assets.Scripts.Combat.Rolls
         private static List<RollBonus> GatherWeaponBonuses(WeaponComponent weapon)
         {
             var bonuses = new List<RollBonus>();
-            if (weapon == null) return bonuses;
 
             int baseAttackBonus = weapon.GetBaseAttackBonus();
             if (baseAttackBonus != 0)
@@ -310,7 +322,6 @@ namespace Assets.Scripts.Combat.Rolls
         private static List<RollBonus> GatherAppliedBonuses(Entity entity, Attribute attribute)
         {
             var bonuses = new List<RollBonus>();
-            if (entity == null) return bonuses;
 
             var (_, _, appliedMods) = StatCalculator.GatherAttributeValueWithBreakdown(entity, attribute);
 
@@ -318,7 +329,7 @@ namespace Assets.Scripts.Combat.Rolls
             {
                 if (mod.Value != 0)
                 {
-                    bonuses.Add(new RollBonus(mod.SourceDisplayName, (int)mod.Value));
+                    bonuses.Add(new RollBonus(mod.Label, (int)mod.Value));
                 }
             }
 

@@ -1,6 +1,5 @@
 ﻿using System.Linq;
 using NUnit.Framework;
-using UnityEngine;
 using Assets.Scripts.Entities.Vehicle;
 
 namespace Assets.Scripts.Tests.PlayMode
@@ -17,13 +16,11 @@ namespace Assets.Scripts.Tests.PlayMode
         [TestCase(VehicleSizeCategory.Huge, -4, -5)]
         public void Size_CorrectModifiers(VehicleSizeCategory size, int expectedAC, int expectedMobility)
         {
-            var dummySource = ScriptableObject.CreateInstance<ScriptableObject>();
-            var modifiers = VehicleSizeModifiers.GetModifiers(size, dummySource);
+            var modifiers = VehicleSizeModifiers.GetModifiers(size);
 
             if (expectedAC == 0 && expectedMobility == 0)
             {
                 Assert.AreEqual(0, modifiers.Count, "Medium should have no modifiers");
-                Object.DestroyImmediate(dummySource);
                 return;
             }
 
@@ -40,8 +37,6 @@ namespace Assets.Scripts.Tests.PlayMode
                 Assert.IsNotNull(mobMod, $"Size {size} should have Mobility modifier");
                 Assert.AreEqual(expectedMobility, (int)mobMod.Value, $"Size {size} Mobility modifier");
             }
-
-            Object.DestroyImmediate(dummySource);
         }
 
         // ==================== Modifier Properties ====================
@@ -49,32 +44,26 @@ namespace Assets.Scripts.Tests.PlayMode
         [Test]
         public void Size_Modifiers_AreEquipmentCategory()
         {
-            var dummySource = ScriptableObject.CreateInstance<ScriptableObject>();
-            var modifiers = VehicleSizeModifiers.GetModifiers(VehicleSizeCategory.Tiny, dummySource);
+            var modifiers = VehicleSizeModifiers.GetModifiers(VehicleSizeCategory.Tiny);
 
             foreach (var mod in modifiers)
             {
                 Assert.AreEqual(ModifierCategory.Equipment, mod.Category,
                     $"Size modifier for {mod.Attribute} should be Equipment category");
             }
-
-            Object.DestroyImmediate(dummySource);
         }
 
         [Test]
         public void Size_Modifiers_HaveDisplayName()
         {
-            var dummySource = ScriptableObject.CreateInstance<ScriptableObject>();
-            var modifiers = VehicleSizeModifiers.GetModifiers(VehicleSizeCategory.Large, dummySource);
+            var modifiers = VehicleSizeModifiers.GetModifiers(VehicleSizeCategory.Large);
 
             foreach (var mod in modifiers)
             {
-                Assert.IsNotNull(mod.DisplayNameOverride, "Size modifier should have display name");
-                Assert.IsTrue(mod.DisplayNameOverride.Contains("Large"),
+                Assert.IsNotNull(mod.Label, "Size modifier should have display name");
+                Assert.IsTrue(mod.Label.Contains("Large"),
                     "Display name should contain size category");
             }
-
-            Object.DestroyImmediate(dummySource);
         }
 
         // ==================== Modifier Types ====================
@@ -82,19 +71,15 @@ namespace Assets.Scripts.Tests.PlayMode
         [Test]
         public void Size_AllModifiers_AreFlatType()
         {
-            var dummySource = ScriptableObject.CreateInstance<ScriptableObject>();
-
             foreach (VehicleSizeCategory size in System.Enum.GetValues(typeof(VehicleSizeCategory)))
             {
-                var modifiers = VehicleSizeModifiers.GetModifiers(size, dummySource);
+                var modifiers = VehicleSizeModifiers.GetModifiers(size);
                 foreach (var mod in modifiers)
                 {
                     Assert.AreEqual(ModifierType.Flat, mod.Type,
                         $"Size {size} modifier for {mod.Attribute} should be Flat type");
                 }
             }
-
-            Object.DestroyImmediate(dummySource);
         }
     }
 }

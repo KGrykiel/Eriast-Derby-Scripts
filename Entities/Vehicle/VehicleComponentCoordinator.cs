@@ -166,7 +166,7 @@ namespace Assets.Scripts.Entities.Vehicle
                 return;
             }
 
-            var sizeModifiers = VehicleSizeModifiers.GetModifiers(vehicle.chassis.sizeCategory, vehicle);
+            var sizeModifiers = VehicleSizeModifiers.GetModifiers(vehicle.chassis.sizeCategory);
 
             foreach (var modifier in sizeModifiers)
             {

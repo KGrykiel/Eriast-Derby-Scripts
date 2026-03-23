@@ -1,6 +1,9 @@
 ﻿using System.Linq;
 using Assets.Scripts.Combat.Rolls;
-using Assets.Scripts.StatusEffects;
+using Assets.Scripts.Conditions;
+using Assets.Scripts.Conditions.EntityConditions;
+using Assets.Scripts.Conditions.CharacterConditions;
+using Assets.Scripts.Entities.Vehicle;
 
 namespace Assets.Scripts.Combat.Logging
 {
@@ -33,7 +36,7 @@ namespace Assets.Scripts.Combat.Logging
         /// Format an active combat source (attacker, skill user).
         /// "Ada via Laser Cannon [Ironclad]", "Ada [Ironclad]", "Laser Cannon [Ironclad]", "Stone Golem"
         /// </summary>
-        public static string FormatSource(Character character, Entity entity, Vehicle vehicle)
+        public static string FormatSource(VehicleSeat seat, Entity entity, Vehicle vehicle)
         {
             if (vehicle == null)
                 vehicle = EntityHelpers.GetParentVehicle(entity);
@@ -41,10 +44,10 @@ namespace Assets.Scripts.Combat.Logging
             string componentName = (entity is VehicleComponent comp) ? comp.name : null;
             string vehicleName = vehicle != null ? vehicle.vehicleName : null;
 
-            if (character != null)
+            if (seat != null && seat.IsAssigned)
             {
                 string suffix = BuildSuffix(componentName, vehicleName, "via");
-                return $"{character.characterName}{suffix}";
+                return $"{seat.GetDisplayName()}{suffix}";
             }
 
             if (entity != null)
@@ -62,7 +65,7 @@ namespace Assets.Scripts.Combat.Logging
         /// Uses "at" instead of "via" — the component is being defended, not used as a tool.
         /// "Ada at Chassis [Ironclad]", "Ada [Ironclad]", "Chassis [Ironclad]"
         /// </summary>
-        public static string FormatDefensiveSource(Character character, Entity entity, Vehicle vehicle)
+        public static string FormatDefensiveSource(VehicleSeat seat, Entity entity, Vehicle vehicle)
         {
             if (vehicle == null)
                 vehicle = EntityHelpers.GetParentVehicle(entity);
@@ -70,10 +73,10 @@ namespace Assets.Scripts.Combat.Logging
             string componentName = (entity is VehicleComponent comp) ? comp.name : null;
             string vehicleName = vehicle != null ? vehicle.vehicleName : null;
 
-            if (character != null)
+            if (seat != null && seat.IsAssigned)
             {
                 string suffix = BuildSuffix(componentName, vehicleName, "at");
-                return $"{character.characterName}{suffix}";
+                return $"{seat.GetDisplayName()}{suffix}";
             }
 
             if (entity != null)
@@ -100,7 +103,7 @@ namespace Assets.Scripts.Combat.Logging
         public static string FormatRollActor(RollActor actor, Vehicle vehicle = null)
         {
             if (actor == null) return vehicle?.vehicleName ?? "Unknown";
-            return FormatSource(actor.GetCharacter(), actor.GetEntity(), vehicle);
+            return FormatSource(actor.GetSeat(), actor.GetEntity(), vehicle);
         }
 
         /// <summary>
@@ -110,7 +113,7 @@ namespace Assets.Scripts.Combat.Logging
         public static string FormatRollActorDefensive(RollActor actor, Vehicle vehicle = null)
         {
             if (actor == null) return vehicle?.vehicleName ?? "Unknown";
-            return FormatDefensiveSource(actor.GetCharacter(), actor.GetEntity(), vehicle);
+            return FormatDefensiveSource(actor.GetSeat(), actor.GetEntity(), vehicle);
         }
 
         // ==================== COMBAT LOGIC HELPERS ====================
@@ -124,24 +127,37 @@ namespace Assets.Scripts.Combat.Logging
             return false;
         }
 
-        public static bool DetermineIfBuff(StatusEffect statusEffect)
+        public static bool DetermineIfBuff(EntityCondition entityCondition)
         {
-            float totalModifierValue = statusEffect.modifiers.Sum(m => m.value);
+            float totalModifierValue = entityCondition.modifiers.Sum(m => m.value);
 
-            bool hasPeriodicDamage = statusEffect.periodicEffects.Any(p => p is PeriodicDamageEffect);
-            bool hasPeriodicRestoration = statusEffect.periodicEffects.Any(p =>
+            bool hasPeriodicDamage = entityCondition.periodicEffects.Any(p => p is PeriodicDamageEffect);
+            bool hasPeriodicRestoration = entityCondition.periodicEffects.Any(p =>
                 p is PeriodicRestorationEffect pr && (pr.formula.baseDice > 0 || pr.formula.bonus > 0));
-            bool hasPeriodicDrain = statusEffect.periodicEffects.Any(p =>
+            bool hasPeriodicDrain = entityCondition.periodicEffects.Any(p =>
                 p is PeriodicRestorationEffect pr && pr.formula.baseDice == 0 && pr.formula.bonus < 0);
 
-            bool hasBehavioralRestrictions = statusEffect.behavioralEffects != null &&
-                (statusEffect.behavioralEffects.preventsActions ||
-                 statusEffect.behavioralEffects.preventsMovement);
+            bool hasBehavioralRestrictions = entityCondition.behavioralEffects != null &&
+                (entityCondition.behavioralEffects.preventsActions ||
+                 entityCondition.behavioralEffects.preventsMovement);
 
             if (hasPeriodicDamage || hasPeriodicDrain || hasBehavioralRestrictions)
                 return false;
             if (hasPeriodicRestoration || totalModifierValue > 0)
                 return true;
+            return totalModifierValue >= 0;
+        }
+
+        public static bool DetermineIfBuff(CharacterCondition condition)
+        {
+            float totalModifierValue = condition.modifiers.Sum(m => m.value);
+
+            bool hasBehavioralRestrictions = condition.behavioralEffects != null &&
+                (condition.behavioralEffects.preventsActions ||
+                 condition.behavioralEffects.preventsMovement);
+
+            if (hasBehavioralRestrictions)
+                return false;
             return totalModifierValue >= 0;
         }
 

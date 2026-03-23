@@ -95,7 +95,10 @@ public abstract class VehicleComponent : Entity
     }
     
     // ==================== CROSS-COMPONENT MODIFIER SYSTEM ====================
-    
+
+    [NonSerialized]
+    private List<(VehicleComponent target, AttributeModifier modifier)> _createdModifiers = new();
+
     /// <summary>
     /// If the component provides modifiers to other components, they are applied at startup.
     /// </summary>
@@ -103,7 +106,7 @@ public abstract class VehicleComponent : Entity
     {
         if (!IsOperational) return;
         if (vehicle == null) return;
-        
+
         foreach (var modData in providedModifiers)
         {
             var targets = ResolveModifierTargets(vehicle, modData);
@@ -111,26 +114,30 @@ public abstract class VehicleComponent : Entity
             {
                 if (target != null && !target.isDestroyed)
                 {
-                    target.AddModifier(new AttributeModifier(
+                    var modifier = new AttributeModifier(
                         modData.attribute,
                         modData.type,
                         modData.value,
-                        source: this,
-                        category: ModifierCategory.Equipment
-                    ));
+                        this.name,
+                        ModifierCategory.Equipment
+                    );
+                    target.AddModifier(modifier);
+                    _createdModifiers.Add((target, modifier));
                 }
             }
         }
     }
-    
+
     public virtual void RemoveProvidedModifiers(Vehicle vehicle)
     {
         if (vehicle == null) return;
-        
-        foreach (var component in vehicle.AllComponents)
+
+        foreach (var (target, modifier) in _createdModifiers)
         {
-            component.RemoveModifiersFromSource(this);
+            if (target != null)
+                target.RemoveModifier(modifier);
         }
+        _createdModifiers.Clear();
     }
     
     private List<VehicleComponent> ResolveModifierTargets(Vehicle vehicle, ComponentModifierData modData)
@@ -174,18 +181,7 @@ public abstract class VehicleComponent : Entity
         
         return targets;
     }
-    
-    public void RemoveModifiersFromSource(UnityEngine.Object source)
-    {
-        for (int i = entityModifiers.Count - 1; i >= 0; i--)
-        {
-            if (entityModifiers[i].Source == source)
-            {
-                entityModifiers.RemoveAt(i);
-            }
-        }
-    }
-    
+
     public void RemoveModifiersByCategory(ModifierCategory category)
     {
         for (int i = entityModifiers.Count - 1; i >= 0; i--)

@@ -2,9 +2,11 @@
 using UnityEngine;
 using Assets.Scripts.Combat.Damage;
 using Assets.Scripts.Combat.Restoration;
-using Assets.Scripts.StatusEffects;
 using Assets.Scripts.Combat.Logging;
 using Assets.Scripts.Combat.Rolls;
+using Assets.Scripts.Conditions.EntityConditions;
+using Assets.Scripts.Conditions.CharacterConditions;
+using Assets.Scripts.Entities.Vehicle;
 
 namespace Assets.Scripts.Combat
 {
@@ -78,44 +80,44 @@ namespace Assets.Scripts.Combat
             Emit(new DamageEvent(result, source, target, causalSource, sourceType));
         }
         
-        public static void EmitStatusEffect(
-            AppliedStatusEffect applied,
+        public static void EmitEntityCondition(
+            AppliedEntityCondition applied,
             Entity source,
             Entity target,
             string causalSource,
             bool wasReplacement = false)
         {
-            Emit(new StatusEffectEvent(applied, source, target, causalSource, wasReplacement));
+            Emit(new EntityConditionEvent(applied, source, target, causalSource, wasReplacement));
         }
 
-        public static void EmitStatusExpired(AppliedStatusEffect expired, Entity target)
+        public static void EmitEntityConditionExpired(AppliedEntityCondition expired, Entity target)
         {
-            Emit(new StatusEffectExpiredEvent(expired, target));
+            Emit(new EntityConditionExpiredEvent(expired, target));
         }
 
-        public static void EmitStatusRefreshed(AppliedStatusEffect refreshed, Entity target)
+        public static void EmitEntityConditionRefreshed(AppliedEntityCondition refreshed, Entity target)
         {
-            Emit(new StatusEffectRefreshedEvent(refreshed, target));
+            Emit(new EntityConditionRefreshedEvent(refreshed, target));
         }
 
-        public static void EmitStatusIgnored(AppliedStatusEffect existing, Entity target)
+        public static void EmitEntityConditionIgnored(AppliedEntityCondition existing, Entity target)
         {
-            Emit(new StatusEffectIgnoredEvent(existing, target));
+            Emit(new EntityConditionIgnoredEvent(existing, target));
         }
 
-        public static void EmitStatusReplaced(AppliedStatusEffect newEffect, Entity target, int oldDuration)
+        public static void EmitEntityConditionReplaced(AppliedEntityCondition newEffect, Entity target, int oldDuration)
         {
-            Emit(new StatusEffectReplacedEvent(newEffect, target, oldDuration));
+            Emit(new EntityConditionReplacedEvent(newEffect, target, oldDuration));
         }
 
-        public static void EmitStatusKeptStronger(AppliedStatusEffect kept, Entity target)
+        public static void EmitEntityConditionKeptStronger(AppliedEntityCondition kept, Entity target)
         {
-            Emit(new StatusEffectKeptStrongerEvent(kept, target));
+            Emit(new EntityConditionKeptStrongerEvent(kept, target));
         }
 
-        public static void EmitStatusStackLimit(StatusEffect template, Entity target, int maxStacks)
+        public static void EmitEntityConditionStackLimit(EntityCondition template, Entity target, int maxStacks)
         {
-            Emit(new StatusEffectStackLimitEvent(template, target, maxStacks));
+            Emit(new EntityConditionStackLimitEvent(template, target, maxStacks));
         }
 
         public static void EmitRestoration(
@@ -164,6 +166,47 @@ namespace Assets.Scripts.Combat
             string defenderCheckName)
         {
             Emit(new OpposedCheckEvent(roll, defenderRoll, attacker, defender, causalSource, attackerCheckName, defenderCheckName));
+        }
+
+        // ==================== CHARACTER CONDITION CONVENIENCE METHODS ====================
+
+        public static void EmitCharacterCondition(
+            AppliedCharacterCondition applied,
+            Entity source,
+            VehicleSeat targetSeat,
+            string causalSource)
+        {
+            Emit(new CharacterConditionEvent(applied, source, targetSeat, causalSource));
+        }
+
+        public static void EmitCharacterConditionExpired(AppliedCharacterCondition expired, VehicleSeat targetSeat)
+        {
+            Emit(new CharacterConditionExpiredEvent(expired, targetSeat));
+        }
+
+        public static void EmitCharacterConditionRefreshed(AppliedCharacterCondition refreshed, VehicleSeat targetSeat)
+        {
+            Emit(new CharacterConditionRefreshedEvent(refreshed, targetSeat));
+        }
+
+        public static void EmitCharacterConditionIgnored(AppliedCharacterCondition existing, VehicleSeat targetSeat)
+        {
+            Emit(new CharacterConditionIgnoredEvent(existing, targetSeat));
+        }
+
+        public static void EmitCharacterConditionReplaced(AppliedCharacterCondition newCondition, VehicleSeat targetSeat, int oldDuration)
+        {
+            Emit(new CharacterConditionReplacedEvent(newCondition, targetSeat, oldDuration));
+        }
+
+        public static void EmitCharacterConditionKeptStronger(AppliedCharacterCondition kept, VehicleSeat targetSeat)
+        {
+            Emit(new CharacterConditionKeptStrongerEvent(kept, targetSeat));
+        }
+
+        public static void EmitCharacterConditionStackLimit(CharacterCondition template, VehicleSeat targetSeat, int maxStacks)
+        {
+            Emit(new CharacterConditionStackLimitEvent(template, targetSeat, maxStacks));
         }
 
         // ==================== UTILITY ====================

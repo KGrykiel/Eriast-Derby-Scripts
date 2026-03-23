@@ -6,7 +6,7 @@ using Assets.Scripts.Entities.Vehicle;
 using Assets.Scripts.Managers;
 using Assets.Scripts.Stages;
 using Assets.Scripts.Stages.Lanes;
-using Assets.Scripts.StatusEffects;
+using Assets.Scripts.Conditions;
 using RollContext = Assets.Scripts.Combat.Rolls.RollSpecs.RollContext;
 using Assets.Scripts.Combat.Rolls.RollSpecs;
 
@@ -131,6 +131,12 @@ public class Vehicle : MonoBehaviour
         if (component == null) return null;
         return seats.FirstOrDefault(s => s.controlledComponents.Contains(component));
     }
+
+    public VehicleSeat GetSeatForCharacter(Character character)
+    {
+        if (character == null) return null;
+        return seats.FirstOrDefault(s => s != null && s.IsAssignedTo(character));
+    }
     
     public List<VehicleSeat> GetActiveSeats()
     {
@@ -169,14 +175,24 @@ public class Vehicle : MonoBehaviour
         {
             component.UpdateStatusEffects();
         }
+
+        foreach (var seat in seats)
+        {
+            seat.UpdateConditions();
+        }
     }
 
-    /// <summary>Broadcasts a removal trigger to all vehicle components.</summary>
+    /// <summary>Broadcasts a removal trigger to all vehicle components and seats.</summary>
     public void NotifyStatusEffectTrigger(RemovalTrigger trigger)
     {
         foreach (var component in AllComponents)
         {
             component.NotifyStatusEffectTrigger(trigger);
+        }
+
+        foreach (var seat in seats)
+        {
+            seat.NotifyStatusEffectTrigger(trigger);
         }
     }
 

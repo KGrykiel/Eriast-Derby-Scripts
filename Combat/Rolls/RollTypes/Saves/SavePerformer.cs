@@ -1,5 +1,5 @@
 ﻿using Assets.Scripts.Combat.Rolls.RollSpecs.SpecTypes;
-using Assets.Scripts.StatusEffects;
+using Assets.Scripts.Conditions;
 
 namespace Assets.Scripts.Combat.Rolls.RollTypes.Saves
 {
@@ -31,10 +31,15 @@ namespace Assets.Scripts.Combat.Rolls.RollTypes.Saves
                 ctx.Spec.DisplayName);
 
             // Step 3: Notify d20 roll trigger
-            Entity actorEntity = defender.GetEntity();
-            if (ctx.Routing.CanAttempt && actorEntity != null)
+            if (ctx.Routing.CanAttempt)
             {
-                actorEntity.NotifyStatusEffectTrigger(RemovalTrigger.OnD20Roll);
+                Entity actorEntity = defender.GetEntity();
+                if (actorEntity != null)
+                    actorEntity.NotifyStatusEffectTrigger(RemovalTrigger.OnD20Roll);
+
+                var defenderSeat = defender.GetSeat();
+                if (defenderSeat != null)
+                    defenderSeat.NotifyStatusEffectTrigger(RemovalTrigger.OnD20Roll);
             }
 
             return roll;

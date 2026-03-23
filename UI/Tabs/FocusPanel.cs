@@ -3,7 +3,7 @@ using TMPro;
 using System.Collections.Generic;
 using System.Linq;
 using Assets.Scripts.Logging;
-using Assets.Scripts.StatusEffects;
+using Assets.Scripts.Conditions.EntityConditions;
 
 public class FocusPanel : MonoBehaviour
 {
@@ -100,7 +100,7 @@ public class FocusPanel : MonoBehaviour
         status += $"<b>Armor Class:</b> {armorClass}\n";
         status += $"<b>Magic Resistance:</b> 10 \n\n"; // TODO: Replace with actual MR attribute
 
-        var allStatusEffects = new List<AppliedStatusEffect>();
+        var allStatusEffects = new List<AppliedEntityCondition>();
         foreach (var component in playerVehicle.AllComponents)
         {
             allStatusEffects.AddRange(component.GetActiveStatusEffects());

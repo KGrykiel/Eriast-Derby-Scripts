@@ -1,5 +1,5 @@
 ﻿using UnityEngine;
-using StatusEffectTemplate = Assets.Scripts.StatusEffects.StatusEffect;
+using Assets.Scripts.Conditions.EntityConditions;
 using Assets.Scripts.Effects;
 
 /// <summary>
@@ -7,21 +7,21 @@ using Assets.Scripts.Effects;
 /// (StatusEffectTemplate, StatusEffectInstance, and Entity.ApplyStatusEffect) to apply buffs, debuffs, DoTs, HoTs, etc. to entities.
 /// </summary>
 [System.Serializable]
-public class ApplyStatusEffect : EffectBase
+public class ApplyConditionEffect : EffectBase
 {
     [Header("Status Effect")]
     [Tooltip("The StatusEffect asset to apply (create via Racing/Status Effect menu)")]
-    public StatusEffectTemplate statusEffect;
+    public EntityCondition condition;
 
     public override void Apply(Entity target, EffectContext context)
     {
-        if (statusEffect == null)
+        if (condition == null)
         {
             Debug.LogWarning("[ApplyStatusEffect] No status effect assigned!");
             return;
         }
 
-        target.ApplyStatusEffect(statusEffect, context.SourceEntity);
+        target.ApplyStatusEffect(condition, context.SourceEntity);
     }
 }
 

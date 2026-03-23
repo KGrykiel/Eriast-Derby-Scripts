@@ -1,4 +1,4 @@
-﻿using Assets.Scripts.StatusEffects;
+﻿using Assets.Scripts.Conditions;
 
 namespace Assets.Scripts.Combat.Rolls.RollTypes.OpposedChecks
 {
@@ -42,15 +42,25 @@ namespace Assets.Scripts.Combat.Rolls.RollTypes.OpposedChecks
                 result, defenderRoll, attackerActor, defenderActor, ctx.CausalSource,
                 ctx.Spec.attackerSpec.DisplayName, ctx.Spec.defenderSpec.DisplayName);
 
-            Entity attackerEntity = attackerActor?.GetEntity();
-            Entity defenderEntity = defenderActor?.GetEntity();
-            if (ctx.AttackerRouting.CanAttempt && attackerEntity != null)
+            if (ctx.AttackerRouting.CanAttempt)
             {
-                attackerEntity.NotifyStatusEffectTrigger(RemovalTrigger.OnD20Roll);
+                Entity attackerEntity = attackerActor?.GetEntity();
+                if (attackerEntity != null)
+                    attackerEntity.NotifyStatusEffectTrigger(RemovalTrigger.OnD20Roll);
+
+                var attackerSeat = attackerActor?.GetSeat();
+                if (attackerSeat != null)
+                    attackerSeat.NotifyStatusEffectTrigger(RemovalTrigger.OnD20Roll);
             }
-            if (ctx.DefenderRouting.CanAttempt && defenderEntity != null)
+            if (ctx.DefenderRouting.CanAttempt)
             {
-                defenderEntity.NotifyStatusEffectTrigger(RemovalTrigger.OnD20Roll);
+                Entity defenderEntity = defenderActor?.GetEntity();
+                if (defenderEntity != null)
+                    defenderEntity.NotifyStatusEffectTrigger(RemovalTrigger.OnD20Roll);
+
+                var defenderSeat = defenderActor?.GetSeat();
+                if (defenderSeat != null)
+                    defenderSeat.NotifyStatusEffectTrigger(RemovalTrigger.OnD20Roll);
             }
 
             return result;
