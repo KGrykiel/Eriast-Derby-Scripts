@@ -95,8 +95,8 @@ namespace Assets.Scripts.Conditions
         // First run: drag generated assets to skill/card definitions once. Subsequent regenerations overwrite the
         // same .asset file (same GUID) so all references are preserved automatically.
 
-        private const string StatusEffectsFolder = "Assets/Content/StatusEffects";
-        private const string ConditionsFolder = "Assets/Content/CharacterConditions";
+        public const string StatusEffectsFolder = "Assets/Content/StatusEffects";
+        public const string ConditionsFolder = "Assets/Content/CharacterConditions";
 
         [MenuItem("Assets/Racing/Regenerate All Status Effects")]
         public static void RegenerateAllStatusEffects()

@@ -103,7 +103,7 @@ public class FocusPanel : MonoBehaviour
         var allStatusEffects = new List<AppliedEntityCondition>();
         foreach (var component in playerVehicle.AllComponents)
         {
-            allStatusEffects.AddRange(component.GetActiveStatusEffects());
+            allStatusEffects.AddRange(component.GetActiveConditions());
         }
         
         if (allStatusEffects.Count > 0)

@@ -3,6 +3,7 @@ using NUnit.Framework;
 using UnityEngine;
 using UnityEngine.TestTools;
 using Assets.Scripts.Tests.Helpers;
+using Assets.Scripts.Effects.EffectTypes;
 
 namespace Assets.Scripts.Tests.PlayMode
 {

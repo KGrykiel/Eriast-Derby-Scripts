@@ -66,7 +66,7 @@ namespace Assets.Scripts.UI.Components
             if (targetEntity == null)
                 return;
 
-            var statusEffects = targetEntity.GetActiveStatusEffects();
+            var statusEffects = targetEntity.GetActiveConditions();
 
             if (statusEffects == null || statusEffects.Count == 0)
                 return;

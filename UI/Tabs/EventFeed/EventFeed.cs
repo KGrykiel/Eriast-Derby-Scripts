@@ -28,7 +28,7 @@ public class EventFeed : MonoBehaviour
 
     private ScrollRect scrollRect;
     private int lastProcessedEventCount = 0;
-    private List<RaceEvent> currentlyDisplayedEvents = new();
+    private readonly List<RaceEvent> currentlyDisplayedEvents = new();
 
     void Start()
     {

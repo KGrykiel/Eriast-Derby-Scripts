@@ -1,4 +1,6 @@
-﻿using System.Linq;
+﻿using Assets.Scripts.Effects;
+using Assets.Scripts.Effects.EffectTypes;
+using System.Linq;
 
 namespace Assets.Scripts.Entities.Vehicle
 {

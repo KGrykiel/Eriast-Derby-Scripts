@@ -9,7 +9,7 @@ namespace Assets.Scripts.Conditions
     /// Handles stacking, duration, removal triggers, and expiry.
     /// Subclasses provide validation, construction, activation lifecycle, and event hooks.
     /// </summary>
-    public abstract class ConditionManager<TTemplate, TApplied>
+    public abstract class ConditionManagerBase<TTemplate, TApplied>
         where TTemplate : ConditionBase
         where TApplied : AppliedConditionBase
     {

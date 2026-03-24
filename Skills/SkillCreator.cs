@@ -7,10 +7,13 @@ using Assets.Scripts.Combat.Damage.FormulaProviders.SpecificProviders;
 using System.Collections.Generic;
 using Assets.Scripts.Entities.Vehicle;
 using Assets.Scripts.Characters;
+using Assets.Scripts.Conditions;
 using Assets.Scripts.Conditions.EntityConditions;
 using Assets.Scripts.Combat.Rolls.RollSpecs;
 using Assets.Scripts.Combat.Rolls.RollSpecs.SpecTypes;
 using Assets.Scripts.Combat.Rolls.Advantage;
+using Assets.Scripts.Effects;
+using Assets.Scripts.Effects.EffectTypes;
 
 namespace Assets.Scripts.Skills
 {
@@ -222,6 +225,10 @@ namespace Assets.Scripts.Skills
             RegenerateSkill(DefineAimedShot());
             RegenerateSkill(DefineIncendiaryShot());
             RegenerateSkill(DefineWebShot());
+            RegenerateSkill(DefineHarden());
+            RegenerateSkill(DefineStimPack());
+            RegenerateSkill(DefineEMPStrike());
+            RegenerateSkill(DefineLancerStrike());
 
             AssetDatabase.SaveAssets();
             Debug.Log("[SkillCreator] All skills regenerated.");
@@ -325,7 +332,7 @@ namespace Assets.Scripts.Skills
             => Make("Incendiary Shot",
                 Attack(FX(
                     Dmg(1, 6, 2, DamageType.Fire, EffectTarget.SelectedTarget),
-                    Status(LoadStatus("Assets/Content/StatusEffects/Burning.asset"), EffectTarget.SelectedTarget))),
+                    Status(LoadEntityCondition("Burning"), EffectTarget.SelectedTarget))),
                 TargetingMode.EnemyComponent,
                 energyCost: 2);
 
@@ -334,9 +341,48 @@ namespace Assets.Scripts.Skills
             => Make("Web Shot",
                 Attack(FX(
                     Dmg(1, 4, 0, DamageType.Bludgeoning, EffectTarget.SelectedTarget),
-                    Status(LoadStatus("Assets/Content/StatusEffects/Slowed.asset"), EffectTarget.SelectedTarget))),
+                    Status(LoadEntityCondition("Slowed"), EffectTarget.SelectedTarget))),
                 TargetingMode.EnemyComponent,
                 energyCost: 2);
+
+        // Pattern: no roll, apply Fortified buff to self — armour and integrity bonus for a short time.
+        private static Skill DefineHarden()
+            => Make("Harden",
+                AlwaysApply(FX(Status(LoadEntityCondition("Fortified"), EffectTarget.SourceVehicle))),
+                TargetingMode.Self,
+                energyCost: 1);
+
+        // Pattern: no roll, apply Regenerating HoT to self — health recovery over time.
+        private static Skill DefineStimPack()
+            => Make("Stim Pack",
+                AlwaysApply(FX(Status(LoadEntityCondition("Regenerating"), EffectTarget.SourceVehicle))),
+                TargetingMode.Self,
+                energyCost: 2);
+
+        // Pattern: attack with electronic debuff — force damage plus Overheating on hit (requires IsElectronic).
+        private static Skill DefineEMPStrike()
+            => Make("EMP Strike",
+                Attack(FX(
+                    Dmg(1, 6, 0, DamageType.Force, EffectTarget.SelectedTarget),
+                    Status(LoadEntityCondition("Overheating"), EffectTarget.SelectedTarget))),
+                TargetingMode.EnemyComponent,
+                energyCost: 3);
+
+        // Pattern: attack with DoT — piercing damage plus Bleeding on hit.
+        private static Skill DefineLancerStrike()
+            => Make("Lancer Strike",
+                Attack(FX(
+                    Dmg(1, 8, 2, DamageType.Piercing, EffectTarget.SelectedTarget),
+                    Status(LoadEntityCondition("Bleeding"), EffectTarget.SelectedTarget))),
+                TargetingMode.EnemyComponent,
+                energyCost: 2);
+
+        // Part 3 (ApplyCharacterConditionEffect pending): apply Inspired to the active crew seat.
+        // private static Skill DefineBattleCry()
+        //     => Make("Battle Cry",
+        //         AlwaysApply(FX(CharacterStatus(LoadCharacterCondition("Inspired"), EffectTarget.SourceVehicle))),
+        //         TargetingMode.Self,
+        //         energyCost: 2);
 
         private static void RegenerateSkill(Skill definition)
         {
@@ -353,9 +399,12 @@ namespace Assets.Scripts.Skills
             }
         }
 
-        /// <summary>Load a StatusEffect asset by project path for use in skill definitions.</summary>
-        private static EntityCondition LoadStatus(string assetPath)
-            => AssetDatabase.LoadAssetAtPath<EntityCondition>(assetPath);
+        private static EntityCondition LoadEntityCondition(string name)
+            => AssetDatabase.LoadAssetAtPath<EntityCondition>($"{ConditionCreator.StatusEffectsFolder}/{name}.asset");
+
+        // Part 3 (ApplyCharacterConditionEffect pending): uncomment when CharacterCondition application is implemented.
+        // private static CharacterCondition LoadCharacterCondition(string name)
+        //     => AssetDatabase.LoadAssetAtPath<CharacterCondition>($"{ConditionCreator.ConditionsFolder}/{name}.asset");
 
         // ==================== BUILDER METHODS ====================
         // Mirrors TestSkillFactory — kept private here to avoid an editor→test assembly dependency.

@@ -10,7 +10,10 @@ using Assets.Scripts.Characters;
 using Assets.Scripts.Combat.Damage;
 using Assets.Scripts.Combat.Restoration;
 using Assets.Scripts.Combat.Damage.FormulaProviders.SpecificProviders;
+using Assets.Scripts.Conditions;
 using StatusEffectTemplate = Assets.Scripts.Conditions.EntityConditions.EntityCondition;
+using Assets.Scripts.Effects;
+using Assets.Scripts.Effects.EffectTypes;
 
 namespace Assets.Scripts.Events.EventCard
 {
@@ -104,6 +107,9 @@ namespace Assets.Scripts.Events.EventCard
             RegenerateCard(DefineFreakStorm());
             RegenerateCard(DefineGustOfWind());
             RegenerateCard(DefineScavengerFind());
+            RegenerateCard(DefineFlamingDebris());
+            RegenerateCard(DefineTarPit());
+            RegenerateCard(DefineRestorationStation());
 
             AssetDatabase.SaveAssets();
             Debug.Log("[EventCardCreator] All event cards regenerated.");
@@ -183,6 +189,46 @@ namespace Assets.Scripts.Events.EventCard
                 Choice("Leave it",
                     AlwaysApply(FX(), "You keep your eyes on the race.")));
 
+        // Pattern: hazard with combined consequence — fail the save, take fire damage and gain Burning DoT.
+        private static ChoiceCard DefineFlamingDebris()
+            => Make("Flaming Debris",
+                "Burning wreckage scatters across the track!",
+                Choice("Power through",
+                    Save(SaveSpec.ForVehicle(VehicleCheckAttribute.Stability), 14,
+                        FX(Dmg(1, 6, 0, DamageType.Fire),
+                           Status(LoadEntityCondition("Burning"))),
+                        successNarrative: "You weave through the flames untouched.",
+                        failureNarrative: "Your hull catches fire!")));
+
+        // Pattern: unconditional debuff — no roll, Slowed applied to the vehicle.
+        private static ChoiceCard DefineTarPit()
+            => Make("Tar Pit",
+                "The track ahead is thick with adhesive tar. There's no way around it.",
+                Choice("Plough through",
+                    AlwaysApply(
+                        FX(Status(LoadEntityCondition("Slowed"))),
+                        "The tar clings to your wheels — you're slowed for the next stretch.")));
+
+        // Pattern: positive event — no roll, apply Regenerating HoT to the vehicle.
+        private static ChoiceCard DefineRestorationStation()
+            => Make("Restoration Station",
+                "A race-sponsor's repair drone swoops alongside your vehicle.",
+                Choice("Accept the assist",
+                    AlwaysApply(
+                        FX(Status(LoadEntityCondition("Regenerating"))),
+                        "The drone patches your damage. You'll be back up to speed shortly.")),
+                Choice("Wave it off",
+                    AlwaysApply(FX(), "You decline the offer and press on.")));
+
+        // Part 3 (ApplyCharacterConditionEffect pending): character condition applied from an event card.
+        // private static ChoiceCard DefineInspirationalSign()
+        //     => Make("Inspirational Sign",
+        //         "A rallying banner hangs across the track — your crew takes heart.",
+        //         Choice("Cheer the crew",
+        //             AlwaysApply(
+        //                 FX(CharacterStatus(LoadCharacterCondition("Inspired"))),
+        //                 "The crew feels emboldened.")));
+
         private static void RegenerateCard(ChoiceCard definition)
         {
             string path = $"{CardsFolder}/{definition.name}.asset";
@@ -198,9 +244,12 @@ namespace Assets.Scripts.Events.EventCard
             }
         }
 
-        /// <summary>Load a StatusEffect asset by project path for use in card definitions.</summary>
-        private static StatusEffectTemplate LoadStatus(string assetPath)
-            => AssetDatabase.LoadAssetAtPath<StatusEffectTemplate>(assetPath);
+        private static StatusEffectTemplate LoadEntityCondition(string name)
+            => AssetDatabase.LoadAssetAtPath<StatusEffectTemplate>($"{ConditionCreator.StatusEffectsFolder}/{name}.asset");
+
+        // Part 3 (ApplyCharacterConditionEffect pending): uncomment when CharacterCondition application is implemented.
+        // private static CharacterCondition LoadCharacterCondition(string name)
+        //     => AssetDatabase.LoadAssetAtPath<CharacterCondition>($"{ConditionCreator.ConditionsFolder}/{name}.asset");
 
         // ==================== BUILDER METHODS ====================
 
@@ -228,6 +277,13 @@ namespace Assets.Scripts.Events.EventCard
             {
                 target = target,
                 effect = new ResourceRestorationEffect { formula = new RestorationFormula { resourceType = ResourceType.Energy, isDrain = false, bonus = amount } }
+            };
+
+        private static EffectInvocation Status(StatusEffectTemplate effect, EffectTarget target = EffectTarget.SourceVehicle)
+            => new EffectInvocation
+            {
+                target = target,
+                effect = new ApplyConditionEffect { condition = effect }
             };
 
         private static RollNode AlwaysApply(List<EffectInvocation> effects, string narrative = "")

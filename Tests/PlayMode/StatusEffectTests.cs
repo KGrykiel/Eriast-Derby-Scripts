@@ -39,13 +39,13 @@ namespace Assets.Scripts.Tests.PlayMode
         {
             var template = TestStatusEffectFactory.CreateModifierEffect("Blessed", Attribute.ArmorClass, 2f, cleanup: cleanup);
 
-            entity.ApplyStatusEffect(template, entity);
+            entity.ApplyCondition(template, entity);
 
             var modifiers = entity.GetModifiers();
             bool hasACBonus = modifiers.Any(m => m.Attribute == Attribute.ArmorClass && m.Value == 2f);
             Assert.IsTrue(hasACBonus, "Should have AC +2 modifier from Blessed");
 
-            var activeEffects = entity.GetActiveStatusEffects();
+            var activeEffects = entity.GetActiveConditions();
             Assert.AreEqual(1, activeEffects.Count, "Should have 1 active status effect");
         }
 
@@ -56,16 +56,16 @@ namespace Assets.Scripts.Tests.PlayMode
         {
             var template = TestStatusEffectFactory.CreateModifierEffect("Blessed", Attribute.ArmorClass, 2f, duration: 3, stackBehaviour: StackBehaviour.Refresh, cleanup: cleanup);
 
-            entity.ApplyStatusEffect(template, entity);
-            var activeEffects = entity.GetActiveStatusEffects();
+            entity.ApplyCondition(template, entity);
+            var activeEffects = entity.GetActiveConditions();
             Assert.AreEqual(1, activeEffects.Count, "Should have 1 effect after first apply");
             Assert.AreEqual(3, activeEffects[0].turnsRemaining, "Should have 3 turns initially");
 
-            entity.UpdateStatusEffects();
+            entity.UpdateConditions();
             Assert.AreEqual(2, activeEffects[0].turnsRemaining, "Should have 2 turns after first update");
 
-            entity.ApplyStatusEffect(template, entity);
-            activeEffects = entity.GetActiveStatusEffects();
+            entity.ApplyCondition(template, entity);
+            activeEffects = entity.GetActiveConditions();
             Assert.AreEqual(1, activeEffects.Count, "Should still have 1 effect (refreshed, not stacked)");
             Assert.AreEqual(3, activeEffects[0].turnsRemaining, "Duration should be refreshed back to 3 turns");
         }
@@ -75,15 +75,15 @@ namespace Assets.Scripts.Tests.PlayMode
         {
             var template = TestStatusEffectFactory.CreateModifierEffect("Blessed", Attribute.ArmorClass, 2f, duration: 2, stackBehaviour: StackBehaviour.Refresh, cleanup: cleanup);
 
-            entity.ApplyStatusEffect(template, entity);
-            entity.ApplyStatusEffect(template, entity);
-            entity.ApplyStatusEffect(template, entity);
+            entity.ApplyCondition(template, entity);
+            entity.ApplyCondition(template, entity);
+            entity.ApplyCondition(template, entity);
 
             var modifiers = entity.GetModifiers();
             int acModifierCount = modifiers.Count(m => m.Attribute == Attribute.ArmorClass && m.Value == 2f);
             Assert.AreEqual(1, acModifierCount, "Should have exactly 1 AC modifier despite multiple applications");
 
-            var activeEffects = entity.GetActiveStatusEffects();
+            var activeEffects = entity.GetActiveConditions();
             Assert.AreEqual(1, activeEffects.Count, "Should have only 1 active effect");
         }
 
@@ -94,11 +94,11 @@ namespace Assets.Scripts.Tests.PlayMode
         {
             var template = TestStatusEffectFactory.CreateModifierEffect("Slowed", Attribute.Mobility, -1f, duration: 3, stackBehaviour: StackBehaviour.Stack, maxStacks: 3, cleanup: cleanup);
 
-            entity.ApplyStatusEffect(template, entity);
-            entity.ApplyStatusEffect(template, entity);
-            entity.ApplyStatusEffect(template, entity);
+            entity.ApplyCondition(template, entity);
+            entity.ApplyCondition(template, entity);
+            entity.ApplyCondition(template, entity);
 
-            var activeEffects = entity.GetActiveStatusEffects();
+            var activeEffects = entity.GetActiveConditions();
             Assert.AreEqual(3, activeEffects.Count, "Should have 3 independent instances");
 
             var modifiers = entity.GetModifiers();
@@ -111,12 +111,12 @@ namespace Assets.Scripts.Tests.PlayMode
         {
             var template = TestStatusEffectFactory.CreateModifierEffect("Slowed", Attribute.Mobility, -1f, duration: 3, stackBehaviour: StackBehaviour.Stack, maxStacks: 2, cleanup: cleanup);
 
-            entity.ApplyStatusEffect(template, entity);
-            entity.ApplyStatusEffect(template, entity);
-            entity.ApplyStatusEffect(template, entity);
-            entity.ApplyStatusEffect(template, entity);
+            entity.ApplyCondition(template, entity);
+            entity.ApplyCondition(template, entity);
+            entity.ApplyCondition(template, entity);
+            entity.ApplyCondition(template, entity);
 
-            var activeEffects = entity.GetActiveStatusEffects();
+            var activeEffects = entity.GetActiveConditions();
             Assert.AreEqual(2, activeEffects.Count, "Should have maximum 2 stacks");
 
             var modifiers = entity.GetModifiers();
@@ -131,10 +131,10 @@ namespace Assets.Scripts.Tests.PlayMode
 
             for (int i = 0; i < 10; i++)
             {
-                entity.ApplyStatusEffect(template, entity);
+                entity.ApplyCondition(template, entity);
             }
 
-            var activeEffects = entity.GetActiveStatusEffects();
+            var activeEffects = entity.GetActiveConditions();
             Assert.AreEqual(10, activeEffects.Count, "Should allow unlimited stacks when maxStacks = 0");
         }
 
@@ -143,23 +143,23 @@ namespace Assets.Scripts.Tests.PlayMode
         {
             var template = TestStatusEffectFactory.CreateModifierEffect("Slowed", Attribute.Mobility, -1f, duration: 3, stackBehaviour: StackBehaviour.Stack, maxStacks: 0, cleanup: cleanup);
 
-            entity.ApplyStatusEffect(template, entity);
-            entity.UpdateStatusEffects();
-            entity.ApplyStatusEffect(template, entity);
+            entity.ApplyCondition(template, entity);
+            entity.UpdateConditions();
+            entity.ApplyCondition(template, entity);
 
-            var activeEffects = entity.GetActiveStatusEffects();
+            var activeEffects = entity.GetActiveConditions();
             Assert.AreEqual(2, activeEffects.Count, "Should have 2 stacks");
             Assert.AreEqual(2, activeEffects[0].turnsRemaining, "First stack should have 2 turns (decremented)");
             Assert.AreEqual(3, activeEffects[1].turnsRemaining, "Second stack should have 3 turns (fresh)");
 
-            entity.UpdateStatusEffects();
-            activeEffects = entity.GetActiveStatusEffects();
+            entity.UpdateConditions();
+            activeEffects = entity.GetActiveConditions();
             Assert.AreEqual(2, activeEffects.Count, "Both stacks should still exist");
             Assert.AreEqual(1, activeEffects[0].turnsRemaining, "First stack down to 1 turn");
             Assert.AreEqual(2, activeEffects[1].turnsRemaining, "Second stack down to 2 turns");
 
-            entity.UpdateStatusEffects();
-            activeEffects = entity.GetActiveStatusEffects();
+            entity.UpdateConditions();
+            activeEffects = entity.GetActiveConditions();
             Assert.AreEqual(1, activeEffects.Count, "First stack should expire");
             Assert.AreEqual(1, activeEffects[0].turnsRemaining, "Second stack should remain with 1 turn");
         }
@@ -171,16 +171,16 @@ namespace Assets.Scripts.Tests.PlayMode
         {
             var template = TestStatusEffectFactory.CreateModifierEffect("Stunned", Attribute.ArmorClass, -2f, duration: 3, stackBehaviour: StackBehaviour.Ignore, cleanup: cleanup);
 
-            entity.ApplyStatusEffect(template, entity);
-            var activeEffects = entity.GetActiveStatusEffects();
+            entity.ApplyCondition(template, entity);
+            var activeEffects = entity.GetActiveConditions();
             Assert.AreEqual(1, activeEffects.Count, "Should have 1 effect after first apply");
             Assert.AreEqual(3, activeEffects[0].turnsRemaining, "Should have 3 turns initially");
 
-            entity.UpdateStatusEffects();
+            entity.UpdateConditions();
             Assert.AreEqual(2, activeEffects[0].turnsRemaining, "Should tick down to 2 turns");
 
-            entity.ApplyStatusEffect(template, entity);
-            activeEffects = entity.GetActiveStatusEffects();
+            entity.ApplyCondition(template, entity);
+            activeEffects = entity.GetActiveConditions();
             Assert.AreEqual(1, activeEffects.Count, "Should still have only 1 effect");
             Assert.AreEqual(2, activeEffects[0].turnsRemaining, "Duration should NOT refresh (still 2 turns)");
         }
@@ -190,11 +190,11 @@ namespace Assets.Scripts.Tests.PlayMode
         {
             var template = TestStatusEffectFactory.CreateBehavioralEffect("Stunned", preventsActions: true, duration: 2, stackBehaviour: StackBehaviour.Ignore, cleanup: cleanup);
 
-            entity.ApplyStatusEffect(template, entity);
-            entity.ApplyStatusEffect(template, entity);
-            entity.ApplyStatusEffect(template, entity);
+            entity.ApplyCondition(template, entity);
+            entity.ApplyCondition(template, entity);
+            entity.ApplyCondition(template, entity);
 
-            var activeEffects = entity.GetActiveStatusEffects();
+            var activeEffects = entity.GetActiveConditions();
             Assert.AreEqual(1, activeEffects.Count, "Should ignore all reapplications");
             Assert.IsFalse(entity.IsOperational, "Should remain stunned");
         }
@@ -206,14 +206,14 @@ namespace Assets.Scripts.Tests.PlayMode
         {
             var template = TestStatusEffectFactory.CreateModifierEffect("Fortified", Attribute.ArmorClass, 3f, duration: 2, stackBehaviour: StackBehaviour.Replace, cleanup: cleanup);
 
-            entity.ApplyStatusEffect(template, entity);
-            var activeEffects = entity.GetActiveStatusEffects();
+            entity.ApplyCondition(template, entity);
+            var activeEffects = entity.GetActiveConditions();
             Assert.AreEqual(1, activeEffects.Count, "Should have 1 effect initially");
             Assert.AreEqual(2, activeEffects[0].turnsRemaining, "Should have 2 turns");
 
             template.baseDuration = 5;
-            entity.ApplyStatusEffect(template, entity);
-            activeEffects = entity.GetActiveStatusEffects();
+            entity.ApplyCondition(template, entity);
+            activeEffects = entity.GetActiveConditions();
             Assert.AreEqual(1, activeEffects.Count, "Should still have 1 effect (replaced)");
             Assert.AreEqual(5, activeEffects[0].turnsRemaining, "Should have the longer duration (5 turns)");
 
@@ -227,14 +227,14 @@ namespace Assets.Scripts.Tests.PlayMode
         {
             var template = TestStatusEffectFactory.CreateModifierEffect("Fortified", Attribute.ArmorClass, 3f, duration: 5, stackBehaviour: StackBehaviour.Replace, cleanup: cleanup);
 
-            entity.ApplyStatusEffect(template, entity);
-            var activeEffects = entity.GetActiveStatusEffects();
+            entity.ApplyCondition(template, entity);
+            var activeEffects = entity.GetActiveConditions();
             Assert.AreEqual(1, activeEffects.Count, "Should have 1 effect initially");
             Assert.AreEqual(5, activeEffects[0].turnsRemaining, "Should have 5 turns");
 
             template.baseDuration = 2;
-            entity.ApplyStatusEffect(template, entity);
-            activeEffects = entity.GetActiveStatusEffects();
+            entity.ApplyCondition(template, entity);
+            activeEffects = entity.GetActiveConditions();
             Assert.AreEqual(1, activeEffects.Count, "Should still have 1 effect (kept stronger)");
             Assert.AreEqual(5, activeEffects[0].turnsRemaining, "Should keep the longer duration (5 turns)");
 
@@ -248,20 +248,20 @@ namespace Assets.Scripts.Tests.PlayMode
         {
             var template = TestStatusEffectFactory.CreateModifierEffect("Fortified", Attribute.ArmorClass, 2f, duration: 99, stackBehaviour: StackBehaviour.Replace, cleanup: cleanup);
 
-            entity.ApplyStatusEffect(template, entity);
+            entity.ApplyCondition(template, entity);
 
             template.baseDuration = -1;
-            entity.ApplyStatusEffect(template, entity);
+            entity.ApplyCondition(template, entity);
 
-            var activeEffects = entity.GetActiveStatusEffects();
+            var activeEffects = entity.GetActiveConditions();
             Assert.AreEqual(1, activeEffects.Count, "Should have 1 effect");
             Assert.AreEqual(-1, activeEffects[0].turnsRemaining, "Should replace with indefinite duration");
 
-            entity.UpdateStatusEffects();
-            entity.UpdateStatusEffects();
-            entity.UpdateStatusEffects();
+            entity.UpdateConditions();
+            entity.UpdateConditions();
+            entity.UpdateConditions();
 
-            activeEffects = entity.GetActiveStatusEffects();
+            activeEffects = entity.GetActiveConditions();
             Assert.AreEqual(1, activeEffects.Count, "Indefinite effect should never expire");
         }
 
@@ -272,14 +272,14 @@ namespace Assets.Scripts.Tests.PlayMode
         {
             var template = TestStatusEffectFactory.CreateModifierEffect("ShortBuff", Attribute.ArmorClass, 3f, duration: 2, cleanup: cleanup);
 
-            entity.ApplyStatusEffect(template, entity);
-            Assert.AreEqual(1, entity.GetActiveStatusEffects().Count, "Should be active initially");
+            entity.ApplyCondition(template, entity);
+            Assert.AreEqual(1, entity.GetActiveConditions().Count, "Should be active initially");
 
-            entity.UpdateStatusEffects(); // Turn 1 — tick + decrement (turnsRemaining: 2→1)
-            Assert.AreEqual(1, entity.GetActiveStatusEffects().Count, "Should still be active after turn 1");
+            entity.UpdateConditions(); // Turn 1 — tick + decrement (turnsRemaining: 2→1)
+            Assert.AreEqual(1, entity.GetActiveConditions().Count, "Should still be active after turn 1");
 
-            entity.UpdateStatusEffects(); // Turn 2 — tick + decrement (turnsRemaining: 1→0, expired, removed)
-            Assert.AreEqual(0, entity.GetActiveStatusEffects().Count, "Should expire after turn 2");
+            entity.UpdateConditions(); // Turn 2 — tick + decrement (turnsRemaining: 1→0, expired, removed)
+            Assert.AreEqual(0, entity.GetActiveConditions().Count, "Should expire after turn 2");
 
             var modifiers = entity.GetModifiers();
             bool hasBonus = modifiers.Any(m => m.Attribute == Attribute.ArmorClass && m.Value == 3f);
@@ -291,14 +291,14 @@ namespace Assets.Scripts.Tests.PlayMode
         {
             var template = TestStatusEffectFactory.CreateModifierEffect("PermanentBuff", Attribute.ArmorClass, 2f, duration: -1, cleanup: cleanup);
 
-            entity.ApplyStatusEffect(template, entity);
+            entity.ApplyCondition(template, entity);
 
             for (int i = 0; i < 100; i++)
             {
-                entity.UpdateStatusEffects();
+                entity.UpdateConditions();
             }
 
-            Assert.AreEqual(1, entity.GetActiveStatusEffects().Count, "Indefinite effect should never expire");
+            Assert.AreEqual(1, entity.GetActiveConditions().Count, "Indefinite effect should never expire");
         }
 
         // ==================== Behavioral Effects ====================
@@ -308,7 +308,7 @@ namespace Assets.Scripts.Tests.PlayMode
         {
             var template = TestStatusEffectFactory.CreateBehavioralEffect("Stunned", preventsActions: true, duration: 2, cleanup: cleanup);
 
-            entity.ApplyStatusEffect(template, entity);
+            entity.ApplyCondition(template, entity);
 
             Assert.IsFalse(entity.IsOperational, "Stunned component should not be operational");
         }
@@ -320,12 +320,12 @@ namespace Assets.Scripts.Tests.PlayMode
         {
             var template = TestStatusEffectFactory.CreateModifierEffect("TempBuff", Attribute.ArmorClass, 5f, cleanup: cleanup);
 
-            var applied = entity.ApplyStatusEffect(template, entity);
+            var applied = entity.ApplyCondition(template, entity);
             Assert.IsTrue(entity.GetModifiers().Any(m => m.Value == 5f), "Modifier should exist after apply");
 
-            entity.RemoveStatusEffect(applied);
+            entity.RemoveCondition(applied);
 
-            Assert.AreEqual(0, entity.GetActiveStatusEffects().Count, "Effect should be removed");
+            Assert.AreEqual(0, entity.GetActiveConditions().Count, "Effect should be removed");
             Assert.IsFalse(entity.GetModifiers().Any(m => m.Value == 5f), "Modifier should be cleaned up");
         }
 
@@ -338,12 +338,12 @@ namespace Assets.Scripts.Tests.PlayMode
                 "Concentration", Attribute.ArmorClass, 2f,
                 removalTriggers: RemovalTrigger.OnDamageTaken, cleanup: cleanup);
 
-            entity.ApplyStatusEffect(template, entity);
-            Assert.AreEqual(1, entity.GetActiveStatusEffects().Count, "Should have 1 effect before damage");
+            entity.ApplyCondition(template, entity);
+            Assert.AreEqual(1, entity.GetActiveConditions().Count, "Should have 1 effect before damage");
 
             entity.TakeDamage(5);
 
-            Assert.AreEqual(0, entity.GetActiveStatusEffects().Count, "Effect should be removed on damage");
+            Assert.AreEqual(0, entity.GetActiveConditions().Count, "Effect should be removed on damage");
             Assert.IsFalse(entity.GetModifiers().Any(m => m.Value == 2f), "Modifiers should be cleaned up");
         }
 
@@ -354,11 +354,11 @@ namespace Assets.Scripts.Tests.PlayMode
                 "Concentration", Attribute.ArmorClass, 2f,
                 removalTriggers: RemovalTrigger.OnDamageTaken, cleanup: cleanup);
 
-            entity.ApplyStatusEffect(template, entity);
+            entity.ApplyCondition(template, entity);
 
             entity.TakeDamage(0);
 
-            Assert.AreEqual(1, entity.GetActiveStatusEffects().Count, "Zero damage should not trigger removal");
+            Assert.AreEqual(1, entity.GetActiveConditions().Count, "Zero damage should not trigger removal");
         }
 
         [Test]
@@ -368,12 +368,12 @@ namespace Assets.Scripts.Tests.PlayMode
                 "Inspired", Attribute.ArmorClass, 1f,
                 removalTriggers: RemovalTrigger.OnD20Roll, cleanup: cleanup);
 
-            entity.ApplyStatusEffect(template, entity);
-            Assert.AreEqual(1, entity.GetActiveStatusEffects().Count);
+            entity.ApplyCondition(template, entity);
+            Assert.AreEqual(1, entity.GetActiveConditions().Count);
 
-            entity.NotifyStatusEffectTrigger(RemovalTrigger.OnD20Roll);
+            entity.NotifyConditionTrigger(RemovalTrigger.OnD20Roll);
 
-            Assert.AreEqual(0, entity.GetActiveStatusEffects().Count, "Should be removed after d20 roll");
+            Assert.AreEqual(0, entity.GetActiveConditions().Count, "Should be removed after d20 roll");
         }
 
         [Test]
@@ -383,12 +383,12 @@ namespace Assets.Scripts.Tests.PlayMode
                 "Ambush", Attribute.Mobility, 3f,
                 removalTriggers: RemovalTrigger.OnAttackMade, cleanup: cleanup);
 
-            entity.ApplyStatusEffect(template, entity);
-            Assert.AreEqual(1, entity.GetActiveStatusEffects().Count);
+            entity.ApplyCondition(template, entity);
+            Assert.AreEqual(1, entity.GetActiveConditions().Count);
 
-            entity.NotifyStatusEffectTrigger(RemovalTrigger.OnAttackMade);
+            entity.NotifyConditionTrigger(RemovalTrigger.OnAttackMade);
 
-            Assert.AreEqual(0, entity.GetActiveStatusEffects().Count, "Should be removed after attack");
+            Assert.AreEqual(0, entity.GetActiveConditions().Count, "Should be removed after attack");
         }
 
         [Test]
@@ -398,12 +398,12 @@ namespace Assets.Scripts.Tests.PlayMode
                 "Overcharge", Attribute.ArmorClass, 4f,
                 removalTriggers: RemovalTrigger.OnSkillUsed, cleanup: cleanup);
 
-            entity.ApplyStatusEffect(template, entity);
-            Assert.AreEqual(1, entity.GetActiveStatusEffects().Count);
+            entity.ApplyCondition(template, entity);
+            Assert.AreEqual(1, entity.GetActiveConditions().Count);
 
-            entity.NotifyStatusEffectTrigger(RemovalTrigger.OnSkillUsed);
+            entity.NotifyConditionTrigger(RemovalTrigger.OnSkillUsed);
 
-            Assert.AreEqual(0, entity.GetActiveStatusEffects().Count, "Should be removed after skill use");
+            Assert.AreEqual(0, entity.GetActiveConditions().Count, "Should be removed after skill use");
         }
 
         [Test]
@@ -413,12 +413,12 @@ namespace Assets.Scripts.Tests.PlayMode
                 "Entrenched", Attribute.ArmorClass, 3f,
                 removalTriggers: RemovalTrigger.OnMovement, cleanup: cleanup);
 
-            entity.ApplyStatusEffect(template, entity);
-            Assert.AreEqual(1, entity.GetActiveStatusEffects().Count);
+            entity.ApplyCondition(template, entity);
+            Assert.AreEqual(1, entity.GetActiveConditions().Count);
 
-            entity.NotifyStatusEffectTrigger(RemovalTrigger.OnMovement);
+            entity.NotifyConditionTrigger(RemovalTrigger.OnMovement);
 
-            Assert.AreEqual(0, entity.GetActiveStatusEffects().Count, "Should be removed after movement");
+            Assert.AreEqual(0, entity.GetActiveConditions().Count, "Should be removed after movement");
         }
 
         [Test]
@@ -428,12 +428,12 @@ namespace Assets.Scripts.Tests.PlayMode
                 "QuickBuff", Attribute.Mobility, 2f,
                 removalTriggers: RemovalTrigger.OnTurnEnd, cleanup: cleanup);
 
-            entity.ApplyStatusEffect(template, entity);
-            Assert.AreEqual(1, entity.GetActiveStatusEffects().Count);
+            entity.ApplyCondition(template, entity);
+            Assert.AreEqual(1, entity.GetActiveConditions().Count);
 
-            entity.NotifyStatusEffectTrigger(RemovalTrigger.OnTurnEnd);
+            entity.NotifyConditionTrigger(RemovalTrigger.OnTurnEnd);
 
-            Assert.AreEqual(0, entity.GetActiveStatusEffects().Count, "Should be removed at turn end");
+            Assert.AreEqual(0, entity.GetActiveConditions().Count, "Should be removed at turn end");
         }
 
         [Test]
@@ -443,12 +443,12 @@ namespace Assets.Scripts.Tests.PlayMode
                 "RoundBuff", Attribute.ArmorClass, 1f,
                 removalTriggers: RemovalTrigger.OnRoundEnd, cleanup: cleanup);
 
-            entity.ApplyStatusEffect(template, entity);
-            Assert.AreEqual(1, entity.GetActiveStatusEffects().Count);
+            entity.ApplyCondition(template, entity);
+            Assert.AreEqual(1, entity.GetActiveConditions().Count);
 
-            entity.NotifyStatusEffectTrigger(RemovalTrigger.OnRoundEnd);
+            entity.NotifyConditionTrigger(RemovalTrigger.OnRoundEnd);
 
-            Assert.AreEqual(0, entity.GetActiveStatusEffects().Count, "Should be removed at round end");
+            Assert.AreEqual(0, entity.GetActiveConditions().Count, "Should be removed at round end");
         }
 
         [Test]
@@ -458,13 +458,13 @@ namespace Assets.Scripts.Tests.PlayMode
                 "FadingBuff", Attribute.ArmorClass, 2f, duration: 5,
                 removalTriggers: RemovalTrigger.OnTurnStart, cleanup: cleanup);
 
-            entity.ApplyStatusEffect(template, entity);
-            Assert.AreEqual(1, entity.GetActiveStatusEffects().Count);
+            entity.ApplyCondition(template, entity);
+            Assert.AreEqual(1, entity.GetActiveConditions().Count);
 
             // UpdateStatusEffects calls OnTurnStart which processes triggers BEFORE tick/decrement
-            entity.UpdateStatusEffects();
+            entity.UpdateConditions();
 
-            Assert.AreEqual(0, entity.GetActiveStatusEffects().Count,
+            Assert.AreEqual(0, entity.GetActiveConditions().Count,
                 "OnTurnStart trigger should remove effect before tick, regardless of remaining duration");
         }
 
@@ -475,12 +475,12 @@ namespace Assets.Scripts.Tests.PlayMode
                 "EnvironmentalBuff", Attribute.ArmorClass, 3f,
                 removalTriggers: RemovalTrigger.OnStageExit, cleanup: cleanup);
 
-            entity.ApplyStatusEffect(template, entity);
-            Assert.AreEqual(1, entity.GetActiveStatusEffects().Count);
+            entity.ApplyCondition(template, entity);
+            Assert.AreEqual(1, entity.GetActiveConditions().Count);
 
-            entity.NotifyStatusEffectTrigger(RemovalTrigger.OnStageExit);
+            entity.NotifyConditionTrigger(RemovalTrigger.OnStageExit);
 
-            Assert.AreEqual(0, entity.GetActiveStatusEffects().Count, "Should be removed on stage exit");
+            Assert.AreEqual(0, entity.GetActiveConditions().Count, "Should be removed on stage exit");
         }
 
         // ==================== Trigger Selectivity ====================
@@ -495,14 +495,14 @@ namespace Assets.Scripts.Tests.PlayMode
                 "Entrenched", Attribute.Mobility, 3f,
                 removalTriggers: RemovalTrigger.OnMovement, cleanup: cleanup);
 
-            entity.ApplyStatusEffect(onDamage, entity);
-            entity.ApplyStatusEffect(onMovement, entity);
-            Assert.AreEqual(2, entity.GetActiveStatusEffects().Count);
+            entity.ApplyCondition(onDamage, entity);
+            entity.ApplyCondition(onMovement, entity);
+            Assert.AreEqual(2, entity.GetActiveConditions().Count);
 
-            entity.NotifyStatusEffectTrigger(RemovalTrigger.OnMovement);
+            entity.NotifyConditionTrigger(RemovalTrigger.OnMovement);
 
-            Assert.AreEqual(1, entity.GetActiveStatusEffects().Count, "Only OnMovement effect should be removed");
-            Assert.AreEqual("Concentration", entity.GetActiveStatusEffects()[0].template.effectName,
+            Assert.AreEqual(1, entity.GetActiveConditions().Count, "Only OnMovement effect should be removed");
+            Assert.AreEqual("Concentration", entity.GetActiveConditions()[0].template.effectName,
                 "OnDamageTaken effect should survive OnMovement trigger");
         }
 
@@ -513,16 +513,16 @@ namespace Assets.Scripts.Tests.PlayMode
                 "SteadyBuff", Attribute.ArmorClass, 2f,
                 removalTriggers: RemovalTrigger.None, cleanup: cleanup);
 
-            entity.ApplyStatusEffect(template, entity);
+            entity.ApplyCondition(template, entity);
 
-            entity.NotifyStatusEffectTrigger(RemovalTrigger.OnDamageTaken);
-            entity.NotifyStatusEffectTrigger(RemovalTrigger.OnD20Roll);
-            entity.NotifyStatusEffectTrigger(RemovalTrigger.OnAttackMade);
-            entity.NotifyStatusEffectTrigger(RemovalTrigger.OnMovement);
-            entity.NotifyStatusEffectTrigger(RemovalTrigger.OnTurnEnd);
-            entity.NotifyStatusEffectTrigger(RemovalTrigger.OnRoundEnd);
+            entity.NotifyConditionTrigger(RemovalTrigger.OnDamageTaken);
+            entity.NotifyConditionTrigger(RemovalTrigger.OnD20Roll);
+            entity.NotifyConditionTrigger(RemovalTrigger.OnAttackMade);
+            entity.NotifyConditionTrigger(RemovalTrigger.OnMovement);
+            entity.NotifyConditionTrigger(RemovalTrigger.OnTurnEnd);
+            entity.NotifyConditionTrigger(RemovalTrigger.OnRoundEnd);
 
-            Assert.AreEqual(1, entity.GetActiveStatusEffects().Count,
+            Assert.AreEqual(1, entity.GetActiveConditions().Count,
                 "Effect with no removal triggers should survive all trigger types");
         }
 
@@ -534,13 +534,13 @@ namespace Assets.Scripts.Tests.PlayMode
                 removalTriggers: RemovalTrigger.OnDamageTaken | RemovalTrigger.OnMovement,
                 cleanup: cleanup);
 
-            entity.ApplyStatusEffect(template, entity);
-            Assert.AreEqual(1, entity.GetActiveStatusEffects().Count);
+            entity.ApplyCondition(template, entity);
+            Assert.AreEqual(1, entity.GetActiveConditions().Count);
 
             // Whichever fires first should remove the effect
-            entity.NotifyStatusEffectTrigger(RemovalTrigger.OnMovement);
+            entity.NotifyConditionTrigger(RemovalTrigger.OnMovement);
 
-            Assert.AreEqual(0, entity.GetActiveStatusEffects().Count,
+            Assert.AreEqual(0, entity.GetActiveConditions().Count,
                 "Effect with multiple triggers should be removed by whichever fires first");
         }
 
@@ -552,11 +552,11 @@ namespace Assets.Scripts.Tests.PlayMode
                 removalTriggers: RemovalTrigger.OnDamageTaken | RemovalTrigger.OnMovement,
                 cleanup: cleanup);
 
-            entity.ApplyStatusEffect(template, entity);
+            entity.ApplyCondition(template, entity);
 
             entity.TakeDamage(1);
 
-            Assert.AreEqual(0, entity.GetActiveStatusEffects().Count,
+            Assert.AreEqual(0, entity.GetActiveConditions().Count,
                 "Either trigger should be sufficient for removal");
         }
 
@@ -572,14 +572,14 @@ namespace Assets.Scripts.Tests.PlayMode
                 "Weakened", Attribute.ArmorClass, -2f,
                 categories: ConditionCategory.Debuff, cleanup: cleanup);
 
-            entity.ApplyStatusEffect(buff, entity);
-            entity.ApplyStatusEffect(debuff, entity);
-            Assert.AreEqual(2, entity.GetActiveStatusEffects().Count);
+            entity.ApplyCondition(buff, entity);
+            entity.ApplyCondition(debuff, entity);
+            Assert.AreEqual(2, entity.GetActiveConditions().Count);
 
-            entity.RemoveStatusEffectsByCategory(ConditionCategory.Buff);
+            entity.RemoveConditionsByCategory(ConditionCategory.Buff);
 
-            Assert.AreEqual(1, entity.GetActiveStatusEffects().Count, "Should remove only buffs");
-            Assert.AreEqual("Weakened", entity.GetActiveStatusEffects()[0].template.effectName,
+            Assert.AreEqual(1, entity.GetActiveConditions().Count, "Should remove only buffs");
+            Assert.AreEqual("Weakened", entity.GetActiveConditions()[0].template.effectName,
                 "Debuff should remain");
         }
 
@@ -593,14 +593,14 @@ namespace Assets.Scripts.Tests.PlayMode
                 "Lucky", Attribute.Mobility, 1f,
                 categories: ConditionCategory.Buff, cleanup: cleanup);
 
-            entity.ApplyStatusEffect(buffMod, entity);
-            entity.ApplyStatusEffect(pureBuff, entity);
+            entity.ApplyCondition(buffMod, entity);
+            entity.ApplyCondition(pureBuff, entity);
 
-            entity.RemoveStatusEffectsByCategory(ConditionCategory.AttributeModifier);
+            entity.RemoveConditionsByCategory(ConditionCategory.AttributeModifier);
 
-            Assert.AreEqual(1, entity.GetActiveStatusEffects().Count,
+            Assert.AreEqual(1, entity.GetActiveConditions().Count,
                 "Should remove effect that has AttributeModifier flag");
-            Assert.AreEqual("Lucky", entity.GetActiveStatusEffects()[0].template.effectName,
+            Assert.AreEqual("Lucky", entity.GetActiveConditions()[0].template.effectName,
                 "Effect without AttributeModifier flag should survive");
         }
 
@@ -614,13 +614,13 @@ namespace Assets.Scripts.Tests.PlayMode
                 "Shield", Attribute.ArmorClass, 2f,
                 categories: ConditionCategory.Buff, cleanup: cleanup);
 
-            entity.ApplyStatusEffect(uncategorised, entity);
-            entity.ApplyStatusEffect(buff, entity);
+            entity.ApplyCondition(uncategorised, entity);
+            entity.ApplyCondition(buff, entity);
 
-            entity.RemoveStatusEffectsByCategory(ConditionCategory.Buff);
+            entity.RemoveConditionsByCategory(ConditionCategory.Buff);
 
-            Assert.AreEqual(1, entity.GetActiveStatusEffects().Count);
-            Assert.AreEqual("Environmental", entity.GetActiveStatusEffects()[0].template.effectName,
+            Assert.AreEqual(1, entity.GetActiveConditions().Count);
+            Assert.AreEqual("Environmental", entity.GetActiveConditions()[0].template.effectName,
                 "Uncategorised effects should not be removed by category-based dispel");
         }
 
@@ -637,15 +637,15 @@ namespace Assets.Scripts.Tests.PlayMode
                 "Shield", Attribute.ArmorClass, 2f,
                 categories: ConditionCategory.Buff, cleanup: cleanup);
 
-            entity.ApplyStatusEffect(dot, entity);
-            entity.ApplyStatusEffect(cc, entity);
-            entity.ApplyStatusEffect(buff, entity);
-            Assert.AreEqual(3, entity.GetActiveStatusEffects().Count);
+            entity.ApplyCondition(dot, entity);
+            entity.ApplyCondition(cc, entity);
+            entity.ApplyCondition(buff, entity);
+            Assert.AreEqual(3, entity.GetActiveConditions().Count);
 
-            entity.RemoveStatusEffectsByCategory(ConditionCategory.Debuff);
+            entity.RemoveConditionsByCategory(ConditionCategory.Debuff);
 
-            Assert.AreEqual(1, entity.GetActiveStatusEffects().Count, "Should remove both debuffs");
-            Assert.AreEqual("Shield", entity.GetActiveStatusEffects()[0].template.effectName,
+            Assert.AreEqual(1, entity.GetActiveConditions().Count, "Should remove both debuffs");
+            Assert.AreEqual("Shield", entity.GetActiveConditions()[0].template.effectName,
                 "Buff should survive debuff purge");
         }
 
@@ -659,14 +659,14 @@ namespace Assets.Scripts.Tests.PlayMode
             var bleeding = TestStatusEffectFactory.CreateModifierEffect(
                 "Bleeding", Attribute.Mobility, -1f, cleanup: cleanup);
 
-            entity.ApplyStatusEffect(burning, entity);
-            entity.ApplyStatusEffect(bleeding, entity);
-            Assert.AreEqual(2, entity.GetActiveStatusEffects().Count);
+            entity.ApplyCondition(burning, entity);
+            entity.ApplyCondition(bleeding, entity);
+            Assert.AreEqual(2, entity.GetActiveConditions().Count);
 
-            entity.RemoveStatusEffectsByTemplate(burning);
+            entity.RemoveConditionsByTemplate(burning);
 
-            Assert.AreEqual(1, entity.GetActiveStatusEffects().Count, "Should remove only Burning");
-            Assert.AreEqual("Bleeding", entity.GetActiveStatusEffects()[0].template.effectName,
+            Assert.AreEqual(1, entity.GetActiveConditions().Count, "Should remove only Burning");
+            Assert.AreEqual("Bleeding", entity.GetActiveConditions()[0].template.effectName,
                 "Bleeding should remain");
         }
 
@@ -677,14 +677,14 @@ namespace Assets.Scripts.Tests.PlayMode
                 "Slowed", Attribute.Mobility, -1f, duration: 3,
                 stackBehaviour: StackBehaviour.Stack, maxStacks: 5, cleanup: cleanup);
 
-            entity.ApplyStatusEffect(template, entity);
-            entity.ApplyStatusEffect(template, entity);
-            entity.ApplyStatusEffect(template, entity);
-            Assert.AreEqual(3, entity.GetActiveStatusEffects().Count, "Should have 3 stacks");
+            entity.ApplyCondition(template, entity);
+            entity.ApplyCondition(template, entity);
+            entity.ApplyCondition(template, entity);
+            Assert.AreEqual(3, entity.GetActiveConditions().Count, "Should have 3 stacks");
 
-            entity.RemoveStatusEffectsByTemplate(template);
+            entity.RemoveConditionsByTemplate(template);
 
-            Assert.AreEqual(0, entity.GetActiveStatusEffects().Count, "Should remove all stacks of the template");
+            Assert.AreEqual(0, entity.GetActiveConditions().Count, "Should remove all stacks of the template");
             Assert.IsFalse(entity.GetModifiers().Any(m => m.Attribute == Attribute.Mobility),
                 "All modifiers from stacks should be cleaned up");
         }
@@ -699,14 +699,14 @@ namespace Assets.Scripts.Tests.PlayMode
                 stackBehaviour: StackBehaviour.Stack, maxStacks: 5,
                 removalTriggers: RemovalTrigger.OnDamageTaken, cleanup: cleanup);
 
-            entity.ApplyStatusEffect(template, entity);
-            entity.ApplyStatusEffect(template, entity);
-            entity.ApplyStatusEffect(template, entity);
-            Assert.AreEqual(3, entity.GetActiveStatusEffects().Count, "Should have 3 stacks");
+            entity.ApplyCondition(template, entity);
+            entity.ApplyCondition(template, entity);
+            entity.ApplyCondition(template, entity);
+            Assert.AreEqual(3, entity.GetActiveConditions().Count, "Should have 3 stacks");
 
             entity.TakeDamage(1);
 
-            Assert.AreEqual(0, entity.GetActiveStatusEffects().Count,
+            Assert.AreEqual(0, entity.GetActiveConditions().Count,
                 "All stacks with the trigger should be removed");
         }
 
@@ -717,16 +717,16 @@ namespace Assets.Scripts.Tests.PlayMode
                 "TimedFragile", Attribute.ArmorClass, 2f, duration: 10,
                 removalTriggers: RemovalTrigger.OnAttackMade, cleanup: cleanup);
 
-            entity.ApplyStatusEffect(template, entity);
+            entity.ApplyCondition(template, entity);
 
-            entity.UpdateStatusEffects(); // Turn 1
-            entity.UpdateStatusEffects(); // Turn 2
-            Assert.AreEqual(1, entity.GetActiveStatusEffects().Count, "Should still be active mid-duration");
-            Assert.AreEqual(8, entity.GetActiveStatusEffects()[0].turnsRemaining, "Should have 8 turns left");
+            entity.UpdateConditions(); // Turn 1
+            entity.UpdateConditions(); // Turn 2
+            Assert.AreEqual(1, entity.GetActiveConditions().Count, "Should still be active mid-duration");
+            Assert.AreEqual(8, entity.GetActiveConditions()[0].turnsRemaining, "Should have 8 turns left");
 
-            entity.NotifyStatusEffectTrigger(RemovalTrigger.OnAttackMade);
+            entity.NotifyConditionTrigger(RemovalTrigger.OnAttackMade);
 
-            Assert.AreEqual(0, entity.GetActiveStatusEffects().Count,
+            Assert.AreEqual(0, entity.GetActiveConditions().Count,
                 "Trigger should remove effect despite having turns remaining");
         }
 
@@ -737,17 +737,17 @@ namespace Assets.Scripts.Tests.PlayMode
                 "Sentinel", Attribute.ArmorClass, 5f, duration: -1,
                 removalTriggers: RemovalTrigger.OnD20Roll, cleanup: cleanup);
 
-            entity.ApplyStatusEffect(template, entity);
+            entity.ApplyCondition(template, entity);
 
             for (int i = 0; i < 10; i++)
             {
-                entity.UpdateStatusEffects();
+                entity.UpdateConditions();
             }
-            Assert.AreEqual(1, entity.GetActiveStatusEffects().Count, "Indefinite effect should survive ticks");
+            Assert.AreEqual(1, entity.GetActiveConditions().Count, "Indefinite effect should survive ticks");
 
-            entity.NotifyStatusEffectTrigger(RemovalTrigger.OnD20Roll);
+            entity.NotifyConditionTrigger(RemovalTrigger.OnD20Roll);
 
-            Assert.AreEqual(0, entity.GetActiveStatusEffects().Count,
+            Assert.AreEqual(0, entity.GetActiveConditions().Count,
                 "Trigger should remove even indefinite effects");
         }
 
@@ -758,16 +758,16 @@ namespace Assets.Scripts.Tests.PlayMode
                 "OneShot", Attribute.ArmorClass, 1f,
                 removalTriggers: RemovalTrigger.OnDamageTaken, cleanup: cleanup);
 
-            entity.ApplyStatusEffect(template, entity);
+            entity.ApplyCondition(template, entity);
 
             entity.TakeDamage(1);
-            Assert.AreEqual(0, entity.GetActiveStatusEffects().Count);
+            Assert.AreEqual(0, entity.GetActiveConditions().Count);
 
             // Firing the same trigger again when no effects remain should not throw
             entity.TakeDamage(1);
-            entity.NotifyStatusEffectTrigger(RemovalTrigger.OnDamageTaken);
+            entity.NotifyConditionTrigger(RemovalTrigger.OnDamageTaken);
 
-            Assert.AreEqual(0, entity.GetActiveStatusEffects().Count, "No errors on redundant trigger firing");
+            Assert.AreEqual(0, entity.GetActiveConditions().Count, "No errors on redundant trigger firing");
         }
 
         [Test]
@@ -777,12 +777,12 @@ namespace Assets.Scripts.Tests.PlayMode
                 "Cursed", Attribute.ArmorClass, -3f,
                 categories: ConditionCategory.Debuff, cleanup: cleanup);
 
-            entity.ApplyStatusEffect(template, entity);
+            entity.ApplyCondition(template, entity);
             Assert.IsTrue(entity.GetModifiers().Any(m => m.Value == -3f), "Modifier should exist after apply");
 
-            entity.RemoveStatusEffectsByCategory(ConditionCategory.Debuff);
+            entity.RemoveConditionsByCategory(ConditionCategory.Debuff);
 
-            Assert.AreEqual(0, entity.GetActiveStatusEffects().Count, "Effect should be removed");
+            Assert.AreEqual(0, entity.GetActiveConditions().Count, "Effect should be removed");
             Assert.IsFalse(entity.GetModifiers().Any(m => m.Value == -3f),
                 "Category removal should clean up modifiers");
         }
@@ -793,12 +793,12 @@ namespace Assets.Scripts.Tests.PlayMode
             var template = TestStatusEffectFactory.CreateModifierEffect(
                 "Hex", Attribute.Mobility, -4f, cleanup: cleanup);
 
-            entity.ApplyStatusEffect(template, entity);
+            entity.ApplyCondition(template, entity);
             Assert.IsTrue(entity.GetModifiers().Any(m => m.Value == -4f), "Modifier should exist after apply");
 
-            entity.RemoveStatusEffectsByTemplate(template);
+            entity.RemoveConditionsByTemplate(template);
 
-            Assert.AreEqual(0, entity.GetActiveStatusEffects().Count, "Effect should be removed");
+            Assert.AreEqual(0, entity.GetActiveConditions().Count, "Effect should be removed");
             Assert.IsFalse(entity.GetModifiers().Any(m => m.Value == -4f),
                 "Template removal should clean up modifiers");
         }
@@ -815,18 +815,18 @@ namespace Assets.Scripts.Tests.PlayMode
                 categories: ConditionCategory.Buff,
                 removalTriggers: RemovalTrigger.None, cleanup: cleanup);
 
-            entity.ApplyStatusEffect(triggerable, entity);
-            entity.ApplyStatusEffect(persistent, entity);
-            Assert.AreEqual(2, entity.GetActiveStatusEffects().Count);
+            entity.ApplyCondition(triggerable, entity);
+            entity.ApplyCondition(persistent, entity);
+            Assert.AreEqual(2, entity.GetActiveConditions().Count);
 
             // Trigger removes only the triggerable one
             entity.TakeDamage(1);
-            Assert.AreEqual(1, entity.GetActiveStatusEffects().Count, "Only triggerable effect should be removed");
-            Assert.AreEqual("Resilient", entity.GetActiveStatusEffects()[0].template.effectName);
+            Assert.AreEqual(1, entity.GetActiveConditions().Count, "Only triggerable effect should be removed");
+            Assert.AreEqual("Resilient", entity.GetActiveConditions()[0].template.effectName);
 
             // Category removal still works for the remaining one
-            entity.RemoveStatusEffectsByCategory(ConditionCategory.Buff);
-            Assert.AreEqual(0, entity.GetActiveStatusEffects().Count, "Category removal should get the rest");
+            entity.RemoveConditionsByCategory(ConditionCategory.Buff);
+            Assert.AreEqual(0, entity.GetActiveConditions().Count, "Category removal should get the rest");
         }
     }
 }

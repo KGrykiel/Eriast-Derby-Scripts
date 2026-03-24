@@ -46,21 +46,21 @@ namespace Assets.Scripts.Combat.Rolls.RollTypes.OpposedChecks
             {
                 Entity attackerEntity = attackerActor?.GetEntity();
                 if (attackerEntity != null)
-                    attackerEntity.NotifyStatusEffectTrigger(RemovalTrigger.OnD20Roll);
+                    attackerEntity.NotifyConditionTrigger(RemovalTrigger.OnD20Roll);
 
                 var attackerSeat = attackerActor?.GetSeat();
                 if (attackerSeat != null)
-                    attackerSeat.NotifyStatusEffectTrigger(RemovalTrigger.OnD20Roll);
+                    attackerSeat.NotifyConditionTrigger(RemovalTrigger.OnD20Roll);
             }
             if (ctx.DefenderRouting.CanAttempt)
             {
                 Entity defenderEntity = defenderActor?.GetEntity();
                 if (defenderEntity != null)
-                    defenderEntity.NotifyStatusEffectTrigger(RemovalTrigger.OnD20Roll);
+                    defenderEntity.NotifyConditionTrigger(RemovalTrigger.OnD20Roll);
 
                 var defenderSeat = defenderActor?.GetSeat();
                 if (defenderSeat != null)
-                    defenderSeat.NotifyStatusEffectTrigger(RemovalTrigger.OnD20Roll);
+                    defenderSeat.NotifyConditionTrigger(RemovalTrigger.OnD20Roll);
             }
 
             return result;

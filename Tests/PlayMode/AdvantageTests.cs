@@ -202,7 +202,7 @@ namespace Assets.Scripts.Tests.PlayMode
             var effect = CreateAdvantageStatusEffect("Inspired", RollMode.Advantage, targets);
 
             var utility = vehicle.optionalComponents[0];
-            utility.ApplyStatusEffect(effect, null);
+            utility.ApplyCondition(effect, null);
 
             var spec = TestSkillFactory.CharacterSkillCheck(CharacterSkill.Piloting, requiredComponent: ComponentType.Utility, dc: 10);
             var result = SkillCheckPerformer.Execute(new SkillCheckExecutionContext
@@ -232,7 +232,7 @@ namespace Assets.Scripts.Tests.PlayMode
             var effect = CreateAdvantageStatusEffect("Attack Boost", RollMode.Advantage, targets);
 
             var utility = vehicle.optionalComponents[0];
-            utility.ApplyStatusEffect(effect, null);
+            utility.ApplyCondition(effect, null);
 
             var spec = TestSkillFactory.CharacterSkillCheck(CharacterSkill.Piloting, requiredComponent: ComponentType.Utility, dc: 10);
             var result = SkillCheckPerformer.Execute(new SkillCheckExecutionContext
@@ -265,7 +265,7 @@ namespace Assets.Scripts.Tests.PlayMode
             var effect = CreateAdvantageStatusEffect("Mechanics Focus", RollMode.Advantage, targets);
 
             var utility = vehicle.optionalComponents[0];
-            utility.ApplyStatusEffect(effect, null);
+            utility.ApplyCondition(effect, null);
 
             var pilotSpec = TestSkillFactory.CharacterSkillCheck(CharacterSkill.Piloting, requiredComponent: ComponentType.Utility, dc: 10);
             var pilotResult = SkillCheckPerformer.Execute(new SkillCheckExecutionContext
@@ -428,7 +428,7 @@ namespace Assets.Scripts.Tests.PlayMode
             var effect = CreateAdvantageStatusEffect("Cursed", RollMode.Disadvantage, targets);
 
             var utility = vehicle.optionalComponents[0];
-            utility.ApplyStatusEffect(effect, null);
+            utility.ApplyCondition(effect, null);
 
             var spec = TestSkillFactory.CharacterSkillCheck(CharacterSkill.Mechanics, requiredComponent: ComponentType.Utility, dc: 10);
             spec.grantedMode = RollMode.Advantage;
@@ -464,7 +464,7 @@ namespace Assets.Scripts.Tests.PlayMode
             };
             var effect = CreateAdvantageStatusEffect("Mobility Focus", RollMode.Advantage, targets);
 
-            vehicle.chassis.ApplyStatusEffect(effect, null);
+            vehicle.chassis.ApplyCondition(effect, null);
 
             var handlingSpec = SkillCheckSpec.ForVehicle(VehicleCheckAttribute.Mobility);
             handlingSpec.dc = 10;

@@ -1,4 +1,3 @@
-using Assets.Scripts.Conditions;
 using Assets.Scripts.Characters;
 using System.Collections.Generic;
 

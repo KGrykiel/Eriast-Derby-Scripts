@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿using SerializeReferenceEditor;
+using UnityEngine;
 
 namespace Assets.Scripts.Combat.Damage.FormulaProviders.SpecificProviders
 {
@@ -10,6 +11,7 @@ namespace Assets.Scripts.Combat.Damage.FormulaProviders.SpecificProviders
     /// Only works when user is a WeaponComponent.
     /// </summary>
     [System.Serializable]
+    [SRName("Weapon")]
     public class WeaponFormulaProvider : IFormulaProvider
     {
         public DamageFormula GetFormula(FormulaContext context)

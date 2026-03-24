@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Linq;
 using Assets.Scripts.Combat.Restoration;
-using Assets.Scripts.Conditions.CharacterConditions;
 using Assets.Scripts.Entities.Vehicle;
 using EventType = Assets.Scripts.Logging.EventType;
 using Assets.Scripts.Logging;

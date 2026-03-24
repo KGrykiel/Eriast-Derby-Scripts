@@ -101,7 +101,7 @@ namespace Assets.Scripts.Entities.Vehicle
             _hasActedThisTurn = false;
         }
 
-        public void NotifyStatusEffectTrigger(RemovalTrigger trigger)
+        public void NotifyConditionTrigger(RemovalTrigger trigger)
         {
             ConditionManager.ProcessRemovalTrigger(trigger);
         }

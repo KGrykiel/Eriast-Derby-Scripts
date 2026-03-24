@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿using SerializeReferenceEditor;
+using UnityEngine;
 
 namespace Assets.Scripts.Combat.Damage.FormulaProviders.SpecificProviders
 {
@@ -9,6 +10,7 @@ namespace Assets.Scripts.Combat.Damage.FormulaProviders.SpecificProviders
     /// Wraps a DamageFormula for Unity serialization and provider interface compliance.
     /// </summary>
     [System.Serializable]
+    [SRName("Static")]
     public class StaticFormulaProvider : IFormulaProvider
     {
         [Tooltip("Fixed damage formula (dice, bonus, damage type)")]

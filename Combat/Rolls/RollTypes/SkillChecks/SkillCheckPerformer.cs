@@ -34,11 +34,11 @@ namespace Assets.Scripts.Combat.Rolls.RollTypes.SkillChecks
             {
                 Entity actorEntity = actor.GetEntity();
                 if (actorEntity != null)
-                    actorEntity.NotifyStatusEffectTrigger(RemovalTrigger.OnD20Roll);
+                    actorEntity.NotifyConditionTrigger(RemovalTrigger.OnD20Roll);
 
                 var actorSeat = actor.GetSeat();
                 if (actorSeat != null)
-                    actorSeat.NotifyStatusEffectTrigger(RemovalTrigger.OnD20Roll);
+                    actorSeat.NotifyConditionTrigger(RemovalTrigger.OnD20Roll);
             }
 
             return roll;
@@ -60,7 +60,7 @@ namespace Assets.Scripts.Combat.Rolls.RollTypes.SkillChecks
                 causalSource,
                 spec.DisplayName);
 
-            entity?.NotifyStatusEffectTrigger(RemovalTrigger.OnD20Roll);
+            entity?.NotifyConditionTrigger(RemovalTrigger.OnD20Roll);
 
             return roll;
         }

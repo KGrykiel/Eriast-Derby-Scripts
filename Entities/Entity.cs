@@ -107,7 +107,7 @@ public abstract class Entity : MonoBehaviour
         if (amount > 0)
         {
             OnDamaged?.Invoke(amount);
-            NotifyStatusEffectTrigger(RemovalTrigger.OnDamageTaken);
+            NotifyConditionTrigger(RemovalTrigger.OnDamageTaken);
         }
 
         if (health <= 0 && !isDestroyed)
@@ -162,41 +162,41 @@ public abstract class Entity : MonoBehaviour
     public event System.Action OnSkillUsed;
 
     /// <summary>Handles stacking rules and emits events. Returns null if feature requirements not met.</summary>
-    public virtual AppliedEntityCondition ApplyStatusEffect(EntityCondition effect, Object applier)
+    public virtual AppliedEntityCondition ApplyCondition(EntityCondition effect, Object applier)
     {
         return statusEffects.Apply(effect, applier);
     }
     
-    public virtual void RemoveStatusEffect(AppliedEntityCondition statusEffect)
+    public virtual void RemoveCondition(AppliedEntityCondition statusEffect)
     {
         statusEffects.Remove(statusEffect);
     }
 
     /// <summary>Removes all effects matching the specified categories (skill-based dispel).</summary>
-    public virtual void RemoveStatusEffectsByCategory(ConditionCategory categories)
+    public virtual void RemoveConditionsByCategory(ConditionCategory categories)
     {
         statusEffects.RemoveByCategory(categories);
     }
 
     /// <summary>Removes all instances of a specific template (targeted dispel).</summary>
-    public virtual void RemoveStatusEffectsByTemplate(EntityCondition template)
+    public virtual void RemoveConditionsByTemplate(EntityCondition template)
     {
         statusEffects.RemoveByTemplate(template);
     }
 
     /// <summary>Processes removal triggers for all active effects. Called by phase handlers and performers.</summary>
-    public virtual void NotifyStatusEffectTrigger(RemovalTrigger trigger)
+    public virtual void NotifyConditionTrigger(RemovalTrigger trigger)
     {
         statusEffects.ProcessRemovalTrigger(trigger);
     }
 
-    public virtual List<AppliedEntityCondition> GetActiveStatusEffects()
+    public virtual List<AppliedEntityCondition> GetActiveConditions()
     {
         return statusEffects.GetActive();
     }
 
     /// <summary>Ticks periodic effects, decrements durations, removes expired. Called each turn.</summary>
-    public virtual void UpdateStatusEffects()
+    public virtual void UpdateConditions()
     {
         statusEffects.OnTurnStart();
     }

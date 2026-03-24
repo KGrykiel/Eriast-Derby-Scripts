@@ -1,5 +1,4 @@
-﻿using Assets.Scripts.Combat;
-using Assets.Scripts.Combat.Rolls.RollSpecs.SpecTypes;
+﻿using Assets.Scripts.Combat.Rolls.RollSpecs.SpecTypes;
 
 namespace Assets.Scripts.Combat.Rolls.RollTypes.Saves
 {

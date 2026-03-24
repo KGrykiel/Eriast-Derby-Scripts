@@ -16,7 +16,7 @@ namespace Assets.Scripts.Combat.Rolls.RollTypes.Attacks
             Entity attackerEntity = ctx.Attacker?.GetEntity();
 
             if (attackerEntity != null)
-                attackerEntity.NotifyStatusEffectTrigger(RemovalTrigger.OnD20Roll);
+                attackerEntity.NotifyConditionTrigger(RemovalTrigger.OnD20Roll);
 
             CombatEventBus.EmitAttackRoll(
                 result,
@@ -25,7 +25,7 @@ namespace Assets.Scripts.Combat.Rolls.RollTypes.Attacks
                 ctx.CausalSource);
 
             if (attackerEntity != null)
-                attackerEntity.NotifyStatusEffectTrigger(RemovalTrigger.OnAttackMade);
+                attackerEntity.NotifyConditionTrigger(RemovalTrigger.OnAttackMade);
             return result;
         }
     }

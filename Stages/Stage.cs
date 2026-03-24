@@ -121,7 +121,7 @@ namespace Assets.Scripts.Stages
             foreach (var component in vehicle.AllComponents)
             {
                 if (component != null)
-                    component.ApplyStatusEffect(stageStatusEffect, this);
+                    component.ApplyCondition(stageStatusEffect, this);
             }
         }
 

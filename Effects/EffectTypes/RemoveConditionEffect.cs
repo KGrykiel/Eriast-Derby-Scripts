@@ -1,6 +1,7 @@
-﻿using UnityEngine;
-using StatusEffectTemplate = Assets.Scripts.Conditions.EntityConditions.EntityCondition;
-using Assets.Scripts.Conditions;
+﻿using Assets.Scripts.Conditions;
+using Assets.Scripts.Conditions.EntityConditions;
+using SerializeReferenceEditor;
+using UnityEngine;
 
 namespace Assets.Scripts.Effects.EffectTypes
 {
@@ -9,6 +10,7 @@ namespace Assets.Scripts.Effects.EffectTypes
     /// Used for dispel skills (e.g., Extinguish removes DoT) and narrative events (e.g., cure SuperAids).
     /// </summary>
     [System.Serializable]
+    [SRName("Remove Condition")]
     public class RemoveStatusEffect : EffectBase
     {
         [Header("Removal Filter")]
@@ -16,17 +18,17 @@ namespace Assets.Scripts.Effects.EffectTypes
         public ConditionCategory categoriesToRemove = ConditionCategory.None;
 
         [Tooltip("Optional: remove only this specific status effect template. Takes priority over categories.")]
-        public StatusEffectTemplate specificTemplate;
+        public EntityCondition specificTemplate;
 
         public override void Apply(Entity target, EffectContext context)
         {
             if (specificTemplate != null)
             {
-                target.RemoveStatusEffectsByTemplate(specificTemplate);
+                target.RemoveConditionsByTemplate(specificTemplate);
             }
             else if (categoriesToRemove != ConditionCategory.None)
             {
-                target.RemoveStatusEffectsByCategory(categoriesToRemove);
+                target.RemoveConditionsByCategory(categoriesToRemove);
             }
             else
             {

@@ -3,8 +3,9 @@ using Assets.Scripts.Characters;
 using Assets.Scripts.Combat.Damage;
 using Assets.Scripts.Combat.Rolls.RollSpecs;
 using Assets.Scripts.Combat.Rolls.RollSpecs.SpecTypes;
-using Assets.Scripts.Combat.Damage.FormulaProviders;
 using Assets.Scripts.Combat.Damage.FormulaProviders.SpecificProviders;
+using Assets.Scripts.Effects;
+using Assets.Scripts.Effects.EffectTypes;
 
 namespace Assets.Scripts.Tests.Helpers
 {

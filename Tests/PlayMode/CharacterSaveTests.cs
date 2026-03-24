@@ -6,7 +6,6 @@ using Assets.Scripts.Characters;
 using Assets.Scripts.Core;
 using Assets.Scripts.Tests.Helpers;
 using Assets.Scripts.Combat;
-using Assets.Scripts.Combat.Rolls;
 using Assets.Scripts.Combat.Rolls.RollTypes.Saves;
 
 namespace Assets.Scripts.Tests.PlayMode

@@ -209,7 +209,7 @@ namespace Assets.Scripts.Combat.Rolls
         private static List<AdvantageSource> GatherEntityAdvantageSources(Entity entity, IRollSpec spec)
         {
             var sources = new List<AdvantageSource>();
-            foreach (var applied in entity.GetActiveStatusEffects())
+            foreach (var applied in entity.GetActiveConditions())
             {
                 foreach (var grant in applied.template.advantageGrants)
                 {

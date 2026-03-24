@@ -35,11 +35,11 @@ namespace Assets.Scripts.Combat.Rolls.RollTypes.Saves
             {
                 Entity actorEntity = defender.GetEntity();
                 if (actorEntity != null)
-                    actorEntity.NotifyStatusEffectTrigger(RemovalTrigger.OnD20Roll);
+                    actorEntity.NotifyConditionTrigger(RemovalTrigger.OnD20Roll);
 
                 var defenderSeat = defender.GetSeat();
                 if (defenderSeat != null)
-                    defenderSeat.NotifyStatusEffectTrigger(RemovalTrigger.OnD20Roll);
+                    defenderSeat.NotifyConditionTrigger(RemovalTrigger.OnD20Roll);
             }
 
             return roll;
@@ -63,7 +63,7 @@ namespace Assets.Scripts.Combat.Rolls.RollTypes.Saves
                 causalSource,
                 spec.DisplayName);
 
-            entity?.NotifyStatusEffectTrigger(RemovalTrigger.OnD20Roll);
+            entity?.NotifyConditionTrigger(RemovalTrigger.OnD20Roll);
 
             return roll;
         }

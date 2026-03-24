@@ -11,7 +11,7 @@ namespace Assets.Scripts.Conditions.CharacterConditions
     /// Activates modifier objects on the seat for eager roll gathering.
     /// No periodic effects — characters have no HP/Energy resources.
     /// </summary>
-    public class CharacterConditionManager : ConditionManager<CharacterCondition, AppliedCharacterCondition>
+    public class CharacterConditionManager : ConditionManagerBase<CharacterCondition, AppliedCharacterCondition>
     {
         private readonly VehicleSeat seat;
 

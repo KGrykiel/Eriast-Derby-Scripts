@@ -9,6 +9,7 @@ using Assets.Scripts.Stages.Lanes;
 using Assets.Scripts.Conditions;
 using RollContext = Assets.Scripts.Combat.Rolls.RollSpecs.RollContext;
 using Assets.Scripts.Combat.Rolls.RollSpecs;
+using Assets.Scripts.Effects;
 
 /// <summary>
 /// Container/coordinator for Entity components. NOT an Entity itself.
@@ -173,7 +174,7 @@ public class Vehicle : MonoBehaviour
     {
         foreach (var component in AllComponents)
         {
-            component.UpdateStatusEffects();
+            component.UpdateConditions();
         }
 
         foreach (var seat in seats)
@@ -187,12 +188,12 @@ public class Vehicle : MonoBehaviour
     {
         foreach (var component in AllComponents)
         {
-            component.NotifyStatusEffectTrigger(trigger);
+            component.NotifyConditionTrigger(trigger);
         }
 
         foreach (var seat in seats)
         {
-            seat.NotifyStatusEffectTrigger(trigger);
+            seat.NotifyConditionTrigger(trigger);
         }
     }
 

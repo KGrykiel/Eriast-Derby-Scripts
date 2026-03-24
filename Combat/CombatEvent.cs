@@ -171,6 +171,8 @@ namespace Assets.Scripts.Combat
         }
     }
 
+    // ==================== ENTITY CONDITION EVENTS ====================
+
     public class EntityConditionExpiredEvent : CombatEvent
     {
         public AppliedEntityCondition Expired { get; set; }

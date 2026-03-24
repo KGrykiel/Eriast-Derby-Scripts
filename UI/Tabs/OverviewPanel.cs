@@ -119,7 +119,7 @@ public class OverviewPanel : MonoBehaviour
 
             if (showModifiers)
             {
-                int statusCount = vehicle.AllComponents.Sum(c => c.GetActiveStatusEffects().Count);
+                int statusCount = vehicle.AllComponents.Sum(c => c.GetActiveConditions().Count);
                 if (statusCount > 0)
                     display += $" Effects:x{statusCount}";
             }

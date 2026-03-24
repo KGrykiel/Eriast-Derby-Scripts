@@ -12,12 +12,13 @@ using Assets.Scripts.Combat.Rolls.Advantage;
 using Assets.Scripts.Stages.Lanes;
 using Assets.Scripts.Conditions;
 using Assets.Scripts.Tests.Helpers;
-using Assets.Scripts.Combat.Rolls.RollTypes.Attacks;
 using Assets.Scripts.Combat.Rolls.RollTypes.SkillChecks;
 using Assets.Scripts.Combat.Rolls.RollSpecs;
 using Assets.Scripts.Combat.Rolls.RollSpecs.SpecTypes;
 using Assets.Scripts.Conditions.EntityConditions;
 using Assets.Scripts.Combat.Damage.FormulaProviders.SpecificProviders;
+using Assets.Scripts.Effects;
+using Assets.Scripts.Effects.EffectTypes;
 
 namespace Assets.Scripts.Tests.PlayMode
 {
@@ -169,7 +170,7 @@ namespace Assets.Scripts.Tests.PlayMode
             Assert.AreEqual(acBefore + 3, acAfter, "AC should increase by 3 from Reinforced buff");
 
             // Verify status effect is active
-            var effects = playerVehicle.chassis.GetActiveStatusEffects();
+            var effects = playerVehicle.chassis.GetActiveConditions();
             Assert.AreEqual(1, effects.Count, "Should have 1 active status effect");
             Assert.AreEqual("Reinforced", effects[0].template.effectName);
         }
@@ -215,13 +216,13 @@ namespace Assets.Scripts.Tests.PlayMode
             playerVehicle.ExecuteSkill(ctx, flameThrower);
             yield return null;
 
-            Assert.AreEqual(1, enemyVehicle.chassis.GetActiveStatusEffects().Count, "Enemy should be Burning");
+            Assert.AreEqual(1, enemyVehicle.chassis.GetActiveConditions().Count, "Enemy should be Burning");
 
             // Simulate 3 turns of DoT ticking
             int healthBefore = enemyVehicle.chassis.GetCurrentHealth();
             for (int turn = 1; turn <= 3; turn++)
             {
-                enemyVehicle.chassis.UpdateStatusEffects();
+                enemyVehicle.chassis.UpdateConditions();
                 int healthAfter = enemyVehicle.chassis.GetCurrentHealth();
                 int damageTaken = healthBefore - healthAfter;
 
@@ -234,7 +235,7 @@ namespace Assets.Scripts.Tests.PlayMode
             }
 
             // After 3 turns, Burning should expire
-            Assert.AreEqual(0, enemyVehicle.chassis.GetActiveStatusEffects().Count,
+            Assert.AreEqual(0, enemyVehicle.chassis.GetActiveConditions().Count,
                 "Burning should expire after 3 turns");
         }
 
@@ -310,7 +311,7 @@ namespace Assets.Scripts.Tests.PlayMode
             // Apply lane effect to all vehicle components (as the system does)
             foreach (var component in playerVehicle.AllComponents)
             {
-                component.ApplyStatusEffect(laneEffect, cliffLane);
+                component.ApplyCondition(laneEffect, cliffLane);
             }
             yield return null;
 
@@ -318,7 +319,7 @@ namespace Assets.Scripts.Tests.PlayMode
             Assert.AreEqual(acBefore - 2, acAfter, "AC should drop by 2 from Cliff Edge lane");
 
             // Verify effect is tracked
-            var effects = playerVehicle.chassis.GetActiveStatusEffects();
+            var effects = playerVehicle.chassis.GetActiveConditions();
             Assert.AreEqual(1, effects.Count);
             Assert.AreEqual("Cliff Edge", effects[0].template.effectName);
         }
@@ -469,7 +470,7 @@ namespace Assets.Scripts.Tests.PlayMode
             cleanup.Add(stunTemplate);
 
             var utilityComp = playerVehicle.optionalComponents[0];
-            utilityComp.ApplyStatusEffect(stunTemplate, utilityComp);
+            utilityComp.ApplyCondition(stunTemplate, utilityComp);
             yield return null;
 
             // Verify Utility is not operational
@@ -484,8 +485,8 @@ namespace Assets.Scripts.Tests.PlayMode
             Assert.AreEqual(0, result.BaseRoll, "Should auto-fail when required component is stunned");
 
             // Wait 2 turns ? stun expires ? component operational again
-            utilityComp.UpdateStatusEffects(); // Turn 1
-            utilityComp.UpdateStatusEffects(); // Turn 2 ? expires
+            utilityComp.UpdateConditions(); // Turn 1
+            utilityComp.UpdateConditions(); // Turn 2 ? expires
             yield return null;
 
             Assert.IsTrue(utilityComp.IsOperational, "Component should be operational after stun expires");
@@ -554,7 +555,7 @@ namespace Assets.Scripts.Tests.PlayMode
 
             // Source 2: Status effect (+3 AC from buff skill)
             var shieldBuff = TestStatusEffectFactory.CreateModifierEffect("Shield", Attribute.ArmorClass, 3f, duration: 5, cleanup: cleanup);
-            playerVehicle.chassis.ApplyStatusEffect(shieldBuff, playerVehicle);
+            playerVehicle.chassis.ApplyCondition(shieldBuff, playerVehicle);
 
             // Source 3: Direct modifier (+1 AC from event card)
             playerVehicle.chassis.AddModifier(new AttributeModifier(
@@ -574,8 +575,8 @@ namespace Assets.Scripts.Tests.PlayMode
             Assert.IsTrue(modifiers.Any(m => m.Label == "Lucky Break"), "Should show Lucky Break");
 
             // Remove status effect ? AC should drop by 3
-            var applied = playerVehicle.chassis.GetActiveStatusEffects()[0];
-            playerVehicle.chassis.RemoveStatusEffect(applied);
+            var applied = playerVehicle.chassis.GetActiveConditions()[0];
+            playerVehicle.chassis.RemoveCondition(applied);
             yield return null;
 
             int acAfterRemoval = playerVehicle.chassis.GetArmorClass();

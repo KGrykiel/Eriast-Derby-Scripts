@@ -1,6 +1,7 @@
-using Assets.Scripts.Effects;
-
-public interface IEffect
+namespace Assets.Scripts.Effects
 {
-    void Apply(Entity target, EffectContext context);
+    public interface IEffect
+    {
+        void Apply(Entity target, EffectContext context);
+    }
 }

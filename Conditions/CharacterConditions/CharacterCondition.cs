@@ -1,5 +1,4 @@
 using System.Collections.Generic;
-using Assets.Scripts.Conditions;
 using SerializeReferenceEditor;
 using UnityEngine;
 

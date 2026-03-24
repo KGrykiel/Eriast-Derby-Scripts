@@ -1,5 +1,4 @@
 ﻿using System.Collections.Generic;
-using Assets.Scripts.Combat;
 using Assets.Scripts.Effects;
 using Assets.Scripts.Conditions;
 using UnityEngine;
@@ -164,7 +163,7 @@ namespace Assets.Scripts.Combat.Rolls.RollSpecs
                 CombatEventBus.BeginAction(ctx.SourceActor, causalSource, targetVehicle, ctx.SourceVehicle);
                 VehicleComponent sourceComponent = ctx.SourceActor?.GetEntity() as VehicleComponent;
                 if (sourceComponent != null)
-                    sourceComponent.NotifyStatusEffectTrigger(RemovalTrigger.OnSkillUsed);
+                    sourceComponent.NotifyConditionTrigger(RemovalTrigger.OnSkillUsed);
             }
 
             try

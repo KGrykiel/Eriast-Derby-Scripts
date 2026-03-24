@@ -44,6 +44,21 @@ namespace Assets.Scripts.Combat
         public IEnumerable<DamageEvent> GetDamageEvents() 
             => Events.OfType<DamageEvent>();
 
+        public IEnumerable<RestorationEvent> GetRestorationEvents()
+            => Events.OfType<RestorationEvent>();
+
+        public IEnumerable<AttackRollEvent> GetAttackRollEvents()
+            => Events.OfType<AttackRollEvent>();
+
+        public IEnumerable<SavingThrowEvent> GetSavingThrowEvents()
+            => Events.OfType<SavingThrowEvent>();
+
+        public IEnumerable<SkillCheckEvent> GetSkillCheckEvents()
+            => Events.OfType<SkillCheckEvent>();
+
+        public IEnumerable<OpposedCheckEvent> GetOpposedCheckEvents()
+            => Events.OfType<OpposedCheckEvent>();
+
         public IEnumerable<EntityConditionEvent> GetEntityConditionEvents() 
             => Events.OfType<EntityConditionEvent>();
 
@@ -85,21 +100,6 @@ namespace Assets.Scripts.Combat
 
         public IEnumerable<CharacterConditionStackLimitEvent> GetCharacterConditionStackLimitEvents()
             => Events.OfType<CharacterConditionStackLimitEvent>();
-
-        public IEnumerable<RestorationEvent> GetRestorationEvents()
-            => Events.OfType<RestorationEvent>();
-
-        public IEnumerable<AttackRollEvent> GetAttackRollEvents() 
-            => Events.OfType<AttackRollEvent>();
-
-        public IEnumerable<SavingThrowEvent> GetSavingThrowEvents() 
-            => Events.OfType<SavingThrowEvent>();
-
-        public IEnumerable<SkillCheckEvent> GetSkillCheckEvents() 
-            => Events.OfType<SkillCheckEvent>();
-
-        public IEnumerable<OpposedCheckEvent> GetOpposedCheckEvents()
-            => Events.OfType<OpposedCheckEvent>();
 
         public Dictionary<Entity, List<DamageEvent>> GetDamageByTarget()
         {

@@ -80,46 +80,6 @@ namespace Assets.Scripts.Combat
             Emit(new DamageEvent(result, source, target, causalSource, sourceType));
         }
         
-        public static void EmitEntityCondition(
-            AppliedEntityCondition applied,
-            Entity source,
-            Entity target,
-            string causalSource,
-            bool wasReplacement = false)
-        {
-            Emit(new EntityConditionEvent(applied, source, target, causalSource, wasReplacement));
-        }
-
-        public static void EmitEntityConditionExpired(AppliedEntityCondition expired, Entity target)
-        {
-            Emit(new EntityConditionExpiredEvent(expired, target));
-        }
-
-        public static void EmitEntityConditionRefreshed(AppliedEntityCondition refreshed, Entity target)
-        {
-            Emit(new EntityConditionRefreshedEvent(refreshed, target));
-        }
-
-        public static void EmitEntityConditionIgnored(AppliedEntityCondition existing, Entity target)
-        {
-            Emit(new EntityConditionIgnoredEvent(existing, target));
-        }
-
-        public static void EmitEntityConditionReplaced(AppliedEntityCondition newEffect, Entity target, int oldDuration)
-        {
-            Emit(new EntityConditionReplacedEvent(newEffect, target, oldDuration));
-        }
-
-        public static void EmitEntityConditionKeptStronger(AppliedEntityCondition kept, Entity target)
-        {
-            Emit(new EntityConditionKeptStrongerEvent(kept, target));
-        }
-
-        public static void EmitEntityConditionStackLimit(EntityCondition template, Entity target, int maxStacks)
-        {
-            Emit(new EntityConditionStackLimitEvent(template, target, maxStacks));
-        }
-
         public static void EmitRestoration(
             RestorationResult result,
             Entity source,
@@ -168,7 +128,46 @@ namespace Assets.Scripts.Combat
             Emit(new OpposedCheckEvent(roll, defenderRoll, attacker, defender, causalSource, attackerCheckName, defenderCheckName));
         }
 
-        // ==================== CHARACTER CONDITION CONVENIENCE METHODS ====================
+        // ==================== CHARACTER CONVENIENCE METHODS ====================
+        public static void EmitEntityCondition(
+            AppliedEntityCondition applied,
+            Entity source,
+            Entity target,
+            string causalSource,
+            bool wasReplacement = false)
+        {
+            Emit(new EntityConditionEvent(applied, source, target, causalSource, wasReplacement));
+        }
+
+        public static void EmitEntityConditionExpired(AppliedEntityCondition expired, Entity target)
+        {
+            Emit(new EntityConditionExpiredEvent(expired, target));
+        }
+
+        public static void EmitEntityConditionRefreshed(AppliedEntityCondition refreshed, Entity target)
+        {
+            Emit(new EntityConditionRefreshedEvent(refreshed, target));
+        }
+
+        public static void EmitEntityConditionIgnored(AppliedEntityCondition existing, Entity target)
+        {
+            Emit(new EntityConditionIgnoredEvent(existing, target));
+        }
+
+        public static void EmitEntityConditionReplaced(AppliedEntityCondition newEffect, Entity target, int oldDuration)
+        {
+            Emit(new EntityConditionReplacedEvent(newEffect, target, oldDuration));
+        }
+
+        public static void EmitEntityConditionKeptStronger(AppliedEntityCondition kept, Entity target)
+        {
+            Emit(new EntityConditionKeptStrongerEvent(kept, target));
+        }
+
+        public static void EmitEntityConditionStackLimit(EntityCondition template, Entity target, int maxStacks)
+        {
+            Emit(new EntityConditionStackLimitEvent(template, target, maxStacks));
+        }
 
         public static void EmitCharacterCondition(
             AppliedCharacterCondition applied,

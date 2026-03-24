@@ -4,12 +4,9 @@ using NUnit.Framework;
 using UnityEngine;
 using UnityEngine.TestTools;
 using Assets.Scripts.Tests.Helpers;
-using Assets.Scripts.Characters;
 using Assets.Scripts.Combat.Rolls;
 using Assets.Scripts.Combat.Rolls.Advantage;
 using Assets.Scripts.Combat.Rolls.RollSpecs.SpecTypes;
-using Assets.Scripts.Combat.Rolls.RollTypes.Attacks;
-using Assets.Scripts.Core;
 using Assets.Scripts.Entities.Vehicle;
 
 namespace Assets.Scripts.Tests.PlayMode

@@ -6,10 +6,11 @@ using UnityEngine.EventSystems;
 using TMPro;
 using Assets.Scripts.Events.EventCard.EventCardTypes;
 using Assets.Scripts.Events.EventCard;
-using Assets.Scripts.Combat.Damage;
 using Assets.Scripts.Combat.Restoration;
 using Assets.Scripts.Combat.Rolls.RollSpecs.SpecTypes;
 using Assets.Scripts.Combat.Damage.FormulaProviders.SpecificProviders;
+using Assets.Scripts.Effects;
+using Assets.Scripts.Effects.EffectTypes;
 
 namespace Assets.Scripts.UI.Components
 {

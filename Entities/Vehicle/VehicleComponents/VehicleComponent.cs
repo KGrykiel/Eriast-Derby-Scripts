@@ -224,7 +224,7 @@ public abstract class VehicleComponent : Entity
         {
             if (isDestroyed || isManuallyDisabled) return false;
 
-            foreach (var statusEffect in GetActiveStatusEffects())
+            foreach (var statusEffect in GetActiveConditions())
             {
                 if (statusEffect.PreventsActions)
                     return false;
@@ -233,7 +233,7 @@ public abstract class VehicleComponent : Entity
             // Vehicle-wide stuns are applied to chassis, so check those too
             if (parentVehicle != null && parentVehicle.chassis != null && parentVehicle.chassis != this)
             {
-                foreach (var statusEffect in parentVehicle.chassis.GetActiveStatusEffects())
+                foreach (var statusEffect in parentVehicle.chassis.GetActiveConditions())
                 {
                     if (statusEffect.PreventsActions)
                         return false;
@@ -248,7 +248,7 @@ public abstract class VehicleComponent : Entity
     {
         if (!IsOperational) return false;
 
-        foreach (var statusEffect in GetActiveStatusEffects())
+        foreach (var statusEffect in GetActiveConditions())
         {
             if (statusEffect.PreventsMovement)
                 return false;
@@ -257,7 +257,7 @@ public abstract class VehicleComponent : Entity
         // Vehicle-wide immobilization is applied to chassis
         if (parentVehicle != null && parentVehicle.chassis != null && parentVehicle.chassis != this)
         {
-            foreach (var statusEffect in parentVehicle.chassis.GetActiveStatusEffects())
+            foreach (var statusEffect in parentVehicle.chassis.GetActiveConditions())
             {
                 if (statusEffect.PreventsMovement)
                     return false;
