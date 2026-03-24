@@ -42,11 +42,11 @@ public abstract class Entity : MonoBehaviour
     [SerializeField, HideInInspector]
     protected List<AttributeModifier> entityModifiers = new();
 
-    private readonly StatusEffectManager statusEffects;
+    private readonly EntityConditionManager statusEffects;
 
     protected Entity()
     {
-        statusEffects = new StatusEffectManager(this);
+        statusEffects = new EntityConditionManager(this);
     }
 
     // ==================== STAT ACCESSORS ====================

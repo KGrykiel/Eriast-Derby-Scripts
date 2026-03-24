@@ -11,11 +11,11 @@ namespace Assets.Scripts.Conditions.EntityConditions
     /// Per-entity manager for status effects. Owns modifier activation, periodic effects,
     /// and CombatEventBus integration.
     /// </summary>
-    public class StatusEffectManager : ConditionManagerBase<EntityCondition, AppliedEntityCondition>
+    public class EntityConditionManager : ConditionManagerBase<EntityCondition, AppliedEntityCondition>
     {
         private readonly Entity entity;
 
-        public StatusEffectManager(Entity entity)
+        public EntityConditionManager(Entity entity)
         {
             this.entity = entity;
         }
