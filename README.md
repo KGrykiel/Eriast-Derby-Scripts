@@ -100,10 +100,11 @@ the Unity editor, without looking at a single line of code.
   multiple targets, and more. This allows for configuration of complex skills
   like "damage the enemy while also applying a status effect to self."
 
-- **Status Effects**  
-  Used for handling buffs, debuffs, damage over time and other behaviours 
-  common in games of this genre. Fully composable and modular using the effect system.
-  Implemented as a **Flyweight pattern** with a template and runtime instances.
+- **Condition System**  
+  A two-tier system for handling buffs, debuffs, damage over time and other behaviours
+  common in games of this genre. **Entity conditions** affect vehicles and components (modifiers, periodic effects);
+  **character conditions** affect crew members in seats (modifiers only). Fully composable and modular using the effect system.
+  Implemented as a **Flyweight pattern** with templates and per-owner managers using **Template Method** for shared stacking/expiry logic.
 
 - **Vehicles and Components**  
   Vehicles are composed of modular **components**, each with their own stats, health and functionality.
@@ -170,14 +171,15 @@ the Unity editor, without looking at a single line of code.
 
 | Pattern | Where | Why |
 |---|---|---|
-| **Strategy** | [`SkillExecutor`](Skills/Helpers/SkillExecutor.cs) → Resolvers<br/>[`IFormulaProvider`](Combat/Damage/FormulaProviders/IFormulaProvider.cs) → damage formulas | Swap resolution algorithms without touching callers. Five different skill roll types route through the same interface. |
-| **Single Source of Truth** | [`StatCalculator`](Core/StatCalculator.cs) — all stat queries<br/>[`D20Calculator`](Combat/D20Calculator.cs) — all d20 rolls<br/>[`DamageApplicator`](Combat/Damage/DamageApplicator.cs) — all damage | Centralized logic guarantees consistency. Every attack, skill check, or damage event flows through one verifiable entry point. |
-| **Flyweight** | [`StatusEffect`](StatusEffects/StatusEffect.cs) (template) / [`AppliedStatusEffect`](StatusEffects/AppliedStatusEffect.cs) (instance) | Shared template + per-entity runtime state. Compose modifiers + DoT/HoT + behavioral restrictions without subclass explosion. |
+| **Strategy** | [`RollNodeExecutor`](Combat/Rolls/RollSpecs/RollNodeExecutor.cs) → [`IRollSpec`](Combat/Rolls/RollSpecs/IRollSpec.cs)<br/>[`IFormulaProvider`](Combat/Damage/FormulaProviders/IFormulaProvider.cs) → damage formulas | Swap resolution algorithms without touching callers. Five different skill roll types route through the same interface. |
+| **Single Source of Truth** | [`StatCalculator`](Core/StatCalculator.cs) — all stat queries<br/>[`D20Calculator`](Combat/Rolls/D20Calculator.cs) — all d20 rolls<br/>[`DamageApplicator`](Combat/Damage/DamageApplicator.cs) — all damage<br/>[`RestorationApplicator`](Combat/Restoration/RestorationApplicator.cs) — all healing/drain | Centralised logic guarantees consistency. Every attack, skill check, damage event, or restoration flows through one verifiable entry point. |
+| **Flyweight** | [`EntityCondition`](Conditions/EntityConditions/EntityCondition.cs) (template) / [`AppliedEntityCondition`](Conditions/EntityConditions/AppliedEntityCondition.cs) (instance) | Shared template + per-entity runtime state. Compose modifiers + DoT/HoT + behavioral restrictions without subclass explosion. |
 | **State Machine** | [`TurnStateMachine`](Managers/TurnStateMachine.cs) | Tracks current phase and manages transitions. Fires events on phase changes for loose coupling. Pauses execution when waiting for player input. |
 | **Chain of Responsibility** | [`ITurnPhaseHandler`](Managers/TurnPhases/ITurnPhaseHandler.cs) → phase handlers | Each handler executes its phase logic and returns the next phase. Returns null to pause execution (player input). Clean separation of phase-specific behavior. |
+| **Template Method** | [`ConditionManagerBase<T,U>`](Conditions/ConditionManagerBase.cs) → concrete managers | Concrete stacking/expiry algorithms in base class. Subclasses override 11 hooks (`OnActivate`, `OnTick`, `OnExpired`, etc.) for entity vs. character-specific behaviour. Eliminates duplicate control flow. |
 | **Observer / Event Bus** | [`CombatEventBus`](Combat/CombatEventBus.cs), [`TurnEventBus`](Managers/TurnEventBus.cs) | Scoped action aggregation for multi-event combat logging. Critical for multi-hit attacks that need to log as one action. |
-| **Context Object** | [`SkillContext`](Skills/Helpers/SkillContext.cs), [`EffectContext`](Effects/EffectContext.cs), [`FormulaContext`](Combat/Damage/FormulaProviders/FormulaContext.cs) | Bundle execution data, eliminate parameter sprawl. Immutable copy helpers for clean data flow. |
-| **ScriptableObject Architecture** | [`Skill`](Skills/Skill.cs), [`StatusEffect`](StatusEffects/StatusEffect.cs), [`Character`](Characters/Character.cs), [`EventCard`](Events/EventCard/EventCard.cs) | Data-driven design — all game content configured in editor, no code changes needed. |
+| **Context Object** | [`RollContext`](Combat/Rolls/RollSpecs/RollContext.cs), [`EffectContext`](Effects/EffectContext.cs), [`FormulaContext`](Combat/Damage/FormulaProviders/FormulaContext.cs) | Bundle execution data, eliminate parameter sprawl. Immutable copy helpers for clean data flow. |
+| **ScriptableObject Architecture** | [`Skill`](Skills/Skill.cs), [`EntityCondition`](Conditions/EntityConditions/EntityCondition.cs), [`Character`](Characters/Character.cs), [`EventCard`](Events/EventCard/EventCard.cs) | Data-driven design — all game content configured in editor, no code changes needed. |
 
 ---
 
