@@ -267,7 +267,7 @@ namespace Assets.Scripts.UI.Components
             {
                 description = "Damage (Weapon)";
             }
-            else if (invocation.effect is ApplyConditionEffect statusEffect && statusEffect.condition != null)
+            else if (invocation.effect is ApplyEntityConditionEffect statusEffect && statusEffect.condition != null)
             {
                 description = $"Apply: {statusEffect.condition.effectName}";
             }

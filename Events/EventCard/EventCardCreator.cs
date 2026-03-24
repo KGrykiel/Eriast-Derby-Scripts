@@ -22,71 +22,6 @@ namespace Assets.Scripts.Events.EventCard
     /// </summary>
     public static class EventCardCreator
     {
-        private const string MenuPath = "Assets/Create/Racing/Event Card/";
-
-        [MenuItem(MenuPath + "Hazard Card")]
-        public static void CreateHazardCard()
-        {
-            CreateCardAsset("NewHazardCard", MakeBlankHazardCard());
-        }
-
-        [MenuItem(MenuPath + "Choice Card")]
-        public static void CreateChoiceCard()
-        {
-            CreateCardAsset("NewChoiceCard", MakeBlankChoiceCard());
-        }
-
-        [MenuItem(MenuPath + "Narrative Card")]
-        public static void CreateNarrativeCard()
-        {
-            CreateCardAsset("NewNarrativeCard", MakeBlankNarrativeCard());
-        }
-
-        private static void CreateCardAsset(string defaultName, ChoiceCard definition)
-        {
-            string path = "Assets";
-
-            if (Selection.activeObject != null)
-            {
-                path = AssetDatabase.GetAssetPath(Selection.activeObject);
-                if (!string.IsNullOrEmpty(path) && System.IO.File.Exists(path))
-                    path = System.IO.Path.GetDirectoryName(path);
-            }
-
-            string assetPath = AssetDatabase.GenerateUniqueAssetPath($"{path}/{defaultName}.asset");
-
-            AssetDatabase.CreateAsset(definition, assetPath);
-            AssetDatabase.SaveAssets();
-
-            Selection.activeObject = definition;
-            EditorUtility.FocusProjectWindow();
-        }
-
-        private static ChoiceCard MakeBlankHazardCard()
-            => Make("New Hazard",
-                "A hazard blocks the track!",
-                Choice("Press on",
-                    Save(SaveSpec.ForVehicle(VehicleCheckAttribute.Stability), 13,
-                        FX(Dmg(1, 6, 0, DamageType.Bludgeoning)),
-                        successNarrative: "You push through unscathed.",
-                        failureNarrative: "The impact rattles your vehicle.")));
-
-        private static ChoiceCard MakeBlankChoiceCard()
-            => Make("New Choice",
-                "A decision looms ahead.",
-                Choice("Take the risk",
-                    Check(SkillCheckSpec.ForVehicle(VehicleCheckAttribute.Mobility), 13,
-                        FX(),
-                        successNarrative: "You navigate it perfectly.",
-                        failureNarrative: "You barely manage.")),
-                Choice("Play it safe",
-                    AlwaysApply(FX(), "You take the cautious route.")));
-
-        private static ChoiceCard MakeBlankNarrativeCard()
-            => Make("New Narrative",
-                "Something happens on the track.",
-                Choice("Continue",
-                    AlwaysApply(FX(), "The moment passes.")));
 
         #region named card catalogue
         // ==================== NAMED CARD CATALOGUE ====================
@@ -283,7 +218,7 @@ namespace Assets.Scripts.Events.EventCard
             => new EffectInvocation
             {
                 target = target,
-                effect = new ApplyConditionEffect { condition = effect }
+                effect = new ApplyEntityConditionEffect { condition = effect }
             };
 
         private static RollNode AlwaysApply(List<EffectInvocation> effects, string narrative = "")

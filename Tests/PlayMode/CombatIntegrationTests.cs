@@ -148,7 +148,7 @@ namespace Assets.Scripts.Tests.PlayMode
                 new System.Collections.Generic.List<EffectInvocation>
                 {
                     new() {
-                        effect = new ApplyConditionEffect { condition = reinforceTemplate },
+                        effect = new ApplyEntityConditionEffect { condition = reinforceTemplate },
                         target = EffectTarget.SelectedTarget
                     }
                 },
@@ -199,7 +199,7 @@ namespace Assets.Scripts.Tests.PlayMode
                 new System.Collections.Generic.List<EffectInvocation>
                 {
                     new() {
-                        effect = new ApplyConditionEffect { condition = burningTemplate },
+                        effect = new ApplyEntityConditionEffect { condition = burningTemplate },
                         target = EffectTarget.SelectedTarget
                     }
                 },

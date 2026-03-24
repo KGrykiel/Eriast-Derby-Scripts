@@ -84,5 +84,8 @@ namespace Assets.Scripts.Conditions.CharacterConditions
 
         protected override void OnKeptStronger(AppliedCharacterCondition applied)
             => CombatEventBus.EmitCharacterConditionKeptStronger(applied, seat);
+
+        protected override void OnRemovedByTrigger(AppliedCharacterCondition applied, RemovalTrigger trigger)
+            => CombatEventBus.EmitCharacterConditionRemovedByTrigger(applied, seat, trigger);
     }
 }

@@ -13,10 +13,13 @@ namespace Assets.Scripts.Combat.Rolls.RollTypes.Attacks
             int defenseValue = ctx.Target.GetArmorClass();
             var result = D20Calculator.Roll(gathered, defenseValue);
 
-            Entity attackerEntity = ctx.Attacker?.GetEntity();
+            Entity attackerEntity = ctx.Attacker.GetEntity();
 
             if (attackerEntity != null)
                 attackerEntity.NotifyConditionTrigger(RemovalTrigger.OnD20Roll);
+            
+            if (ctx.Attacker.GetSeat() != null)
+                ctx.Attacker.GetSeat().NotifyConditionTrigger(RemovalTrigger.OnD20Roll);
 
             CombatEventBus.EmitAttackRoll(
                 result,

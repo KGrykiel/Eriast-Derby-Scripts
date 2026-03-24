@@ -173,7 +173,7 @@ namespace Assets.Scripts.Skills
             return new List<EffectInvocation>
             {
                 new() {
-                    effect = new ApplyConditionEffect(),
+                    effect = new ApplyEntityConditionEffect(),
                     target = EffectTarget.SourceVehicle
                 }
             };
@@ -184,7 +184,7 @@ namespace Assets.Scripts.Skills
             return new List<EffectInvocation>
             {
                 new() {
-                    effect = new ApplyConditionEffect(),
+                    effect = new ApplyEntityConditionEffect(),
                     target = EffectTarget.SelectedTarget
                 }
             };
@@ -446,7 +446,7 @@ namespace Assets.Scripts.Skills
             => new EffectInvocation
             {
                 target = target,
-                effect = new ApplyConditionEffect { condition = effect }
+                effect = new ApplyEntityConditionEffect { condition = effect }
             };
 
         private static RollNode AlwaysApply(List<EffectInvocation> effects)

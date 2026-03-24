@@ -55,6 +55,8 @@ namespace Assets.Scripts.Combat.Logging
                 case CharacterConditionReplacedEvent ccrep:   LogCharacterConditionReplaced(ccrep); break;
                 case CharacterConditionKeptStrongerEvent ccks: LogCharacterConditionKeptStronger(ccks); break;
                 case CharacterConditionStackLimitEvent ccsl:  LogCharacterConditionStackLimit(ccsl); break;
+                case EntityConditionRemovedByTriggerEvent ecrt:  LogEntityConditionRemovedByTrigger(ecrt); break;
+                case CharacterConditionRemovedByTriggerEvent ccrt: LogCharacterConditionRemovedByTrigger(ccrt); break;
             }
         }
 
@@ -331,6 +333,9 @@ namespace Assets.Scripts.Combat.Logging
 
             foreach (var evt in action.GetEntityConditionExpiredEvents())
                 LogEntityConditionExpired(evt);
+
+            foreach (var evt in action.GetEntityConditionRemovedByTriggerEvents())
+                LogEntityConditionRemovedByTrigger(evt);
         }
 
         private static void LogSingleEntityCondition(EntityConditionEvent evt, CombatAction action = null)
@@ -645,6 +650,9 @@ namespace Assets.Scripts.Combat.Logging
 
             foreach (var evt in action.GetCharacterConditionExpiredEvents())
                 LogCharacterConditionExpired(evt);
+
+            foreach (var evt in action.GetCharacterConditionRemovedByTriggerEvents())
+                LogCharacterConditionRemovedByTrigger(evt);
         }
 
         private static void LogSingleCharacterCondition(CharacterConditionEvent evt, CombatAction action = null)
@@ -779,6 +787,38 @@ namespace Assets.Scripts.Combat.Logging
                   .WithMetadata("stackLimitReached", true)
                   .WithMetadata("maxStacks", evt.MaxStacks)
                   .WithMetadata("stackBehaviour", "Stack");
+        }
+
+        private static void LogEntityConditionRemovedByTrigger(EntityConditionRemovedByTriggerEvent evt)
+        {
+            Vehicle targetVehicle = EntityHelpers.GetParentVehicle(evt.Target);
+            string targetName = CombatDisplayHelpers.FormatEntityWithVehicle(evt.Target, targetVehicle);
+
+            var logEvt = RaceHistory.Log(
+                EventType.Condition, EventImportance.Low,
+                $"{targetName}'s {evt.Removed.template.effectName} removed by trigger ({evt.Trigger})",
+                targetVehicle != null ? targetVehicle.currentStage : null,
+                null, targetVehicle);
+
+            logEvt.WithMetadata("statusEffectName", evt.Removed.template.effectName)
+                  .WithMetadata("removedByTrigger", true)
+                  .WithMetadata("trigger", evt.Trigger.ToString())
+                  .WithMetadata("effectBreakdown", CombatFormatter.FormatEntityConditionTooltip(evt.Removed));
+        }
+
+        private static void LogCharacterConditionRemovedByTrigger(CharacterConditionRemovedByTriggerEvent evt)
+        {
+            string targetName = evt.TargetSeat?.GetDisplayName() ?? evt.TargetSeat?.seatName ?? "Unknown";
+
+            var logEvt = RaceHistory.Log(
+                EventType.Condition, EventImportance.Low,
+                $"{targetName}'s {evt.Removed.template.effectName} removed by trigger ({evt.Trigger})",
+                null, null, null);
+
+            logEvt.WithMetadata("statusEffectName", evt.Removed.template.effectName)
+                  .WithMetadata("removedByTrigger", true)
+                  .WithMetadata("trigger", evt.Trigger.ToString())
+                  .WithMetadata("effectBreakdown", CombatFormatter.FormatCharacterConditionTooltip(evt.Removed));
         }
     }
 }

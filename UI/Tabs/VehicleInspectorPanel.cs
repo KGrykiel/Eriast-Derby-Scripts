@@ -771,7 +771,8 @@ public class VehicleInspectorPanel : MonoBehaviour
                 
                 info += $"\n  <b><color={statusColor}>{statusIcon} {seat.seatName}</color></b>{roleText}\n";
                 info += $"    Operator: {characterName}\n";
-                
+                info += BuildSeatConditionsText(seat);
+
                 if (!seat.CanAct())
                 {
                     string reason = seat.GetCannotActReason();
@@ -808,6 +809,33 @@ public class VehicleInspectorPanel : MonoBehaviour
         skillsSectionText.text = info;
     }
     
+    private string BuildSeatConditionsText(VehicleSeat seat)
+    {
+        if (!seat.IsAssigned)
+            return string.Empty;
+
+        var conditions = seat.GetActiveConditions();
+
+        if (conditions.Count == 0)
+            return "    <color=#888888>Conditions: none</color>\n";
+
+        string text = "    Conditions: ";
+        for (int i = 0; i < conditions.Count; i++)
+        {
+            var condition = conditions[i];
+            string name = condition.template.effectName;
+            string duration = condition.IsIndefinite ? "∞" : $"{condition.turnsRemaining}t";
+
+            string flags = condition.PreventsActions ? " <color=#FF6666>[incap]</color>" : string.Empty;
+
+            text += $"<b>{name}</b> ({duration}){flags}";
+            if (i < conditions.Count - 1)
+                text += ", ";
+        }
+
+        return text + "\n";
+    }
+
     private void PopulateEventHistory()
     {
         if (eventHistorySectionText == null) return;

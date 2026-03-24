@@ -113,5 +113,8 @@ namespace Assets.Scripts.Conditions.EntityConditions
 
         protected override void OnKeptStronger(AppliedEntityCondition applied)
             => CombatEventBus.EmitEntityConditionKeptStronger(applied, entity);
+
+        protected override void OnRemovedByTrigger(AppliedEntityCondition applied, RemovalTrigger trigger)
+            => CombatEventBus.EmitEntityConditionRemovedByTrigger(applied, entity, trigger);
     }
 }

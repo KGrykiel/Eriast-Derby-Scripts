@@ -1,6 +1,7 @@
 ﻿using Assets.Scripts.Combat.Damage;
 using Assets.Scripts.Combat.Restoration;
 using Assets.Scripts.Combat.Rolls;
+using Assets.Scripts.Conditions;
 using Assets.Scripts.Conditions.EntityConditions;
 using Assets.Scripts.Conditions.CharacterConditions;
 using Assets.Scripts.Entities.Vehicle;
@@ -249,6 +250,20 @@ namespace Assets.Scripts.Combat
         }
     }
 
+    public class EntityConditionRemovedByTriggerEvent : CombatEvent
+    {
+        public AppliedEntityCondition Removed { get; set; }
+        public RemovalTrigger Trigger { get; set; }
+
+        public EntityConditionRemovedByTriggerEvent(AppliedEntityCondition removed, Entity target, RemovalTrigger trigger)
+        {
+            Removed = removed;
+            Target = target;
+            Trigger = trigger;
+            Source = null;
+        }
+    }
+
     // ==================== CHARACTER CONDITION EVENTS ====================
 
     public class CharacterConditionEvent : CombatEvent
@@ -353,6 +368,22 @@ namespace Assets.Scripts.Combat
             Template = template;
             TargetSeat = targetSeat;
             MaxStacks = maxStacks;
+            Source = null;
+            Target = null;
+        }
+    }
+
+    public class CharacterConditionRemovedByTriggerEvent : CombatEvent
+    {
+        public AppliedCharacterCondition Removed { get; set; }
+        public RemovalTrigger Trigger { get; set; }
+        public VehicleSeat TargetSeat { get; set; }
+
+        public CharacterConditionRemovedByTriggerEvent(AppliedCharacterCondition removed, VehicleSeat targetSeat, RemovalTrigger trigger)
+        {
+            Removed = removed;
+            TargetSeat = targetSeat;
+            Trigger = trigger;
             Source = null;
             Target = null;
         }

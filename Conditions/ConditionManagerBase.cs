@@ -98,7 +98,10 @@ namespace Assets.Scripts.Conditions
                 .ToList();
 
             foreach (var applied in toRemove)
+            {
+                OnRemovedByTrigger(applied, trigger);
                 Remove(applied);
+            }
         }
 
         // ==================== ABSTRACT ====================
@@ -120,6 +123,7 @@ namespace Assets.Scripts.Conditions
         protected virtual void OnStackLimitReached(TTemplate template) { }
         protected virtual void OnReplaced(TApplied newApplied, int oldDuration) { }
         protected virtual void OnKeptStronger(TApplied applied) { }
+        protected virtual void OnRemovedByTrigger(TApplied applied, RemovalTrigger trigger) { }
 
         // ==================== STACKING LOGIC ====================
 

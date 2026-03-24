@@ -32,7 +32,7 @@ namespace Assets.Scripts.Entities.Vehicle
                 return component != null ? component : vehicle.chassis;
             }
 
-            if (effect is ApplyConditionEffect appliedCondition)
+            if (effect is ApplyEntityConditionEffect appliedCondition)
             {
                 if (appliedCondition.condition != null && 
                     appliedCondition.condition.modifiers != null && 

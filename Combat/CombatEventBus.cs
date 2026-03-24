@@ -4,6 +4,7 @@ using Assets.Scripts.Combat.Damage;
 using Assets.Scripts.Combat.Restoration;
 using Assets.Scripts.Combat.Logging;
 using Assets.Scripts.Combat.Rolls;
+using Assets.Scripts.Conditions;
 using Assets.Scripts.Conditions.EntityConditions;
 using Assets.Scripts.Conditions.CharacterConditions;
 using Assets.Scripts.Entities.Vehicle;
@@ -167,6 +168,16 @@ namespace Assets.Scripts.Combat
         public static void EmitEntityConditionStackLimit(EntityCondition template, Entity target, int maxStacks)
         {
             Emit(new EntityConditionStackLimitEvent(template, target, maxStacks));
+        }
+
+        public static void EmitEntityConditionRemovedByTrigger(AppliedEntityCondition removed, Entity target, RemovalTrigger trigger)
+        {
+            Emit(new EntityConditionRemovedByTriggerEvent(removed, target, trigger));
+        }
+
+        public static void EmitCharacterConditionRemovedByTrigger(AppliedCharacterCondition removed, VehicleSeat targetSeat, RemovalTrigger trigger)
+        {
+            Emit(new CharacterConditionRemovedByTriggerEvent(removed, targetSeat, trigger));
         }
 
         public static void EmitCharacterCondition(

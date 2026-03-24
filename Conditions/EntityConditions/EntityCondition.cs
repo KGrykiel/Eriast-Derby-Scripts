@@ -9,7 +9,7 @@ namespace Assets.Scripts.Conditions.EntityConditions
     /// Entity-domain status effect template. Runtime instances use AppliedStatusEffect.
     /// Inherits identity, behavioural, advantage, duration/stacking, and categorisation from ConditionBase.
     /// </summary>
-    [CreateAssetMenu(menuName = "Racing/Status Effect", fileName = "New Status Effect")]
+    [CreateAssetMenu(menuName = "Racing/Entity Condition", fileName = "New Entity Condition")]
     public class EntityCondition : ConditionBase
     {
         [Header("Stat Modifiers")]

@@ -101,6 +101,12 @@ namespace Assets.Scripts.Combat
         public IEnumerable<CharacterConditionStackLimitEvent> GetCharacterConditionStackLimitEvents()
             => Events.OfType<CharacterConditionStackLimitEvent>();
 
+        public IEnumerable<EntityConditionRemovedByTriggerEvent> GetEntityConditionRemovedByTriggerEvents()
+            => Events.OfType<EntityConditionRemovedByTriggerEvent>();
+
+        public IEnumerable<CharacterConditionRemovedByTriggerEvent> GetCharacterConditionRemovedByTriggerEvents()
+            => Events.OfType<CharacterConditionRemovedByTriggerEvent>();
+
         public Dictionary<Entity, List<DamageEvent>> GetDamageByTarget()
         {
             return GetDamageEvents()
