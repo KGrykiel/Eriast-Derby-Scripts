@@ -227,7 +227,7 @@ namespace Assets.Scripts.Combat.Rolls
 
             foreach (var component in vehicle.AllComponents)
             {
-                if (!component.isDestroyed)
+                if (!component.IsDestroyed())
                 {
                     foreach (var grant in component.advantageGrants)
                     {

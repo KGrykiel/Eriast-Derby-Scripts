@@ -14,9 +14,9 @@ namespace Assets.Scripts.Combat
     /// </summary>
     public abstract class CombatEvent
     {
-        public Entity Source { get; set; }
-        public Entity Target { get; set; }
-        public string CausalSource { get; set; }
+        public Entity Source { get; protected set; }
+        public Entity Target { get; protected set; }
+        public string CausalSource { get; protected set; }
     }
     
     public class DamageEvent : CombatEvent

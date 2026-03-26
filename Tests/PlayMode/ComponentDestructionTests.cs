@@ -47,7 +47,7 @@ namespace Assets.Scripts.Tests.PlayMode
 
             // Destroy the utility component via TakeDamage
             utility.TakeDamage(utility.GetCurrentHealth());
-            Assert.IsTrue(utility.isDestroyed, "Utility should be destroyed");
+            Assert.IsTrue(utility.IsDestroyed(), "Utility should be destroyed");
 
             // Second attempt - should auto-fail
             var resultAfter = SkillCheckPerformer.Execute(new SkillCheckExecutionContext { Vehicle = vehicle, Spec = spec, CausalSource = null, Routing = CheckRouter.RouteSkillCheck(vehicle, spec) });
@@ -71,14 +71,14 @@ namespace Assets.Scripts.Tests.PlayMode
 
             // Destroy
             utility.TakeDamage(utility.GetCurrentHealth());
-            Assert.IsTrue(utility.isDestroyed, "Should be destroyed");
+            Assert.IsTrue(utility.IsDestroyed(), "Should be destroyed");
 
             var resultDestroyed = SkillCheckPerformer.Execute(new SkillCheckExecutionContext { Vehicle = vehicle, Spec = spec, CausalSource = null, Routing = CheckRouter.RouteSkillCheck(vehicle, spec) });
             yield return null;
             Assert.AreEqual(0, resultDestroyed.BaseRoll, "Should auto-fail when destroyed");
 
             // Restore - reset destroyed state and heal
-            utility.isDestroyed = false;
+            utility.ResetDestroyedState();
             utility.SetHealth(utility.GetMaxHealth());
 
             bool isOperational = utility.IsOperational;

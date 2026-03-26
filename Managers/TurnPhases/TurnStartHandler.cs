@@ -18,7 +18,7 @@
             // === TURN START LOGIC ===
             
             // 1. Regenerate power FIRST (see full resources before paying costs)
-            if (vehicle.powerCore != null && !vehicle.powerCore.isDestroyed)
+            if (vehicle.powerCore != null && !vehicle.powerCore.IsDestroyed())
                 vehicle.powerCore.RegenerateEnergy();
 
             // 2. Reset per-turn power tracking

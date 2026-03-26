@@ -30,7 +30,7 @@ namespace Assets.Scripts.Skills.Helpers
             Entity targetEntity = ctx.TargetEntity;
             if (targetEntity == null) return true;
 
-            if (targetEntity.isDestroyed)
+            if (targetEntity.IsDestroyed())
             {
                 Debug.LogWarning($"[SkillValidator] {ctx.SourceVehicle.vehicleName} tried to target destroyed entity {targetEntity.name} with {skill.name}");
                 return false;

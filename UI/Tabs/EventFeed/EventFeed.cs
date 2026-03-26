@@ -45,7 +45,7 @@ public class EventFeed : MonoBehaviour
 
     void Update()
     {
-        int currentEventCount = RaceHistory.Instance.AllEvents.Count;
+        int currentEventCount = RaceHistory.AllEvents.Count;
 
         if (currentEventCount > lastProcessedEventCount)
         {
@@ -111,7 +111,7 @@ public class EventFeed : MonoBehaviour
                 scrollRect.verticalNormalizedPosition = 0f;
         }
 
-        lastProcessedEventCount = RaceHistory.Instance.AllEvents.Count;
+        lastProcessedEventCount = RaceHistory.AllEvents.Count;
     }
 
     public void RefreshFeed()
@@ -121,7 +121,7 @@ public class EventFeed : MonoBehaviour
 
     private List<RaceEvent> GetFilteredEvents()
     {
-        var events = RaceHistory.Instance.AllEvents.ToList();
+        var events = RaceHistory.AllEvents.ToList();
 
         return events.Where(evt =>
         {

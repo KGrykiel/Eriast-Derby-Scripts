@@ -153,7 +153,7 @@ namespace Assets.Scripts.Tests.PlayMode
             yield return null;
 
             Assert.AreEqual(75, target.GetCurrentHealth(), "Health should be reduced by 25");
-            Assert.IsFalse(target.isDestroyed, "Should not be destroyed at 75 HP");
+            Assert.IsFalse(target.IsDestroyed(), "Should not be destroyed at 75 HP");
 
             Object.DestroyImmediate(targetObj);
         }
@@ -172,7 +172,7 @@ namespace Assets.Scripts.Tests.PlayMode
             yield return null;
 
             Assert.AreEqual(0, target.GetCurrentHealth(), "Health should be 0");
-            Assert.IsTrue(target.isDestroyed, "Should be destroyed");
+            Assert.IsTrue(target.IsDestroyed(), "Should be destroyed");
 
             Object.DestroyImmediate(targetObj);
         }

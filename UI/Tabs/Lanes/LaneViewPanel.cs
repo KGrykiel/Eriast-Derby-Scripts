@@ -53,14 +53,11 @@ namespace Assets.Scripts.UI.Tabs.Lanes
         
         private bool HasStateChanged()
         {
-            if (RaceHistory.Instance != null)
+            int currentEventCount = RaceHistory.AllEvents.Count;
+            if (currentEventCount != lastEventCount)
             {
-                int currentEventCount = RaceHistory.Instance.AllEvents.Count;
-                if (currentEventCount != lastEventCount)
-                {
-                    lastEventCount = currentEventCount;
-                    return true;
-                }
+                lastEventCount = currentEventCount;
+                return true;
             }
 
             int currentHash = CalculateVehicleHash();
@@ -173,8 +170,7 @@ namespace Assets.Scripts.UI.Tabs.Lanes
 
         public void RefreshView()
         {
-            if (RaceHistory.Instance != null)
-                lastEventCount = RaceHistory.Instance.AllEvents.Count;
+            lastEventCount = RaceHistory.AllEvents.Count;
             lastVehicleHash = CalculateVehicleHash();
 
             foreach (var column in spawnedColumns)

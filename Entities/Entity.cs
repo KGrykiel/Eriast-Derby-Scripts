@@ -27,7 +27,8 @@ public abstract class Entity : MonoBehaviour
     
     [Header("Entity State")]
     [Tooltip("Is this entity destroyed?")]
-    public bool isDestroyed = false;
+    [SerializeField] private bool isDestroyed = false;
+    public bool IsDestroyed() => isDestroyed;
     
     [Header("Entity Features")]
     [Tooltip("Capability flags for status effect targeting validation")]
@@ -137,6 +138,12 @@ public abstract class Entity : MonoBehaviour
         health = Mathf.Clamp(value, 0, GetMaxHealth());
     }
 
+    /// <summary>Resets destroyed state directly. Use for restoration mechanics and test setup only.</summary>
+    public void ResetDestroyedState()
+    {
+        isDestroyed = false;
+    }
+
     // ==================== MODIFIER SYSTEM ====================
     
     /// <summary>Components use this for permanent equipment bonuses. Skills should use ApplyStatusEffect().</summary>
@@ -150,7 +157,7 @@ public abstract class Entity : MonoBehaviour
         entityModifiers.Remove(modifier);
     }
 
-    public virtual List<AttributeModifier> GetModifiers()
+    public virtual IReadOnlyList<AttributeModifier> GetModifiers()
     {
         return entityModifiers;
     }

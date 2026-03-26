@@ -112,7 +112,7 @@ public abstract class VehicleComponent : Entity
             var targets = ResolveModifierTargets(vehicle, modData);
             foreach (var target in targets)
             {
-                if (target != null && !target.isDestroyed)
+                if (target != null && !target.IsDestroyed())
                 {
                     var modifier = new AttributeModifier(
                         modData.attribute,
@@ -208,7 +208,7 @@ public abstract class VehicleComponent : Entity
 
     public override bool CanBeTargeted()
     {
-        if (isDestroyed) return false;
+        if (IsDestroyed()) return false;
 
         if (parentVehicle != null)
             return parentVehicle.IsComponentAccessible(this);
@@ -222,7 +222,7 @@ public abstract class VehicleComponent : Entity
     {
         get
         {
-            if (isDestroyed || isManuallyDisabled) return false;
+            if (IsDestroyed() || isManuallyDisabled) return false;
 
             foreach (var statusEffect in GetActiveConditions())
             {
@@ -352,7 +352,7 @@ public abstract class VehicleComponent : Entity
     /// <summary>Returns false if destroyed or trying to disable mandatory components.</summary>
     public virtual bool SetManuallyDisabled(bool disabled)
     {
-        if (isDestroyed) return false;
+        if (IsDestroyed()) return false;
 
         if (disabled && (componentType == ComponentType.Chassis || componentType == ComponentType.PowerCore))
             return false;

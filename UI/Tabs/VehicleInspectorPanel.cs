@@ -93,15 +93,12 @@ public class VehicleInspectorPanel : MonoBehaviour
             return;
         }
 
-        if (RaceHistory.Instance != null)
-        {
-            int currentEventCount = RaceHistory.Instance.AllEvents.Count;
+        int currentEventCount = RaceHistory.AllEvents.Count;
             if (currentEventCount != lastEventCount)
             {
                 lastEventCount = currentEventCount;
                 RefreshDetails();
             }
-        }
     }
 
     private void TryInitialize()
@@ -117,8 +114,7 @@ public class VehicleInspectorPanel : MonoBehaviour
                 PopulateDropdown();
                 initialized = true;
 
-                if (RaceHistory.Instance != null)
-                    lastEventCount = RaceHistory.Instance.AllEvents.Count;
+                lastEventCount = RaceHistory.AllEvents.Count;
             }
         }
     }
@@ -515,7 +511,7 @@ public class VehicleInspectorPanel : MonoBehaviour
         
         if (destroyedIcon != null)
         {
-            destroyedIcon.gameObject.SetActive(component.isDestroyed);
+            destroyedIcon.gameObject.SetActive(component.IsDestroyed());
         }
         
         if (disabledIcon != null)
@@ -623,7 +619,7 @@ public class VehicleInspectorPanel : MonoBehaviour
             
             bool showRoleInfo = component.roleType != RoleType.None;
             bool isAccessible = selectedVehicle.IsComponentAccessible(component);
-            bool showWarning = !component.isDestroyed && !isAccessible;
+            bool showWarning = !component.IsDestroyed() && !isAccessible;
             
             roleInfoRow.gameObject.SetActive(showRoleInfo || showWarning);
             

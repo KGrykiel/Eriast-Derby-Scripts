@@ -147,7 +147,7 @@ public class DriveComponent : VehicleComponent
 
     public void DecreaseSpeed(int speedDecrease)
     {
-        if (isDestroyed) return;
+        if (IsDestroyed()) return;
 
         int modifiedDecel = GetDeceleration();
         int actualDecrease = Mathf.Min(speedDecrease, modifiedDecel);
@@ -192,7 +192,7 @@ public class DriveComponent : VehicleComponent
     
     public void SetTargetSpeed(int speedPercent)
     {
-        if (isDestroyed) return;
+        if (IsDestroyed()) return;
 
         int oldTarget = targetSpeedPercent;
         targetSpeedPercent = Mathf.Clamp(speedPercent, 0, 100);

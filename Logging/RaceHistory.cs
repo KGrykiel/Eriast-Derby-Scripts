@@ -5,30 +5,24 @@ using Assets.Scripts.Stages;
 namespace Assets.Scripts.Logging
 {
     /// <summary>Central race event log. Round/turn tracking owned by TurnStateMachine.</summary>
-    public class RaceHistory : MonoBehaviour
+    public class RaceHistory
     {
         private static RaceHistory instance;
+        private static RaceHistory Instance => instance ??= new RaceHistory();
 
-        public static RaceHistory Instance
-        {
-            get
-            {
-                if (instance == null)
-                {
-                    GameObject go = new("RaceHistory");
-                    instance = go.AddComponent<RaceHistory>();
-                    DontDestroyOnLoad(go);
-                }
-                return instance;
-            }
-        }
+        private GameManager gameManager;
 
         private List<RaceEvent> allEvents = new();
         private Dictionary<Vehicle, List<RaceEvent>> vehicleEvents = new();
         public int maxStoredEvents = 10000;
 
-        public IReadOnlyList<RaceEvent> AllEvents => allEvents;
-        
+        public static IReadOnlyList<RaceEvent> AllEvents => Instance.allEvents;
+
+        public static void Initialize(GameManager gm)
+        {
+            Instance.gameManager = gm;
+        }
+
         public static RaceEvent Log(
             EventType type,
             EventImportance importance,
@@ -54,8 +48,7 @@ namespace Assets.Scripts.Logging
 
         private static int GetCurrentRound()
         {
-            var gameManager = FindFirstObjectByType<GameManager>();
-            var stateMachine = gameManager?.GetStateMachine();
+            var stateMachine = Instance.gameManager?.GetStateMachine();
             return stateMachine?.CurrentRound ?? 0;
         }
 
@@ -74,17 +67,17 @@ namespace Assets.Scripts.Logging
                 {
                     vehicleEvents[vehicle] = new List<RaceEvent>();
                 }
-                
+
                 vehicleEvents[vehicle].Add(evt);
             }
-            
+
             // Trim if exceeding max
             if (allEvents.Count > maxStoredEvents)
             {
                 int toRemove = allEvents.Count - maxStoredEvents;
                 allEvents.RemoveRange(0, toRemove);
             }
-            
+
             // Debug log in editor
             #if UNITY_EDITOR
             if (evt.importance <= EventImportance.High)
@@ -106,12 +99,6 @@ namespace Assets.Scripts.Logging
         {
             Instance.allEvents.Clear();
             Instance.vehicleEvents.Clear();
-        }
-
-        private void OnDestroy()
-        {
-            if (instance == this)
-                instance = null;
         }
     }
 }

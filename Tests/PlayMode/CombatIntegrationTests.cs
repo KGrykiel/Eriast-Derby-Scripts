@@ -520,14 +520,14 @@ namespace Assets.Scripts.Tests.PlayMode
 
             // Phase 2: Destroy component via damage
             utility.TakeDamage(utility.GetCurrentHealth());
-            Assert.IsTrue(utility.isDestroyed, "Component should be destroyed");
+            Assert.IsTrue(utility.IsDestroyed(), "Component should be destroyed");
 
             var result2 = SkillCheckPerformer.Execute(new SkillCheckExecutionContext { Vehicle = playerVehicle, Spec = spec, CausalSource = null, Routing = CheckRouter.RouteSkillCheck(playerVehicle, spec) });
             yield return null;
             Assert.AreEqual(0, result2.BaseRoll, "Should auto-fail when component destroyed");
 
             // Phase 3: Restore component
-            utility.isDestroyed = false;
+            utility.ResetDestroyedState();
             utility.SetHealth(utility.GetMaxHealth());
             Assert.IsTrue(utility.IsOperational, "Component should be operational after restoration");
 

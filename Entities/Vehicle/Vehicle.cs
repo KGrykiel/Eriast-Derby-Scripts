@@ -218,9 +218,9 @@ public class Vehicle : MonoBehaviour
     public string GetNonOperationalReason()
     {
         if (chassis == null) return "No chassis installed";
-        if (chassis.isDestroyed) return "Chassis destroyed";
+        if (chassis.IsDestroyed()) return "Chassis destroyed";
         if (powerCore == null) return "No power core installed";
-        if (powerCore.isDestroyed) return "Power core destroyed - no power";
+        if (powerCore.IsDestroyed()) return "Power core destroyed - no power";
         return null;
     }
 
@@ -236,7 +236,7 @@ public class Vehicle : MonoBehaviour
         // Check drive system
         var driveComponent = GetDriveComponent();
         if (driveComponent == null) return "No drive system installed";
-        if (driveComponent.isDestroyed) return "Drive system destroyed";
+        if (driveComponent.IsDestroyed()) return "Drive system destroyed";
         if (driveComponent.isManuallyDisabled) return "Drive system manually disabled by engineer";
         if (!driveComponent.CanContributeToMovement()) return "Drive system immobilized by status effect";
         

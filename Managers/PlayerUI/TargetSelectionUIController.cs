@@ -75,7 +75,7 @@ namespace Assets.Scripts.Managers.PlayerUI
                 btn.GetComponentInChildren<TextMeshProUGUI>().text = BuildComponentButtonText(targetVehicle, component);
 
                 bool isAccessible = targetVehicle.IsComponentAccessible(component);
-                btn.interactable = isAccessible && !component.isDestroyed;
+                btn.interactable = isAccessible && !component.IsDestroyed();
 
                 VehicleComponent comp = component;
                 btn.onClick.AddListener(() => onComponentSelected?.Invoke(comp));
@@ -107,7 +107,7 @@ namespace Assets.Scripts.Managers.PlayerUI
 
                 Button btn = UnityEngine.Object.Instantiate(ui.targetButtonPrefab, ui.targetButtonContainer);
                 btn.GetComponentInChildren<TextMeshProUGUI>().text = BuildComponentButtonText(playerVehicle, component);
-                btn.interactable = !component.isDestroyed;
+                btn.interactable = !component.IsDestroyed();
 
                 VehicleComponent comp = component;
                 btn.onClick.AddListener(() => onComponentSelected?.Invoke(comp));
@@ -127,7 +127,7 @@ namespace Assets.Scripts.Managers.PlayerUI
 
             string text = $"{component.name} (HP: {component.GetCurrentHealth()}/{modifiedMaxHP}, AC: {modifiedAC})";
 
-            if (component.isDestroyed)
+            if (component.IsDestroyed())
                 text = $"[X] {text} - DESTROYED";
             else if (!targetVehicle.IsComponentAccessible(component))
                 text = $"[?] {text} - {targetVehicle.GetInaccessibilityReason(component)}";

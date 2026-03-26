@@ -193,7 +193,7 @@ public class FocusPanel : MonoBehaviour
     {
         if (recentEventsText == null) return;
 
-        var recentEvents = RaceHistory.Instance.AllEvents
+        var recentEvents = RaceHistory.AllEvents
             .Where(e => e.importance <= EventImportance.High)
             .TakeLast(recentEventCount)
             .ToList();

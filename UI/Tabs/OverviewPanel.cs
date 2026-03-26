@@ -158,7 +158,7 @@ public class OverviewPanel : MonoBehaviour
         string display = "<b><size=18>=== CRITICAL EVENTS ===</size></b>\n";
         display += "<color=#888888>------------------------</color>\n\n";
 
-        var criticalEvents = RaceHistory.Instance.AllEvents
+        var criticalEvents = RaceHistory.AllEvents
             .Where(e => e.importance <= EventImportance.High)
             .TakeLast(criticalEventCount)
             .ToList();
@@ -176,10 +176,10 @@ public class OverviewPanel : MonoBehaviour
         }
 
         display += "\n<b>RACE STATISTICS:</b>\n";
-        display += $"  Total Events: {RaceHistory.Instance.AllEvents.Count}\n";
-        display += $"  Critical: {RaceHistory.Instance.AllEvents.Count(e => e.importance == EventImportance.Critical)}\n";
-        display += $"  Combats: {RaceHistory.Instance.AllEvents.Count(e => e.type == EventType.Combat)}\n";
-        display += $"  Destructions: {RaceHistory.Instance.AllEvents.Count(e => e.type == EventType.Destruction)}\n";
+        display += $"  Total Events: {RaceHistory.AllEvents.Count}\n";
+        display += $"  Critical: {RaceHistory.AllEvents.Count(e => e.importance == EventImportance.Critical)}\n";
+        display += $"  Combats: {RaceHistory.AllEvents.Count(e => e.type == EventType.Combat)}\n";
+        display += $"  Destructions: {RaceHistory.AllEvents.Count(e => e.type == EventType.Destruction)}\n";
 
         eventSummaryText.text = display;
     }

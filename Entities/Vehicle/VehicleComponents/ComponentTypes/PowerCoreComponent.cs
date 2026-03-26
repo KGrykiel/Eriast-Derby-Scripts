@@ -78,7 +78,7 @@ namespace Assets.Scripts.Entities.Vehicle.VehicleComponents.ComponentTypes
 
         public void RegenerateEnergy()
         {
-            if (isDestroyed) return;
+            if (IsDestroyed()) return;
 
             int regenRate = GetEnergyRegen();
             int maxCap = GetMaxEnergy();
@@ -95,7 +95,7 @@ namespace Assets.Scripts.Entities.Vehicle.VehicleComponents.ComponentTypes
         /// </summary>
         public int RestoreEnergy(int amount)
         {
-            if (isDestroyed) return 0;
+            if (IsDestroyed()) return 0;
 
             int maxCap = GetMaxEnergy();
             int oldEnergy = currentEnergy;
@@ -110,7 +110,7 @@ namespace Assets.Scripts.Entities.Vehicle.VehicleComponents.ComponentTypes
         /// </summary>
         public int DrainEnergy(int amount)
         {
-            if (isDestroyed) return 0;
+            if (IsDestroyed()) return 0;
 
             int oldEnergy = currentEnergy;
 

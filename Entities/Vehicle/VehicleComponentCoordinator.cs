@@ -61,7 +61,7 @@ namespace Assets.Scripts.Entities.Vehicle
 
         public bool IsComponentAccessible(VehicleComponent target)
         {
-            if (target == null || target.isDestroyed)
+            if (target == null || target.IsDestroyed())
                 return false;
 
             if (target.exposure == ComponentExposure.External)
@@ -71,7 +71,7 @@ namespace Assets.Scripts.Entities.Vehicle
             if ((target.exposure == ComponentExposure.Protected || target.exposure == ComponentExposure.Shielded)
                 && target.shieldedByComponent != null)
             {
-                return target.shieldedByComponent.isDestroyed;
+                return target.shieldedByComponent.IsDestroyed();
             }
 
             // Internal components - inaccessible until chassis is damaged enough.
@@ -89,7 +89,7 @@ namespace Assets.Scripts.Entities.Vehicle
         /// <summary>Null if accessible.</summary>
         public string GetInaccessibilityReason(VehicleComponent target)
         {
-            if (target == null || target.isDestroyed)
+            if (target == null || target.IsDestroyed())
                 return "Component destroyed";
 
             if (IsComponentAccessible(target))
@@ -98,7 +98,7 @@ namespace Assets.Scripts.Entities.Vehicle
             if ((target.exposure == ComponentExposure.Protected || target.exposure == ComponentExposure.Shielded)
                 && target.shieldedByComponent != null)
             {
-                if (!target.shieldedByComponent.isDestroyed)
+                if (!target.shieldedByComponent.IsDestroyed())
                     return $"Shielded by {target.shieldedByComponent.name}";
             }
 
@@ -172,7 +172,7 @@ namespace Assets.Scripts.Entities.Vehicle
             {
                 VehicleComponent targetComponent = effectRouter.ResolveModifierTarget(modifier.Attribute);
 
-                if (targetComponent != null && !targetComponent.isDestroyed)
+                if (targetComponent != null && !targetComponent.IsDestroyed())
                 {
                     targetComponent.AddModifier(modifier);
                 }
