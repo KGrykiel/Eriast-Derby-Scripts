@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 using Assets.Scripts.Characters;
+using Assets.Scripts.Combat.Rolls.Advantage;
 using Assets.Scripts.Conditions;
 using Assets.Scripts.Conditions.CharacterConditions;
 
@@ -114,6 +115,9 @@ namespace Assets.Scripts.Entities.Vehicle
         [NonSerialized]
         private readonly List<CharacterModifier> _characterModifiers = new();
 
+        [NonSerialized]
+        private readonly List<AdvantageGrant> _advantageGrants = new();
+
         private CharacterConditionManager ConditionManager
         {
             get
@@ -138,7 +142,12 @@ namespace Assets.Scripts.Entities.Vehicle
 
         public void AddCharacterModifier(CharacterModifier modifier) => _characterModifiers.Add(modifier);
         public void RemoveCharacterModifier(CharacterModifier modifier) => _characterModifiers.Remove(modifier);
+        public void RemoveCharacterModifiersFromSource(object source) => _characterModifiers.RemoveAll(m => m.Source == source);
         public List<CharacterModifier> GetCharacterModifiers() => _characterModifiers;
+
+        public void AddAdvantageGrant(AdvantageGrant grant) => _advantageGrants.Add(grant);
+        public void RemoveAdvantageGrantsFromSource(object source) => _advantageGrants.RemoveAll(g => g.Source == source);
+        public IReadOnlyList<AdvantageGrant> GetAdvantageGrants() => _advantageGrants;
 
         /// <summary>Returns null for character personal skills (not from a component).</summary>
         public VehicleComponent GetComponentForSkill(Skill skill)

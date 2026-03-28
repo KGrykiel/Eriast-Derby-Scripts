@@ -2,10 +2,10 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 using System;
+using Assets.Scripts.Combat.Rolls.Advantage;
 using Assets.Scripts.Entities;
 using Assets.Scripts.Core;
 using Assets.Scripts.Entities.Vehicle.VehicleComponents;
-using Assets.Scripts.Combat.Rolls.Advantage;
 
 /// <summary>
 /// Base class for vehicle components. Components ARE Entities (have HP, can be damaged).
@@ -55,8 +55,8 @@ public abstract class VehicleComponent : Entity
     public List<Skill> componentSkills = new();
 
     [Header("Advantage / Disadvantage")]
-    [Tooltip("Intrinsic advantage/disadvantage grants while this component is operational")]
-    public List<AdvantageGrant> advantageGrants = new();
+    [Tooltip("Advantage/disadvantage grants this component provides. Use targetMode to control which component's rolls are affected.")]
+    public List<ComponentAdvantageGrantData> providedAdvantageGrants = new();
     
     // Reference to parent vehicle (set during initialization)
     protected Vehicle parentVehicle;
@@ -96,9 +96,6 @@ public abstract class VehicleComponent : Entity
     
     // ==================== CROSS-COMPONENT MODIFIER SYSTEM ====================
 
-    [NonSerialized]
-    private List<(VehicleComponent target, AttributeModifier modifier)> _createdModifiers = new();
-
     /// <summary>
     /// If the component provides modifiers to other components, they are applied at startup.
     /// </summary>
@@ -109,20 +106,13 @@ public abstract class VehicleComponent : Entity
 
         foreach (var modData in providedModifiers)
         {
-            var targets = ResolveModifierTargets(vehicle, modData);
+            var targets = ResolveTargets(vehicle, modData.targetMode, modData.specificTarget);
             foreach (var target in targets)
             {
                 if (target != null && !target.IsDestroyed())
                 {
-                    var modifier = new AttributeModifier(
-                        modData.attribute,
-                        modData.type,
-                        modData.value,
-                        this.name,
-                        ModifierCategory.Equipment
-                    );
-                    target.AddModifier(modifier);
-                    _createdModifiers.Add((target, modifier));
+                    modData.modifier.Source = this;
+                    target.AddModifier(modData.modifier);
                 }
             }
         }
@@ -132,53 +122,80 @@ public abstract class VehicleComponent : Entity
     {
         if (vehicle == null) return;
 
-        foreach (var (target, modifier) in _createdModifiers)
-        {
-            if (target != null)
-                target.RemoveModifier(modifier);
-        }
-        _createdModifiers.Clear();
+        foreach (var component in vehicle.AllComponents)
+            component.RemoveModifiersFromSource(this);
     }
-    
-    private List<VehicleComponent> ResolveModifierTargets(Vehicle vehicle, ComponentModifierData modData)
+
+    public virtual void ApplyProvidedAdvantageGrants(Vehicle vehicle)
+    {
+        if (!IsOperational) return;
+        if (vehicle == null) return;
+
+        foreach (var grantData in providedAdvantageGrants)
+        {
+            var targets = ResolveTargets(vehicle, grantData.targetMode, grantData.specificTarget);
+            foreach (var target in targets)
+            {
+                if (target != null && !target.IsDestroyed())
+                {
+                    grantData.grant.Source = this;
+                    target.AddAdvantageGrant(grantData.grant);
+                }
+            }
+        }
+    }
+
+    public virtual void RemoveProvidedAdvantageGrants(Vehicle vehicle)
+    {
+        if (vehicle == null) return;
+
+        foreach (var component in vehicle.AllComponents)
+            component.RemoveAdvantageGrantsFromSource(this);
+    }
+
+    private List<VehicleComponent> ResolveTargets(Vehicle vehicle, ComponentTargetMode targetMode, VehicleComponent specificTarget)
     {
         var targets = new List<VehicleComponent>();
-        
-        switch (modData.targetMode)
+
+        switch (targetMode)
         {
             case ComponentTargetMode.Chassis:
-                if (vehicle.chassis != null) 
+                if (vehicle.chassis != null)
                     targets.Add(vehicle.chassis);
                 break;
-                
+
             case ComponentTargetMode.PowerCore:
-                if (vehicle.powerCore != null) 
+                if (vehicle.powerCore != null)
                     targets.Add(vehicle.powerCore);
                 break;
-                
+
             case ComponentTargetMode.Drive:
                 var drive = vehicle.optionalComponents.OfType<DriveComponent>().FirstOrDefault();
-                if (drive != null) 
+                if (drive != null)
                     targets.Add(drive);
                 break;
-                
+
             case ComponentTargetMode.AllWeapons:
                 foreach (var weapon in vehicle.optionalComponents.OfType<WeaponComponent>())
                 {
                     targets.Add(weapon);
                 }
                 break;
-                
+
             case ComponentTargetMode.AllComponents:
                 targets.AddRange(vehicle.AllComponents);
                 break;
-                
+
             case ComponentTargetMode.SpecificComponent:
-                if (modData.specificTarget != null) 
-                    targets.Add(modData.specificTarget);
+                if (specificTarget != null)
+                    targets.Add(specificTarget);
+                break;
+
+            case ComponentTargetMode.Self:
+                targets.Add(this);
                 break;
         }
-        
+
         return targets;
     }
 
@@ -231,15 +248,9 @@ public abstract class VehicleComponent : Entity
             }
 
             // Vehicle-wide stuns are applied to chassis, so check those too
-            if (parentVehicle != null && parentVehicle.chassis != null && parentVehicle.chassis != this)
-            {
-                foreach (var statusEffect in parentVehicle.chassis.GetActiveConditions())
-                {
-                    if (statusEffect.PreventsActions)
-                        return false;
-                }
-            }
-            
+            if (parentVehicle != null && parentVehicle.chassis != this && parentVehicle.IsChassisStunned)
+                return false;
+
             return true;
         }
     }
@@ -254,16 +265,6 @@ public abstract class VehicleComponent : Entity
                 return false;
         }
 
-        // Vehicle-wide immobilization is applied to chassis
-        if (parentVehicle != null && parentVehicle.chassis != null && parentVehicle.chassis != this)
-        {
-            foreach (var statusEffect in parentVehicle.chassis.GetActiveConditions())
-            {
-                if (statusEffect.PreventsMovement)
-                    return false;
-            }
-        }
-        
         return true;
     }
     
@@ -279,16 +280,19 @@ public abstract class VehicleComponent : Entity
     protected virtual void OnComponentDestroyed()
     {
         RemoveProvidedModifiers(parentVehicle);
+        RemoveProvidedAdvantageGrants(parentVehicle);
     }
 
     protected virtual void OnComponentDisabled()
     {
         RemoveProvidedModifiers(parentVehicle);
+        RemoveProvidedAdvantageGrants(parentVehicle);
     }
 
     protected virtual void OnComponentEnabled()
     {
         ApplyProvidedModifiers(parentVehicle);
+        ApplyProvidedAdvantageGrants(parentVehicle);
     }
     
     // ==================== SKILL MANAGEMENT ====================

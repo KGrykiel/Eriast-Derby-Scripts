@@ -1,6 +1,8 @@
 using UnityEngine;
+using System;
 using System.Collections.Generic;
 using Assets.Scripts.Combat.Damage;
+using Assets.Scripts.Combat.Rolls.Advantage;
 using Assets.Scripts.Entities;
 using Assets.Scripts.Core;
 using Assets.Scripts.Conditions.EntityConditions;
@@ -157,10 +159,24 @@ public abstract class Entity : MonoBehaviour
         entityModifiers.Remove(modifier);
     }
 
+    public void RemoveModifiersFromSource(object source)
+    {
+        entityModifiers.RemoveAll(m => m.Source == source);
+    }
+
     public virtual IReadOnlyList<AttributeModifier> GetModifiers()
     {
         return entityModifiers;
     }
+
+    // ==================== ADVANTAGE GRANT SYSTEM ====================
+
+    [NonSerialized]
+    private List<AdvantageGrant> _advantageGrants = new();
+
+    public void AddAdvantageGrant(AdvantageGrant grant) => _advantageGrants.Add(grant);
+    public void RemoveAdvantageGrantsFromSource(object source) => _advantageGrants.RemoveAll(g => g.Source == source);
+    public IReadOnlyList<AdvantageGrant> GetAdvantageGrants() => _advantageGrants;
 
     // ==================== STATUS EFFECT SYSTEM ====================
 
@@ -169,7 +185,7 @@ public abstract class Entity : MonoBehaviour
     public event System.Action OnSkillUsed;
 
     /// <summary>Handles stacking rules and emits events. Returns null if feature requirements not met.</summary>
-    public virtual AppliedEntityCondition ApplyCondition(EntityCondition effect, Object applier)
+    public virtual AppliedEntityCondition ApplyCondition(EntityCondition effect, UnityEngine.Object applier)
     {
         return statusEffects.Apply(effect, applier);
     }

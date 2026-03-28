@@ -1,4 +1,5 @@
 ﻿using System;
+using Assets.Scripts.Combat.Rolls.Advantage;
 using UnityEngine;
 
 namespace Assets.Scripts.Entities.Vehicle.VehicleComponents
@@ -10,19 +11,13 @@ namespace Assets.Scripts.Entities.Vehicle.VehicleComponents
     [Serializable]
     public class ComponentModifierData
     {
-        [Tooltip("Which attribute to modify")]
-        public Attribute attribute;
-        
-        [Tooltip("Type of modification (Flat or Multiplier)")]
-        public ModifierType type = ModifierType.Flat;
-        
-        [Tooltip("Value of modification (e.g., +2, -5, or 1.5 for multiplier)")]
-        public float value;
-        
+        [Tooltip("Modifier to apply to the target component (attribute, type, value, and optional label)")]
+        public AttributeModifier modifier;
+
         [Header("Target Selection")]
         [Tooltip("Which component(s) receive this modifier")]
         public ComponentTargetMode targetMode = ComponentTargetMode.Chassis;
-        
+
         [Tooltip("Specific target (only used when targetMode is SpecificComponent)")]
         public VehicleComponent specificTarget;
     }
@@ -45,6 +40,27 @@ namespace Assets.Scripts.Entities.Vehicle.VehicleComponents
         AllComponents,
         
         [Tooltip("Targets a specific component (set specificTarget field)")]
-        SpecificComponent
+        SpecificComponent,
+
+        [Tooltip("Targets only this component itself")]
+        Self
+    }
+
+    /// <summary>
+    /// Cross-component advantage grant data (e.g. Enhanced Sensors gives advantage on all vehicle checks).
+    /// Mirrors ComponentModifierData but for advantage/disadvantage grants.
+    /// </summary>
+    [Serializable]
+    public class ComponentAdvantageGrantData
+    {
+        [Tooltip("Advantage grant to apply to the target component's rolls")]
+        public AdvantageGrant grant;
+
+        [Header("Target Selection")]
+        [Tooltip("Which component(s) receive this advantage grant on their rolls")]
+        public ComponentTargetMode targetMode = ComponentTargetMode.AllComponents;
+
+        [Tooltip("Specific target (only used when targetMode is SpecificComponent)")]
+        public VehicleComponent specificTarget;
     }
 }

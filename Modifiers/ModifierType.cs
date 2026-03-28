@@ -52,11 +52,15 @@ public enum ModifierCategory
 /// Shared base for all modifier types (entity and character).
 /// Data only — calculation logic lives in ModifierCalculator.
 /// </summary>
+[Serializable]
 public abstract class ModifierBase
 {
     public ModifierType Type;
     public float Value;
     public string Label;
+
+    [NonSerialized]
+    public object Source;
 
     protected ModifierBase(ModifierType type, float value, string label)
     {
@@ -75,12 +79,6 @@ public class AttributeModifier : ModifierBase
 {
     public Attribute Attribute;
     public ModifierCategory Category;
-
-    public bool IsDispellable => Category == ModifierCategory.Condition || Category == ModifierCategory.Aura;
-    public bool IsPermanent => Category == ModifierCategory.Equipment;
-    public bool IsTemporary => Category == ModifierCategory.Condition || 
-                              Category == ModifierCategory.Aura || 
-                              Category == ModifierCategory.Skill;
 
     public AttributeModifier(
         Attribute attribute,

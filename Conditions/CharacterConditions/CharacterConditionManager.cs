@@ -1,6 +1,7 @@
 using System.Linq;
 using Assets.Scripts.Characters;
 using Assets.Scripts.Combat;
+using Assets.Scripts.Combat.Rolls.Advantage;
 using Assets.Scripts.Entities.Vehicle;
 using UnityEngine;
 
@@ -45,18 +46,28 @@ namespace Assets.Scripts.Conditions.CharacterConditions
 
                 if (modifier != null)
                 {
-                    applied.createdModifiers.Add(modifier);
+                    modifier.Source = applied;
                     seat.AddCharacterModifier(modifier);
                 }
+            }
+
+            foreach (var grant in applied.template.advantageGrants)
+            {
+                var runtimeGrant = new AdvantageGrant
+                {
+                    label = !string.IsNullOrEmpty(grant.label) ? grant.label : applied.template.effectName,
+                    type = grant.type,
+                    targets = grant.targets,
+                    Source = applied
+                };
+                seat.AddAdvantageGrant(runtimeGrant);
             }
         }
 
         protected override void OnDeactivate(AppliedCharacterCondition applied)
         {
-            foreach (var modifier in applied.createdModifiers)
-                seat.RemoveCharacterModifier(modifier);
-
-            applied.createdModifiers.Clear();
+            seat.RemoveCharacterModifiersFromSource(applied);
+            seat.RemoveAdvantageGrantsFromSource(applied);
         }
 
         // ==================== EVENT HOOKS ====================

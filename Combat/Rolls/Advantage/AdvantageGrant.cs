@@ -46,7 +46,7 @@ namespace Assets.Scripts.Combat.Rolls.Advantage
     }
 
     [Serializable]
-    public struct AdvantageGrant
+    public class AdvantageGrant
     {
         public string label;
         public RollMode type;
@@ -54,6 +54,9 @@ namespace Assets.Scripts.Combat.Rolls.Advantage
         [SerializeReference, SR]
         [Tooltip("What types of rolls does this grant apply to? Add entries for each category.")]
         public List<IAdvantageTarget> targets;
+
+        [NonSerialized]
+        public object Source;
     }
 
     /// <summary>

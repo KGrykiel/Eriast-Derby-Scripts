@@ -2,6 +2,7 @@
 using Assets.Scripts.Combat;
 using Assets.Scripts.Combat.Damage;
 using Assets.Scripts.Combat.Restoration;
+using Assets.Scripts.Combat.Rolls.Advantage;
 using Assets.Scripts.Entities;
 using UnityEngine;
 
@@ -55,17 +56,27 @@ namespace Assets.Scripts.Conditions.EntityConditions
                     applied.template.effectName,
                     ModifierCategory.Condition);
 
-                applied.createdModifiers.Add(modifier);
+                modifier.Source = applied;
                 entity.AddModifier(modifier);
+            }
+
+            foreach (var grant in applied.template.advantageGrants)
+            {
+                var runtimeGrant = new AdvantageGrant
+                {
+                    label = !string.IsNullOrEmpty(grant.label) ? grant.label : applied.template.effectName,
+                    type = grant.type,
+                    targets = grant.targets,
+                    Source = applied
+                };
+                entity.AddAdvantageGrant(runtimeGrant);
             }
         }
 
         protected override void OnDeactivate(AppliedEntityCondition applied)
         {
-            foreach (var modifier in applied.createdModifiers)
-                entity.RemoveModifier(modifier);
-
-            applied.createdModifiers.Clear();
+            entity.RemoveModifiersFromSource(applied);
+            entity.RemoveAdvantageGrantsFromSource(applied);
         }
 
         protected override void OnTick(AppliedEntityCondition applied)

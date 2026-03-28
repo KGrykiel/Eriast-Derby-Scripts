@@ -178,70 +178,21 @@ namespace Assets.Scripts.Combat.Rolls
                 sources.Add(grantedSource);
 
             if (entity != null)
-                sources.AddRange(GatherEntityAdvantageSources(entity, spec));
+                GatherFromGrants(entity.GetAdvantageGrants(), spec, sources);
 
             if (seat != null)
-                sources.AddRange(GatherSeatConditionAdvantages(seat, spec));
+                GatherFromGrants(seat.GetAdvantageGrants(), spec, sources);
 
             return sources;
         }
 
-        private static List<AdvantageSource> GatherSeatConditionAdvantages(VehicleSeat seat, IRollSpec spec)
+        private static void GatherFromGrants(IReadOnlyList<AdvantageGrant> grants, IRollSpec spec, List<AdvantageSource> sources)
         {
-            var sources = new List<AdvantageSource>();
-
-            foreach (var applied in seat.GetActiveConditions())
+            foreach (var grant in grants)
             {
-                foreach (var grant in applied.template.advantageGrants)
-                {
-                    if (GrantMatchesSpec(grant, spec))
-                    {
-                        string label = !string.IsNullOrEmpty(grant.label)
-                            ? grant.label : applied.template.effectName;
-                        sources.Add(new AdvantageSource(label, grant.type));
-                    }
-                }
+                if (GrantMatchesSpec(grant, spec))
+                    sources.Add(new AdvantageSource(grant.label, grant.type));
             }
-
-            return sources;
-        }
-
-        private static List<AdvantageSource> GatherEntityAdvantageSources(Entity entity, IRollSpec spec)
-        {
-            var sources = new List<AdvantageSource>();
-            foreach (var applied in entity.GetActiveConditions())
-            {
-                foreach (var grant in applied.template.advantageGrants)
-                {
-                    if (GrantMatchesSpec(grant, spec))
-                    {
-                        string label = !string.IsNullOrEmpty(grant.label)
-                            ? grant.label : applied.template.effectName;
-                        sources.Add(new AdvantageSource(label, grant.type));
-                    }
-                }
-            }
-
-            Vehicle vehicle = entity is VehicleComponent comp ? comp.ParentVehicle : null;
-            if (vehicle == null) return sources;
-
-            foreach (var component in vehicle.AllComponents)
-            {
-                if (!component.IsDestroyed())
-                {
-                    foreach (var grant in component.advantageGrants)
-                    {
-                        if (GrantMatchesSpec(grant, spec))
-                        {
-                            string label = !string.IsNullOrEmpty(grant.label)
-                                ? grant.label : component.name;
-                            sources.Add(new AdvantageSource(label, grant.type));
-                        }
-                    }
-                }
-            }
-
-            return sources;
         }
 
         private static bool GrantMatchesSpec(AdvantageGrant grant, IRollSpec spec)
@@ -250,38 +201,17 @@ namespace Assets.Scripts.Combat.Rolls
 
             foreach (var target in grant.targets)
             {
-                if (spec is VehicleSkillCheckSpec vCheck)
+                bool matches = (spec, target) switch
                 {
-                    if (target is VehicleCheckAdvantage vca
-                        && (vca.limitTo == null || vca.limitTo.Count == 0
-                            || vca.limitTo.Contains(vCheck.vehicleAttribute)))
-                        return true;
-                }
-                else if (spec is CharacterSkillCheckSpec cCheck)
-                {
-                    if (target is CharacterCheckAdvantage cca
-                        && (cca.limitTo == null || cca.limitTo.Count == 0
-                            || cca.limitTo.Contains(cCheck.characterSkill)))
-                        return true;
-                }
-                else if (spec is VehicleSaveSpec vSave)
-                {
-                    if (target is VehicleSaveAdvantage vsa
-                        && (vsa.limitTo == null || vsa.limitTo.Count == 0
-                            || vsa.limitTo.Contains(vSave.vehicleAttribute)))
-                        return true;
-                }
-                else if (spec is CharacterSaveSpec cSave)
-                {
-                    if (target is CharacterSaveAdvantage csa
-                        && (csa.limitTo == null || csa.limitTo.Count == 0
-                            || csa.limitTo.Contains(cSave.characterAttribute)))
-                        return true;
-                }
-                else if (spec is AttackSpec && target is AttackAdvantage)
-                {
-                    return true;
-                }
+                    (VehicleSkillCheckSpec s, VehicleCheckAdvantage t)     => t.limitTo is not { Count: > 0 } || t.limitTo.Contains(s.vehicleAttribute),
+                    (CharacterSkillCheckSpec s, CharacterCheckAdvantage t) => t.limitTo is not { Count: > 0 } || t.limitTo.Contains(s.characterSkill),
+                    (VehicleSaveSpec s, VehicleSaveAdvantage t)            => t.limitTo is not { Count: > 0 } || t.limitTo.Contains(s.vehicleAttribute),
+                    (CharacterSaveSpec s, CharacterSaveAdvantage t)        => t.limitTo is not { Count: > 0 } || t.limitTo.Contains(s.characterAttribute),
+                    (AttackSpec, AttackAdvantage)                          => true,
+                    _                                                      => false
+                };
+
+                if (matches) return true;
             }
 
             return false;

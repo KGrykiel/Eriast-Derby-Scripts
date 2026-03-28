@@ -10,6 +10,7 @@ using Assets.Scripts.Combat.Rolls.Advantage;
 using Assets.Scripts.Combat.Rolls.RollSpecs.SpecTypes;
 using Assets.Scripts.Combat.Rolls.RollTypes.SkillChecks;
 using Assets.Scripts.Entities.Vehicle;
+using Assets.Scripts.Entities.Vehicle.VehicleComponents;
 using Assets.Scripts.Conditions;
 using Assets.Scripts.Tests.Helpers;
 using Assets.Scripts.Conditions.EntityConditions;
@@ -306,15 +307,19 @@ namespace Assets.Scripts.Tests.PlayMode
                 .Build();
 
             var utility = vehicle.optionalComponents[0];
-            utility.advantageGrants = new List<AdvantageGrant>
+            utility.providedAdvantageGrants = new List<ComponentAdvantageGrantData>
             {
-                new AdvantageGrant
+                new ComponentAdvantageGrantData
                 {
-                    label = "Enhanced Sensors",
-                    type = RollMode.Advantage,
-                    targets = new List<IAdvantageTarget> { new CharacterCheckAdvantage() }
+                    grant = new AdvantageGrant
+                    {
+                        label = "Enhanced Sensors",
+                        type = RollMode.Advantage,
+                        targets = new List<IAdvantageTarget> { new CharacterCheckAdvantage() }
+                    }
                 }
             };
+            utility.ApplyProvidedAdvantageGrants(vehicle);
 
             var spec = TestSkillFactory.CharacterSkillCheck(CharacterSkill.Perception, requiredComponent: ComponentType.Utility, dc: 10);
             var result = SkillCheckPerformer.Execute(new SkillCheckExecutionContext
@@ -340,15 +345,19 @@ namespace Assets.Scripts.Tests.PlayMode
                 .Build();
 
             var utility = vehicle.optionalComponents[0];
-            utility.advantageGrants = new List<AdvantageGrant>
+            utility.providedAdvantageGrants = new List<ComponentAdvantageGrantData>
             {
-                new AdvantageGrant
+                new ComponentAdvantageGrantData
                 {
-                    label = "Enhanced Sensors",
-                    type = RollMode.Advantage,
-                    targets = new List<IAdvantageTarget> { new CharacterCheckAdvantage() }
+                    grant = new AdvantageGrant
+                    {
+                        label = "Enhanced Sensors",
+                        type = RollMode.Advantage,
+                        targets = new List<IAdvantageTarget> { new CharacterCheckAdvantage() }
+                    }
                 }
             };
+            utility.ApplyProvidedAdvantageGrants(vehicle);
 
             utility.TakeDamage(utility.GetCurrentHealth());
 

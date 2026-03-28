@@ -154,6 +154,7 @@ namespace Assets.Scripts.Entities.Vehicle
                 if (provider.IsOperational)
                 {
                     provider.ApplyProvidedModifiers(vehicle);
+                    provider.ApplyProvidedAdvantageGrants(vehicle);
                 }
             }
         }

@@ -226,6 +226,20 @@ public class Vehicle : MonoBehaviour
 
     public bool IsOperational() => GetNonOperationalReason() == null;
 
+    /// <summary>True if any chassis condition is blocking all component actions vehicle-wide.</summary>
+    public bool IsChassisStunned
+    {
+        get
+        {
+            if (chassis == null) return false;
+            foreach (var effect in chassis.GetActiveConditions())
+            {
+                if (effect.PreventsActions) return true;
+            }
+            return false;
+        }
+    }
+
     /// <summary>Null if can move.</summary>
     public string GetCannotMoveReason()
     {

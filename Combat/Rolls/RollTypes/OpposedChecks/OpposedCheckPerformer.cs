@@ -33,10 +33,8 @@ namespace Assets.Scripts.Combat.Rolls.RollTypes.OpposedChecks
                 result = D20Calculator.Roll(attackerGathered, defenderRoll.Total);
             }
 
-            RollActor attackerActor = ctx.AttackerRouting.Actor
-                ?? (ctx.AttackerVehicle != null ? new ComponentActor(ctx.AttackerVehicle.chassis) : null);
-            RollActor defenderActor = ctx.DefenderRouting.Actor
-                ?? (ctx.DefenderVehicle != null ? new ComponentActor(ctx.DefenderVehicle.chassis) : null);
+            RollActor attackerActor = ctx.AttackerRouting.Actor;
+            RollActor defenderActor = ctx.DefenderRouting.Actor;
 
             CombatEventBus.EmitOpposedCheck(
                 result, defenderRoll, attackerActor, defenderActor, ctx.CausalSource,
@@ -44,21 +42,21 @@ namespace Assets.Scripts.Combat.Rolls.RollTypes.OpposedChecks
 
             if (ctx.AttackerRouting.CanAttempt)
             {
-                Entity attackerEntity = attackerActor?.GetEntity();
+                Entity attackerEntity = attackerActor.GetEntity();
                 if (attackerEntity != null)
                     attackerEntity.NotifyConditionTrigger(RemovalTrigger.OnD20Roll);
 
-                var attackerSeat = attackerActor?.GetSeat();
+                var attackerSeat = attackerActor.GetSeat();
                 if (attackerSeat != null)
                     attackerSeat.NotifyConditionTrigger(RemovalTrigger.OnD20Roll);
             }
             if (ctx.DefenderRouting.CanAttempt)
             {
-                Entity defenderEntity = defenderActor?.GetEntity();
+                Entity defenderEntity = defenderActor.GetEntity();
                 if (defenderEntity != null)
                     defenderEntity.NotifyConditionTrigger(RemovalTrigger.OnD20Roll);
 
-                var defenderSeat = defenderActor?.GetSeat();
+                var defenderSeat = defenderActor.GetSeat();
                 if (defenderSeat != null)
                     defenderSeat.NotifyConditionTrigger(RemovalTrigger.OnD20Roll);
             }
