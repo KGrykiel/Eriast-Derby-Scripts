@@ -8,6 +8,10 @@ namespace Assets.Scripts.Entities.Vehicle
     public class VehicleComponentCoordinator
     {
         private readonly global::Vehicle vehicle;
+        private readonly List<VehicleComponent> _components = new();
+
+        public ChassisComponent Chassis { get; private set; }
+        public PowerCoreComponent PowerCore { get; private set; }
 
         public VehicleComponentCoordinator(global::Vehicle vehicle)
         {
@@ -26,35 +30,30 @@ namespace Assets.Scripts.Entities.Vehicle
             foreach (var component in allFoundComponents)
             {
                 component.Initialize(vehicle);
-
-                if (component is ChassisComponent && vehicle.chassis == null)
-                {
-                    vehicle.chassis = component as ChassisComponent;
-                }
-                else if (component is PowerCoreComponent && vehicle.powerCore == null)
-                {
-                    vehicle.powerCore = component as PowerCoreComponent;
-                }
-                else
-                {
-                    if (!vehicle.optionalComponents.Contains(component))
-                    {
-                        vehicle.optionalComponents.Add(component);
-                    }
-                }
+                RegisterComponent(component);
             }
 
             // Chassis and PowerCore are mandatory - the vehicle doesn't function without them.
-            if (vehicle.chassis == null)
+            if (Chassis == null)
                 Debug.LogWarning($"[Vehicle] {vehicle.vehicleName} has no Chassis component! Vehicle stats will be incomplete.");
 
-            if (vehicle.powerCore == null)
+            if (PowerCore == null)
                 Debug.LogWarning($"[Vehicle] {vehicle.vehicleName} has no Power Core component! Vehicle will have no power.");
 
             // Cross-component modifiers depend on all components being discovered first
             InitializeComponentModifiers();
 
-            Debug.Log($"[Vehicle] {vehicle.vehicleName} initialized with {GetAllComponents().Count} component(s)");
+            Debug.Log($"[Vehicle] {vehicle.vehicleName} initialized with {_components.Count} component(s)");
+        }
+
+        public void RegisterComponent(VehicleComponent component)
+        {
+            if (component == null || _components.Contains(component)) return;
+            _components.Add(component);
+            if (component is ChassisComponent chassis && Chassis == null)
+                Chassis = chassis;
+            else if (component is PowerCoreComponent powerCore && PowerCore == null)
+                PowerCore = powerCore;
         }
 
         // ==================== COMPONENT ACCESSIBILITY ====================
@@ -77,9 +76,9 @@ namespace Assets.Scripts.Entities.Vehicle
             // Internal components - inaccessible until chassis is damaged enough.
             if (target.exposure == ComponentExposure.Internal)
             {
-                if (vehicle.chassis == null) return true; // Fallback if no chassis
+                if (Chassis == null) return true; // Fallback if no chassis
 
-                int chassisDamagePercent = 100 - (vehicle.chassis.GetCurrentHealth() * 100 / vehicle.chassis.GetMaxHealth());
+                int chassisDamagePercent = 100 - (Chassis.GetCurrentHealth() * 100 / Chassis.GetMaxHealth());
                 return chassisDamagePercent >= target.internalAccessThreshold;
             }
 
@@ -104,9 +103,9 @@ namespace Assets.Scripts.Entities.Vehicle
 
             if (target.exposure == ComponentExposure.Internal)
             {
-                if (vehicle.chassis != null)
+                if (Chassis != null)
                 {
-                    int chassisDamagePercent = 100 - (vehicle.chassis.GetCurrentHealth() * 100 / vehicle.chassis.GetMaxHealth());
+                    int chassisDamagePercent = 100 - (Chassis.GetCurrentHealth() * 100 / Chassis.GetMaxHealth());
                     if (chassisDamagePercent < target.internalAccessThreshold)
                     {
                         return $"Chassis must be {target.internalAccessThreshold}% damaged";
@@ -119,14 +118,7 @@ namespace Assets.Scripts.Entities.Vehicle
 
         // ==================== COMPONENT QUERIES ====================
 
-        public List<VehicleComponent> GetAllComponents()
-        {
-            List<VehicleComponent> all = new();
-            if (vehicle.chassis != null) all.Add(vehicle.chassis);
-            if (vehicle.powerCore != null) all.Add(vehicle.powerCore);
-            if (vehicle.optionalComponents != null) all.AddRange(vehicle.optionalComponents);
-            return all;
-        }
+        public IReadOnlyList<VehicleComponent> GetAllComponents() => _components;
 
         // ==================== COMPONENT SPACE VALIDATION ====================
 
@@ -161,13 +153,13 @@ namespace Assets.Scripts.Entities.Vehicle
 
         public void ApplySizeModifiers(VehicleEffectRouter effectRouter)
         {
-            if (vehicle.chassis == null)
+            if (Chassis == null)
             {
                 Debug.LogWarning($"[Vehicle] {vehicle.vehicleName} has no chassis - cannot apply size modifiers");
                 return;
             }
 
-            var sizeModifiers = VehicleSizeModifiers.GetModifiers(vehicle.chassis.sizeCategory);
+            var sizeModifiers = VehicleSizeModifiers.GetModifiers(Chassis.sizeCategory);
 
             foreach (var modifier in sizeModifiers)
             {

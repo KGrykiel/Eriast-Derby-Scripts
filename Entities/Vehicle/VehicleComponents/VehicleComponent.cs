@@ -170,13 +170,13 @@ public abstract class VehicleComponent : Entity
                 break;
 
             case ComponentTargetMode.Drive:
-                var drive = vehicle.optionalComponents.OfType<DriveComponent>().FirstOrDefault();
+                var drive = vehicle.AllComponents.OfType<DriveComponent>().FirstOrDefault();
                 if (drive != null)
                     targets.Add(drive);
                 break;
 
             case ComponentTargetMode.AllWeapons:
-                foreach (var weapon in vehicle.optionalComponents.OfType<WeaponComponent>())
+                foreach (var weapon in vehicle.AllComponents.OfType<WeaponComponent>())
                 {
                     targets.Add(weapon);
                 }

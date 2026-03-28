@@ -36,14 +36,8 @@ public class Vehicle : MonoBehaviour
     public List<VehicleSeat> seats = new();
     
     [Header("Vehicle Components")]
-    [Tooltip("Chassis - MANDATORY structural component (stores HP and AC)")]
-    public ChassisComponent chassis;
-    
-    [Tooltip("Power Core - MANDATORY power supply component (stores energy)")]
-    public PowerCoreComponent powerCore;
-    
-    [Tooltip("Optional components (Drive, Weapons, Utilities, etc.)")]
-    public List<VehicleComponent> optionalComponents = new();
+    public ChassisComponent chassis => componentCoordinator?.Chassis;
+    public PowerCoreComponent powerCore => componentCoordinator?.PowerCore;
 
     // Coordinators (handle distinct concerns)
     private VehicleComponentCoordinator componentCoordinator;
@@ -78,14 +72,16 @@ public class Vehicle : MonoBehaviour
     
     // ==================== COMPONENT ACCESS (delegate to coordinator) ====================
     
-    public List<VehicleComponent> AllComponents => componentCoordinator?.GetAllComponents() ?? new List<VehicleComponent>();
+    public IReadOnlyList<VehicleComponent> AllComponents => componentCoordinator?.GetAllComponents() ?? System.Array.Empty<VehicleComponent>();
+
+    public void RegisterComponent(VehicleComponent component) => componentCoordinator?.RegisterComponent(component);
     
     public bool IsComponentAccessible(VehicleComponent target) => componentCoordinator?.IsComponentAccessible(target) ?? false;
     
     public string GetInaccessibilityReason(VehicleComponent target) => componentCoordinator?.GetInaccessibilityReason(target);
     
     public DriveComponent GetDriveComponent()
-        => optionalComponents.OfType<DriveComponent>().FirstOrDefault();
+        => AllComponents.OfType<DriveComponent>().FirstOrDefault();
 
     public VehicleComponent GetComponentOfType(ComponentType type)
         => AllComponents.FirstOrDefault(c => c.componentType == type);

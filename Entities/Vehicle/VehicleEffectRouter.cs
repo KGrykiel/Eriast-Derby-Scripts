@@ -64,10 +64,10 @@ namespace Assets.Scripts.Entities.Vehicle
                 Attribute.DragCoefficient => vehicle.chassis,
                 Attribute.MaxEnergy => vehicle.powerCore,
                 Attribute.EnergyRegen => vehicle.powerCore,
-                Attribute.MaxSpeed => vehicle.optionalComponents.OfType<DriveComponent>().FirstOrDefault(),
-                Attribute.Acceleration => vehicle.optionalComponents.OfType<DriveComponent>().FirstOrDefault(),
-                Attribute.Stability => vehicle.optionalComponents.OfType<DriveComponent>().FirstOrDefault(),
-                Attribute.BaseFriction => vehicle.optionalComponents.OfType<DriveComponent>().FirstOrDefault(),
+                Attribute.MaxSpeed => vehicle.AllComponents.OfType<DriveComponent>().FirstOrDefault(),
+                Attribute.Acceleration => vehicle.AllComponents.OfType<DriveComponent>().FirstOrDefault(),
+                Attribute.Stability => vehicle.AllComponents.OfType<DriveComponent>().FirstOrDefault(),
+                Attribute.BaseFriction => vehicle.AllComponents.OfType<DriveComponent>().FirstOrDefault(),
                 _ => vehicle.chassis
             };
         }

@@ -47,7 +47,7 @@ namespace Assets.Scripts.Tests.PlayMode
                 .WithWeapon(bob, attackBonus: 1)
                 .Build();
 
-            var weapon = vehicle.optionalComponents[0];
+            var weapon = vehicle.AllComponents.OfType<WeaponComponent>().First();
 
             // Create a dummy target
             var targetObj = new GameObject("Target");
@@ -98,7 +98,7 @@ namespace Assets.Scripts.Tests.PlayMode
                 .WithWeapon(bob, attackBonus: 0)
                 .Build();
 
-            var weapon = vehicle.optionalComponents[0];
+            var weapon = vehicle.AllComponents.OfType<WeaponComponent>().First();
 
             // Apply a +2 attack bonus modifier (simulating "Blessed" status effect)
             weapon.AddModifier(new AttributeModifier(

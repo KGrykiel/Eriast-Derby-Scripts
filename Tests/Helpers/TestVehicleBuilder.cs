@@ -21,7 +21,7 @@ namespace Assets.Scripts.Tests.Helpers
         public TestVehicleBuilder WithChassis(Character driver = null, int maxHealth = 100, int armorClass = 10)
         {
             chassis = TestComponentFactory.CreateChassis(root, maxHealth, armorClass);
-            vehicle.chassis = chassis;
+            vehicle.RegisterComponent(chassis);
 
             if (driver != null)
             {
@@ -35,7 +35,7 @@ namespace Assets.Scripts.Tests.Helpers
         public TestVehicleBuilder WithWeapon(Character gunner = null, int attackBonus = 0, string weaponName = "TestWeapon")
         {
             var weapon = TestComponentFactory.CreateWeapon(root, weaponName, attackBonus);
-            vehicle.optionalComponents.Add(weapon);
+            vehicle.RegisterComponent(weapon);
 
             if (gunner != null)
             {
@@ -49,7 +49,7 @@ namespace Assets.Scripts.Tests.Helpers
         public TestVehicleBuilder WithUtility(Character operatorChar = null)
         {
             var utility = TestComponentFactory.CreateUtility(root);
-            vehicle.optionalComponents.Add(utility);
+            vehicle.RegisterComponent(utility);
 
             if (operatorChar != null)
             {
@@ -63,7 +63,7 @@ namespace Assets.Scripts.Tests.Helpers
         public TestVehicleBuilder WithPowerCore(Character engineer = null)
         {
             var powerCore = TestComponentFactory.CreatePowerCore(root);
-            vehicle.powerCore = powerCore;
+            vehicle.RegisterComponent(powerCore);
 
             if (engineer != null)
             {
@@ -86,14 +86,8 @@ namespace Assets.Scripts.Tests.Helpers
 
             // Manually initialize components since Vehicle.Awake() ran before
             // components were assigned (Awake fires on AddComponent, not Build)
-            if (vehicle.chassis != null)
-                vehicle.chassis.Initialize(vehicle);
-            if (vehicle.powerCore != null)
-                vehicle.powerCore.Initialize(vehicle);
-            foreach (var comp in vehicle.optionalComponents)
-            {
+            foreach (var comp in vehicle.AllComponents)
                 comp.Initialize(vehicle);
-            }
 
             return vehicle;
         }

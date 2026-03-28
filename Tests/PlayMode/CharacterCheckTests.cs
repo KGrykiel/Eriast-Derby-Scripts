@@ -81,7 +81,7 @@ namespace Assets.Scripts.Tests.PlayMode
                 .Build();
 
             // Destroy the utility component
-            var utility = vehicle.optionalComponents[0];
+            var utility = vehicle.GetComponentOfType(ComponentType.Utility);
             utility.TakeDamage(utility.GetCurrentHealth());
 
             var spec = TestSkillFactory.CharacterSkillCheck(CharacterSkill.Mechanics, requiredComponent: ComponentType.Utility, dc: 15);

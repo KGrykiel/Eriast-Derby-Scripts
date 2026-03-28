@@ -81,7 +81,7 @@ namespace Assets.Scripts.Tests.PlayMode
             var ctx = new RollContext
             {
                 SourceVehicle = playerVehicle,
-                SourceActor = new CharacterWithToolActor(playerVehicle.GetSeatForCharacter(bob), playerVehicle.optionalComponents[0]),
+                SourceActor = new CharacterWithToolActor(playerVehicle.GetSeatForCharacter(bob), playerVehicle.AllComponents.OfType<WeaponComponent>().First()),
                 TargetEntity = enemyVehicle.chassis
             };
             playerVehicle.ExecuteSkill(ctx, cannonShot);
@@ -117,7 +117,7 @@ namespace Assets.Scripts.Tests.PlayMode
             var ctx = new RollContext
             {
                 SourceVehicle = playerVehicle,
-                SourceActor = new CharacterWithToolActor(playerVehicle.GetSeatForCharacter(gunner), playerVehicle.optionalComponents[0]),
+                SourceActor = new CharacterWithToolActor(playerVehicle.GetSeatForCharacter(gunner), playerVehicle.AllComponents.OfType<WeaponComponent>().First()),
                 TargetEntity = enemyVehicle.chassis
             };
             bool executed = playerVehicle.ExecuteSkill(ctx, expensiveSkill);
@@ -210,7 +210,7 @@ namespace Assets.Scripts.Tests.PlayMode
             var ctx = new RollContext
             {
                 SourceVehicle = playerVehicle,
-                SourceActor = new CharacterWithToolActor(playerVehicle.GetSeatForCharacter(pyro), playerVehicle.optionalComponents[0]),
+                SourceActor = new CharacterWithToolActor(playerVehicle.GetSeatForCharacter(pyro), playerVehicle.AllComponents.OfType<WeaponComponent>().First()),
                 TargetEntity = enemyVehicle.chassis
             };
             playerVehicle.ExecuteSkill(ctx, flameThrower);
@@ -282,7 +282,7 @@ namespace Assets.Scripts.Tests.PlayMode
 
             // Test 4: Attack bonuses stack correctly
             var attackSpec = new AttackSpec { grantedMode = RollMode.Normal };
-            var gathered = RollGatherer.ForAttack(attackSpec, new CharacterWithToolActor(playerVehicle.GetSeatForCharacter(gunner), playerVehicle.optionalComponents[0]));
+            var gathered = RollGatherer.ForAttack(attackSpec, new CharacterWithToolActor(playerVehicle.GetSeatForCharacter(gunner), playerVehicle.AllComponents.OfType<WeaponComponent>().First()));
             var bonuses = gathered.Bonuses;
             int totalMod = bonuses.Sum(b => b.Value);
             Assert.AreEqual(6, totalMod, "Attack bonus should be weapon(2) + character(4) = 6");
@@ -469,7 +469,7 @@ namespace Assets.Scripts.Tests.PlayMode
             stunTemplate.behavioralEffects = new BehavioralEffectData { preventsActions = true };
             cleanup.Add(stunTemplate);
 
-            var utilityComp = playerVehicle.optionalComponents[0];
+            var utilityComp = playerVehicle.GetComponentOfType(ComponentType.Utility);
             utilityComp.ApplyCondition(stunTemplate, utilityComp);
             yield return null;
 
@@ -509,7 +509,7 @@ namespace Assets.Scripts.Tests.PlayMode
                 .WithUtility(engineer)
                 .Build();
 
-            var utility = playerVehicle.optionalComponents[0];
+            var utility = playerVehicle.GetComponentOfType(ComponentType.Utility);
             var spec = SkillCheckSpec.ForCharacter(CharacterSkill.Mechanics, ComponentType.Utility);
             spec.dc = 10;
 
@@ -635,7 +635,7 @@ namespace Assets.Scripts.Tests.PlayMode
                     var playerCtx = new RollContext
                     {
                         SourceVehicle = playerVehicle,
-                        SourceActor = new CharacterWithToolActor(playerVehicle.GetSeatForCharacter(pGunner), playerVehicle.optionalComponents[0]),
+                        SourceActor = new CharacterWithToolActor(playerVehicle.GetSeatForCharacter(pGunner), playerVehicle.AllComponents.OfType<WeaponComponent>().First()),
                         TargetEntity = enemyVehicle.chassis
                     };
                     playerVehicle.ExecuteSkill(playerCtx, playerAttack);
@@ -647,7 +647,7 @@ namespace Assets.Scripts.Tests.PlayMode
                     var enemyCtx = new RollContext
                     {
                         SourceVehicle = enemyVehicle,
-                        SourceActor = new CharacterWithToolActor(enemyVehicle.GetSeatForCharacter(eGunner), enemyVehicle.optionalComponents[0]),
+                        SourceActor = new CharacterWithToolActor(enemyVehicle.GetSeatForCharacter(eGunner), enemyVehicle.AllComponents.OfType<WeaponComponent>().First()),
                         TargetEntity = playerVehicle.chassis
                     };
                     enemyVehicle.ExecuteSkill(enemyCtx, enemyAttack);

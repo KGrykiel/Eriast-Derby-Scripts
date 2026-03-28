@@ -83,7 +83,7 @@ namespace Assets.Scripts.Tests.PlayMode
                 .WithUtility(character)
                 .Build();
 
-            var utility = vehicle.optionalComponents[0];
+            var utility = vehicle.GetComponentOfType(ComponentType.Utility);
             utility.TakeDamage(utility.GetCurrentHealth());
 
             var spec = SkillCheckSpec.ForCharacter(CharacterSkill.Mechanics, ComponentType.Utility);

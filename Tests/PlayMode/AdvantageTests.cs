@@ -202,7 +202,7 @@ namespace Assets.Scripts.Tests.PlayMode
             var targets = new List<IAdvantageTarget> { new CharacterCheckAdvantage() };
             var effect = CreateAdvantageStatusEffect("Inspired", RollMode.Advantage, targets);
 
-            var utility = vehicle.optionalComponents[0];
+            var utility = vehicle.GetComponentOfType(ComponentType.Utility);
             utility.ApplyCondition(effect, null);
 
             var spec = TestSkillFactory.CharacterSkillCheck(CharacterSkill.Piloting, requiredComponent: ComponentType.Utility, dc: 10);
@@ -232,7 +232,7 @@ namespace Assets.Scripts.Tests.PlayMode
             var targets = new List<IAdvantageTarget> { new AttackAdvantage() };
             var effect = CreateAdvantageStatusEffect("Attack Boost", RollMode.Advantage, targets);
 
-            var utility = vehicle.optionalComponents[0];
+            var utility = vehicle.GetComponentOfType(ComponentType.Utility);
             utility.ApplyCondition(effect, null);
 
             var spec = TestSkillFactory.CharacterSkillCheck(CharacterSkill.Piloting, requiredComponent: ComponentType.Utility, dc: 10);
@@ -265,7 +265,7 @@ namespace Assets.Scripts.Tests.PlayMode
             };
             var effect = CreateAdvantageStatusEffect("Mechanics Focus", RollMode.Advantage, targets);
 
-            var utility = vehicle.optionalComponents[0];
+            var utility = vehicle.GetComponentOfType(ComponentType.Utility);
             utility.ApplyCondition(effect, null);
 
             var pilotSpec = TestSkillFactory.CharacterSkillCheck(CharacterSkill.Piloting, requiredComponent: ComponentType.Utility, dc: 10);
@@ -306,7 +306,7 @@ namespace Assets.Scripts.Tests.PlayMode
                 .WithUtility(character)
                 .Build();
 
-            var utility = vehicle.optionalComponents[0];
+            var utility = vehicle.GetComponentOfType(ComponentType.Utility);
             utility.providedAdvantageGrants = new List<ComponentAdvantageGrantData>
             {
                 new ComponentAdvantageGrantData
@@ -344,7 +344,7 @@ namespace Assets.Scripts.Tests.PlayMode
                 .WithUtility(character)
                 .Build();
 
-            var utility = vehicle.optionalComponents[0];
+            var utility = vehicle.GetComponentOfType(ComponentType.Utility);
             utility.providedAdvantageGrants = new List<ComponentAdvantageGrantData>
             {
                 new ComponentAdvantageGrantData
@@ -436,7 +436,7 @@ namespace Assets.Scripts.Tests.PlayMode
             var targets = new List<IAdvantageTarget> { new CharacterCheckAdvantage() };
             var effect = CreateAdvantageStatusEffect("Cursed", RollMode.Disadvantage, targets);
 
-            var utility = vehicle.optionalComponents[0];
+            var utility = vehicle.GetComponentOfType(ComponentType.Utility);
             utility.ApplyCondition(effect, null);
 
             var spec = TestSkillFactory.CharacterSkillCheck(CharacterSkill.Mechanics, requiredComponent: ComponentType.Utility, dc: 10);

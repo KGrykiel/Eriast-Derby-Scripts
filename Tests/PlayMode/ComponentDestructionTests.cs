@@ -37,7 +37,7 @@ namespace Assets.Scripts.Tests.PlayMode
                 .WithUtility(character)
                 .Build();
 
-            var utility = vehicle.optionalComponents[0];
+            var utility = vehicle.GetComponentOfType(ComponentType.Utility);
 
             // First attempt - should work
             var spec = TestSkillFactory.CharacterSkillCheck(CharacterSkill.Mechanics, requiredComponent: ComponentType.Utility, dc: 10);
@@ -66,7 +66,7 @@ namespace Assets.Scripts.Tests.PlayMode
                 .WithUtility(character)
                 .Build();
 
-            var utility = vehicle.optionalComponents[0];
+            var utility = vehicle.GetComponentOfType(ComponentType.Utility);
             var spec = TestSkillFactory.CharacterSkillCheck(CharacterSkill.Mechanics, requiredComponent: ComponentType.Utility, dc: 10);
 
             // Destroy
