@@ -154,11 +154,12 @@ public class Vehicle : MonoBehaviour
     /// <summary>Returns the current value of a live vehicle state. Used by StateThresholdSpec.</summary>
     public int GetStateValue(RuntimeState state)
     {
+        var drive = GetDriveComponent();
         return state switch
         {
-            RuntimeState.CurrentSpeed    => GetDriveComponent()?.GetCurrentSpeed() ?? 0,
-            RuntimeState.CurrentEnergy   => powerCore?.GetCurrentEnergy() ?? 0,
-            RuntimeState.CurrentHealth   => chassis?.GetCurrentHealth() ?? 0,
+            RuntimeState.CurrentSpeed    => drive != null ? drive.GetCurrentSpeed() : 0,
+            RuntimeState.CurrentEnergy   => powerCore != null ? powerCore.GetCurrentEnergy() : 0,
+            RuntimeState.CurrentHealth   => chassis != null ? chassis.GetCurrentHealth() : 0,
             RuntimeState.CurrentProgress => progress,
             _                            => 0
         };

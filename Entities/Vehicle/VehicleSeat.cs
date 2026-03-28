@@ -175,7 +175,7 @@ namespace Assets.Scripts.Entities.Vehicle
 
         public bool IsAssignedTo(Character character) => assignedCharacter == character;
 
-        public string GetDisplayName() => assignedCharacter?.characterName;
+        public string GetDisplayName() => assignedCharacter != null ? assignedCharacter.characterName : null;
 
         public List<Skill> GetPersonalAbilities()
         {

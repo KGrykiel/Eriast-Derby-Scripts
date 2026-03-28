@@ -104,7 +104,8 @@ namespace Assets.Scripts.Conditions.EntityConditions
         protected override void OnNewlyApplied(AppliedEntityCondition applied, bool wasReplacement)
         {
             Entity sourceEntity = applied.applier as Entity;
-            CombatEventBus.EmitEntityCondition(applied, sourceEntity, entity, applied.applier?.name, wasReplacement);
+            string applierName = applied.applier != null ? applied.applier.name : null;
+            CombatEventBus.EmitEntityCondition(applied, sourceEntity, entity, applierName, wasReplacement);
         }
 
         protected override void OnExpired(AppliedEntityCondition applied)

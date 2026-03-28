@@ -48,7 +48,8 @@ namespace Assets.Scripts.Logging
 
         private static int GetCurrentRound()
         {
-            var stateMachine = Instance.gameManager?.GetStateMachine();
+            if (Instance.gameManager == null) return 0;
+            var stateMachine = Instance.gameManager.GetStateMachine();
             return stateMachine?.CurrentRound ?? 0;
         }
 

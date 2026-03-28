@@ -63,7 +63,8 @@ namespace Assets.Scripts.Combat.Rolls.RollTypes.Saves
                 causalSource,
                 spec.DisplayName);
 
-            entity?.NotifyConditionTrigger(RemovalTrigger.OnD20Roll);
+            if (entity != null)
+                entity.NotifyConditionTrigger(RemovalTrigger.OnD20Roll);
 
             return roll;
         }
