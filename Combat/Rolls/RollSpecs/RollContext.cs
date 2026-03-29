@@ -1,4 +1,7 @@
-﻿namespace Assets.Scripts.Combat.Rolls.RollSpecs
+﻿using Assets.Scripts.Entities;
+using Assets.Scripts.Entities.Vehicles;
+
+namespace Assets.Scripts.Combat.Rolls.RollSpecs
 {
     /// <summary>
     /// Context struct to hold any relevant information about the action being executed.

@@ -1,4 +1,6 @@
-﻿using UnityEngine;
+﻿using Assets.Scripts.Entities;
+using Assets.Scripts.Entities.Vehicles.VehicleComponents.ComponentTypes;
+using UnityEngine;
 
 namespace Assets.Scripts.Effects.EffectTypes.CustomEffectCommands
 {

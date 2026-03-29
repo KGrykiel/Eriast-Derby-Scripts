@@ -1,6 +1,6 @@
 ﻿using System.Linq;
 using NUnit.Framework;
-using Assets.Scripts.Entities.Vehicle;
+using Assets.Scripts.Entities.Vehicles;
 
 namespace Assets.Scripts.Tests.PlayMode
 {

@@ -1,6 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
 using Assets.Scripts.Core;
+using Assets.Scripts.Entities.Vehicles;
+using Assets.Scripts.Entities.Vehicles.VehicleComponents;
+using Assets.Scripts.Entities.Vehicles.VehicleComponents.ComponentTypes;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;

@@ -6,6 +6,7 @@ using EventType = Assets.Scripts.Logging.EventType;
 using Assets.Scripts.Logging;
 using Assets.Scripts.Managers;
 using Assets.Scripts.Stages;
+using Assets.Scripts.Entities.Vehicles;
 
 public class OverviewPanel : MonoBehaviour
 {

@@ -6,8 +6,9 @@ using Assets.Scripts.Characters;
 using Assets.Scripts.Combat.Rolls.Advantage;
 using Assets.Scripts.Conditions;
 using Assets.Scripts.Conditions.CharacterConditions;
+using Assets.Scripts.Entities.Vehicles.VehicleComponents;
 
-namespace Assets.Scripts.Entities.Vehicle
+namespace Assets.Scripts.Entities.Vehicles
 {
     /// <summary>
     /// Physical seat/station on a vehicle. Characters can only operate components
@@ -29,6 +30,11 @@ namespace Assets.Scripts.Entities.Vehicle
         [Tooltip("Character currently occupying this seat. Drag PlayerCharacter ScriptableObject here. " +
                  "Leave empty for uncrewed/AI-controlled seats.")]
         [SerializeField] private Character assignedCharacter;
+
+        // ==================== VEHICLE REFERENCE ====================
+
+        [NonSerialized]
+        public Vehicle ParentVehicle;
 
         // ==================== TURN STATE ====================
 

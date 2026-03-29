@@ -1,3 +1,5 @@
+using Assets.Scripts.Entities;
+
 namespace Assets.Scripts.Effects
 {
     public interface IEffect

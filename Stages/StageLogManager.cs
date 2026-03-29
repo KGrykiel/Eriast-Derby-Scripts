@@ -1,4 +1,5 @@
-﻿using Assets.Scripts.Logging;
+﻿using Assets.Scripts.Entities.Vehicles;
+using Assets.Scripts.Logging;
 using Assets.Scripts.Stages.Lanes;
 using EventType = Assets.Scripts.Logging.EventType;
 

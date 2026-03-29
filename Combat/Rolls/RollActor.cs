@@ -1,4 +1,5 @@
-﻿using Assets.Scripts.Entities.Vehicle;
+﻿using Assets.Scripts.Entities;
+using Assets.Scripts.Entities.Vehicles;
 
 namespace Assets.Scripts.Combat.Rolls
 {
@@ -34,11 +35,7 @@ namespace Assets.Scripts.Combat.Rolls
 
         public override Entity GetEntity() => null;
         public override VehicleSeat GetSeat() => Seat;
-        public override Vehicle GetVehicle()
-        {
-            if (Seat == null || Seat.controlledComponents.Count == 0) return null;
-            return EntityHelpers.GetParentVehicle(Seat.controlledComponents[0]);
-        }
+        public override Vehicle GetVehicle() => Seat.ParentVehicle;
     }
 
     /// <summary>A character making the roll through a tool component (e.g. gunner via weapon, engineer via power core).</summary>
@@ -51,6 +48,6 @@ namespace Assets.Scripts.Combat.Rolls
 
         public override Entity GetEntity() => Tool;
         public override VehicleSeat GetSeat() => Seat;
-        public override Vehicle GetVehicle() => EntityHelpers.GetParentVehicle(Tool);
+        public override Vehicle GetVehicle() => Seat.ParentVehicle;
     }
 }

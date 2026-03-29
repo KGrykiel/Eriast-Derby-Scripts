@@ -1,4 +1,4 @@
-﻿namespace Assets.Scripts.Entities.Vehicle
+﻿namespace Assets.Scripts.Entities.Vehicles
 {
     /// <summary>Constrained subset of Attribute for d20 checks/saves. Prevents rolling against MaxHealth, etc.</summary>
     public enum VehicleCheckAttribute

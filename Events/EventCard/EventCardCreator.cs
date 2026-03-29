@@ -5,7 +5,7 @@ using System.Collections.Generic;
 using Assets.Scripts.Events.EventCard.EventCardTypes;
 using Assets.Scripts.Combat.Rolls.RollSpecs;
 using Assets.Scripts.Combat.Rolls.RollSpecs.SpecTypes;
-using Assets.Scripts.Entities.Vehicle;
+using Assets.Scripts.Entities.Vehicles;
 using Assets.Scripts.Characters;
 using Assets.Scripts.Combat.Damage;
 using Assets.Scripts.Combat.Restoration;

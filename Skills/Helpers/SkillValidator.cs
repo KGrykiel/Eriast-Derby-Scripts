@@ -1,4 +1,7 @@
 ﻿using Assets.Scripts.Combat.Rolls.RollSpecs;
+using Assets.Scripts.Entities;
+using Assets.Scripts.Entities.Vehicles;
+using Assets.Scripts.Entities.Vehicles.VehicleComponents;
 using UnityEngine;
 
 namespace Assets.Scripts.Skills.Helpers

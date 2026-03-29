@@ -1,6 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using Assets.Scripts.Entities.Vehicle;
+using Assets.Scripts.Entities.Vehicles;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;

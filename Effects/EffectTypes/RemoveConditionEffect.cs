@@ -1,5 +1,6 @@
 ﻿using Assets.Scripts.Conditions;
 using Assets.Scripts.Conditions.EntityConditions;
+using Assets.Scripts.Entities;
 using SerializeReferenceEditor;
 using UnityEngine;
 

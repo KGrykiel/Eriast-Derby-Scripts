@@ -1,6 +1,6 @@
 ﻿using UnityEngine;
 
-namespace Assets.Scripts.Entities.Vehicle
+namespace Assets.Scripts.Entities.Vehicles
 {
     /// <summary>
     /// Physics for acceleration system: friction (constant, units/turn) + drag (speed-dependent, percentage).

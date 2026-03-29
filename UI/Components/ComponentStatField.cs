@@ -1,6 +1,7 @@
 ﻿using UnityEngine;
 using TMPro;
 using UnityEngine.UI;
+using Assets.Scripts.Entities;
 
 namespace Assets.Scripts.UI.Components
 {

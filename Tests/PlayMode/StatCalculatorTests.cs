@@ -2,6 +2,8 @@
 using NUnit.Framework;
 using UnityEngine;
 using Assets.Scripts.Core;
+using Assets.Scripts.Entities;
+using Assets.Scripts.Entities.Vehicles.VehicleComponents.ComponentTypes;
 
 namespace Assets.Scripts.Tests.PlayMode
 {

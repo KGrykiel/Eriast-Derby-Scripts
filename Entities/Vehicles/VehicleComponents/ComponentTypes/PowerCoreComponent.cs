@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace Assets.Scripts.Entities.Vehicle.VehicleComponents.ComponentTypes
+namespace Assets.Scripts.Entities.Vehicles.VehicleComponents.ComponentTypes
 {
     /// <summary>Main energy source. Every vehicle needs one or else it's just a static lump of metal</summary>
     public class PowerCoreComponent : VehicleComponent

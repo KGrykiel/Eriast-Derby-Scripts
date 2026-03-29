@@ -1,3 +1,4 @@
+using Assets.Scripts.Entities;
 using SerializeReferenceEditor;
 using System;
 using UnityEngine;

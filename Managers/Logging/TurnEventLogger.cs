@@ -1,5 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
+using Assets.Scripts.Entities.Vehicles;
+using Assets.Scripts.Entities.Vehicles.VehicleComponents;
 using Assets.Scripts.Logging;
 using Assets.Scripts.Stages;
 using EventType = Assets.Scripts.Logging.EventType;

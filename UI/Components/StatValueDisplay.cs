@@ -3,6 +3,7 @@ using UnityEngine.EventSystems;
 using TMPro;
 using Assets.Scripts.Combat.Logging;
 using Assets.Scripts.Core;
+using Assets.Scripts.Entities;
 
 namespace Assets.Scripts.UI.Components
 {

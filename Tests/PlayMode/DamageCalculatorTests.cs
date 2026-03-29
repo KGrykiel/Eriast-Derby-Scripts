@@ -3,6 +3,7 @@ using NUnit.Framework;
 using UnityEngine;
 using UnityEngine.TestTools;
 using Assets.Scripts.Combat.Damage;
+using Assets.Scripts.Entities.Vehicles.VehicleComponents.ComponentTypes;
 
 namespace Assets.Scripts.Tests.PlayMode
 {

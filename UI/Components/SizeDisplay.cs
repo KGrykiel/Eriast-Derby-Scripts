@@ -1,7 +1,7 @@
 ﻿using UnityEngine;
 using UnityEngine.EventSystems;
 using TMPro;
-using Assets.Scripts.Entities.Vehicle;
+using Assets.Scripts.Entities.Vehicles;
 
 namespace Assets.Scripts.UI.Components
 {

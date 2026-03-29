@@ -1,4 +1,6 @@
-﻿namespace Assets.Scripts.Managers.TurnPhases
+﻿using Assets.Scripts.Entities.Vehicles;
+
+namespace Assets.Scripts.Managers.TurnPhases
 {
     /// <summary>
     /// Interface for handling a specific turn phase, using the chain-of-responsibility pattern.

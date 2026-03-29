@@ -1,4 +1,5 @@
 ﻿using Assets.Scripts.Combat.Rolls;
+using Assets.Scripts.Entities;
 
 namespace Assets.Scripts.Combat.Damage
 {

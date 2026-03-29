@@ -3,6 +3,7 @@ using UnityEngine;
 using Assets.Scripts.Stages.Lanes;
 using Assets.Scripts.Combat.Rolls.RollSpecs;
 using Assets.Scripts.Conditions.EntityConditions;
+using Assets.Scripts.Entities.Vehicles;
 
 namespace Assets.Scripts.Stages
 {

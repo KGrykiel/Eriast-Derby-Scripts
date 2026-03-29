@@ -1,11 +1,13 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
-using Assets.Scripts.Entities.Vehicle;
+using Assets.Scripts.Entities.Vehicles;
 using Assets.Scripts.Combat.Rolls;
 using Assets.Scripts.Managers;
 using Assets.Scripts.Managers.PlayerUI;
 using Assets.Scripts.Combat.Rolls.RollSpecs;
+using Assets.Scripts.Entities;
+using Assets.Scripts.Entities.Vehicles.VehicleComponents;
 
 /// <summary>Orchestrates player input for whichever vehicle is currently taking its turn.</summary>
 public class PlayerController : MonoBehaviour

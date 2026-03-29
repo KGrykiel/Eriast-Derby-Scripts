@@ -2,6 +2,7 @@
 using UnityEngine;
 using UnityEngine.UI;
 using Assets.Scripts.Conditions.EntityConditions;
+using Assets.Scripts.Entities;
 
 namespace Assets.Scripts.UI.Components
 {

@@ -1,4 +1,7 @@
-﻿namespace Assets.Scripts.Combat.Damage
+﻿using Assets.Scripts.Entities;
+using Assets.Scripts.Entities.Vehicles.VehicleComponents.ComponentTypes;
+
+namespace Assets.Scripts.Combat.Damage
 {
     /// <summary>
     /// Context object containing information needed to resolve damage formulas.

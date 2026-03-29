@@ -7,7 +7,8 @@ using Assets.Scripts.Tests.Helpers;
 using Assets.Scripts.Combat.Rolls;
 using Assets.Scripts.Combat.Rolls.Advantage;
 using Assets.Scripts.Combat.Rolls.RollSpecs.SpecTypes;
-using Assets.Scripts.Entities.Vehicle;
+using Assets.Scripts.Entities.Vehicles;
+using Assets.Scripts.Entities.Vehicles.VehicleComponents.ComponentTypes;
 
 namespace Assets.Scripts.Tests.PlayMode
 {

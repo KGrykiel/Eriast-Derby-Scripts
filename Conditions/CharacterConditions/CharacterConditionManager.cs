@@ -2,7 +2,8 @@ using System.Linq;
 using Assets.Scripts.Characters;
 using Assets.Scripts.Combat;
 using Assets.Scripts.Combat.Rolls.Advantage;
-using Assets.Scripts.Entities.Vehicle;
+using Assets.Scripts.Entities;
+using Assets.Scripts.Entities.Vehicles;
 using UnityEngine;
 
 namespace Assets.Scripts.Conditions.CharacterConditions

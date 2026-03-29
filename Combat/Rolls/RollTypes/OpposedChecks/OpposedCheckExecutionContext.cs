@@ -1,4 +1,5 @@
 ﻿using Assets.Scripts.Combat.Rolls.RollSpecs.SpecTypes;
+using Assets.Scripts.Entities.Vehicles;
 
 namespace Assets.Scripts.Combat.Rolls.RollTypes.OpposedChecks
 {

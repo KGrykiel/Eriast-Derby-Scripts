@@ -1,7 +1,7 @@
 ﻿using UnityEngine;
 using Assets.Scripts.Characters;
 using Assets.Scripts.Combat.Rolls.Advantage;
-using Assets.Scripts.Entities.Vehicle;
+using Assets.Scripts.Entities.Vehicles;
 
 namespace Assets.Scripts.Combat.Rolls.RollSpecs.SpecTypes
 {

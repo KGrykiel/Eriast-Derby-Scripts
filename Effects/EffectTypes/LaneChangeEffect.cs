@@ -1,4 +1,6 @@
-﻿using Assets.Scripts.Stages.Lanes;
+﻿using Assets.Scripts.Entities;
+using Assets.Scripts.Entities.Vehicles;
+using Assets.Scripts.Stages.Lanes;
 using SerializeReferenceEditor;
 using UnityEngine;
 

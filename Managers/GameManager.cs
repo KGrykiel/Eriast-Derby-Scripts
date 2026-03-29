@@ -7,6 +7,7 @@ using Assets.Scripts.Managers.Logging;
 using Assets.Scripts.Managers.TurnPhases;
 using Assets.Scripts.Logging;
 using Assets.Scripts.Stages;
+using Assets.Scripts.Entities.Vehicles;
 
 [RequireComponent(typeof(PlayerController))]
 

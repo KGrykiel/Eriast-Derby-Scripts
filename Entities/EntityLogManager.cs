@@ -1,6 +1,7 @@
 ﻿using Assets.Scripts.Logging;
-using Assets.Scripts.Entities.Vehicle.VehicleComponents.ComponentTypes;
+using Assets.Scripts.Entities.Vehicles.VehicleComponents.ComponentTypes;
 using EventType = Assets.Scripts.Logging.EventType;
+using Assets.Scripts.Entities.Vehicles.VehicleComponents;
 
 namespace Assets.Scripts.Entities
 {

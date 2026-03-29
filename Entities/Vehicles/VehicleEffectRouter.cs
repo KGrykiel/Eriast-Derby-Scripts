@@ -1,15 +1,17 @@
 ﻿using Assets.Scripts.Effects;
 using Assets.Scripts.Effects.EffectTypes;
+using Assets.Scripts.Entities.Vehicles.VehicleComponents;
+using Assets.Scripts.Entities.Vehicles.VehicleComponents.ComponentTypes;
 using System.Linq;
 
-namespace Assets.Scripts.Entities.Vehicle
+namespace Assets.Scripts.Entities.Vehicles
 {
     /// <summary>Routes effects and modifiers to the correct component based on type/attribute.</summary>
     public class VehicleEffectRouter
     {
-        private readonly global::Vehicle vehicle;
+        private readonly Vehicle vehicle;
 
-        public VehicleEffectRouter(global::Vehicle vehicle)
+        public VehicleEffectRouter(Vehicle vehicle)
         {
             this.vehicle = vehicle;
         }

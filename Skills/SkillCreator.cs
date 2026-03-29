@@ -5,7 +5,7 @@ using Assets.Scripts.Combat.Damage;
 using Assets.Scripts.Combat.Restoration;
 using Assets.Scripts.Combat.Damage.FormulaProviders.SpecificProviders;
 using System.Collections.Generic;
-using Assets.Scripts.Entities.Vehicle;
+using Assets.Scripts.Entities.Vehicles;
 using Assets.Scripts.Characters;
 using Assets.Scripts.Conditions;
 using Assets.Scripts.Conditions.EntityConditions;

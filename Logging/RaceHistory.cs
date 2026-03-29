@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using Assets.Scripts.Stages;
+using Assets.Scripts.Entities.Vehicles;
 
 namespace Assets.Scripts.Logging
 {

@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using Assets.Scripts.Entities;
 using Assets.Scripts.Modifiers.DynamicModifiers;
 
 namespace Assets.Scripts.Core

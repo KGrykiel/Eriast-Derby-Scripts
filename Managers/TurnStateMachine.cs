@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using UnityEngine;
 using Assets.Scripts.Managers.TurnPhases;
+using Assets.Scripts.Entities.Vehicles;
 
 namespace Assets.Scripts.Managers
 {

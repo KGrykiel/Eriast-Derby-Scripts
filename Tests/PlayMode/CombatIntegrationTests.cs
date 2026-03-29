@@ -19,6 +19,9 @@ using Assets.Scripts.Conditions.EntityConditions;
 using Assets.Scripts.Combat.Damage.FormulaProviders.SpecificProviders;
 using Assets.Scripts.Effects;
 using Assets.Scripts.Effects.EffectTypes;
+using Assets.Scripts.Entities.Vehicles;
+using Assets.Scripts.Entities.Vehicles.VehicleComponents.ComponentTypes;
+using Assets.Scripts.Entities.Vehicles.VehicleComponents;
 
 namespace Assets.Scripts.Tests.PlayMode
 {
@@ -385,7 +388,7 @@ namespace Assets.Scripts.Tests.PlayMode
                 .WithChassis()
                 .WithPowerCore()
                 .Build();
-            var driverSeat = new Assets.Scripts.Entities.Vehicle.VehicleSeat
+            var driverSeat = new VehicleSeat
             {
                 seatName = "Driver",
                 controlledComponents = new System.Collections.Generic.List<VehicleComponent> { playerVehicle.chassis }

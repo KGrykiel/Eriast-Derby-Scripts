@@ -3,10 +3,11 @@ using System.Collections.Generic;
 using System.Linq;
 using Assets.Scripts.Combat.Rolls;
 using Assets.Scripts.Combat.Restoration;
-using Assets.Scripts.Entities.Vehicle;
 using EventType = Assets.Scripts.Logging.EventType;
 using Assets.Scripts.Logging;
 using Assets.Scripts.Core;
+using Assets.Scripts.Entities.Vehicles;
+using Assets.Scripts.Entities;
 
 namespace Assets.Scripts.Combat.Logging
 {

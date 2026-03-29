@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿using Assets.Scripts.Entities.Vehicles;
+using UnityEngine;
 
 namespace Assets.Scripts.Events.EventCard
 {

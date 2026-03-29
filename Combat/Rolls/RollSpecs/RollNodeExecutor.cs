@@ -1,12 +1,16 @@
 ﻿using System.Collections.Generic;
 using Assets.Scripts.Effects;
 using Assets.Scripts.Conditions;
+using Assets.Scripts.Stages.Lanes;
 using UnityEngine;
 using Assets.Scripts.Combat.Rolls.RollTypes.Attacks;
 using Assets.Scripts.Combat.Rolls.RollTypes.OpposedChecks;
 using Assets.Scripts.Combat.Rolls.RollTypes.Saves;
 using Assets.Scripts.Combat.Rolls.RollTypes.SkillChecks;
 using Assets.Scripts.Combat.Rolls.RollSpecs.SpecTypes;
+using Assets.Scripts.Entities.Vehicles;
+using Assets.Scripts.Entities;
+using Assets.Scripts.Entities.Vehicles.VehicleComponents;
 
 namespace Assets.Scripts.Combat.Rolls.RollSpecs
 {
@@ -214,6 +218,43 @@ namespace Assets.Scripts.Combat.Rolls.RollSpecs
                     Vehicle targetVehicle = EntityHelpers.GetParentVehicle(ctx.TargetEntity);
                     Vehicle routeVehicle = targetVehicle != null ? targetVehicle : ctx.SourceVehicle;
                     targets.Add(routeVehicle.RouteEffectTarget(invocation.effect));
+                    break;
+
+                case EffectTarget.AllComponentsOnTarget:
+                    Vehicle allCompVehicle = EntityHelpers.GetParentVehicle(ctx.TargetEntity);
+                    if (allCompVehicle != null)
+                    {
+                        foreach (var component in allCompVehicle.AllComponents)
+                            targets.Add(component);
+                    }
+                    else
+                        Debug.LogWarning("[RollNodeExecutor] AllComponentsOnTarget: no target vehicle in context.");
+                    break;
+
+                case EffectTarget.RandomComponentOnTarget:
+                    Vehicle randomCompVehicle = EntityHelpers.GetParentVehicle(ctx.TargetEntity);
+                    if (randomCompVehicle != null)
+                    {
+                        var components = randomCompVehicle.AllComponents;
+                        if (components.Count > 0)
+                            targets.Add(components[Random.Range(0, components.Count)]);
+                    }
+                    else
+                        Debug.LogWarning("[RollNodeExecutor] RandomComponentOnTarget: no target vehicle in context.");
+                    break;
+
+                case EffectTarget.SameLaneAsTarget:
+                    Vehicle sameLaneVehicle = EntityHelpers.GetParentVehicle(ctx.TargetEntity);
+                    StageLane sameLane = sameLaneVehicle?.currentLane;
+                    if (sameLane != null)
+                    {
+                        foreach (var laneVehicle in sameLane.vehiclesInLane)
+                            targets.Add(laneVehicle.RouteEffectTarget(invocation.effect));
+                    }
+                    else if (sameLaneVehicle != null)
+                        targets.Add(sameLaneVehicle.RouteEffectTarget(invocation.effect));
+                    else
+                        Debug.LogWarning("[RollNodeExecutor] SameLaneAsTarget: no target vehicle in context.");
                     break;
             }
 

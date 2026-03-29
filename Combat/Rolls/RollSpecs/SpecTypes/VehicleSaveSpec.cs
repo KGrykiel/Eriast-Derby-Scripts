@@ -1,6 +1,6 @@
 ﻿using UnityEngine;
 using SerializeReferenceEditor;
-using Assets.Scripts.Entities.Vehicle;
+using Assets.Scripts.Entities.Vehicles;
 
 namespace Assets.Scripts.Combat.Rolls.RollSpecs.SpecTypes
 {

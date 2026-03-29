@@ -3,6 +3,7 @@ using Assets.Scripts.Combat.Damage;
 using SerializeReferenceEditor;
 using Assets.Scripts.Combat.Damage.FormulaProviders;
 using Assets.Scripts.Combat.Damage.FormulaProviders.SpecificProviders;
+using Assets.Scripts.Entities;
 
 namespace Assets.Scripts.Effects.EffectTypes
 {

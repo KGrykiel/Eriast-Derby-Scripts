@@ -38,5 +38,16 @@ namespace Assets.Scripts.Effects
 
         [Tooltip("Target vehicle (routes based on effect type, ignores manual component selection)")]
         TargetVehicle,
+
+        // AoE — Intra-vehicle
+        [Tooltip("All components on the target vehicle")]
+        AllComponentsOnTarget,
+
+        [Tooltip("One random component on the target vehicle")]
+        RandomComponentOnTarget,
+
+        // AoE — Inter-vehicle (lane-scoped; lane is the tactical position unit, not a physical corridor)
+        [Tooltip("All vehicles in the same lane as the selected target (routes per vehicle, same as TargetVehicle × N)")]
+        SameLaneAsTarget,
     }
 }

@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 
-namespace Assets.Scripts.Entities.Vehicle
+namespace Assets.Scripts.Entities.Vehicles
 {
     /// <summary>
     /// Bonuses/Penalties for different vehicle sizes to level the playing field and keep realism.

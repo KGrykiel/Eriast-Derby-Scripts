@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Assets.Scripts.Logging;
 using Assets.Scripts.Conditions.EntityConditions;
+using Assets.Scripts.Entities.Vehicles;
 
 public class FocusPanel : MonoBehaviour
 {

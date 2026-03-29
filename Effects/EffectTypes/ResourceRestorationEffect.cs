@@ -1,4 +1,5 @@
 using Assets.Scripts.Combat.Restoration;
+using Assets.Scripts.Entities;
 using SerializeReferenceEditor;
 using UnityEngine;
 

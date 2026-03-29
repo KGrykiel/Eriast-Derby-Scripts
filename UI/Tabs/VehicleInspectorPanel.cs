@@ -5,7 +5,8 @@ using System.Collections.Generic;
 using System.Linq;
 using Assets.Scripts.Logging;
 using Assets.Scripts.UI.Components;
-using Assets.Scripts.Entities.Vehicle;
+using Assets.Scripts.Entities.Vehicles;
+using Assets.Scripts.Entities.Vehicles.VehicleComponents;
 
 public class VehicleInspectorPanel : MonoBehaviour
 {

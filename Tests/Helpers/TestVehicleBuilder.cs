@@ -1,6 +1,8 @@
 ﻿using System.Collections.Generic;
 using UnityEngine;
-using Assets.Scripts.Entities.Vehicle;
+using Assets.Scripts.Entities.Vehicles;
+using Assets.Scripts.Entities.Vehicles.VehicleComponents.ComponentTypes;
+using Assets.Scripts.Entities.Vehicles.VehicleComponents;
 
 namespace Assets.Scripts.Tests.Helpers
 {
@@ -88,6 +90,9 @@ namespace Assets.Scripts.Tests.Helpers
             // components were assigned (Awake fires on AddComponent, not Build)
             foreach (var comp in vehicle.AllComponents)
                 comp.Initialize(vehicle);
+
+            foreach (var seat in vehicle.seats)
+                seat.ParentVehicle = vehicle;
 
             return vehicle;
         }

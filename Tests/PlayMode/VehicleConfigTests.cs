@@ -3,6 +3,7 @@ using NUnit.Framework;
 using UnityEngine;
 using UnityEngine.TestTools;
 using Assets.Scripts.Tests.Helpers;
+using Assets.Scripts.Entities.Vehicles;
 
 namespace Assets.Scripts.Tests.PlayMode
 {

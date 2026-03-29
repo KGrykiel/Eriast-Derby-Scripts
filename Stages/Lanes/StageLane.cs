@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using UnityEngine;
 using Assets.Scripts.Conditions.EntityConditions;
+using Assets.Scripts.Entities.Vehicles;
 
 namespace Assets.Scripts.Stages.Lanes
 {

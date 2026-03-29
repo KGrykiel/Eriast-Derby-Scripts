@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using Assets.Scripts.Entities.Vehicles;
 using Assets.Scripts.Stages;
 
 namespace Assets.Scripts.Logging

@@ -3,6 +3,7 @@ using UnityEngine;
 using Assets.Scripts.Managers;
 using Assets.Scripts.Stages;
 using Assets.Scripts.Conditions;
+using Assets.Scripts.Entities.Vehicles;
 
 /// <summary>Stateless utilities for vehicle operations during turns (movement, power, targeting).</summary>
 public class TurnService

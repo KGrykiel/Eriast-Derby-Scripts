@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using SerializeReferenceEditor;
 using Assets.Scripts.Combat.Rolls.RollSpecs;
+using Assets.Scripts.Entities.Vehicles;
 
 namespace Assets.Scripts.Events.EventCard.EventCardTypes
 {

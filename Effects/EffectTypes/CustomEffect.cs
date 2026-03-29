@@ -1,4 +1,5 @@
 using Assets.Scripts.Effects.EffectTypes.CustomEffectCommands;
+using Assets.Scripts.Entities;
 using SerializeReferenceEditor;
 using System;
 using UnityEngine;

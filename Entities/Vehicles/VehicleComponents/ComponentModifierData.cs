@@ -2,7 +2,7 @@
 using Assets.Scripts.Combat.Rolls.Advantage;
 using UnityEngine;
 
-namespace Assets.Scripts.Entities.Vehicle.VehicleComponents
+namespace Assets.Scripts.Entities.Vehicles.VehicleComponents
 {
     /// <summary>
     /// Cross-component modifier data (e.g. Advanced Armor gives +2 AC to Chassis).

@@ -3,7 +3,7 @@
 //using UnityEngine;
 //using Assets.Scripts.Effects;
 //using Assets.Scripts.Combat.SkillChecks;
-//using Assets.Scripts.Entities.Vehicle.VehicleComponents;
+//using Assets.Scripts.Entities.Vehicles.VehicleComponents;
 
 //namespace Assets.Scripts.Events.EventCard.EventCardTypes
 //{

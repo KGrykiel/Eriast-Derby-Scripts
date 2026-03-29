@@ -1,4 +1,6 @@
-﻿using System.Collections.Generic;
+﻿using Assets.Scripts.Entities;
+using Assets.Scripts.Entities.Vehicles;
+using System.Collections.Generic;
 
 namespace Assets.Scripts.Modifiers.DynamicModifiers
 {

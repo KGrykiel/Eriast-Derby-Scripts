@@ -1,4 +1,5 @@
 ﻿using System;
+using Assets.Scripts.Entities.Vehicles;
 using SerializeReferenceEditor;
 using UnityEngine;
 

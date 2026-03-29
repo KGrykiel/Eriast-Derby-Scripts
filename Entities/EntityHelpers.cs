@@ -1,4 +1,8 @@
-﻿public static class EntityHelpers
+﻿using Assets.Scripts.Entities;
+using Assets.Scripts.Entities.Vehicles;
+using Assets.Scripts.Entities.Vehicles.VehicleComponents;
+
+public static class EntityHelpers
 {
     /// <summary>Returns null if entity is not a VehicleComponent.</summary>
     public static Vehicle GetParentVehicle(Entity entity)

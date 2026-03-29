@@ -1,19 +1,20 @@
 ﻿using System.Collections.Generic;
 using UnityEngine;
-using Assets.Scripts.Entities.Vehicle.VehicleComponents.ComponentTypes;
+using Assets.Scripts.Entities.Vehicles.VehicleComponents.ComponentTypes;
+using Assets.Scripts.Entities.Vehicles.VehicleComponents;
 
-namespace Assets.Scripts.Entities.Vehicle
+namespace Assets.Scripts.Entities.Vehicles
 {
     /// <summary>Component discovery, initialization, accessibility, and cross-component modifiers.</summary>
     public class VehicleComponentCoordinator
     {
-        private readonly global::Vehicle vehicle;
+        private readonly Vehicle vehicle;
         private readonly List<VehicleComponent> _components = new();
 
         public ChassisComponent Chassis { get; private set; }
         public PowerCoreComponent PowerCore { get; private set; }
 
-        public VehicleComponentCoordinator(global::Vehicle vehicle)
+        public VehicleComponentCoordinator(Vehicle vehicle)
         {
             this.vehicle = vehicle;
         }
