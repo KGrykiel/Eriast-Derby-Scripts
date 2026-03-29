@@ -187,16 +187,8 @@ public class EventFeed : MonoBehaviour
         return evt.metadata.ContainsKey("rollBreakdown") ||
                evt.metadata.ContainsKey("damageBreakdown") ||
                evt.metadata.ContainsKey("restorationBreakdown") ||
-               evt.metadata.ContainsKey("effectBreakdown") ||        // Status effects
-               evt.metadata.ContainsKey("dcBreakdown") ||            // Saving throw DC
-               evt.metadata.ContainsKey("saveModifiersBreakdown") || // Save modifiers
-               evt.metadata.ContainsKey("componentRollBreakdown") ||
-               evt.metadata.ContainsKey("chassisRollBreakdown") ||
-               evt.metadata.ContainsKey("defenseBreakdown") ||       // AC breakdown
-               evt.metadata.ContainsKey("baseRoll") ||
-               evt.metadata.ContainsKey("modifierCount") ||
-               evt.metadata.ContainsKey("componentCount") ||
-               evt.metadata.ContainsKey("totalDamage") ||
-               evt.metadata.ContainsKey("actualChange");             // Restoration events
+               evt.metadata.ContainsKey("effectBreakdown") ||
+               evt.metadata.ContainsKey("dcBreakdown") ||
+               evt.metadata.ContainsKey("defenseBreakdown");
     }
 }

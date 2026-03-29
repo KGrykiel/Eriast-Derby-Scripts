@@ -20,8 +20,7 @@ namespace Assets.Scripts.Stages
                 $"{vehicle.vehicleName} triggered event card: {cardName} in {stage.stageName}",
                 stage,
                 vehicle
-            ).WithMetadata("eventCardName", cardName)
-             .WithMetadata("stageName", stage.stageName);
+            );
         }
 
         public static void LogStageExit(this Stage stage, Vehicle vehicle, int vehicleCount)
@@ -34,8 +33,7 @@ namespace Assets.Scripts.Stages
                 $"{vehicle.vehicleName} left {stage.stageName}",
                 stage,
                 vehicle
-            ).WithMetadata("stageName", stage.stageName)
-             .WithMetadata("vehicleCount", vehicleCount);
+            );
         }
 
         public static void LogLaneTurnEffect(
@@ -58,9 +56,7 @@ namespace Assets.Scripts.Stages
                 narrative,
                 stage,
                 vehicle
-            ).WithMetadata("laneName", lane.laneName)
-             .WithMetadata("effectName", effect.effectName)
-             .WithMetadata("success", success);
+            );
         }
     }
 }

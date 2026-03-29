@@ -24,7 +24,7 @@ namespace Assets.Scripts.Effects.EffectTypes
                 return;
             }
 
-            target.ApplyCondition(condition, context.SourceEntity);
+            target.ApplyCondition(condition, context.SourceActor?.GetEntity());
         }
     }
 }

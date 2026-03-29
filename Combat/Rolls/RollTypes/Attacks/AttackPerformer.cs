@@ -21,11 +21,11 @@ namespace Assets.Scripts.Combat.Rolls.RollTypes.Attacks
             if (ctx.Attacker.GetSeat() != null)
                 ctx.Attacker.GetSeat().NotifyConditionTrigger(RemovalTrigger.OnD20Roll);
 
-            CombatEventBus.EmitAttackRoll(
+            CombatEventBus.Emit(new AttackRollEvent(
                 result,
                 ctx.Attacker,
                 ctx.Target,
-                ctx.CausalSource);
+                ctx.CausalSource));
 
             if (attackerEntity != null)
                 attackerEntity.NotifyConditionTrigger(RemovalTrigger.OnAttackMade);

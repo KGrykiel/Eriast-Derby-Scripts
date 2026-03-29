@@ -14,43 +14,44 @@ namespace Assets.Scripts.Combat
     /// </summary>
     public abstract class CombatEvent
     {
-        public Entity Source { get; protected set; }
-        public Entity Target { get; protected set; }
         public string CausalSource { get; protected set; }
     }
     
     public class DamageEvent : CombatEvent
     {
         public DamageResult Result { get; set; }
-        public DamageSource SourceType { get; set; }
-        
+        public RollActor Actor { get; set; }
+        public Entity Target { get; set; }
+
         public DamageEvent(
             DamageResult result,
-            Entity source,
+            RollActor actor,
             Entity target,
-            string causalSource,
-            DamageSource sourceType = DamageSource.Ability)
+            string causalSource)
         {
             Result = result;
-            Source = source;
+            Actor = actor;
             Target = target;
             CausalSource = causalSource;
-            SourceType = sourceType;
         }
     }
 
     public class RestorationEvent : CombatEvent
     {
         public RestorationResult Result { get; set; }
-        
+        public RollActor Actor { get; set; }
+        public Entity Target { get; set; }
+
         public RestorationEvent(
             RestorationResult result,
-            Entity source,
-            Entity target)
+            RollActor actor,
+            Entity target,
+            string causalSource)
         {
             Result = result;
-            Source = source;
+            Actor = actor;
             Target = target;
+            CausalSource = causalSource;
         }
     }
     
@@ -59,6 +60,7 @@ namespace Assets.Scripts.Combat
     {
         public D20RollOutcome Roll { get; set; }
         public RollActor Actor { get; set; }
+        public Entity Target { get; set; }
 
         public AttackRollEvent(
             D20RollOutcome roll,
@@ -68,7 +70,6 @@ namespace Assets.Scripts.Combat
         {
             Roll = roll;
             Actor = actor;
-            Source = actor?.GetEntity();
             Target = target;
             CausalSource = causalSource;
         }
@@ -79,6 +80,7 @@ namespace Assets.Scripts.Combat
         public D20RollOutcome Roll { get; set; }
         public RollActor Defender { get; set; }
         public string CheckName { get; set; }
+        public Entity Source { get; set; }
 
         public SavingThrowEvent(
             D20RollOutcome roll,
@@ -90,7 +92,6 @@ namespace Assets.Scripts.Combat
             Roll = roll;
             Defender = defender;
             Source = source;
-            Target = defender?.GetEntity();
             CausalSource = causalSource;
             CheckName = checkName;
         }
@@ -110,8 +111,6 @@ namespace Assets.Scripts.Combat
         {
             Roll = roll;
             Actor = actor;
-            Source = actor?.GetEntity();
-            Target = null; // Skill checks don't have a target
             CausalSource = causalSource;
             CheckName = checkName;
         }
@@ -139,8 +138,6 @@ namespace Assets.Scripts.Combat
             DefenderRoll = defenderRoll;
             AttackerActor = attackerActor;
             DefenderActor = defenderActor;
-            Source = attackerActor?.GetEntity();
-            Target = defenderActor?.GetEntity();
             CausalSource = causalSource;
             AttackerCheckName = attackerCheckName;
             DefenderCheckName = defenderCheckName;
@@ -151,24 +148,19 @@ namespace Assets.Scripts.Combat
     public class EntityConditionEvent : CombatEvent
     {
         public AppliedEntityCondition Applied { get; set; }
-        public bool WasReplacement { get; set; }
-
-        /// <summary>True if requirements not met or better effect exists.</summary>
-        public bool WasBlocked { get; set; }
+        public Entity Source { get; set; }
+        public Entity Target { get; set; }
 
         public EntityConditionEvent(
             AppliedEntityCondition applied,
             Entity source,
             Entity target,
-            string causalSource,
-            bool wasReplacement = false)
+            string causalSource)
         {
             Applied = applied;
             Source = source;
             Target = target;
             CausalSource = causalSource;
-            WasReplacement = wasReplacement;
-            WasBlocked = applied == null;
         }
     }
 
@@ -177,36 +169,36 @@ namespace Assets.Scripts.Combat
     public class EntityConditionExpiredEvent : CombatEvent
     {
         public AppliedEntityCondition Expired { get; set; }
+        public Entity Target { get; set; }
 
         public EntityConditionExpiredEvent(AppliedEntityCondition expired, Entity target)
         {
             Expired = expired;
             Target = target;
-            Source = null;
         }
     }
 
     public class EntityConditionRefreshedEvent : CombatEvent
     {
         public AppliedEntityCondition Refreshed { get; set; }
+        public Entity Target { get; set; }
 
         public EntityConditionRefreshedEvent(AppliedEntityCondition refreshed, Entity target)
         {
             Refreshed = refreshed;
             Target = target;
-            Source = null;
         }
     }
 
     public class EntityConditionIgnoredEvent : CombatEvent
     {
         public AppliedEntityCondition Existing { get; set; }
+        public Entity Target { get; set; }
 
         public EntityConditionIgnoredEvent(AppliedEntityCondition existing, Entity target)
         {
             Existing = existing;
             Target = target;
-            Source = null;
         }
     }
 
@@ -214,25 +206,25 @@ namespace Assets.Scripts.Combat
     {
         public AppliedEntityCondition NewEffect { get; set; }
         public int OldDuration { get; set; }
+        public Entity Target { get; set; }
 
         public EntityConditionReplacedEvent(AppliedEntityCondition newEffect, Entity target, int oldDuration)
         {
             NewEffect = newEffect;
             Target = target;
             OldDuration = oldDuration;
-            Source = null;
         }
     }
 
     public class EntityConditionKeptStrongerEvent : CombatEvent
     {
         public AppliedEntityCondition Kept { get; set; }
+        public Entity Target { get; set; }
 
         public EntityConditionKeptStrongerEvent(AppliedEntityCondition kept, Entity target)
         {
             Kept = kept;
             Target = target;
-            Source = null;
         }
     }
 
@@ -240,13 +232,13 @@ namespace Assets.Scripts.Combat
     {
         public EntityCondition Template { get; set; }
         public int MaxStacks { get; set; }
+        public Entity Target { get; set; }
 
         public EntityConditionStackLimitEvent(EntityCondition template, Entity target, int maxStacks)
         {
             Template = template;
             Target = target;
             MaxStacks = maxStacks;
-            Source = null;
         }
     }
 
@@ -254,13 +246,13 @@ namespace Assets.Scripts.Combat
     {
         public AppliedEntityCondition Removed { get; set; }
         public RemovalTrigger Trigger { get; set; }
+        public Entity Target { get; set; }
 
         public EntityConditionRemovedByTriggerEvent(AppliedEntityCondition removed, Entity target, RemovalTrigger trigger)
         {
             Removed = removed;
             Target = target;
             Trigger = trigger;
-            Source = null;
         }
     }
 
@@ -270,6 +262,7 @@ namespace Assets.Scripts.Combat
     {
         public AppliedCharacterCondition Applied { get; set; }
         public VehicleSeat TargetSeat { get; set; }
+        public Entity Source { get; set; }
 
         public CharacterConditionEvent(
             AppliedCharacterCondition applied,
@@ -279,7 +272,6 @@ namespace Assets.Scripts.Combat
         {
             Applied = applied;
             Source = source;
-            Target = null;
             TargetSeat = targetSeat;
             CausalSource = causalSource;
         }
@@ -294,8 +286,6 @@ namespace Assets.Scripts.Combat
         {
             Expired = expired;
             TargetSeat = targetSeat;
-            Source = null;
-            Target = null;
         }
     }
 
@@ -308,8 +298,6 @@ namespace Assets.Scripts.Combat
         {
             Refreshed = refreshed;
             TargetSeat = targetSeat;
-            Source = null;
-            Target = null;
         }
     }
 
@@ -322,8 +310,6 @@ namespace Assets.Scripts.Combat
         {
             Existing = existing;
             TargetSeat = targetSeat;
-            Source = null;
-            Target = null;
         }
     }
 
@@ -338,8 +324,6 @@ namespace Assets.Scripts.Combat
             NewCondition = newCondition;
             TargetSeat = targetSeat;
             OldDuration = oldDuration;
-            Source = null;
-            Target = null;
         }
     }
 
@@ -352,8 +336,6 @@ namespace Assets.Scripts.Combat
         {
             Kept = kept;
             TargetSeat = targetSeat;
-            Source = null;
-            Target = null;
         }
     }
 
@@ -368,8 +350,6 @@ namespace Assets.Scripts.Combat
             Template = template;
             TargetSeat = targetSeat;
             MaxStacks = maxStacks;
-            Source = null;
-            Target = null;
         }
     }
 
@@ -384,8 +364,6 @@ namespace Assets.Scripts.Combat
             Removed = removed;
             TargetSeat = targetSeat;
             Trigger = trigger;
-            Source = null;
-            Target = null;
         }
     }
 }

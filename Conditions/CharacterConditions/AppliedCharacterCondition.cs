@@ -1,5 +1,3 @@
-using Assets.Scripts.Characters;
-
 namespace Assets.Scripts.Conditions.CharacterConditions
 {
     /// <summary>

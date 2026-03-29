@@ -23,12 +23,12 @@ namespace Assets.Scripts.Combat.Rolls.RollTypes.Saves
 
             // Step 2: Emit event automatically
             RollActor defender = ctx.Routing.Actor ?? new ComponentActor(ctx.Vehicle.chassis);
-            CombatEventBus.EmitSavingThrow(
+            CombatEventBus.Emit(new SavingThrowEvent(
                 roll,
                 ctx.AttackerEntity,
                 defender,
                 ctx.CausalSource,
-                ctx.Spec.DisplayName);
+                ctx.Spec.DisplayName));
 
             // Step 3: Notify d20 roll trigger
             if (ctx.Routing.CanAttempt)
@@ -56,12 +56,12 @@ namespace Assets.Scripts.Combat.Rolls.RollTypes.Saves
             var gathered = RollGatherer.ForSave(spec, defender);
             var roll = D20Calculator.Roll(gathered, spec.dc);
 
-            CombatEventBus.EmitSavingThrow(
+            CombatEventBus.Emit(new SavingThrowEvent(
                 roll,
                 attackerEntity,
                 defender,
                 causalSource,
-                spec.DisplayName);
+                spec.DisplayName));
 
             if (entity != null)
                 entity.NotifyConditionTrigger(RemovalTrigger.OnD20Roll);

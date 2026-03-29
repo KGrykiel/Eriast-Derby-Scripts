@@ -2,6 +2,7 @@
 using UnityEngine.EventSystems;
 using TMPro;
 using Assets.Scripts.Combat.Logging;
+using Assets.Scripts.Core;
 
 namespace Assets.Scripts.UI.Components
 {
@@ -23,8 +24,6 @@ namespace Assets.Scripts.UI.Components
 
         private Entity tooltipEntity;
         private Attribute tooltipAttribute;
-        private int tooltipBaseValue;
-        private int tooltipFinalValue;
         
         void Awake()
         {
@@ -43,8 +42,6 @@ namespace Assets.Scripts.UI.Components
 
             tooltipEntity = entity;
             tooltipAttribute = attribute;
-            tooltipBaseValue = baseValue;
-            tooltipFinalValue = finalValue;
 
             textComponent.text = displayText ?? finalValue.ToString();
 
@@ -106,11 +103,11 @@ namespace Assets.Scripts.UI.Components
         {
             if (tooltipEntity == null) return;
 
+            var (total, baseValue, modifiers) = StatCalculator.GatherAttributeValueWithBreakdown(
+                tooltipEntity, tooltipAttribute);
+
             string tooltipContent = CombatFormatter.FormatStatBreakdown(
-                tooltipEntity,
-                tooltipAttribute,
-                tooltipBaseValue,
-                tooltipFinalValue);
+                tooltipAttribute, baseValue, total, modifiers);
 
             RollTooltip.ShowNow(tooltipContent, rectTransform);
         }

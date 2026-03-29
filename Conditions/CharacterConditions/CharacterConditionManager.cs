@@ -75,28 +75,29 @@ namespace Assets.Scripts.Conditions.CharacterConditions
         protected override void OnNewlyApplied(AppliedCharacterCondition applied, bool wasReplacement)
         {
             Entity sourceEntity = applied.applier as Entity;
-            CombatEventBus.EmitCharacterCondition(applied, sourceEntity, seat, applied.applier?.name);
+            string applierName = applied.applier != null ? applied.applier.name : null;
+            CombatEventBus.Emit(new CharacterConditionEvent(applied, sourceEntity, seat, applierName));
         }
 
         protected override void OnExpired(AppliedCharacterCondition applied)
-            => CombatEventBus.EmitCharacterConditionExpired(applied, seat);
+            => CombatEventBus.Emit(new CharacterConditionExpiredEvent(applied, seat));
 
         protected override void OnRefreshed(AppliedCharacterCondition applied)
-            => CombatEventBus.EmitCharacterConditionRefreshed(applied, seat);
+            => CombatEventBus.Emit(new CharacterConditionRefreshedEvent(applied, seat));
 
         protected override void OnIgnored(AppliedCharacterCondition applied)
-            => CombatEventBus.EmitCharacterConditionIgnored(applied, seat);
+            => CombatEventBus.Emit(new CharacterConditionIgnoredEvent(applied, seat));
 
         protected override void OnStackLimitReached(CharacterCondition template)
-            => CombatEventBus.EmitCharacterConditionStackLimit(template, seat, template.maxStacks);
+            => CombatEventBus.Emit(new CharacterConditionStackLimitEvent(template, seat, template.maxStacks));
 
         protected override void OnReplaced(AppliedCharacterCondition newApplied, int oldDuration)
-            => CombatEventBus.EmitCharacterConditionReplaced(newApplied, seat, oldDuration);
+            => CombatEventBus.Emit(new CharacterConditionReplacedEvent(newApplied, seat, oldDuration));
 
         protected override void OnKeptStronger(AppliedCharacterCondition applied)
-            => CombatEventBus.EmitCharacterConditionKeptStronger(applied, seat);
+            => CombatEventBus.Emit(new CharacterConditionKeptStrongerEvent(applied, seat));
 
         protected override void OnRemovedByTrigger(AppliedCharacterCondition applied, RemovalTrigger trigger)
-            => CombatEventBus.EmitCharacterConditionRemovedByTrigger(applied, seat, trigger);
+            => CombatEventBus.Emit(new CharacterConditionRemovedByTriggerEvent(applied, seat, trigger));
     }
 }

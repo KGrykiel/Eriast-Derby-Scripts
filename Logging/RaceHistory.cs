@@ -1,5 +1,6 @@
 ﻿using UnityEngine;
 using System.Collections.Generic;
+using System.Linq;
 using Assets.Scripts.Stages;
 
 namespace Assets.Scripts.Logging
@@ -13,7 +14,6 @@ namespace Assets.Scripts.Logging
         private GameManager gameManager;
 
         private List<RaceEvent> allEvents = new();
-        private Dictionary<Vehicle, List<RaceEvent>> vehicleEvents = new();
         public int maxStoredEvents = 10000;
 
         public static IReadOnlyList<RaceEvent> AllEvents => Instance.allEvents;
@@ -60,18 +60,6 @@ namespace Assets.Scripts.Logging
 
             allEvents.Add(evt);
 
-            foreach (var vehicle in evt.involvedVehicles)
-            {
-                if (vehicle == null) continue;
-
-                if (!vehicleEvents.ContainsKey(vehicle))
-                {
-                    vehicleEvents[vehicle] = new List<RaceEvent>();
-                }
-
-                vehicleEvents[vehicle].Add(evt);
-            }
-
             // Trim if exceeding max
             if (allEvents.Count > maxStoredEvents)
             {
@@ -90,16 +78,11 @@ namespace Assets.Scripts.Logging
 
 
         public static List<RaceEvent> GetVehicleEvents(Vehicle vehicle)
-        {
-            if (Instance.vehicleEvents.ContainsKey(vehicle))
-                return Instance.vehicleEvents[vehicle];
-            return new List<RaceEvent>();
-        }
+            => Instance.allEvents.Where(e => e.involvedVehicles.Contains(vehicle)).ToList();
 
         public static void ClearHistory()
         {
             Instance.allEvents.Clear();
-            Instance.vehicleEvents.Clear();
         }
     }
 }

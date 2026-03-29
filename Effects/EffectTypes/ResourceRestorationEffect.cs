@@ -19,7 +19,7 @@ namespace Assets.Scripts.Effects.EffectTypes
         public override void Apply(Entity target, EffectContext context)
         {
             int amount = RestorationCalculator.Roll(formula);
-            RestorationApplicator.Apply(formula, amount, target, context.SourceEntity);
+            RestorationApplicator.Apply(formula, amount, target, context.SourceActor, context.CausalSource);
         }
     }
 }

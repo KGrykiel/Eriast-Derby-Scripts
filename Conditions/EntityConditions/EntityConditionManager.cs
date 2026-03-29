@@ -88,12 +88,12 @@ namespace Assets.Scripts.Conditions.EntityConditions
                     case PeriodicDamageEffect dot:
                         var resistance = entity.GetResistance(dot.damageFormula.damageType);
                         var dmgResult = DamageCalculator.Compute(dot.damageFormula, resistance);
-                        DamageApplicator.Apply(dmgResult, entity, causalSource: applied.template.effectName, sourceType: DamageSource.Effect);
+                        DamageApplicator.Apply(dmgResult, entity, causalSource: applied.template.effectName);
                         break;
 
                     case PeriodicRestorationEffect hot:
                         int amount = RestorationCalculator.Roll(hot.formula);
-                        RestorationApplicator.Apply(hot.formula, amount, entity);
+                        RestorationApplicator.Apply(hot.formula, amount, entity, causalSource: applied.template.effectName);
                         break;
                 }
             }
@@ -105,28 +105,28 @@ namespace Assets.Scripts.Conditions.EntityConditions
         {
             Entity sourceEntity = applied.applier as Entity;
             string applierName = applied.applier != null ? applied.applier.name : null;
-            CombatEventBus.EmitEntityCondition(applied, sourceEntity, entity, applierName, wasReplacement);
+            CombatEventBus.Emit(new EntityConditionEvent(applied, sourceEntity, entity, applierName));
         }
 
         protected override void OnExpired(AppliedEntityCondition applied)
-            => CombatEventBus.EmitEntityConditionExpired(applied, entity);
+            => CombatEventBus.Emit(new EntityConditionExpiredEvent(applied, entity));
 
         protected override void OnRefreshed(AppliedEntityCondition applied)
-            => CombatEventBus.EmitEntityConditionRefreshed(applied, entity);
+            => CombatEventBus.Emit(new EntityConditionRefreshedEvent(applied, entity));
 
         protected override void OnIgnored(AppliedEntityCondition applied)
-            => CombatEventBus.EmitEntityConditionIgnored(applied, entity);
+            => CombatEventBus.Emit(new EntityConditionIgnoredEvent(applied, entity));
 
         protected override void OnStackLimitReached(EntityCondition template)
-            => CombatEventBus.EmitEntityConditionStackLimit(template, entity, template.maxStacks);
+            => CombatEventBus.Emit(new EntityConditionStackLimitEvent(template, entity, template.maxStacks));
 
         protected override void OnReplaced(AppliedEntityCondition newApplied, int oldDuration)
-            => CombatEventBus.EmitEntityConditionReplaced(newApplied, entity, oldDuration);
+            => CombatEventBus.Emit(new EntityConditionReplacedEvent(newApplied, entity, oldDuration));
 
         protected override void OnKeptStronger(AppliedEntityCondition applied)
-            => CombatEventBus.EmitEntityConditionKeptStronger(applied, entity);
+            => CombatEventBus.Emit(new EntityConditionKeptStrongerEvent(applied, entity));
 
         protected override void OnRemovedByTrigger(AppliedEntityCondition applied, RemovalTrigger trigger)
-            => CombatEventBus.EmitEntityConditionRemovedByTrigger(applied, entity, trigger);
+            => CombatEventBus.Emit(new EntityConditionRemovedByTriggerEvent(applied, entity, trigger));
     }
 }

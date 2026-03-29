@@ -10,6 +10,7 @@ namespace Assets.Scripts.Combat.Rolls
     {
         public abstract Entity GetEntity();
         public abstract VehicleSeat GetSeat();
+        public abstract Vehicle GetVehicle();
     }
 
     /// <summary>A vehicle component making the roll (vehicle checks, vehicle saves).</summary>
@@ -21,6 +22,7 @@ namespace Assets.Scripts.Combat.Rolls
 
         public override Entity GetEntity() => Component;
         public override VehicleSeat GetSeat() => null;
+        public override Vehicle GetVehicle() => EntityHelpers.GetParentVehicle(Component);
     }
 
     /// <summary>A character making the roll without a specific tool (character-only checks).</summary>
@@ -32,6 +34,11 @@ namespace Assets.Scripts.Combat.Rolls
 
         public override Entity GetEntity() => null;
         public override VehicleSeat GetSeat() => Seat;
+        public override Vehicle GetVehicle()
+        {
+            if (Seat == null || Seat.controlledComponents.Count == 0) return null;
+            return EntityHelpers.GetParentVehicle(Seat.controlledComponents[0]);
+        }
     }
 
     /// <summary>A character making the roll through a tool component (e.g. gunner via weapon, engineer via power core).</summary>
@@ -44,5 +51,6 @@ namespace Assets.Scripts.Combat.Rolls
 
         public override Entity GetEntity() => Tool;
         public override VehicleSeat GetSeat() => Seat;
+        public override Vehicle GetVehicle() => EntityHelpers.GetParentVehicle(Tool);
     }
 }

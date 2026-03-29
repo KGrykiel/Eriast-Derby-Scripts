@@ -20,29 +20,18 @@ namespace Assets.Scripts.Effects.EffectTypes
 
         public override void Apply(Entity target, EffectContext context)
         {
-            Entity user = context.SourceEntity;
+            Entity user = context.SourceActor?.GetEntity();
             var formulaContext = new FormulaContext(user);
             DamageFormula formula = formulaProvider.GetFormula(formulaContext);
 
             ResistanceLevel resistance = target.GetResistance(formula.damageType);
             DamageResult result = DamageCalculator.Compute(formula, resistance, context.IsCriticalHit);
 
-            DamageSource sourceType;
-            if (context.DamageSourceOverride.HasValue)
-                sourceType = context.DamageSourceOverride.Value;
-            else if (user is WeaponComponent)
-                sourceType = DamageSource.Weapon;
-            else if (user == null)
-                sourceType = DamageSource.Environment;
-            else
-                sourceType = DamageSource.Ability;
-
             DamageApplicator.Apply(
                 result: result,
                 target: target,
-                attacker: user,
-                causalSource: context.CausalSource ?? user?.name,
-                sourceType: sourceType
+                actor: context.SourceActor,
+                causalSource: context.CausalSource ?? user?.name
             );
         }
     }

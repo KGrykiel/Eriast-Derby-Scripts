@@ -18,7 +18,6 @@ namespace Assets.Scripts.Managers.Logging
 
         public void SubscribeToTurnEventBus()
         {
-            TurnEventBus.OnPhaseChanged += LogPhaseChange;
             TurnEventBus.OnRoundStarted += LogRoundStart;
             TurnEventBus.OnRoundEnded += LogRoundEnd;
             TurnEventBus.OnTurnStarted += LogTurnStart;
@@ -45,7 +44,6 @@ namespace Assets.Scripts.Managers.Logging
 
         public void Unsubscribe()
         {
-            TurnEventBus.OnPhaseChanged -= LogPhaseChange;
             TurnEventBus.OnRoundStarted -= LogRoundStart;
             TurnEventBus.OnRoundEnded -= LogRoundEnd;
             TurnEventBus.OnTurnStarted -= LogTurnStart;
@@ -72,19 +70,13 @@ namespace Assets.Scripts.Managers.Logging
         
         // ==================== LIFECYCLE EVENT HANDLERS ====================
         
-        private void LogPhaseChange(TurnPhase oldPhase, TurnPhase newPhase)
-        {
-        }
-        
         private void LogRoundStart(int roundNumber)
         {
-            int vehicleCount = stateMachine?.AllVehicles.Count ?? 0;
             RaceHistory.Log(
                 EventType.System,
                 EventImportance.Medium,
                 $"═══════════ Round {roundNumber} Begins ═══════════"
-            ).WithMetadata("round", roundNumber)
-             .WithMetadata("vehicleCount", vehicleCount);
+            );
         }
         
         private void LogRoundEnd(int roundNumber)
@@ -93,23 +85,21 @@ namespace Assets.Scripts.Managers.Logging
                 EventType.System,
                 EventImportance.Low,
                 $"═══════════ Round {roundNumber} Ends ═══════════"
-            ).WithMetadata("round", roundNumber);
+            );
         }
         
         private void LogTurnStart(Vehicle vehicle)
         {
             int turnIndex = stateMachine?.CurrentTurnIndex ?? 0;
             int totalVehicles = stateMachine?.AllVehicles.Count ?? 0;
-            int round = stateMachine?.CurrentRound ?? 0;
-            
+
             RaceHistory.Log(
                 EventType.System,
                 EventImportance.Low,
                 $"{vehicle.vehicleName}'s turn begins (Turn {turnIndex + 1}/{totalVehicles})",
                 vehicle.currentStage,
                 vehicle
-            ).WithMetadata("turnIndex", turnIndex)
-             .WithMetadata("round", round);
+            );
         }
         
         private void LogTurnEnd(Vehicle vehicle)
@@ -140,7 +130,7 @@ namespace Assets.Scripts.Managers.Logging
                 $"{vehicle.vehicleName} rolled initiative: {initiative}",
                 null,
                 vehicle
-            ).WithMetadata("initiative", initiative);
+            );
         }
         
         private void LogVehicleRemoved(Vehicle vehicle)
@@ -175,7 +165,7 @@ namespace Assets.Scripts.Managers.Logging
                 $"{vehicle.vehicleName} automatically moved (movement not triggered manually)",
                 vehicle.currentStage,
                 vehicle
-            ).WithMetadata("automatic", true);
+            );
         }
         
         private void LogComponentPowerShutdown(Vehicle vehicle, VehicleComponent component, int required, int available)
@@ -186,9 +176,7 @@ namespace Assets.Scripts.Managers.Logging
                 $"{vehicle.vehicleName}: {component.name} shut down (needs {required}, have {available})",
                 vehicle.currentStage,
                 vehicle
-            ).WithMetadata("component", component.name)
-             .WithMetadata("requiredPower", required)
-             .WithMetadata("availablePower", available);
+            );
         }
         
         private void LogMovementBlocked(Vehicle vehicle, string reason)
@@ -199,7 +187,7 @@ namespace Assets.Scripts.Managers.Logging
                 $"{vehicle.vehicleName} cannot move: {reason}",
                 vehicle.currentStage,
                 vehicle
-            ).WithMetadata("reason", reason);
+            );
         }
         
         private void LogMovementExecuted(Vehicle vehicle, int distance, int speed, int oldProgress, int newProgress)
@@ -210,26 +198,20 @@ namespace Assets.Scripts.Managers.Logging
                 $"{vehicle.vehicleName} moved {distance} units (speed {speed})",
                 vehicle.currentStage,
                 vehicle
-            ).WithMetadata("distance", distance)
-             .WithMetadata("speed", speed)
-             .WithMetadata("oldProgress", oldProgress)
-             .WithMetadata("newProgress", newProgress);
+            );
         }
         
         private void LogStageEntered(Vehicle vehicle, Stage newStage, Stage previousStage, int carriedProgress, bool isPlayerChoice)
         {
             EventImportance importance = isPlayerChoice ? EventImportance.Medium : EventImportance.Low;
-            string previousStageName = previousStage != null ? previousStage.stageName : "None";
-            
+
             RaceHistory.Log(
                 EventType.Movement,
                 importance,
                 $"{vehicle.vehicleName} entered {newStage.stageName}",
                 newStage,
                 vehicle
-            ).WithMetadata("previousStage", previousStageName)
-             .WithMetadata("carriedProgress", carriedProgress)
-             .WithMetadata("isPlayerChoice", isPlayerChoice);
+            );
         }
         
         private void LogFinishLineCrossed(Vehicle vehicle, Stage finishStage)
@@ -253,8 +235,7 @@ namespace Assets.Scripts.Managers.Logging
                 $"{vehicle.vehicleName} cannot act: {reason}",
                 vehicle.currentStage,
                 vehicle
-            ).WithMetadata("nonOperational", true)
-             .WithMetadata("reason", reason);
+            );
         }
         
         private void LogPlayerActionPhaseStarted(Vehicle vehicle)
@@ -287,7 +268,7 @@ namespace Assets.Scripts.Managers.Logging
                 $"{vehicle.vehicleName} moved forward (player triggered)",
                 vehicle.currentStage,
                 vehicle
-            ).WithMetadata("manual", true);
+            );
         }
         
         // ==================== INITIALIZATION LOGGING ====================
@@ -339,8 +320,7 @@ namespace Assets.Scripts.Managers.Logging
                     $"{vehicle.vehicleName} crew: {string.Join(", ", crewList)}",
                     stage,
                     vehicle
-                ).WithMetadata("crewCount", crewList.Count)
-                 .WithMetadata("seatCount", vehicle.seats.Count);
+                );
             }
         }
     }

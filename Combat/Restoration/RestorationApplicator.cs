@@ -1,4 +1,5 @@
 ﻿using UnityEngine;
+using Assets.Scripts.Combat.Rolls;
 using Assets.Scripts.Entities.Vehicle.VehicleComponents.ComponentTypes;
 
 namespace Assets.Scripts.Combat.Restoration
@@ -13,7 +14,8 @@ namespace Assets.Scripts.Combat.Restoration
             RestorationFormula formula,
             int rolledAmount,
             Entity target,
-            Entity source = null)
+            RollActor actor = null,
+            string causalSource = null)
         {
             var result = formula.resourceType switch
             {
@@ -22,7 +24,7 @@ namespace Assets.Scripts.Combat.Restoration
                 _ => BuildNoChangeResult(formula, rolledAmount)
             };
 
-            CombatEventBus.EmitRestoration(result, source, target);
+            CombatEventBus.Emit(new RestorationEvent(result, actor, target, causalSource));
             return result;
         }
 

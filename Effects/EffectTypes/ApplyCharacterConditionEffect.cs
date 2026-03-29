@@ -48,7 +48,7 @@ namespace Assets.Scripts.Effects.EffectTypes
                 return;
             }
 
-            seat.ApplyCondition(condition, context.SourceEntity);
+            seat.ApplyCondition(condition, context.SourceActor?.GetEntity());
         }
     }
 }

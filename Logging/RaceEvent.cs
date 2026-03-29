@@ -1,5 +1,4 @@
-﻿using UnityEngine;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using Assets.Scripts.Stages;
 
 namespace Assets.Scripts.Logging
@@ -17,9 +16,7 @@ namespace Assets.Scripts.Logging
         public Stage location;
         public List<Vehicle> involvedVehicles = new();
         public string description;
-        public string shortDescription;
         public Dictionary<string, object> metadata = new();
-        public float timestamp;
 
         public RaceEvent(
             int turn,
@@ -33,9 +30,7 @@ namespace Assets.Scripts.Logging
             type = eventType;
             importance = eventImportance;
             description = desc;
-            shortDescription = desc.Length > 50 ? desc[..47] + "..." : desc;
             location = stage;
-            timestamp = Time.time;
 
             if (vehicles != null && vehicles.Length > 0)
             {

@@ -1,4 +1,4 @@
-﻿using Assets.Scripts.Combat.Damage;
+﻿using Assets.Scripts.Combat.Rolls;
 using Assets.Scripts.Combat.Rolls.RollSpecs;
 
 namespace Assets.Scripts.Effects
@@ -10,19 +10,17 @@ namespace Assets.Scripts.Effects
     public struct EffectContext
     {
         public bool IsCriticalHit;
-        public Entity SourceEntity;
-        public DamageSource? DamageSourceOverride;
+        public RollActor SourceActor;
         public string CausalSource;
 
         public static EffectContext Default => new();
 
         public static EffectContext FromRollContext(RollContext ctx, bool isCriticalHit = false)
         {
-            Entity sourceEntity = ctx.SourceActor?.GetEntity();
             return new EffectContext
             {
                 IsCriticalHit = isCriticalHit,
-                SourceEntity = sourceEntity
+                SourceActor = ctx.SourceActor
             };
         }
     }

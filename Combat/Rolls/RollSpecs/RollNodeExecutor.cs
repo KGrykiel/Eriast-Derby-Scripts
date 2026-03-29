@@ -159,8 +159,7 @@ namespace Assets.Scripts.Combat.Rolls.RollSpecs
 
             if (scopeAsAction)
             {
-                Vehicle targetVehicle = EntityHelpers.GetParentVehicle(ctx.TargetEntity);
-                CombatEventBus.BeginAction(ctx.SourceActor, causalSource, targetVehicle, ctx.SourceVehicle);
+                CombatEventBus.BeginAction();
                 VehicleComponent sourceComponent = ctx.SourceActor?.GetEntity() as VehicleComponent;
                 if (sourceComponent != null)
                     sourceComponent.NotifyConditionTrigger(RemovalTrigger.OnSkillUsed);
@@ -169,6 +168,7 @@ namespace Assets.Scripts.Combat.Rolls.RollSpecs
             try
             {
                 var effectContext = EffectContext.FromRollContext(ctx, isCriticalHit);
+                effectContext.CausalSource = causalSource;
 
                 foreach (var invocation in effects)
                 {

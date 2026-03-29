@@ -7,7 +7,6 @@ using Assets.Scripts.Combat.Rolls;
 using Assets.Scripts.Conditions;
 using Assets.Scripts.Conditions.EntityConditions;
 using Assets.Scripts.Conditions.CharacterConditions;
-using Assets.Scripts.Core;
 
 namespace Assets.Scripts.Combat.Logging
 {
@@ -127,24 +126,24 @@ namespace Assets.Scripts.Combat.Logging
 
         // ==================== DC / DEFENSE FORMATTING ====================
 
-        public static string FormatDCDetailed(int dc, string skillName, string saveTypeName)
+        public static string FormatDCDetailed(int dc, string skillName, string checkTypeName, string checkType = "Save")
         {
             var sb = new StringBuilder();
-            sb.AppendLine($"{saveTypeName} Save DC Breakdown:");
+            sb.AppendLine($"{checkTypeName} {checkType} DC Breakdown:");
             sb.AppendLine($"  Base DC: {dc} ({skillName})");
             sb.AppendLine("  ─────────────");
             sb.AppendLine($"  Total DC: {dc}");
             return sb.ToString();
         }
 
-        public static string FormatDefenseDetailed(int total, float baseValue, List<AttributeModifier> modifiers, string defenseName = "AC")
+        public static string FormatDefenseDetailed(int total, int baseValue, List<AttributeModifier> modifiers, string defenseName = "AC")
         {
             if (modifiers == null)
                 return $"{defenseName}: {total}";
 
             var sb = new StringBuilder();
             sb.AppendLine($"{defenseName} Breakdown:");
-            sb.AppendLine($"  Base: {(int)baseValue}");
+            sb.AppendLine($"  Base: {baseValue}");
 
             foreach (var mod in modifiers)
             {
@@ -252,29 +251,23 @@ namespace Assets.Scripts.Combat.Logging
         // ==================== STAT BREAKDOWN ====================
 
         public static string FormatStatBreakdown(
-            Entity entity,
             Attribute attribute,
             int baseValue,
-            int finalValue)
+            int finalValue,
+            List<AttributeModifier> modifiers)
         {
-            if (entity == null)
-                return $"{attribute}: {finalValue}";
-
-            var (calculatedTotal, returnedBase, modifiers) = StatCalculator.GatherAttributeValueWithBreakdown(
-                entity, attribute);
-
-            if (modifiers.Count == 0)
+            if (modifiers == null || modifiers.Count == 0)
                 return $"{attribute}: {baseValue}\n═══════════════════════════════\nBase value only (no modifiers)";
 
             var sb = new StringBuilder();
             sb.AppendLine($"{attribute}: {finalValue}");
             sb.AppendLine("═══════════════════════════════");
-            sb.AppendLine($"Base:                      {returnedBase}");
+            sb.AppendLine($"Base:                      {baseValue}");
             sb.AppendLine();
 
             AppendModifiersByCategory(sb, modifiers, attribute);
 
-            float totalModifiers = finalValue - returnedBase;
+            float totalModifiers = finalValue - baseValue;
             string totalSign = totalModifiers >= 0 ? "+" : "";
             sb.AppendLine("═══════════════════════════════");
             sb.AppendLine($"Total Modifiers:          {totalSign}{totalModifiers}  {attribute}");

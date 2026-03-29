@@ -36,9 +36,9 @@ namespace Assets.Scripts.Combat.Rolls.RollTypes.OpposedChecks
             RollActor attackerActor = ctx.AttackerRouting.Actor;
             RollActor defenderActor = ctx.DefenderRouting.Actor;
 
-            CombatEventBus.EmitOpposedCheck(
+            CombatEventBus.Emit(new OpposedCheckEvent(
                 result, defenderRoll, attackerActor, defenderActor, ctx.CausalSource,
-                ctx.Spec.attackerSpec.DisplayName, ctx.Spec.defenderSpec.DisplayName);
+                ctx.Spec.attackerSpec.DisplayName, ctx.Spec.defenderSpec.DisplayName));
 
             if (ctx.AttackerRouting.CanAttempt)
             {

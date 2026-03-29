@@ -1,4 +1,6 @@
-﻿namespace Assets.Scripts.Combat.Damage
+﻿using Assets.Scripts.Combat.Rolls;
+
+namespace Assets.Scripts.Combat.Damage
 {
     /// <summary>
     /// Single entry point for ALL damage in the game — skills, DoT, hazards, event cards, maybe more in the future.
@@ -13,13 +15,12 @@
         public static DamageResult Apply(
             DamageResult result,
             Entity target,
-            Entity attacker = null,
-            string causalSource = null,
-            DamageSource sourceType = DamageSource.Ability)
+            RollActor actor = null,
+            string causalSource = null)
         {
             // ALWAYS emit event for logging, even if damage is 0
             // This is critical for showing IMMUNE/RESISTANT feedback to players
-            CombatEventBus.EmitDamage(result, attacker, target, causalSource, sourceType);
+            CombatEventBus.Emit(new DamageEvent(result, actor, target, causalSource));
 
             // Apply damage to target
             if (result.FinalDamage > 0)

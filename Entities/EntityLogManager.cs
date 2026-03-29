@@ -21,17 +21,13 @@ namespace Assets.Scripts.Entities
                 _ => $"{drive.ParentVehicle.vehicleName} speed changed: {oldSpeed} → {newSpeed} ({reason})"
             };
             
-            var log = RaceHistory.Log(
+            RaceHistory.Log(
                 EventType.Movement,
                 EventImportance.Low,
                 message,
                 drive.ParentVehicle.currentStage,
                 drive.ParentVehicle
-            ).WithMetadata("oldSpeed", oldSpeed)
-             .WithMetadata("newSpeed", newSpeed);
-            
-            if (amount.HasValue)
-                log.WithMetadata(reason + "Amount", amount.Value);
+            );
         }
         
         public static void LogSpeedScaling(this DriveComponent drive, int oldSpeed, int newSpeed, int oldMaxSpeed, int newMaxSpeed)
@@ -44,10 +40,7 @@ namespace Assets.Scripts.Entities
                 $"{drive.ParentVehicle.vehicleName}'s speed scaled: {oldSpeed} → {newSpeed} (maxSpeed: {oldMaxSpeed} → {newMaxSpeed})",
                 drive.ParentVehicle.currentStage,
                 drive.ParentVehicle
-            ).WithMetadata("oldSpeed", oldSpeed)
-             .WithMetadata("newSpeed", newSpeed)
-             .WithMetadata("oldMaxSpeed", oldMaxSpeed)
-             .WithMetadata("newMaxSpeed", newMaxSpeed);
+            );
         }
         
         public static void LogTargetSpeedSet(this DriveComponent drive, int oldPercent, int newPercent)
@@ -63,11 +56,7 @@ namespace Assets.Scripts.Entities
                 $"{drive.ParentVehicle.vehicleName} set target speed: {oldPercent}% → {newPercent}% ({targetAbsolute} units/turn)",
                 drive.ParentVehicle.currentStage,
                 drive.ParentVehicle
-            ).WithMetadata("oldTargetPercent", oldPercent)
-             .WithMetadata("newTargetPercent", newPercent)
-             .WithMetadata("targetAbsolute", targetAbsolute)
-             .WithMetadata("currentSpeed", drive.GetCurrentSpeed())
-             .WithMetadata("maxSpeed", maxSpeed);
+            );
         }
         
         // ==================== DAMAGE/HEALTH LOGGING ====================
@@ -82,9 +71,7 @@ namespace Assets.Scripts.Entities
                 $"[CRITICAL] {chassis.ParentVehicle.vehicleName}'s Chassis destroyed! Vehicle structural collapse imminent!",
                 chassis.ParentVehicle.currentStage,
                 chassis.ParentVehicle
-            ).WithMetadata("componentName", chassis.name)
-             .WithMetadata("componentType", "Chassis")
-             .WithMetadata("catastrophicFailure", true);
+            );
         }
         
         public static void LogPowerCoreDestroyed(this PowerCoreComponent powerCore)
@@ -97,10 +84,7 @@ namespace Assets.Scripts.Entities
                 $"[CRITICAL] {powerCore.ParentVehicle.vehicleName}'s Power Core destroyed! Vehicle is powerless!",
                 powerCore.ParentVehicle.currentStage,
                 powerCore.ParentVehicle
-            ).WithMetadata("componentName", powerCore.name)
-             .WithMetadata("componentType", "PowerCore")
-             .WithMetadata("currentEnergy", 0)
-             .WithMetadata("catastrophicFailure", true);
+            );
         }
         
         public static void LogComponentDestroyed(this VehicleComponent component)
@@ -113,8 +97,7 @@ namespace Assets.Scripts.Entities
                 $"[DESTROYED] {component.ParentVehicle.vehicleName}'s {component.name} was destroyed!",
                 component.ParentVehicle.currentStage,
                 component.ParentVehicle
-            ).WithMetadata("componentName", component.name)
-             .WithMetadata("componentType", component.componentType.ToString());
+            );
         }
         
         public static void LogModifierRemoved(this VehicleComponent component, AttributeModifier modifier)
@@ -127,10 +110,7 @@ namespace Assets.Scripts.Entities
                 $"{component.ParentVehicle.vehicleName}'s {component.name} lost {modifier.Type} {modifier.Attribute} {modifier.Value:+0;-0} modifier",
                 component.ParentVehicle.currentStage,
                 component.ParentVehicle
-            ).WithMetadata("component", component.name)
-             .WithMetadata("modifierType", modifier.Type.ToString())
-             .WithMetadata("attribute", modifier.Attribute.ToString())
-             .WithMetadata("removed", true);
+            );
         }
         
         public static void LogPowerStarved(this VehicleComponent component, int requiredPower)
@@ -143,9 +123,7 @@ namespace Assets.Scripts.Entities
                 $"{component.ParentVehicle.vehicleName}: {component.name} shut down due to insufficient power",
                 component.ParentVehicle.currentStage,
                 component.ParentVehicle
-            ).WithMetadata("component", component.name)
-             .WithMetadata("requiredPower", requiredPower)
-             .WithMetadata("reason", "InsufficientPower");
+            );
         }
         
         public static void LogManualStateChange(this VehicleComponent component, bool isDisabled)
@@ -160,8 +138,7 @@ namespace Assets.Scripts.Entities
                 $"{component.ParentVehicle.vehicleName}: {component.name} {state} by engineer",
                 component.ParentVehicle.currentStage,
                 component.ParentVehicle
-            ).WithMetadata("component", component.name)
-             .WithMetadata("manuallyDisabled", isDisabled);
+            );
         }
 
         // ==================== RESOURCE LOGGING ====================
@@ -176,9 +153,7 @@ namespace Assets.Scripts.Entities
                 $"{powerCore.ParentVehicle.vehicleName} regenerated {regenAmount} energy ({currentEnergy}/{maxEnergy})",
                 powerCore.ParentVehicle.currentStage,
                 powerCore.ParentVehicle
-            ).WithMetadata("regenAmount", regenAmount)
-             .WithMetadata("currentEnergy", currentEnergy)
-             .WithMetadata("maxEnergy", maxEnergy);
+            );
         }
         
         public static void LogPowerDraw(this PowerCoreComponent powerCore, int amount, VehicleComponent requester, string reason, int remainingEnergy, int turnDrawTotal)
@@ -193,9 +168,7 @@ namespace Assets.Scripts.Entities
                 $"{powerCore.ParentVehicle.vehicleName}: {requesterName} drew {amount} power ({reason})",
                 powerCore.ParentVehicle.currentStage,
                 powerCore.ParentVehicle
-            ).WithMetadata("powerDrawn", amount)
-             .WithMetadata("remainingEnergy", remainingEnergy)
-             .WithMetadata("turnDrawTotal", turnDrawTotal);
+            );
         }
     }
 }

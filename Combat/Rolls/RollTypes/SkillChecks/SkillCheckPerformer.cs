@@ -23,11 +23,11 @@ namespace Assets.Scripts.Combat.Rolls.RollTypes.SkillChecks
 
             // Step 2: Emit event automatically
             RollActor actor = ctx.Routing.Actor ?? new ComponentActor(ctx.Vehicle.chassis);
-            CombatEventBus.EmitSkillCheck(
+            CombatEventBus.Emit(new SkillCheckEvent(
                 roll,
                 actor,
                 ctx.CausalSource,
-                ctx.Spec.DisplayName);
+                ctx.Spec.DisplayName));
 
             // Step 3: Notify d20 roll trigger on roller
             if (ctx.Routing.CanAttempt)
@@ -54,11 +54,11 @@ namespace Assets.Scripts.Combat.Rolls.RollTypes.SkillChecks
             var gathered = RollGatherer.ForSkillCheck(spec, actor);
             var roll = D20Calculator.Roll(gathered, spec.dc);
 
-            CombatEventBus.EmitSkillCheck(
+            CombatEventBus.Emit(new SkillCheckEvent(
                 roll,
                 actor,
                 causalSource,
-                spec.DisplayName);
+                spec.DisplayName));
 
             if (entity != null)
                 entity.NotifyConditionTrigger(RemovalTrigger.OnD20Roll);
