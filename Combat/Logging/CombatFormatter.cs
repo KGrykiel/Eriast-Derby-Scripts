@@ -7,6 +7,7 @@ using Assets.Scripts.Combat.Rolls;
 using Assets.Scripts.Conditions;
 using Assets.Scripts.Conditions.EntityConditions;
 using Assets.Scripts.Conditions.CharacterConditions;
+using Assets.Scripts.Modifiers;
 
 namespace Assets.Scripts.Combat.Logging
 {
@@ -136,7 +137,7 @@ namespace Assets.Scripts.Combat.Logging
             return sb.ToString();
         }
 
-        public static string FormatDefenseDetailed(int total, int baseValue, List<AttributeModifier> modifiers, string defenseName = "AC")
+        public static string FormatDefenseDetailed(int total, int baseValue, List<EntityAttributeModifier> modifiers, string defenseName = "AC")
         {
             if (modifiers == null)
                 return $"{defenseName}: {total}";
@@ -148,7 +149,7 @@ namespace Assets.Scripts.Combat.Logging
             foreach (var mod in modifiers)
             {
                 string sign = mod.Value >= 0 ? "+" : "";
-                sb.AppendLine($"  {mod.Label}: {sign}{(int)mod.Value} ({mod.Category})");
+                sb.AppendLine($"  {mod.Label}: {sign}{(int)mod.Value}");
             }
 
             sb.AppendLine("  ─────────────");
@@ -251,10 +252,10 @@ namespace Assets.Scripts.Combat.Logging
         // ==================== STAT BREAKDOWN ====================
 
         public static string FormatStatBreakdown(
-            Attribute attribute,
+            EntityAttribute attribute,
             int baseValue,
             int finalValue,
-            List<AttributeModifier> modifiers)
+            List<EntityAttributeModifier> modifiers)
         {
             if (modifiers == null || modifiers.Count == 0)
                 return $"{attribute}: {baseValue}\n═══════════════════════════════\nBase value only (no modifiers)";
@@ -265,7 +266,7 @@ namespace Assets.Scripts.Combat.Logging
             sb.AppendLine($"Base:                      {baseValue}");
             sb.AppendLine();
 
-            AppendModifiersByCategory(sb, modifiers, attribute);
+            AppendGroupedModifiers(sb, modifiers, attribute);
 
             float totalModifiers = finalValue - baseValue;
             string totalSign = totalModifiers >= 0 ? "+" : "";
@@ -401,44 +402,14 @@ namespace Assets.Scripts.Combat.Logging
             };
         }
 
-        private static void AppendModifiersByCategory(StringBuilder sb, List<AttributeModifier> modifiers, Attribute attribute)
+        private static void AppendGroupedModifiers(StringBuilder sb, List<EntityAttributeModifier> modifiers, EntityAttribute attribute)
         {
-            var grouped = new Dictionary<string, List<AttributeModifier>>
-            {
-                ["Status Effects"] = new List<AttributeModifier>(),
-                ["Equipment"] = new List<AttributeModifier>(),
-                ["Auras"] = new List<AttributeModifier>(),
-                ["Skills"] = new List<AttributeModifier>(),
-                ["Other"] = new List<AttributeModifier>()
-            };
-
             foreach (var mod in modifiers)
-            {
-                string key = mod.Category switch
-                {
-                    ModifierCategory.Condition => "Status Effects",
-                    ModifierCategory.Equipment => "Equipment",
-                    ModifierCategory.Aura => "Auras",
-                    ModifierCategory.Skill => "Skills",
-                    _ => "Other"
-                };
-                grouped[key].Add(mod);
-            }
-
-            foreach (var kvp in grouped)
-            {
-                if (kvp.Value.Count == 0) continue;
-
-                sb.AppendLine($"{kvp.Key}:");
-                foreach (var mod in kvp.Value)
-                {
-                    sb.AppendLine(FormatModifierLine(mod, attribute));
-                }
-                sb.AppendLine();
-            }
+                sb.AppendLine(FormatModifierLine(mod, attribute));
+            sb.AppendLine();
         }
 
-        private static string FormatModifierLine(AttributeModifier mod, Attribute attribute)
+        private static string FormatModifierLine(EntityAttributeModifier mod, EntityAttribute attribute)
         {
             string sign = mod.Value >= 0 ? "+" : "";
             string typeStr = mod.Type == ModifierType.Multiplier ? "×" : "";

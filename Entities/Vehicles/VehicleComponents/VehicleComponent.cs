@@ -4,6 +4,7 @@ using UnityEngine;
 using System;
 using Assets.Scripts.Core;
 using Assets.Scripts.Entities.Vehicles.VehicleComponents.ComponentTypes;
+using Assets.Scripts.Modifiers;
 
 namespace Assets.Scripts.Entities.Vehicles.VehicleComponents
 {
@@ -12,8 +13,10 @@ namespace Assets.Scripts.Entities.Vehicles.VehicleComponents
     /// Main source of interaction between vehicles.
     /// Components can provide modifiers to other components via providedModifiers.
     /// </summary>
-    public abstract class VehicleComponent : Entity
+    public abstract class VehicleComponent : Entity, IModifierSource
     {
+        public string ModifierLabel => name;
+
         [Header("Component Identity")]
         [Tooltip("Category of this component (locked for specific component types)")]
         public ComponentType componentType = ComponentType.Custom;
@@ -81,15 +84,15 @@ namespace Assets.Scripts.Entities.Vehicles.VehicleComponents
         public int GetBaseComponentSpace() => baseComponentSpace;
         public int GetBasePowerDrawPerTurn() => basePowerDrawPerTurn;
 
-        public virtual int GetComponentSpace() => StatCalculator.GatherAttributeValue(this, Attribute.ComponentSpace);
-        public virtual int GetPowerDrawPerTurn() => StatCalculator.GatherAttributeValue(this, Attribute.PowerDraw);
+        public virtual int GetComponentSpace() => StatCalculator.GatherAttributeValue(this, EntityAttribute.ComponentSpace);
+        public virtual int GetPowerDrawPerTurn() => StatCalculator.GatherAttributeValue(this, EntityAttribute.PowerDraw);
 
-        public override int GetBaseValue(Attribute attribute)
+        public override int GetBaseValue(EntityAttribute attribute)
         {
             return attribute switch
             {
-                Attribute.ComponentSpace => baseComponentSpace,
-                Attribute.PowerDraw => basePowerDrawPerTurn,
+                EntityAttribute.ComponentSpace => baseComponentSpace,
+                EntityAttribute.PowerDraw => basePowerDrawPerTurn,
                 _ => base.GetBaseValue(attribute)
             };
         }
@@ -199,23 +202,12 @@ namespace Assets.Scripts.Entities.Vehicles.VehicleComponents
             return targets;
         }
 
-        public void RemoveModifiersByCategory(ModifierCategory category)
-        {
-            for (int i = entityModifiers.Count - 1; i >= 0; i--)
-            {
-                if (entityModifiers[i].Category == category)
-                {
-                    entityModifiers.RemoveAt(i);
-                }
-            }
-        }
-
-        // ==================== MODIFIER SYSTEM (Uses Unified Entity System) ====================
+        // ==================== MODIFIER SYSTEM
 
         /// <summary>
         /// override to add logging.
         /// </summary>
-        public override void RemoveModifier(AttributeModifier modifier)
+        public override void RemoveModifier(EntityAttributeModifier modifier)
         {
             base.RemoveModifier(modifier);
             this.LogModifierRemoved(modifier);
@@ -316,7 +308,7 @@ namespace Assets.Scripts.Entities.Vehicles.VehicleComponents
             if (basePowerDrawPerTurn > 0)
             {
                 int modifiedPower = GetPowerDrawPerTurn();
-                stats.Add(VehicleComponentUI.DisplayStat.WithTooltip("Power", "PWR", Attribute.PowerDraw, basePowerDrawPerTurn, modifiedPower, "/turn"));
+                stats.Add(VehicleComponentUI.DisplayStat.WithTooltip("Power", "PWR", EntityAttribute.PowerDraw, basePowerDrawPerTurn, modifiedPower, "/turn"));
             }
 
             return stats;

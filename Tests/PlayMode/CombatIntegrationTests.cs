@@ -22,6 +22,7 @@ using Assets.Scripts.Effects.EffectTypes;
 using Assets.Scripts.Entities.Vehicles;
 using Assets.Scripts.Entities.Vehicles.VehicleComponents.ComponentTypes;
 using Assets.Scripts.Entities.Vehicles.VehicleComponents;
+using Assets.Scripts.Modifiers;
 
 namespace Assets.Scripts.Tests.PlayMode
 {
@@ -146,7 +147,7 @@ namespace Assets.Scripts.Tests.PlayMode
             playerVehicle.powerCore.currentEnergy = 20;
 
             // Buff: "Reinforce Hull" ? +3 AC to chassis for 3 turns
-            var reinforceTemplate = TestStatusEffectFactory.CreateModifierEffect("Reinforced", Attribute.ArmorClass, 3f, duration: 3, cleanup: cleanup);
+            var reinforceTemplate = TestStatusEffectFactory.CreateModifierEffect("Reinforced", EntityAttribute.ArmorClass, 3f, duration: 3, cleanup: cleanup);
             var reinforceSkill = TestSkillFactory.CreateNoRollSkill("Reinforce Hull",
                 new System.Collections.Generic.List<EffectInvocation>
                 {
@@ -301,7 +302,7 @@ namespace Assets.Scripts.Tests.PlayMode
             playerVehicle = TestVehicleBuilder.CreateWithChassis(driver);
 
             // Create stage with a lane that has a status effect
-            var laneEffect = TestStatusEffectFactory.CreateModifierEffect("Cliff Edge", Attribute.ArmorClass, -2f, cleanup: cleanup);
+            var laneEffect = TestStatusEffectFactory.CreateModifierEffect("Cliff Edge", EntityAttribute.ArmorClass, -2f, cleanup: cleanup);
             var stage = TestStageFactory.CreateStage("Rocky Stage", out stageObj);
             var cliffLane = TestStageFactory.CreateLane("Cliff Edge Lane", stage, stageObj, laneEffect);
 
@@ -552,17 +553,17 @@ namespace Assets.Scripts.Tests.PlayMode
             int baseAC = playerVehicle.chassis.GetArmorClass();
 
             // Source 1: Equipment modifier (+2 AC)
-            playerVehicle.chassis.AddModifier(new AttributeModifier(
-                Attribute.ArmorClass, ModifierType.Flat, 2f,
-                "Armor Plating", ModifierCategory.Equipment));
+            playerVehicle.chassis.AddModifier(new EntityAttributeModifier(
+                EntityAttribute.ArmorClass, ModifierType.Flat, 2f,
+                "Armor Plating"));
 
             // Source 2: Status effect (+3 AC from buff skill)
-            var shieldBuff = TestStatusEffectFactory.CreateModifierEffect("Shield", Attribute.ArmorClass, 3f, duration: 5, cleanup: cleanup);
+            var shieldBuff = TestStatusEffectFactory.CreateModifierEffect("Shield", EntityAttribute.ArmorClass, 3f, duration: 5, cleanup: cleanup);
             playerVehicle.chassis.ApplyCondition(shieldBuff, playerVehicle);
 
             // Source 3: Direct modifier (+1 AC from event card)
-            playerVehicle.chassis.AddModifier(new AttributeModifier(
-                Attribute.ArmorClass, ModifierType.Flat, 1f,
+            playerVehicle.chassis.AddModifier(new EntityAttributeModifier(
+                EntityAttribute.ArmorClass, ModifierType.Flat, 1f,
                 "Lucky Break"));
 
             yield return null;
@@ -573,7 +574,7 @@ namespace Assets.Scripts.Tests.PlayMode
 
             // Verify breakdown shows all sources
             var (total, bv, modifiers) = Assets.Scripts.Core.StatCalculator.GatherAttributeValueWithBreakdown(
-                playerVehicle.chassis, Attribute.ArmorClass);
+                playerVehicle.chassis, EntityAttribute.ArmorClass);
             Assert.IsTrue(modifiers.Any(m => m.Label == "Armor Plating"), "Should show Armor Plating");
             Assert.IsTrue(modifiers.Any(m => m.Label == "Lucky Break"), "Should show Lucky Break");
 

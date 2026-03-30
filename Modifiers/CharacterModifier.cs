@@ -1,8 +1,10 @@
-﻿namespace Assets.Scripts.Characters
+﻿using Assets.Scripts.Characters;
+
+namespace Assets.Scripts.Modifiers
 {
     public abstract class CharacterModifier : ModifierBase
     {
-        protected CharacterModifier(ModifierType type, float value, string label)
+        protected CharacterModifier(ModifierType type, float value, string label = "")
             : base(type, value, label)
         {
         }
@@ -12,7 +14,7 @@
     {
         public CharacterSkill Skill;
 
-        public CharacterSkillModifier(CharacterSkill skill, ModifierType type, float value, string label)
+        public CharacterSkillModifier(CharacterSkill skill, ModifierType type, float value, string label = "")
             : base(type, value, label)
         {
             Skill = skill;
@@ -23,7 +25,7 @@
     {
         public CharacterAttribute Attribute;
 
-        public CharacterAttributeModifier(CharacterAttribute attribute, ModifierType type, float value, string label)
+        public CharacterAttributeModifier(CharacterAttribute attribute, ModifierType type, float value, string label = "")
             : base(type, value, label)
         {
             Attribute = attribute;

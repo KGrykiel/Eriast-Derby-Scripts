@@ -9,6 +9,7 @@ using Assets.Scripts.Combat.Rolls.Advantage;
 using Assets.Scripts.Combat.Rolls.RollSpecs.SpecTypes;
 using Assets.Scripts.Entities.Vehicles;
 using Assets.Scripts.Entities.Vehicles.VehicleComponents.ComponentTypes;
+using Assets.Scripts.Modifiers;
 
 namespace Assets.Scripts.Tests.PlayMode
 {
@@ -102,12 +103,11 @@ namespace Assets.Scripts.Tests.PlayMode
             var weapon = vehicle.AllComponents.OfType<WeaponComponent>().First();
 
             // Apply a +2 attack bonus modifier (simulating "Blessed" status effect)
-            weapon.AddModifier(new AttributeModifier(
-                Attribute.AttackBonus,
+            weapon.AddModifier(new EntityAttributeModifier(
+                EntityAttribute.AttackBonus,
                 ModifierType.Flat,
                 2f,
-                "Blessed",
-                ModifierCategory.Condition
+                "Blessed"
             ));
 
             var spec = new AttackSpec { grantedMode = RollMode.Normal };

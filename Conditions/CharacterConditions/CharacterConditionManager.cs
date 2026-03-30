@@ -1,9 +1,9 @@
 using System.Linq;
-using Assets.Scripts.Characters;
 using Assets.Scripts.Combat;
 using Assets.Scripts.Combat.Rolls.Advantage;
 using Assets.Scripts.Entities;
 using Assets.Scripts.Entities.Vehicles;
+using Assets.Scripts.Modifiers;
 using UnityEngine;
 
 namespace Assets.Scripts.Conditions.CharacterConditions
@@ -39,17 +39,14 @@ namespace Assets.Scripts.Conditions.CharacterConditions
                 CharacterModifier modifier = modData switch
                 {
                     CharacterSkillModifierData skillData => new CharacterSkillModifier(
-                        skillData.skill, skillData.type, skillData.value, applied.template.effectName),
+                        skillData.skill, skillData.type, skillData.value) { Source = applied },
                     CharacterAttributeModifierData attrData => new CharacterAttributeModifier(
-                        attrData.attribute, attrData.type, attrData.value, applied.template.effectName),
+                        attrData.attribute, attrData.type, attrData.value) { Source = applied },
                     _ => null
                 };
 
                 if (modifier != null)
-                {
-                    modifier.Source = applied;
                     seat.AddCharacterModifier(modifier);
-                }
             }
 
             foreach (var grant in applied.template.advantageGrants)

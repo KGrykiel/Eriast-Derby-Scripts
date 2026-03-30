@@ -81,9 +81,9 @@ namespace Assets.Scripts.UI.Tabs.Lanes
                         string sign = entityMod.value >= 0 ? "+" : "";
                         string attrShort = entityMod.attribute switch
                         {
-                            Attribute.ArmorClass => "AC",
-                            Attribute.MaxSpeed => "Spd",
-                            Attribute.MaxHealth => "HP",
+                            EntityAttribute.ArmorClass => "AC",
+                            EntityAttribute.MaxSpeed => "Spd",
+                            EntityAttribute.MaxHealth => "HP",
                             _ => entityMod.attribute.ToString().Substring(0, 3)
                         };
                         parts.Add($"{attrShort}{sign}{entityMod.value}");
@@ -114,9 +114,9 @@ namespace Assets.Scripts.UI.Tabs.Lanes
                 foreach (var mod in lane.laneStatusEffect.modifiers)
                 {
                     if (mod is not EntityModifierData entityMod) continue;
-                    if (entityMod.attribute == Attribute.MaxSpeed && entityMod.value > 0)
+                    if (entityMod.attribute == EntityAttribute.MaxSpeed && entityMod.value > 0)
                         hasSpeedBoost = true;
-                    if (entityMod.attribute == Attribute.ArmorClass && entityMod.value > 0)
+                    if (entityMod.attribute == EntityAttribute.ArmorClass && entityMod.value > 0)
                         hasDefenseBoost = true;
                 }
             }

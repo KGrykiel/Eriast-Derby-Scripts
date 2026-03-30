@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using Assets.Scripts.Modifiers;
+using System.Collections.Generic;
 
 namespace Assets.Scripts.Entities.Vehicles
 {
@@ -26,9 +27,9 @@ namespace Assets.Scripts.Entities.Vehicles
     
     public static class VehicleSizeModifiers
     {
-        public static List<AttributeModifier> GetModifiers(VehicleSizeCategory size)
+        public static List<EntityAttributeModifier> GetModifiers(VehicleSizeCategory size)
         {
-            var modifiers = new List<AttributeModifier>();
+            var modifiers = new List<EntityAttributeModifier>();
 
             // AC Modifier for chassis
             // Large vehicles are easier to hit (bigger target)
@@ -44,12 +45,11 @@ namespace Assets.Scripts.Entities.Vehicles
 
             if (acMod != 0)
             {
-                modifiers.Add(new AttributeModifier(
-                    Attribute.ArmorClass,
+                modifiers.Add(new EntityAttributeModifier(
+                    EntityAttribute.ArmorClass,
                     ModifierType.Flat,
                     acMod,
-                    $"Size: {size}",
-                    ModifierCategory.Equipment
+                    $"Size: {size}"
                 ));
             }
             
@@ -67,12 +67,11 @@ namespace Assets.Scripts.Entities.Vehicles
             
             if (mobilityMod != 0)
             {
-                modifiers.Add(new AttributeModifier(
-                    Attribute.Mobility,
+                modifiers.Add(new EntityAttributeModifier(
+                    EntityAttribute.Mobility,
                     ModifierType.Flat,
                     mobilityMod,
-                    $"Size: {size}",
-                    ModifierCategory.Equipment
+                    $"Size: {size}"
                 ));
             }
             return modifiers;

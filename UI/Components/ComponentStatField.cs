@@ -9,7 +9,7 @@ namespace Assets.Scripts.UI.Components
     {
         [Header("Configuration")]
         [Tooltip("Which attribute does this field represent? (Only used if pre-configured)")]
-        public Attribute attribute;
+        public EntityAttribute attribute;
         
         [Tooltip("Display label for this stat (e.g., 'HP', 'Speed')")]
         public string displayLabel = "Stat";
@@ -29,7 +29,7 @@ namespace Assets.Scripts.UI.Components
         
         private string runtimeStatName;
         private Entity currentEntity;
-        private Attribute? runtimeAttribute;
+        private EntityAttribute? runtimeAttribute;
 
         void Awake()
         {

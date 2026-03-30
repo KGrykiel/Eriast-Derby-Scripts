@@ -225,7 +225,7 @@ namespace Assets.Scripts.Combat.Rolls
             string displayLabel)
         {
             var bonuses = new List<RollBonus>();
-            Attribute attribute = checkAttribute.ToAttribute();
+            EntityAttribute attribute = checkAttribute.ToAttribute();
 
             int baseValue = component.GetBaseValue(attribute);
             if (baseValue != 0)
@@ -247,11 +247,11 @@ namespace Assets.Scripts.Combat.Rolls
                 bonuses.Add(new RollBonus(weapon.name ?? "Weapon", baseAttackBonus));
             }
 
-            bonuses.AddRange(GatherAppliedBonuses(weapon, Attribute.AttackBonus));
+            bonuses.AddRange(GatherAppliedBonuses(weapon, EntityAttribute.AttackBonus));
             return bonuses;
         }
 
-        private static List<RollBonus> GatherAppliedBonuses(Entity entity, Attribute attribute)
+        private static List<RollBonus> GatherAppliedBonuses(Entity entity, EntityAttribute attribute)
         {
             var bonuses = new List<RollBonus>();
 

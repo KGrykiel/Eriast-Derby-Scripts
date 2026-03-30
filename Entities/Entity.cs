@@ -8,6 +8,7 @@ using Assets.Scripts.Conditions.EntityConditions;
 using Assets.Scripts.Conditions;
 
 using Assets.Scripts.Effects;
+using Assets.Scripts.Modifiers;
 
 namespace Assets.Scripts.Entities
 {
@@ -46,7 +47,7 @@ namespace Assets.Scripts.Entities
         // ==================== MODIFIER & STATUS EFFECT STORAGE ====================
     
         [SerializeField, HideInInspector]
-        protected List<AttributeModifier> entityModifiers = new();
+        protected List<EntityAttributeModifier> entityModifiers = new();
     
         private readonly EntityConditionManager statusEffects;
     
@@ -69,8 +70,8 @@ namespace Assets.Scripts.Entities
         public int GetBaseArmorClass() => baseArmorClass;
         
         // Modified value accessors (return values with all modifiers applied via StatCalculator)
-        public virtual int GetMaxHealth() => StatCalculator.GatherAttributeValue(this, Attribute.MaxHealth);
-        public virtual int GetArmorClass() => StatCalculator.GatherAttributeValue(this, Attribute.ArmorClass);
+        public virtual int GetMaxHealth() => StatCalculator.GatherAttributeValue(this, EntityAttribute.MaxHealth);
+        public virtual int GetArmorClass() => StatCalculator.GatherAttributeValue(this, EntityAttribute.ArmorClass);
         
         // ==================== ENTITY FEATURES ====================
         
@@ -152,12 +153,12 @@ namespace Assets.Scripts.Entities
         // ==================== MODIFIER SYSTEM ====================
         
         /// <summary>Components use this for permanent equipment bonuses. Skills should use ApplyStatusEffect().</summary>
-        public virtual void AddModifier(AttributeModifier modifier)
+        public virtual void AddModifier(EntityAttributeModifier modifier)
         {
             entityModifiers.Add(modifier);
         }
     
-        public virtual void RemoveModifier(AttributeModifier modifier)
+        public virtual void RemoveModifier(EntityAttributeModifier modifier)
         {
             entityModifiers.Remove(modifier);
         }
@@ -167,7 +168,7 @@ namespace Assets.Scripts.Entities
             entityModifiers.RemoveAll(m => m.Source == source);
         }
     
-        public virtual IReadOnlyList<AttributeModifier> GetModifiers()
+        public virtual IReadOnlyList<EntityAttributeModifier> GetModifiers()
         {
             return entityModifiers;
         }
@@ -243,12 +244,12 @@ namespace Assets.Scripts.Entities
         // ==================== BASE VALUE RESOLUTION ====================
     
         /// <summary>Returns the raw base value for an attribute before modifiers. Override in subclasses to add attributes.</summary>
-        public virtual int GetBaseValue(Attribute attribute)
+        public virtual int GetBaseValue(EntityAttribute attribute)
         {
             return attribute switch
             {
-                Attribute.MaxHealth => baseMaxHealth,
-                Attribute.ArmorClass => baseArmorClass,
+                EntityAttribute.MaxHealth => baseMaxHealth,
+                EntityAttribute.ArmorClass => baseArmorClass,
                 _ => 0
             };
         }

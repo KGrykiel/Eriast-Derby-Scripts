@@ -24,7 +24,7 @@ namespace Assets.Scripts.UI.Components
         private RectTransform rectTransform;
 
         private Entity tooltipEntity;
-        private Attribute tooltipAttribute;
+        private EntityAttribute tooltipAttribute;
         
         void Awake()
         {
@@ -34,7 +34,7 @@ namespace Assets.Scripts.UI.Components
         
         public void UpdateDisplay(
             Entity entity,
-            Attribute attribute,
+            EntityAttribute attribute,
             int baseValue,
             int finalValue,
             string displayText = null)

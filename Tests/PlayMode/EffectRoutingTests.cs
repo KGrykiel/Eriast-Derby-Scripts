@@ -31,7 +31,7 @@ namespace Assets.Scripts.Tests.PlayMode
                 .WithChassis()
                 .Build();
 
-            var result = VehicleComponentResolver.ResolveForAttribute(vehicle, Attribute.ArmorClass);
+            var result = VehicleComponentResolver.ResolveForAttribute(vehicle, EntityAttribute.ArmorClass);
             yield return null;
 
             Assert.AreEqual(vehicle.chassis, result, "ArmorClass should resolve to chassis");
@@ -44,7 +44,7 @@ namespace Assets.Scripts.Tests.PlayMode
                 .WithChassis()
                 .Build();
 
-            var result = VehicleComponentResolver.ResolveForAttribute(vehicle, Attribute.MaxHealth);
+            var result = VehicleComponentResolver.ResolveForAttribute(vehicle, EntityAttribute.MaxHealth);
             yield return null;
 
             Assert.AreEqual(vehicle.chassis, result, "MaxHealth should resolve to chassis");
@@ -57,7 +57,7 @@ namespace Assets.Scripts.Tests.PlayMode
                 .WithChassis()
                 .Build();
 
-            var result = VehicleComponentResolver.ResolveForAttribute(vehicle, Attribute.Mobility);
+            var result = VehicleComponentResolver.ResolveForAttribute(vehicle, EntityAttribute.Mobility);
             yield return null;
 
             Assert.AreEqual(vehicle.chassis, result, "Mobility should resolve to chassis");
@@ -73,7 +73,7 @@ namespace Assets.Scripts.Tests.PlayMode
                 .WithPowerCore()
                 .Build();
 
-            var result = VehicleComponentResolver.ResolveForAttribute(vehicle, Attribute.MaxEnergy);
+            var result = VehicleComponentResolver.ResolveForAttribute(vehicle, EntityAttribute.MaxEnergy);
             yield return null;
 
             Assert.AreEqual(vehicle.powerCore, result, "MaxEnergy should resolve to PowerCore");
@@ -87,7 +87,7 @@ namespace Assets.Scripts.Tests.PlayMode
                 .WithPowerCore()
                 .Build();
 
-            var result = VehicleComponentResolver.ResolveForAttribute(vehicle, Attribute.EnergyRegen);
+            var result = VehicleComponentResolver.ResolveForAttribute(vehicle, EntityAttribute.EnergyRegen);
             yield return null;
 
             Assert.AreEqual(vehicle.powerCore, result, "EnergyRegen should resolve to PowerCore");
@@ -102,7 +102,7 @@ namespace Assets.Scripts.Tests.PlayMode
                 .WithChassis()
                 .Build();
 
-            var result = VehicleComponentResolver.ResolveForAttribute(vehicle, Attribute.ArmorClass);
+            var result = VehicleComponentResolver.ResolveForAttribute(vehicle, EntityAttribute.ArmorClass);
             yield return null;
 
             Assert.AreEqual(vehicle.chassis, result, "Should fall back to chassis");

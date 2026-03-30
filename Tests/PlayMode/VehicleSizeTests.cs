@@ -1,6 +1,7 @@
 ﻿using System.Linq;
 using NUnit.Framework;
 using Assets.Scripts.Entities.Vehicles;
+using Assets.Scripts.Modifiers;
 
 namespace Assets.Scripts.Tests.PlayMode
 {
@@ -26,32 +27,20 @@ namespace Assets.Scripts.Tests.PlayMode
 
             if (expectedAC != 0)
             {
-                var acMod = modifiers.FirstOrDefault(m => m.Attribute == Attribute.ArmorClass);
+                var acMod = modifiers.FirstOrDefault(m => m.Attribute == EntityAttribute.ArmorClass);
                 Assert.IsNotNull(acMod, $"Size {size} should have AC modifier");
                 Assert.AreEqual(expectedAC, (int)acMod.Value, $"Size {size} AC modifier");
             }
 
             if (expectedMobility != 0)
             {
-                var mobMod = modifiers.FirstOrDefault(m => m.Attribute == Attribute.Mobility);
+                var mobMod = modifiers.FirstOrDefault(m => m.Attribute == EntityAttribute.Mobility);
                 Assert.IsNotNull(mobMod, $"Size {size} should have Mobility modifier");
                 Assert.AreEqual(expectedMobility, (int)mobMod.Value, $"Size {size} Mobility modifier");
             }
         }
 
         // ==================== Modifier Properties ====================
-
-        [Test]
-        public void Size_Modifiers_AreEquipmentCategory()
-        {
-            var modifiers = VehicleSizeModifiers.GetModifiers(VehicleSizeCategory.Tiny);
-
-            foreach (var mod in modifiers)
-            {
-                Assert.AreEqual(ModifierCategory.Equipment, mod.Category,
-                    $"Size modifier for {mod.Attribute} should be Equipment category");
-            }
-        }
 
         [Test]
         public void Size_Modifiers_HaveDisplayName()

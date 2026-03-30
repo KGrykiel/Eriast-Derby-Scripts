@@ -279,7 +279,7 @@ public class VehicleInspectorPanel : MonoBehaviour
             {
                 hpDisplay.UpdateDisplay(
                     selectedVehicle.chassis,
-                    Attribute.MaxHealth,
+                    EntityAttribute.MaxHealth,
                     baseMaxHP,
                     maxHealth,
                     $"{currentHealth}/{maxHealth}"
@@ -310,7 +310,7 @@ public class VehicleInspectorPanel : MonoBehaviour
             {
                 energyDisplay.UpdateDisplay(
                     selectedVehicle.powerCore,
-                    Attribute.MaxEnergy,
+                    EntityAttribute.MaxEnergy,
                     baseMaxEnergy,
                     maxEnergy,
                     $"{currentEnergy}/{maxEnergy}"
@@ -349,7 +349,7 @@ public class VehicleInspectorPanel : MonoBehaviour
                 
                 acDisplay.UpdateDisplay(
                     selectedVehicle.chassis,
-                    Attribute.ArmorClass,
+                    EntityAttribute.ArmorClass,
                     baseAC,
                     modifiedAC,
                     modifiedAC.ToString()
@@ -376,7 +376,7 @@ public class VehicleInspectorPanel : MonoBehaviour
                 
                 regenDisplay.UpdateDisplay(
                     selectedVehicle.powerCore,
-                    Attribute.EnergyRegen,
+                    EntityAttribute.EnergyRegen,
                     baseRegen,
                     modifiedRegen,
                     $"{modifiedRegen}"
@@ -542,7 +542,7 @@ public class VehicleInspectorPanel : MonoBehaviour
             {
                 hpDisplay.UpdateDisplay(
                     component,
-                    Attribute.MaxHealth,
+                    EntityAttribute.MaxHealth,
                     component.GetBaseMaxHealth(),
                     component.GetMaxHealth(),
                     $"{component.GetCurrentHealth()}/{component.GetMaxHealth()}"
@@ -575,7 +575,7 @@ public class VehicleInspectorPanel : MonoBehaviour
             {
                 acDisplay.UpdateDisplay(
                     component,
-                    Attribute.ArmorClass,
+                    EntityAttribute.ArmorClass,
                     baseAC,
                     modifiedAC,
                     modifiedAC.ToString()

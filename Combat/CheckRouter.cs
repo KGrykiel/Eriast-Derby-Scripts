@@ -158,11 +158,11 @@ namespace Assets.Scripts.Combat
         
         private static Entity GetComponentForVehicleAttribute(Vehicle vehicle, VehicleCheckAttribute checkAttr)
         {
-            Attribute attribute = checkAttr.ToAttribute();
+            EntityAttribute attribute = checkAttr.ToAttribute();
             return attribute switch
             {
-                Attribute.Mobility  => vehicle.chassis,
-                Attribute.Integrity => vehicle.chassis,
+                EntityAttribute.Mobility  => vehicle.chassis,
+                EntityAttribute.Integrity => vehicle.chassis,
                 _ => null
             };
         }

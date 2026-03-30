@@ -1,5 +1,6 @@
 using Assets.Scripts.Entities;
 using Assets.Scripts.Entities.Vehicles;
+using Assets.Scripts.Modifiers;
 using SerializeReferenceEditor;
 using System;
 using UnityEngine;
@@ -17,16 +18,16 @@ namespace Assets.Scripts.Effects.EffectTypes
     public class AttributeModifierEffect : EffectBase
     {
         [Header("Modifier Configuration")]
-        public Attribute attribute;
+        public EntityAttribute attribute;
         public ModifierType type;
         public float value;
 
         [Tooltip("Label shown in logs and tooltips for this modifier")]
         public string label = "Effect Modifier";
 
-        public AttributeModifier ToRuntimeModifier()
+        public EntityAttributeModifier ToRuntimeModifier()
         {
-            return new AttributeModifier(
+            return new EntityAttributeModifier(
                 attribute,
                 type,
                 value,

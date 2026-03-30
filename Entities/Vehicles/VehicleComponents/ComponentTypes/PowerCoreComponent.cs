@@ -62,16 +62,16 @@ namespace Assets.Scripts.Entities.Vehicles.VehicleComponents.ComponentTypes
         public int GetBaseEnergyRegen() => baseEnergyRegen;
         public int GetBaseMaxPowerDrawPerTurn() => baseMaxPowerDrawPerTurn;
 
-        public int GetMaxEnergy() => StatCalculator.GatherAttributeValue(this, Attribute.MaxEnergy);
-        public int GetEnergyRegen() => StatCalculator.GatherAttributeValue(this, Attribute.EnergyRegen);
+        public int GetMaxEnergy() => StatCalculator.GatherAttributeValue(this, EntityAttribute.MaxEnergy);
+        public int GetEnergyRegen() => StatCalculator.GatherAttributeValue(this, EntityAttribute.EnergyRegen);
         public int GetMaxPowerDrawPerTurn() => baseMaxPowerDrawPerTurn;
 
-        public override int GetBaseValue(Attribute attribute)
+        public override int GetBaseValue(EntityAttribute attribute)
         {
             return attribute switch
             {
-                Attribute.MaxEnergy => baseMaxEnergy,
-                Attribute.EnergyRegen => baseEnergyRegen,
+                EntityAttribute.MaxEnergy => baseMaxEnergy,
+                EntityAttribute.EnergyRegen => baseEnergyRegen,
                 _ => base.GetBaseValue(attribute)
             };
         }
@@ -126,8 +126,8 @@ namespace Assets.Scripts.Entities.Vehicles.VehicleComponents.ComponentTypes
             int modifiedMaxEnergy = GetMaxEnergy();
             int modifiedRegen = GetEnergyRegen();
 
-            stats.Add(VehicleComponentUI.DisplayStat.BarWithTooltip("Energy", "EN", Attribute.MaxEnergy, currentEnergy, baseMaxEnergy, modifiedMaxEnergy));
-            stats.Add(VehicleComponentUI.DisplayStat.WithTooltip("Regen", "REGEN", Attribute.EnergyRegen, baseEnergyRegen, modifiedRegen, "/turn"));
+            stats.Add(VehicleComponentUI.DisplayStat.BarWithTooltip("Energy", "EN", EntityAttribute.MaxEnergy, currentEnergy, baseMaxEnergy, modifiedMaxEnergy));
+            stats.Add(VehicleComponentUI.DisplayStat.WithTooltip("Regen", "REGEN", EntityAttribute.EnergyRegen, baseEnergyRegen, modifiedRegen, "/turn"));
 
             return stats;
         }

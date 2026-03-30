@@ -4,6 +4,7 @@ using Assets.Scripts.Combat.Damage;
 using Assets.Scripts.Combat.Restoration;
 using Assets.Scripts.Combat.Rolls.Advantage;
 using Assets.Scripts.Entities;
+using Assets.Scripts.Modifiers;
 using UnityEngine;
 
 namespace Assets.Scripts.Conditions.EntityConditions
@@ -49,14 +50,7 @@ namespace Assets.Scripts.Conditions.EntityConditions
         {
             foreach (var modData in applied.template.modifiers)
             {
-                var modifier = new AttributeModifier(
-                    modData.attribute,
-                    modData.type,
-                    modData.value,
-                    applied.template.effectName,
-                    ModifierCategory.Condition);
-
-                modifier.Source = applied;
+                var modifier = new EntityAttributeModifier(modData.attribute, modData.type, modData.value) { Source = applied };
                 entity.AddModifier(modifier);
             }
 

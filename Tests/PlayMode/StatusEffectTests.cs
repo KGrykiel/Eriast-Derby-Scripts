@@ -38,12 +38,12 @@ namespace Assets.Scripts.Tests.PlayMode
         [Test]
         public void StatusEffect_Apply_AddsModifiers()
         {
-            var template = TestStatusEffectFactory.CreateModifierEffect("Blessed", Attribute.ArmorClass, 2f, cleanup: cleanup);
+            var template = TestStatusEffectFactory.CreateModifierEffect("Blessed", EntityAttribute.ArmorClass, 2f, cleanup: cleanup);
 
             entity.ApplyCondition(template, entity);
 
             var modifiers = entity.GetModifiers();
-            bool hasACBonus = modifiers.Any(m => m.Attribute == Attribute.ArmorClass && m.Value == 2f);
+            bool hasACBonus = modifiers.Any(m => m.Attribute == EntityAttribute.ArmorClass && m.Value == 2f);
             Assert.IsTrue(hasACBonus, "Should have AC +2 modifier from Blessed");
 
             var activeEffects = entity.GetActiveConditions();
@@ -55,7 +55,7 @@ namespace Assets.Scripts.Tests.PlayMode
         [Test]
         public void StatusEffect_Stacking_Refresh_ResetsDuration()
         {
-            var template = TestStatusEffectFactory.CreateModifierEffect("Blessed", Attribute.ArmorClass, 2f, duration: 3, stackBehaviour: StackBehaviour.Refresh, cleanup: cleanup);
+            var template = TestStatusEffectFactory.CreateModifierEffect("Blessed", EntityAttribute.ArmorClass, 2f, duration: 3, stackBehaviour: StackBehaviour.Refresh, cleanup: cleanup);
 
             entity.ApplyCondition(template, entity);
             var activeEffects = entity.GetActiveConditions();
@@ -74,14 +74,14 @@ namespace Assets.Scripts.Tests.PlayMode
         [Test]
         public void StatusEffect_Stacking_Refresh_KeepsSingleModifier()
         {
-            var template = TestStatusEffectFactory.CreateModifierEffect("Blessed", Attribute.ArmorClass, 2f, duration: 2, stackBehaviour: StackBehaviour.Refresh, cleanup: cleanup);
+            var template = TestStatusEffectFactory.CreateModifierEffect("Blessed", EntityAttribute.ArmorClass, 2f, duration: 2, stackBehaviour: StackBehaviour.Refresh, cleanup: cleanup);
 
             entity.ApplyCondition(template, entity);
             entity.ApplyCondition(template, entity);
             entity.ApplyCondition(template, entity);
 
             var modifiers = entity.GetModifiers();
-            int acModifierCount = modifiers.Count(m => m.Attribute == Attribute.ArmorClass && m.Value == 2f);
+            int acModifierCount = modifiers.Count(m => m.Attribute == EntityAttribute.ArmorClass && m.Value == 2f);
             Assert.AreEqual(1, acModifierCount, "Should have exactly 1 AC modifier despite multiple applications");
 
             var activeEffects = entity.GetActiveConditions();
@@ -93,7 +93,7 @@ namespace Assets.Scripts.Tests.PlayMode
         [Test]
         public void StatusEffect_Stacking_Stack_AllowsMultipleInstances()
         {
-            var template = TestStatusEffectFactory.CreateModifierEffect("Slowed", Attribute.Mobility, -1f, duration: 3, stackBehaviour: StackBehaviour.Stack, maxStacks: 3, cleanup: cleanup);
+            var template = TestStatusEffectFactory.CreateModifierEffect("Slowed", EntityAttribute.Mobility, -1f, duration: 3, stackBehaviour: StackBehaviour.Stack, maxStacks: 3, cleanup: cleanup);
 
             entity.ApplyCondition(template, entity);
             entity.ApplyCondition(template, entity);
@@ -103,14 +103,14 @@ namespace Assets.Scripts.Tests.PlayMode
             Assert.AreEqual(3, activeEffects.Count, "Should have 3 independent instances");
 
             var modifiers = entity.GetModifiers();
-            int mobilityModifierCount = modifiers.Count(m => m.Attribute == Attribute.Mobility && m.Value == -1f);
+            int mobilityModifierCount = modifiers.Count(m => m.Attribute == EntityAttribute.Mobility && m.Value == -1f);
             Assert.AreEqual(3, mobilityModifierCount, "Should have 3 separate mobility modifiers");
         }
 
         [Test]
         public void StatusEffect_Stacking_Stack_RespectsMaxStacks()
         {
-            var template = TestStatusEffectFactory.CreateModifierEffect("Slowed", Attribute.Mobility, -1f, duration: 3, stackBehaviour: StackBehaviour.Stack, maxStacks: 2, cleanup: cleanup);
+            var template = TestStatusEffectFactory.CreateModifierEffect("Slowed", EntityAttribute.Mobility, -1f, duration: 3, stackBehaviour: StackBehaviour.Stack, maxStacks: 2, cleanup: cleanup);
 
             entity.ApplyCondition(template, entity);
             entity.ApplyCondition(template, entity);
@@ -121,14 +121,14 @@ namespace Assets.Scripts.Tests.PlayMode
             Assert.AreEqual(2, activeEffects.Count, "Should have maximum 2 stacks");
 
             var modifiers = entity.GetModifiers();
-            int mobilityModifierCount = modifiers.Count(m => m.Attribute == Attribute.Mobility && m.Value == -1f);
+            int mobilityModifierCount = modifiers.Count(m => m.Attribute == EntityAttribute.Mobility && m.Value == -1f);
             Assert.AreEqual(2, mobilityModifierCount, "Should have exactly 2 mobility modifiers");
         }
 
         [Test]
         public void StatusEffect_Stacking_Stack_UnlimitedWhenMaxStacksZero()
         {
-            var template = TestStatusEffectFactory.CreateModifierEffect("Vulnerable", Attribute.ArmorClass, -1f, duration: 2, stackBehaviour: StackBehaviour.Stack, maxStacks: 0, cleanup: cleanup);
+            var template = TestStatusEffectFactory.CreateModifierEffect("Vulnerable", EntityAttribute.ArmorClass, -1f, duration: 2, stackBehaviour: StackBehaviour.Stack, maxStacks: 0, cleanup: cleanup);
 
             for (int i = 0; i < 10; i++)
             {
@@ -142,7 +142,7 @@ namespace Assets.Scripts.Tests.PlayMode
         [Test]
         public void StatusEffect_Stacking_Stack_IndependentDurations()
         {
-            var template = TestStatusEffectFactory.CreateModifierEffect("Slowed", Attribute.Mobility, -1f, duration: 3, stackBehaviour: StackBehaviour.Stack, maxStacks: 0, cleanup: cleanup);
+            var template = TestStatusEffectFactory.CreateModifierEffect("Slowed", EntityAttribute.Mobility, -1f, duration: 3, stackBehaviour: StackBehaviour.Stack, maxStacks: 0, cleanup: cleanup);
 
             entity.ApplyCondition(template, entity);
             entity.UpdateConditions();
@@ -170,7 +170,7 @@ namespace Assets.Scripts.Tests.PlayMode
         [Test]
         public void StatusEffect_Stacking_Ignore_DoesNothing()
         {
-            var template = TestStatusEffectFactory.CreateModifierEffect("Stunned", Attribute.ArmorClass, -2f, duration: 3, stackBehaviour: StackBehaviour.Ignore, cleanup: cleanup);
+            var template = TestStatusEffectFactory.CreateModifierEffect("Stunned", EntityAttribute.ArmorClass, -2f, duration: 3, stackBehaviour: StackBehaviour.Ignore, cleanup: cleanup);
 
             entity.ApplyCondition(template, entity);
             var activeEffects = entity.GetActiveConditions();
@@ -205,7 +205,7 @@ namespace Assets.Scripts.Tests.PlayMode
         [Test]
         public void StatusEffect_Stacking_Replace_LongerDurationReplaces()
         {
-            var template = TestStatusEffectFactory.CreateModifierEffect("Fortified", Attribute.ArmorClass, 3f, duration: 2, stackBehaviour: StackBehaviour.Replace, cleanup: cleanup);
+            var template = TestStatusEffectFactory.CreateModifierEffect("Fortified", EntityAttribute.ArmorClass, 3f, duration: 2, stackBehaviour: StackBehaviour.Replace, cleanup: cleanup);
 
             entity.ApplyCondition(template, entity);
             var activeEffects = entity.GetActiveConditions();
@@ -219,14 +219,14 @@ namespace Assets.Scripts.Tests.PlayMode
             Assert.AreEqual(5, activeEffects[0].turnsRemaining, "Should have the longer duration (5 turns)");
 
             var modifiers = entity.GetModifiers();
-            bool hasBonus = modifiers.Any(m => m.Attribute == Attribute.ArmorClass && m.Value == 3f);
+            bool hasBonus = modifiers.Any(m => m.Attribute == EntityAttribute.ArmorClass && m.Value == 3f);
             Assert.IsTrue(hasBonus, "Should still have AC +3 modifier");
         }
 
         [Test]
         public void StatusEffect_Stacking_Replace_ShorterDurationIgnored()
         {
-            var template = TestStatusEffectFactory.CreateModifierEffect("Fortified", Attribute.ArmorClass, 3f, duration: 5, stackBehaviour: StackBehaviour.Replace, cleanup: cleanup);
+            var template = TestStatusEffectFactory.CreateModifierEffect("Fortified", EntityAttribute.ArmorClass, 3f, duration: 5, stackBehaviour: StackBehaviour.Replace, cleanup: cleanup);
 
             entity.ApplyCondition(template, entity);
             var activeEffects = entity.GetActiveConditions();
@@ -240,14 +240,14 @@ namespace Assets.Scripts.Tests.PlayMode
             Assert.AreEqual(5, activeEffects[0].turnsRemaining, "Should keep the longer duration (5 turns)");
 
             var modifiers = entity.GetModifiers();
-            bool hasBonus = modifiers.Any(m => m.Attribute == Attribute.ArmorClass && m.Value == 3f);
+            bool hasBonus = modifiers.Any(m => m.Attribute == EntityAttribute.ArmorClass && m.Value == 3f);
             Assert.IsTrue(hasBonus, "Should still have AC +3 modifier");
         }
 
         [Test]
         public void StatusEffect_Stacking_Replace_IndefiniteIsStrongest()
         {
-            var template = TestStatusEffectFactory.CreateModifierEffect("Fortified", Attribute.ArmorClass, 2f, duration: 99, stackBehaviour: StackBehaviour.Replace, cleanup: cleanup);
+            var template = TestStatusEffectFactory.CreateModifierEffect("Fortified", EntityAttribute.ArmorClass, 2f, duration: 99, stackBehaviour: StackBehaviour.Replace, cleanup: cleanup);
 
             entity.ApplyCondition(template, entity);
 
@@ -271,7 +271,7 @@ namespace Assets.Scripts.Tests.PlayMode
         [Test]
         public void StatusEffect_Duration_ExpiresAfterTurns()
         {
-            var template = TestStatusEffectFactory.CreateModifierEffect("ShortBuff", Attribute.ArmorClass, 3f, duration: 2, cleanup: cleanup);
+            var template = TestStatusEffectFactory.CreateModifierEffect("ShortBuff", EntityAttribute.ArmorClass, 3f, duration: 2, cleanup: cleanup);
 
             entity.ApplyCondition(template, entity);
             Assert.AreEqual(1, entity.GetActiveConditions().Count, "Should be active initially");
@@ -283,14 +283,14 @@ namespace Assets.Scripts.Tests.PlayMode
             Assert.AreEqual(0, entity.GetActiveConditions().Count, "Should expire after turn 2");
 
             var modifiers = entity.GetModifiers();
-            bool hasBonus = modifiers.Any(m => m.Attribute == Attribute.ArmorClass && m.Value == 3f);
+            bool hasBonus = modifiers.Any(m => m.Attribute == EntityAttribute.ArmorClass && m.Value == 3f);
             Assert.IsFalse(hasBonus, "Modifiers should be cleaned up after expiration");
         }
 
         [Test]
         public void StatusEffect_Indefinite_NeverExpires()
         {
-            var template = TestStatusEffectFactory.CreateModifierEffect("PermanentBuff", Attribute.ArmorClass, 2f, duration: -1, cleanup: cleanup);
+            var template = TestStatusEffectFactory.CreateModifierEffect("PermanentBuff", EntityAttribute.ArmorClass, 2f, duration: -1, cleanup: cleanup);
 
             entity.ApplyCondition(template, entity);
 
@@ -319,7 +319,7 @@ namespace Assets.Scripts.Tests.PlayMode
         [Test]
         public void StatusEffect_Removal_CleansUpModifiers()
         {
-            var template = TestStatusEffectFactory.CreateModifierEffect("TempBuff", Attribute.ArmorClass, 5f, cleanup: cleanup);
+            var template = TestStatusEffectFactory.CreateModifierEffect("TempBuff", EntityAttribute.ArmorClass, 5f, cleanup: cleanup);
 
             var applied = entity.ApplyCondition(template, entity);
             Assert.IsTrue(entity.GetModifiers().Any(m => m.Value == 5f), "Modifier should exist after apply");
@@ -336,7 +336,7 @@ namespace Assets.Scripts.Tests.PlayMode
         public void StatusEffect_RemovalTrigger_OnDamageTaken_RemovesEffect()
         {
             var template = TestStatusEffectFactory.CreateModifierEffect(
-                "Concentration", Attribute.ArmorClass, 2f,
+                "Concentration", EntityAttribute.ArmorClass, 2f,
                 removalTriggers: RemovalTrigger.OnDamageTaken, cleanup: cleanup);
 
             entity.ApplyCondition(template, entity);
@@ -352,7 +352,7 @@ namespace Assets.Scripts.Tests.PlayMode
         public void StatusEffect_RemovalTrigger_OnDamageTaken_ZeroDamageDoesNotRemove()
         {
             var template = TestStatusEffectFactory.CreateModifierEffect(
-                "Concentration", Attribute.ArmorClass, 2f,
+                "Concentration", EntityAttribute.ArmorClass, 2f,
                 removalTriggers: RemovalTrigger.OnDamageTaken, cleanup: cleanup);
 
             entity.ApplyCondition(template, entity);
@@ -366,7 +366,7 @@ namespace Assets.Scripts.Tests.PlayMode
         public void StatusEffect_RemovalTrigger_OnD20Roll_RemovesEffect()
         {
             var template = TestStatusEffectFactory.CreateModifierEffect(
-                "Inspired", Attribute.ArmorClass, 1f,
+                "Inspired", EntityAttribute.ArmorClass, 1f,
                 removalTriggers: RemovalTrigger.OnD20Roll, cleanup: cleanup);
 
             entity.ApplyCondition(template, entity);
@@ -381,7 +381,7 @@ namespace Assets.Scripts.Tests.PlayMode
         public void StatusEffect_RemovalTrigger_OnAttackMade_RemovesEffect()
         {
             var template = TestStatusEffectFactory.CreateModifierEffect(
-                "Ambush", Attribute.Mobility, 3f,
+                "Ambush", EntityAttribute.Mobility, 3f,
                 removalTriggers: RemovalTrigger.OnAttackMade, cleanup: cleanup);
 
             entity.ApplyCondition(template, entity);
@@ -396,7 +396,7 @@ namespace Assets.Scripts.Tests.PlayMode
         public void StatusEffect_RemovalTrigger_OnSkillUsed_RemovesEffect()
         {
             var template = TestStatusEffectFactory.CreateModifierEffect(
-                "Overcharge", Attribute.ArmorClass, 4f,
+                "Overcharge", EntityAttribute.ArmorClass, 4f,
                 removalTriggers: RemovalTrigger.OnSkillUsed, cleanup: cleanup);
 
             entity.ApplyCondition(template, entity);
@@ -411,7 +411,7 @@ namespace Assets.Scripts.Tests.PlayMode
         public void StatusEffect_RemovalTrigger_OnMovement_RemovesEffect()
         {
             var template = TestStatusEffectFactory.CreateModifierEffect(
-                "Entrenched", Attribute.ArmorClass, 3f,
+                "Entrenched", EntityAttribute.ArmorClass, 3f,
                 removalTriggers: RemovalTrigger.OnMovement, cleanup: cleanup);
 
             entity.ApplyCondition(template, entity);
@@ -426,7 +426,7 @@ namespace Assets.Scripts.Tests.PlayMode
         public void StatusEffect_RemovalTrigger_OnTurnEnd_RemovesEffect()
         {
             var template = TestStatusEffectFactory.CreateModifierEffect(
-                "QuickBuff", Attribute.Mobility, 2f,
+                "QuickBuff", EntityAttribute.Mobility, 2f,
                 removalTriggers: RemovalTrigger.OnTurnEnd, cleanup: cleanup);
 
             entity.ApplyCondition(template, entity);
@@ -441,7 +441,7 @@ namespace Assets.Scripts.Tests.PlayMode
         public void StatusEffect_RemovalTrigger_OnRoundEnd_RemovesEffect()
         {
             var template = TestStatusEffectFactory.CreateModifierEffect(
-                "RoundBuff", Attribute.ArmorClass, 1f,
+                "RoundBuff", EntityAttribute.ArmorClass, 1f,
                 removalTriggers: RemovalTrigger.OnRoundEnd, cleanup: cleanup);
 
             entity.ApplyCondition(template, entity);
@@ -456,7 +456,7 @@ namespace Assets.Scripts.Tests.PlayMode
         public void StatusEffect_RemovalTrigger_OnTurnStart_RemovesBeforeTick()
         {
             var template = TestStatusEffectFactory.CreateModifierEffect(
-                "FadingBuff", Attribute.ArmorClass, 2f, duration: 5,
+                "FadingBuff", EntityAttribute.ArmorClass, 2f, duration: 5,
                 removalTriggers: RemovalTrigger.OnTurnStart, cleanup: cleanup);
 
             entity.ApplyCondition(template, entity);
@@ -473,7 +473,7 @@ namespace Assets.Scripts.Tests.PlayMode
         public void StatusEffect_RemovalTrigger_OnStageExit_RemovesEffect()
         {
             var template = TestStatusEffectFactory.CreateModifierEffect(
-                "EnvironmentalBuff", Attribute.ArmorClass, 3f,
+                "EnvironmentalBuff", EntityAttribute.ArmorClass, 3f,
                 removalTriggers: RemovalTrigger.OnStageExit, cleanup: cleanup);
 
             entity.ApplyCondition(template, entity);
@@ -490,10 +490,10 @@ namespace Assets.Scripts.Tests.PlayMode
         public void StatusEffect_RemovalTrigger_DoesNotRemoveUnrelated()
         {
             var onDamage = TestStatusEffectFactory.CreateModifierEffect(
-                "Concentration", Attribute.ArmorClass, 2f,
+                "Concentration", EntityAttribute.ArmorClass, 2f,
                 removalTriggers: RemovalTrigger.OnDamageTaken, cleanup: cleanup);
             var onMovement = TestStatusEffectFactory.CreateModifierEffect(
-                "Entrenched", Attribute.Mobility, 3f,
+                "Entrenched", EntityAttribute.Mobility, 3f,
                 removalTriggers: RemovalTrigger.OnMovement, cleanup: cleanup);
 
             entity.ApplyCondition(onDamage, entity);
@@ -511,7 +511,7 @@ namespace Assets.Scripts.Tests.PlayMode
         public void StatusEffect_RemovalTrigger_NoTriggers_SurvivesAll()
         {
             var template = TestStatusEffectFactory.CreateModifierEffect(
-                "SteadyBuff", Attribute.ArmorClass, 2f,
+                "SteadyBuff", EntityAttribute.ArmorClass, 2f,
                 removalTriggers: RemovalTrigger.None, cleanup: cleanup);
 
             entity.ApplyCondition(template, entity);
@@ -531,7 +531,7 @@ namespace Assets.Scripts.Tests.PlayMode
         public void StatusEffect_RemovalTrigger_MultipleTriggers_FirstOneRemoves()
         {
             var template = TestStatusEffectFactory.CreateModifierEffect(
-                "Fragile", Attribute.ArmorClass, 1f,
+                "Fragile", EntityAttribute.ArmorClass, 1f,
                 removalTriggers: RemovalTrigger.OnDamageTaken | RemovalTrigger.OnMovement,
                 cleanup: cleanup);
 
@@ -549,7 +549,7 @@ namespace Assets.Scripts.Tests.PlayMode
         public void StatusEffect_RemovalTrigger_MultipleTriggers_SecondAlsoWorks()
         {
             var template = TestStatusEffectFactory.CreateModifierEffect(
-                "Fragile", Attribute.ArmorClass, 1f,
+                "Fragile", EntityAttribute.ArmorClass, 1f,
                 removalTriggers: RemovalTrigger.OnDamageTaken | RemovalTrigger.OnMovement,
                 cleanup: cleanup);
 
@@ -567,10 +567,10 @@ namespace Assets.Scripts.Tests.PlayMode
         public void StatusEffect_RemoveByCategory_RemovesMatchingEffects()
         {
             var buff = TestStatusEffectFactory.CreateModifierEffect(
-                "Fortified", Attribute.ArmorClass, 2f,
+                "Fortified", EntityAttribute.ArmorClass, 2f,
                 categories: ConditionCategory.Buff, cleanup: cleanup);
             var debuff = TestStatusEffectFactory.CreateModifierEffect(
-                "Weakened", Attribute.ArmorClass, -2f,
+                "Weakened", EntityAttribute.ArmorClass, -2f,
                 categories: ConditionCategory.Debuff, cleanup: cleanup);
 
             entity.ApplyCondition(buff, entity);
@@ -588,10 +588,10 @@ namespace Assets.Scripts.Tests.PlayMode
         public void StatusEffect_RemoveByCategory_RemovesMultiCategoryEffects()
         {
             var buffMod = TestStatusEffectFactory.CreateModifierEffect(
-                "Blessed", Attribute.ArmorClass, 3f,
+                "Blessed", EntityAttribute.ArmorClass, 3f,
                 categories: ConditionCategory.Buff | ConditionCategory.AttributeModifier, cleanup: cleanup);
             var pureBuff = TestStatusEffectFactory.CreateModifierEffect(
-                "Lucky", Attribute.Mobility, 1f,
+                "Lucky", EntityAttribute.Mobility, 1f,
                 categories: ConditionCategory.Buff, cleanup: cleanup);
 
             entity.ApplyCondition(buffMod, entity);
@@ -609,10 +609,10 @@ namespace Assets.Scripts.Tests.PlayMode
         public void StatusEffect_RemoveByCategory_NoCategoryIsImmune()
         {
             var uncategorised = TestStatusEffectFactory.CreateModifierEffect(
-                "Environmental", Attribute.ArmorClass, 1f,
+                "Environmental", EntityAttribute.ArmorClass, 1f,
                 categories: ConditionCategory.None, cleanup: cleanup);
             var buff = TestStatusEffectFactory.CreateModifierEffect(
-                "Shield", Attribute.ArmorClass, 2f,
+                "Shield", EntityAttribute.ArmorClass, 2f,
                 categories: ConditionCategory.Buff, cleanup: cleanup);
 
             entity.ApplyCondition(uncategorised, entity);
@@ -629,13 +629,13 @@ namespace Assets.Scripts.Tests.PlayMode
         public void StatusEffect_RemoveByCategory_DebuffFlagRemovesAllDebuffs()
         {
             var dot = TestStatusEffectFactory.CreateModifierEffect(
-                "Burning", Attribute.ArmorClass, -1f,
+                "Burning", EntityAttribute.ArmorClass, -1f,
                 categories: ConditionCategory.Debuff | ConditionCategory.DoT, cleanup: cleanup);
             var cc = TestStatusEffectFactory.CreateBehavioralEffect(
                 "Stunned", preventsActions: true,
                 categories: ConditionCategory.Debuff | ConditionCategory.CrowdControl, cleanup: cleanup);
             var buff = TestStatusEffectFactory.CreateModifierEffect(
-                "Shield", Attribute.ArmorClass, 2f,
+                "Shield", EntityAttribute.ArmorClass, 2f,
                 categories: ConditionCategory.Buff, cleanup: cleanup);
 
             entity.ApplyCondition(dot, entity);
@@ -656,9 +656,9 @@ namespace Assets.Scripts.Tests.PlayMode
         public void StatusEffect_RemoveByTemplate_RemovesSpecificEffect()
         {
             var burning = TestStatusEffectFactory.CreateModifierEffect(
-                "Burning", Attribute.ArmorClass, -1f, cleanup: cleanup);
+                "Burning", EntityAttribute.ArmorClass, -1f, cleanup: cleanup);
             var bleeding = TestStatusEffectFactory.CreateModifierEffect(
-                "Bleeding", Attribute.Mobility, -1f, cleanup: cleanup);
+                "Bleeding", EntityAttribute.Mobility, -1f, cleanup: cleanup);
 
             entity.ApplyCondition(burning, entity);
             entity.ApplyCondition(bleeding, entity);
@@ -675,7 +675,7 @@ namespace Assets.Scripts.Tests.PlayMode
         public void StatusEffect_RemoveByTemplate_RemovesAllStacks()
         {
             var template = TestStatusEffectFactory.CreateModifierEffect(
-                "Slowed", Attribute.Mobility, -1f, duration: 3,
+                "Slowed", EntityAttribute.Mobility, -1f, duration: 3,
                 stackBehaviour: StackBehaviour.Stack, maxStacks: 5, cleanup: cleanup);
 
             entity.ApplyCondition(template, entity);
@@ -686,7 +686,7 @@ namespace Assets.Scripts.Tests.PlayMode
             entity.RemoveConditionsByTemplate(template);
 
             Assert.AreEqual(0, entity.GetActiveConditions().Count, "Should remove all stacks of the template");
-            Assert.IsFalse(entity.GetModifiers().Any(m => m.Attribute == Attribute.Mobility),
+            Assert.IsFalse(entity.GetModifiers().Any(m => m.Attribute == EntityAttribute.Mobility),
                 "All modifiers from stacks should be cleaned up");
         }
 
@@ -696,7 +696,7 @@ namespace Assets.Scripts.Tests.PlayMode
         public void StatusEffect_RemovalTrigger_DuringStack_RemovesAllMatchingStacks()
         {
             var template = TestStatusEffectFactory.CreateModifierEffect(
-                "FragileStack", Attribute.ArmorClass, -1f, duration: 5,
+                "FragileStack", EntityAttribute.ArmorClass, -1f, duration: 5,
                 stackBehaviour: StackBehaviour.Stack, maxStacks: 5,
                 removalTriggers: RemovalTrigger.OnDamageTaken, cleanup: cleanup);
 
@@ -715,7 +715,7 @@ namespace Assets.Scripts.Tests.PlayMode
         public void StatusEffect_RemovalTrigger_WithDuration_TriggerRemovesBeforeExpiry()
         {
             var template = TestStatusEffectFactory.CreateModifierEffect(
-                "TimedFragile", Attribute.ArmorClass, 2f, duration: 10,
+                "TimedFragile", EntityAttribute.ArmorClass, 2f, duration: 10,
                 removalTriggers: RemovalTrigger.OnAttackMade, cleanup: cleanup);
 
             entity.ApplyCondition(template, entity);
@@ -735,7 +735,7 @@ namespace Assets.Scripts.Tests.PlayMode
         public void StatusEffect_RemovalTrigger_IndefiniteEffectCanBeTriggered()
         {
             var template = TestStatusEffectFactory.CreateModifierEffect(
-                "Sentinel", Attribute.ArmorClass, 5f, duration: -1,
+                "Sentinel", EntityAttribute.ArmorClass, 5f, duration: -1,
                 removalTriggers: RemovalTrigger.OnD20Roll, cleanup: cleanup);
 
             entity.ApplyCondition(template, entity);
@@ -756,7 +756,7 @@ namespace Assets.Scripts.Tests.PlayMode
         public void StatusEffect_RemovalTrigger_AlreadyRemovedIsIdempotent()
         {
             var template = TestStatusEffectFactory.CreateModifierEffect(
-                "OneShot", Attribute.ArmorClass, 1f,
+                "OneShot", EntityAttribute.ArmorClass, 1f,
                 removalTriggers: RemovalTrigger.OnDamageTaken, cleanup: cleanup);
 
             entity.ApplyCondition(template, entity);
@@ -775,7 +775,7 @@ namespace Assets.Scripts.Tests.PlayMode
         public void StatusEffect_RemoveByCategory_CleansUpModifiers()
         {
             var template = TestStatusEffectFactory.CreateModifierEffect(
-                "Cursed", Attribute.ArmorClass, -3f,
+                "Cursed", EntityAttribute.ArmorClass, -3f,
                 categories: ConditionCategory.Debuff, cleanup: cleanup);
 
             entity.ApplyCondition(template, entity);
@@ -792,7 +792,7 @@ namespace Assets.Scripts.Tests.PlayMode
         public void StatusEffect_RemoveByTemplate_CleansUpModifiers()
         {
             var template = TestStatusEffectFactory.CreateModifierEffect(
-                "Hex", Attribute.Mobility, -4f, cleanup: cleanup);
+                "Hex", EntityAttribute.Mobility, -4f, cleanup: cleanup);
 
             entity.ApplyCondition(template, entity);
             Assert.IsTrue(entity.GetModifiers().Any(m => m.Value == -4f), "Modifier should exist after apply");
@@ -808,11 +808,11 @@ namespace Assets.Scripts.Tests.PlayMode
         public void StatusEffect_MixedTriggerAndCategory_BothPathsWork()
         {
             var triggerable = TestStatusEffectFactory.CreateModifierEffect(
-                "Fragile", Attribute.ArmorClass, 1f,
+                "Fragile", EntityAttribute.ArmorClass, 1f,
                 categories: ConditionCategory.Buff,
                 removalTriggers: RemovalTrigger.OnDamageTaken, cleanup: cleanup);
             var persistent = TestStatusEffectFactory.CreateModifierEffect(
-                "Resilient", Attribute.ArmorClass, 2f,
+                "Resilient", EntityAttribute.ArmorClass, 2f,
                 categories: ConditionCategory.Buff,
                 removalTriggers: RemovalTrigger.None, cleanup: cleanup);
 

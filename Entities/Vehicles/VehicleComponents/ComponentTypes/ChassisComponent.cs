@@ -58,17 +58,17 @@ namespace Assets.Scripts.Entities.Vehicles.VehicleComponents.ComponentTypes
         public int GetBaseIntegrity() => baseIntegrity;
         public int GetBaseDragCoefficientPercent() => baseDragCoefficientPercent;
 
-        public int GetMobility() => StatCalculator.GatherAttributeValue(this, Attribute.Mobility);
-        public int GetIntegrity() => StatCalculator.GatherAttributeValue(this, Attribute.Integrity);
-        public int GetDragCoefficientPercent() => StatCalculator.GatherAttributeValue(this, Attribute.DragCoefficient);
+        public int GetMobility() => StatCalculator.GatherAttributeValue(this, EntityAttribute.Mobility);
+        public int GetIntegrity() => StatCalculator.GatherAttributeValue(this, EntityAttribute.Integrity);
+        public int GetDragCoefficientPercent() => StatCalculator.GatherAttributeValue(this, EntityAttribute.DragCoefficient);
 
-        public override int GetBaseValue(Attribute attribute)
+        public override int GetBaseValue(EntityAttribute attribute)
         {
             return attribute switch
             {
-                Attribute.Mobility => baseMobility,
-                Attribute.Integrity => baseIntegrity + GetIntegrityDamagePenalty(),
-                Attribute.DragCoefficient => baseDragCoefficientPercent,
+                EntityAttribute.Mobility => baseMobility,
+                EntityAttribute.Integrity => baseIntegrity + GetIntegrityDamagePenalty(),
+                EntityAttribute.DragCoefficient => baseDragCoefficientPercent,
                 _ => base.GetBaseValue(attribute)
             };
         }
@@ -97,14 +97,14 @@ namespace Assets.Scripts.Entities.Vehicles.VehicleComponents.ComponentTypes
             int modifiedSpace = -GetComponentSpace();
             if (baseSpace > 0 || modifiedSpace > 0)
             {
-                stats.Add(VehicleComponentUI.DisplayStat.WithTooltip("Capacity", "CAP", Attribute.ComponentSpace, baseSpace, modifiedSpace));
+                stats.Add(VehicleComponentUI.DisplayStat.WithTooltip("Capacity", "CAP", EntityAttribute.ComponentSpace, baseSpace, modifiedSpace));
             }
 
             int modifiedMobility = GetMobility();
-            stats.Add(VehicleComponentUI.DisplayStat.WithTooltip("Mobility", "MBL", Attribute.Mobility, baseMobility, modifiedMobility));
+            stats.Add(VehicleComponentUI.DisplayStat.WithTooltip("Mobility", "MBL", EntityAttribute.Mobility, baseMobility, modifiedMobility));
 
             int modifiedDrag = GetDragCoefficientPercent();
-            stats.Add(VehicleComponentUI.DisplayStat.WithTooltip("Drag", "DRAG", Attribute.DragCoefficient, baseDragCoefficientPercent, modifiedDrag, "%"));
+            stats.Add(VehicleComponentUI.DisplayStat.WithTooltip("Drag", "DRAG", EntityAttribute.DragCoefficient, baseDragCoefficientPercent, modifiedDrag, "%"));
 
             return stats;
         }

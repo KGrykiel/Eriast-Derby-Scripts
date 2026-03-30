@@ -13,15 +13,15 @@ namespace Assets.Scripts.Modifiers.DynamicModifiers
     {
         private const float SPEED_TO_AC_RATIO = 1f; // way too high, just for testing.
 
-        public static List<AttributeModifier> EvaluateAll(
+        public static List<EntityAttributeModifier> EvaluateAll(
             Entity entity, 
-            Attribute targetAttribute)
+            EntityAttribute targetAttribute)
         {
-            var dynamicModifiers = new List<AttributeModifier>();
+            var dynamicModifiers = new List<EntityAttributeModifier>();
 
             switch (targetAttribute)
             {
-                case Attribute.ArmorClass:
+                case EntityAttribute.ArmorClass:
                     EvaluateSpeedToAC(entity, dynamicModifiers);
                     break;
             }
@@ -32,7 +32,7 @@ namespace Assets.Scripts.Modifiers.DynamicModifiers
         /// <summary>Fast-moving vehicles are harder to hit. AC bonus = currentSpeed × ratio.</summary>
         private static void EvaluateSpeedToAC(
             Entity entity, 
-            List<AttributeModifier> modifiers)
+            List<EntityAttributeModifier> modifiers)
         {
             Vehicle vehicle = EntityHelpers.GetParentVehicle(entity);
             if (vehicle == null) return;
@@ -45,12 +45,11 @@ namespace Assets.Scripts.Modifiers.DynamicModifiers
 
             if (acBonus > 0)
             {
-                modifiers.Add(new AttributeModifier(
-                    Attribute.ArmorClass,
+                modifiers.Add(new EntityAttributeModifier(
+                    EntityAttribute.ArmorClass,
                     ModifierType.Flat,
                     acBonus,
-                    "Speed -> AC",
-                    ModifierCategory.Dynamic
+                    "Speed -> AC"
                 ));
             }
         }

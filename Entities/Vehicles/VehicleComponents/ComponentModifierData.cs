@@ -1,5 +1,6 @@
 ﻿using System;
 using Assets.Scripts.Combat.Rolls.Advantage;
+using Assets.Scripts.Modifiers;
 using UnityEngine;
 
 namespace Assets.Scripts.Entities.Vehicles.VehicleComponents
@@ -12,7 +13,7 @@ namespace Assets.Scripts.Entities.Vehicles.VehicleComponents
     public class ComponentModifierData
     {
         [Tooltip("Modifier to apply to the target component (attribute, type, value, and optional label)")]
-        public AttributeModifier modifier;
+        public EntityAttributeModifier modifier;
 
         [Header("Target Selection")]
         [Tooltip("Which component(s) receive this modifier")]

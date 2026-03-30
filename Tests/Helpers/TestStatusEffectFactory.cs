@@ -2,6 +2,7 @@
 using Assets.Scripts.Conditions;
 using Assets.Scripts.Combat.Damage;
 using Assets.Scripts.Conditions.EntityConditions;
+using Assets.Scripts.Modifiers;
 
 namespace Assets.Scripts.Tests.Helpers
 {
@@ -23,7 +24,7 @@ namespace Assets.Scripts.Tests.Helpers
         /// <param name="cleanup">Cleanup list to track for disposal</param>
         public static EntityCondition CreateModifierEffect(
             string name,
-            Attribute attribute,
+            EntityAttribute attribute,
             float value,
             int duration = -1,
             StackBehaviour stackBehaviour = StackBehaviour.Refresh,

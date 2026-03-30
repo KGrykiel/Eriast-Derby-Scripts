@@ -2,6 +2,7 @@ using System;
 using UnityEngine;
 using Assets.Scripts.Characters;
 using SerializeReferenceEditor;
+using Assets.Scripts.Modifiers;
 
 namespace Assets.Scripts.Conditions.CharacterConditions
 {

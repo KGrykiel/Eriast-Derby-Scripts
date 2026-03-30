@@ -8,7 +8,7 @@
         public float? Current;
         public float? Max;
         public bool ShowBar;
-        public Attribute? Attribute;
+        public EntityAttribute? Attribute;
         public int BaseValue;
         public int FinalValue;
         
@@ -44,7 +44,7 @@
             };
         }
         
-        public static DisplayStat WithTooltip(string name, string label, Attribute attribute, int baseValue, int finalValue, string suffix = "")
+        public static DisplayStat WithTooltip(string name, string label, EntityAttribute attribute, int baseValue, int finalValue, string suffix = "")
         {
             return new DisplayStat
             {
@@ -76,7 +76,7 @@
             };
         }
         
-        public static DisplayStat BarWithTooltip(string name, string label, Attribute attribute, int current, int baseMax, int finalMax)
+        public static DisplayStat BarWithTooltip(string name, string label, EntityAttribute attribute, int current, int baseMax, int finalMax)
         {
             return new DisplayStat
             {

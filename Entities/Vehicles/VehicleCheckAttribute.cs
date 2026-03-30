@@ -18,14 +18,14 @@
         /// <summary>
         /// quick conversions between VehicleCheckAttribute and Attribute. Attribute is the enum for gathering modifiers.
         /// </summary>
-        public static Attribute ToAttribute(this VehicleCheckAttribute checkAttr)
+        public static EntityAttribute ToAttribute(this VehicleCheckAttribute checkAttr)
         {
             return checkAttr switch
             {
-                VehicleCheckAttribute.Mobility   => Attribute.Mobility,
-                VehicleCheckAttribute.Stability  => Attribute.Stability,
-                VehicleCheckAttribute.Integrity  => Attribute.Integrity,
-                _                                => Attribute.Mobility
+                VehicleCheckAttribute.Mobility   => EntityAttribute.Mobility,
+                VehicleCheckAttribute.Stability  => EntityAttribute.Stability,
+                VehicleCheckAttribute.Integrity  => EntityAttribute.Integrity,
+                _                                => EntityAttribute.Mobility
             };
         }
     }

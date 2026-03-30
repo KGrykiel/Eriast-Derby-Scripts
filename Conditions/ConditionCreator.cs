@@ -8,6 +8,7 @@ using Assets.Scripts.Combat.Restoration;
 using Assets.Scripts.Combat.Rolls.Advantage;
 using Assets.Scripts.Conditions.EntityConditions;
 using Assets.Scripts.Conditions.CharacterConditions;
+using Assets.Scripts.Modifiers;
 
 namespace Assets.Scripts.Conditions
 {
@@ -71,8 +72,8 @@ namespace Assets.Scripts.Conditions
                 categories: ConditionCategory.Debuff | ConditionCategory.DoT,
                 required: EntityFeature.IsElectronic,
                 modifiers: Mods(
-                    Mod(Attribute.MaxSpeed, ModifierType.Flat, -20f),
-                    Mod(Attribute.EnergyRegen, ModifierType.Flat, -2f)),
+                    Mod(EntityAttribute.MaxSpeed, ModifierType.Flat, -20f),
+                    Mod(EntityAttribute.EnergyRegen, ModifierType.Flat, -2f)),
                 periodicEffects: Periodics(
                     RestorationPeriodic(ResourceType.Energy, 0, 6, 3, isDrain: true)));
 
@@ -83,8 +84,8 @@ namespace Assets.Scripts.Conditions
                 maxStacks: 3,
                 categories: ConditionCategory.Debuff | ConditionCategory.CrowdControl,
                 modifiers: Mods(
-                    Mod(Attribute.MaxSpeed, ModifierType.Multiplier, 0.5f),
-                    Mod(Attribute.Mobility, ModifierType.Flat, -3f)));
+                    Mod(EntityAttribute.MaxSpeed, ModifierType.Multiplier, 0.5f),
+                    Mod(EntityAttribute.Mobility, ModifierType.Flat, -3f)));
 
         // Pattern: multi-modifier buff — armor and integrity bonus.
         private static EntityCondition DefineFortified()
@@ -92,8 +93,8 @@ namespace Assets.Scripts.Conditions
                 stackBehaviour: StackBehaviour.Replace,
                 categories: ConditionCategory.Buff | ConditionCategory.AttributeModifier,
                 modifiers: Mods(
-                    Mod(Attribute.ArmorClass, ModifierType.Flat, 3f),
-                    Mod(Attribute.Integrity, ModifierType.Flat, 2f)));
+                    Mod(EntityAttribute.ArmorClass, ModifierType.Flat, 3f),
+                    Mod(EntityAttribute.Integrity, ModifierType.Flat, 2f)));
 
         // Pattern: behavioral — amplifies damage taken.
         private static EntityCondition DefineVulnerable()
@@ -170,7 +171,7 @@ namespace Assets.Scripts.Conditions
 
         // ==================== BUILDER METHODS ====================
 
-        private static EntityModifierData Mod(Attribute attribute, ModifierType type, float value)
+        private static EntityModifierData Mod(EntityAttribute attribute, ModifierType type, float value)
             => new EntityModifierData { attribute = attribute, type = type, value = value };
 
         private static List<EntityModifierData> Mods(params EntityModifierData[] mods)

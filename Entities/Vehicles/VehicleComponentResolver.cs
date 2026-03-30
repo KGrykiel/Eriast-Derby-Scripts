@@ -11,21 +11,21 @@ namespace Assets.Scripts.Entities.Vehicles
     /// </summary>
     public static class VehicleComponentResolver
     {
-        public static VehicleComponent ResolveForAttribute(Vehicle vehicle, Attribute attribute)
+        public static VehicleComponent ResolveForAttribute(Vehicle vehicle, EntityAttribute attribute)
         {
             return attribute switch
             {
-                Attribute.MaxHealth => vehicle.chassis,
-                Attribute.ArmorClass => vehicle.chassis,
-                Attribute.MagicResistance => vehicle.chassis,
-                Attribute.Mobility => vehicle.chassis,
-                Attribute.DragCoefficient => vehicle.chassis,
-                Attribute.MaxEnergy => vehicle.powerCore,
-                Attribute.EnergyRegen => vehicle.powerCore,
-                Attribute.MaxSpeed => vehicle.AllComponents.OfType<DriveComponent>().FirstOrDefault(),
-                Attribute.Acceleration => vehicle.AllComponents.OfType<DriveComponent>().FirstOrDefault(),
-                Attribute.Stability => vehicle.AllComponents.OfType<DriveComponent>().FirstOrDefault(),
-                Attribute.BaseFriction => vehicle.AllComponents.OfType<DriveComponent>().FirstOrDefault(),
+                EntityAttribute.MaxHealth => vehicle.chassis,
+                EntityAttribute.ArmorClass => vehicle.chassis,
+                EntityAttribute.MagicResistance => vehicle.chassis,
+                EntityAttribute.Mobility => vehicle.chassis,
+                EntityAttribute.DragCoefficient => vehicle.chassis,
+                EntityAttribute.MaxEnergy => vehicle.powerCore,
+                EntityAttribute.EnergyRegen => vehicle.powerCore,
+                EntityAttribute.MaxSpeed => vehicle.AllComponents.OfType<DriveComponent>().FirstOrDefault(),
+                EntityAttribute.Acceleration => vehicle.AllComponents.OfType<DriveComponent>().FirstOrDefault(),
+                EntityAttribute.Stability => vehicle.AllComponents.OfType<DriveComponent>().FirstOrDefault(),
+                EntityAttribute.BaseFriction => vehicle.AllComponents.OfType<DriveComponent>().FirstOrDefault(),
                 _ => vehicle.chassis
             };
         }

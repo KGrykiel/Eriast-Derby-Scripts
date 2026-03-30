@@ -2,6 +2,7 @@
 using Assets.Scripts.Entities.Vehicles.VehicleComponents.ComponentTypes;
 using EventType = Assets.Scripts.Logging.EventType;
 using Assets.Scripts.Entities.Vehicles.VehicleComponents;
+using Assets.Scripts.Modifiers;
 
 namespace Assets.Scripts.Entities
 {
@@ -101,7 +102,7 @@ namespace Assets.Scripts.Entities
             );
         }
         
-        public static void LogModifierRemoved(this VehicleComponent component, AttributeModifier modifier)
+        public static void LogModifierRemoved(this VehicleComponent component, EntityAttributeModifier modifier)
         {
             if (component.ParentVehicle == null) return;
 

@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Assets.Scripts.Modifiers;
+using System;
 using UnityEngine;
 
 namespace Assets.Scripts.Conditions.EntityConditions
@@ -7,7 +8,7 @@ namespace Assets.Scripts.Conditions.EntityConditions
     public class EntityModifierData
     {
         [Tooltip("Entity attribute to modify (e.g., Mobility, ArmorClass)")]
-        public Attribute attribute;
+        public EntityAttribute attribute;
         [Tooltip("Flat adds a fixed amount; Multiplier scales the value")]
         public ModifierType type;
         [Tooltip("Amount to modify by (negative for penalties)")]

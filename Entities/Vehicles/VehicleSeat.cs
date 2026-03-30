@@ -8,6 +8,7 @@ using Assets.Scripts.Conditions;
 using Assets.Scripts.Conditions.CharacterConditions;
 using Assets.Scripts.Effects;
 using Assets.Scripts.Entities.Vehicles.VehicleComponents;
+using Assets.Scripts.Modifiers;
 
 namespace Assets.Scripts.Entities.Vehicles
 {

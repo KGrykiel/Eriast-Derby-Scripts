@@ -168,6 +168,7 @@ namespace Assets.Scripts.Entities.Vehicles
 
                 if (targetComponent != null && !targetComponent.IsDestroyed())
                 {
+                    modifier.Source = targetComponent;
                     targetComponent.AddModifier(modifier);
                 }
             }

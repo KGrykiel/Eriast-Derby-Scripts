@@ -32,15 +32,15 @@ namespace Assets.Scripts.Entities.Vehicles.VehicleComponents.ComponentTypes
         public int GetBaseMaxAmmo() => baseMaxAmmo;
 
         public DamageFormula GetDamageFormula() => baseDamageFormula;
-        public int GetAttackBonus() => StatCalculator.GatherAttributeValue(this, Attribute.AttackBonus);
-        public int GetMaxAmmo() => StatCalculator.GatherAttributeValue(this, Attribute.Ammo);
+        public int GetAttackBonus() => StatCalculator.GatherAttributeValue(this, EntityAttribute.AttackBonus);
+        public int GetMaxAmmo() => StatCalculator.GatherAttributeValue(this, EntityAttribute.Ammo);
 
-        public override int GetBaseValue(Attribute attribute)
+        public override int GetBaseValue(EntityAttribute attribute)
         {
             return attribute switch
             {
-                Attribute.AttackBonus => baseAttackBonus,
-                Attribute.Ammo => baseMaxAmmo,
+                EntityAttribute.AttackBonus => baseAttackBonus,
+                EntityAttribute.Ammo => baseMaxAmmo,
                 _ => base.GetBaseValue(attribute)
             };
         }
@@ -85,12 +85,12 @@ namespace Assets.Scripts.Entities.Vehicles.VehicleComponents.ComponentTypes
             stats.Add(VehicleComponentUI.DisplayStat.Simple("Damage", "DMG", dmgStr));
 
             int modifiedAttackBonus = GetAttackBonus();
-            stats.Add(VehicleComponentUI.DisplayStat.WithTooltip("Attack Bonus", "HIT", Attribute.AttackBonus, baseAttackBonus, modifiedAttackBonus));
+            stats.Add(VehicleComponentUI.DisplayStat.WithTooltip("Attack Bonus", "HIT", EntityAttribute.AttackBonus, baseAttackBonus, modifiedAttackBonus));
 
             if (baseMaxAmmo != -1)
             {
                 int modifiedMaxAmmo = GetMaxAmmo();
-                stats.Add(VehicleComponentUI.DisplayStat.BarWithTooltip("Ammo", "AMMO", Attribute.Ammo, currentAmmo, baseMaxAmmo, modifiedMaxAmmo));
+                stats.Add(VehicleComponentUI.DisplayStat.BarWithTooltip("Ammo", "AMMO", EntityAttribute.Ammo, currentAmmo, baseMaxAmmo, modifiedMaxAmmo));
             }
 
             stats.AddRange(base.GetDisplayStats());

@@ -1,4 +1,4 @@
-public enum Attribute
+public enum EntityAttribute
 {
     // Core stats
     MaxSpeed,
