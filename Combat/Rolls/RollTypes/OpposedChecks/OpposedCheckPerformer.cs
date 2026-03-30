@@ -17,21 +17,31 @@ namespace Assets.Scripts.Combat.Rolls.RollTypes.OpposedChecks
 
             if (!ctx.AttackerRouting.CanAttempt)
             {
-                result = D20Calculator.AutoFail(0);
+                result = D20RollOutcome.AutoFail(0);
             }
             else if (!ctx.DefenderRouting.CanAttempt)
             {
-                result = D20Calculator.AutoSuccess(0);
+                result = D20RollOutcome.AutoSuccess(0);
             }
             else
             {
                 var defenderGathered = RollGatherer.ForSkillCheck(
                     ctx.Spec.defenderSpec, ctx.DefenderRouting.Actor);
-                defenderRoll = D20Calculator.Roll(defenderGathered, 0);
+                var defenderData = D20Calculator.Roll(defenderGathered);
 
                 var attackerGathered = RollGatherer.ForSkillCheck(
                     ctx.Spec.attackerSpec, ctx.AttackerRouting.Actor);
-                result = D20Calculator.Roll(attackerGathered, defenderRoll.Total);
+                var attackerData = D20Calculator.Roll(attackerGathered);
+
+                bool attackerSuccess = attackerData.Total > defenderData.Total;
+                defenderRoll = new D20RollOutcome(
+                    defenderData.KeptRoll, defenderData.Bonuses, defenderData.TotalModifier,
+                    defenderData.Total, attackerData.Total, !attackerSuccess,
+                    defenderData.IsCrit, defenderData.IsFumble, defenderData.Advantage);
+                result = new D20RollOutcome(
+                    attackerData.KeptRoll, attackerData.Bonuses, attackerData.TotalModifier,
+                    attackerData.Total, defenderData.Total, attackerSuccess,
+                    attackerData.IsCrit, attackerData.IsFumble, attackerData.Advantage);
             }
 
             RollActor attackerActor = ctx.AttackerRouting.Actor;

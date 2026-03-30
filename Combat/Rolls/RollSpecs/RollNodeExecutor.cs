@@ -82,13 +82,13 @@ namespace Assets.Scripts.Combat.Rolls.RollSpecs
         {
             return spec switch
             {
-                null                     => D20Calculator.AutoSuccess(0),
+                null                     => D20RollOutcome.AutoSuccess(0),
                 SkillCheckSpec s         => ResolveSkillCheck(s, ctx),
                 SaveSpec s               => ResolveSavingThrow(s, ctx),
                 AttackSpec s             => ResolveAttack(s, ctx),
                 StateThresholdSpec s     => ResolveStateThreshold(s, ctx),
                 OpposedCheckRollSpec s   => ResolveOpposedCheck(s, ctx),
-                _                        => D20Calculator.AutoFail(0)
+                _                        => D20RollOutcome.AutoFail(0)
             };
         }
 
@@ -133,7 +133,7 @@ namespace Assets.Scripts.Combat.Rolls.RollSpecs
             if (targetEntity == null)
             {
                 Debug.LogError("[RollNodeExecutor] AttackSpec requires a targetable Entity in RollContext.");
-                return D20Calculator.AutoFail(0);
+                return D20RollOutcome.AutoFail(0);
             }
 
             var attackCtx = new AttackExecutionContext
@@ -156,7 +156,7 @@ namespace Assets.Scripts.Combat.Rolls.RollSpecs
             string vehicleName = sourceVehicle != null ? sourceVehicle.vehicleName : "<null>";
             Debug.Log($"[StateThreshold] {vehicleName}: {spec.state} {value} vs minimum {spec.minimumValue} — {(success ? "PASS" : "FAIL")}");
 
-            return success ? D20Calculator.AutoSuccess(0) : D20Calculator.AutoFail(0);
+            return success ? D20RollOutcome.AutoSuccess(0) : D20RollOutcome.AutoFail(0);
         }
 
         private static D20RollOutcome ResolveOpposedCheck(OpposedCheckRollSpec spec, RollContext ctx)
@@ -165,7 +165,7 @@ namespace Assets.Scripts.Combat.Rolls.RollSpecs
             if (targetVehicle == null)
             {
                 Debug.LogError("[RollNodeExecutor] OpposedCheck requires a target vehicle in RollContext.");
-                return D20Calculator.AutoFail(0);
+                return D20RollOutcome.AutoFail(0);
             }
 
             Vehicle sourceVehicle = GetSourceVehicle(ctx);

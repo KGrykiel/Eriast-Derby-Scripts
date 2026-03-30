@@ -15,11 +15,16 @@ namespace Assets.Scripts.Combat.Rolls.RollTypes.SkillChecks
             // Step 1: Gather bonuses and advantages
             D20RollOutcome roll;
             if (!ctx.Routing.CanAttempt)
-                roll = D20Calculator.AutoFail(ctx.Spec.dc);
+                roll = D20RollOutcome.AutoFail(ctx.Spec.dc);
             else
             {
                 var gathered = RollGatherer.ForSkillCheck(ctx.Spec, ctx.Routing.Actor);
-                roll = D20Calculator.Roll(gathered, ctx.Spec.dc);
+                var data = D20Calculator.Roll(gathered);
+                bool success = data.IsCrit || (!data.IsFumble && data.Total >= ctx.Spec.dc);
+                roll = new D20RollOutcome(
+                    data.KeptRoll, data.Bonuses, data.TotalModifier,
+                    data.Total, ctx.Spec.dc, success,
+                    data.IsCrit, data.IsFumble, data.Advantage);
             }
 
             // Step 2: Emit event automatically
@@ -53,7 +58,12 @@ namespace Assets.Scripts.Combat.Rolls.RollTypes.SkillChecks
         {
             var actor = new ComponentActor(entity);
             var gathered = RollGatherer.ForSkillCheck(spec, actor);
-            var roll = D20Calculator.Roll(gathered, spec.dc);
+            var data = D20Calculator.Roll(gathered);
+            bool success = data.IsCrit || (!data.IsFumble && data.Total >= spec.dc);
+            var roll = new D20RollOutcome(
+                data.KeptRoll, data.Bonuses, data.TotalModifier,
+                data.Total, spec.dc, success,
+                data.IsCrit, data.IsFumble, data.Advantage);
 
             CombatEventBus.Emit(new SkillCheckEvent(
                 roll,

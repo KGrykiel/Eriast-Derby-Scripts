@@ -68,10 +68,10 @@ namespace Assets.Scripts.Tests.PlayMode
         public void Roll_Normal_NoDroppingRoll()
         {
             var gathered = new GatheredRoll(new List<RollBonus>(), null);
-            var outcome = D20Calculator.Roll(gathered, 10);
+            var data = D20Calculator.Roll(gathered);
 
-            Assert.AreEqual(RollMode.Normal, outcome.Advantage.Mode);
-            Assert.IsNull(outcome.Advantage.DroppedRoll,
+            Assert.AreEqual(RollMode.Normal, data.Advantage.Mode);
+            Assert.IsNull(data.Advantage.DroppedRoll,
                 "Normal rolls should not have a dropped roll");
         }
 
@@ -81,10 +81,10 @@ namespace Assets.Scripts.Tests.PlayMode
             var sources = new List<AdvantageSource> { new AdvantageSource("Test", RollMode.Advantage) };
             var gathered = new GatheredRoll(new List<RollBonus>(), sources);
 
-            var outcome = D20Calculator.Roll(gathered, 10);
+            var data = D20Calculator.Roll(gathered);
 
-            Assert.AreEqual(RollMode.Advantage, outcome.Advantage.Mode);
-            Assert.IsNotNull(outcome.Advantage.DroppedRoll,
+            Assert.AreEqual(RollMode.Advantage, data.Advantage.Mode);
+            Assert.IsNotNull(data.Advantage.DroppedRoll,
                 "Advantage rolls should have a dropped roll");
         }
 
@@ -94,10 +94,10 @@ namespace Assets.Scripts.Tests.PlayMode
             var sources = new List<AdvantageSource> { new AdvantageSource("Test", RollMode.Disadvantage) };
             var gathered = new GatheredRoll(new List<RollBonus>(), sources);
 
-            var outcome = D20Calculator.Roll(gathered, 10);
+            var data = D20Calculator.Roll(gathered);
 
-            Assert.AreEqual(RollMode.Disadvantage, outcome.Advantage.Mode);
-            Assert.IsNotNull(outcome.Advantage.DroppedRoll,
+            Assert.AreEqual(RollMode.Disadvantage, data.Advantage.Mode);
+            Assert.IsNotNull(data.Advantage.DroppedRoll,
                 "Disadvantage rolls should have a dropped roll");
         }
 
@@ -107,9 +107,9 @@ namespace Assets.Scripts.Tests.PlayMode
             var sources = new List<AdvantageSource> { new AdvantageSource("Test", RollMode.Advantage) };
             var gathered = new GatheredRoll(new List<RollBonus>(), sources);
 
-            var outcome = D20Calculator.Roll(gathered, 10);
+            var data = D20Calculator.Roll(gathered);
 
-            Assert.GreaterOrEqual(outcome.BaseRoll, outcome.Advantage.DroppedRoll.Value,
+            Assert.GreaterOrEqual(data.KeptRoll, data.Advantage.DroppedRoll.Value,
                 "With advantage, the kept roll should be >= the dropped roll");
         }
 
@@ -119,9 +119,9 @@ namespace Assets.Scripts.Tests.PlayMode
             var sources = new List<AdvantageSource> { new AdvantageSource("Test", RollMode.Disadvantage) };
             var gathered = new GatheredRoll(new List<RollBonus>(), sources);
 
-            var outcome = D20Calculator.Roll(gathered, 10);
+            var data = D20Calculator.Roll(gathered);
 
-            Assert.LessOrEqual(outcome.BaseRoll, outcome.Advantage.DroppedRoll.Value,
+            Assert.LessOrEqual(data.KeptRoll, data.Advantage.DroppedRoll.Value,
                 "With disadvantage, the kept roll should be <= the dropped roll");
         }
 
@@ -135,21 +135,21 @@ namespace Assets.Scripts.Tests.PlayMode
             };
             var gathered = new GatheredRoll(new List<RollBonus>(), sources);
 
-            var outcome = D20Calculator.Roll(gathered, 10);
+            var data = D20Calculator.Roll(gathered);
 
-            Assert.AreEqual(2, outcome.Advantage.Sources.Count);
-            Assert.AreEqual("Bless", outcome.Advantage.Sources[0].Label);
-            Assert.AreEqual("Flanking", outcome.Advantage.Sources[1].Label);
+            Assert.AreEqual(2, data.Advantage.Sources.Count);
+            Assert.AreEqual("Bless", data.Advantage.Sources[0].Label);
+            Assert.AreEqual("Flanking", data.Advantage.Sources[1].Label);
         }
 
         [Test]
         public void Roll_NullSources_ProducesEmptyArray()
         {
             var gathered = new GatheredRoll(new List<RollBonus>(), null);
-            var outcome = D20Calculator.Roll(gathered, 10);
+            var data = D20Calculator.Roll(gathered);
 
-            Assert.IsNotNull(outcome.Advantage.Sources);
-            Assert.AreEqual(0, outcome.Advantage.Sources.Count);
+            Assert.IsNotNull(data.Advantage.Sources);
+            Assert.AreEqual(0, data.Advantage.Sources.Count);
         }
 
         // ==================== GatherAdvantageSources ====================

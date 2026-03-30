@@ -7,10 +7,8 @@ namespace Assets.Scripts.Combat.Rolls
     /// <summary>Universal d20 roll mechanics. All d20 rolls in the game are funneled here</summary>
     public static class D20Calculator
     {
-        /// <summary>Nat 20 = auto-success (crit), nat 1 = auto-fail (fumble).</summary>
-        public static D20RollOutcome Roll(
-            GatheredRoll gatheredRoll,
-            int targetValue)
+        /// <summary>Nat 20 = crit, nat 1 = fumble. Success evaluation belongs in each performer.</summary>
+        public static D20RollData Roll(GatheredRoll gatheredRoll)
         {
             RollMode mode = ResolveMode(gatheredRoll.AdvantageSources);
 
@@ -31,42 +29,10 @@ namespace Assets.Scripts.Combat.Rolls
             int total = keptRoll + totalModifier;
             bool isCrit = keptRoll == 20;
             bool isFumble = keptRoll == 1;
-            bool success = isCrit || (!isFumble && total >= targetValue);
 
             var advantage = new AdvantageResult(mode, droppedRoll, gatheredRoll.AdvantageSources);
 
-            return new D20RollOutcome(
-                keptRoll, gatheredRoll.Bonuses, totalModifier, total, targetValue,
-                success, isCrit, isFumble, advantage);
-        }
-
-        /// <summary>Synthetic failed roll — e.g. no suitable character found to attempt.</summary>
-        public static D20RollOutcome AutoFail(int targetValue)
-        {
-            return new D20RollOutcome(
-                baseRoll: 0,
-                bonuses: new List<RollBonus>(),
-                totalModifier: 0,
-                total: 0,
-                targetValue: targetValue,
-                success: false,
-                isCriticalHit: false,
-                isFumble: false,
-                isAutoFail: true);
-        }
-
-        /// <summary>Synthetic successful roll — e.g. the opposing side cannot attempt.</summary>
-        public static D20RollOutcome AutoSuccess(int targetValue)
-        {
-            return new D20RollOutcome(
-                baseRoll: 0,
-                bonuses: new List<RollBonus>(),
-                totalModifier: 0,
-                total: 0,
-                targetValue: targetValue,
-                success: true,
-                isCriticalHit: false,
-                isFumble: false);
+            return new D20RollData(keptRoll, gatheredRoll.Bonuses, totalModifier, total, isCrit, isFumble, advantage);
         }
 
         private static int SumBonuses(List<RollBonus> bonuses)

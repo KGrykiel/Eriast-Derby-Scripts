@@ -12,7 +12,12 @@ namespace Assets.Scripts.Combat.Rolls.RollTypes.Attacks
         {
             var gathered = RollGatherer.ForAttack(ctx.Spec, ctx.Attacker);
             int defenseValue = ctx.Target.GetArmorClass();
-            var result = D20Calculator.Roll(gathered, defenseValue);
+            var data = D20Calculator.Roll(gathered);
+            bool success = data.IsCrit || (!data.IsFumble && data.Total >= defenseValue);
+            var result = new D20RollOutcome(
+                data.KeptRoll, data.Bonuses, data.TotalModifier,
+                data.Total, defenseValue, success,
+                data.IsCrit, data.IsFumble, data.Advantage);
 
             Entity attackerEntity = ctx.Attacker.GetEntity();
 

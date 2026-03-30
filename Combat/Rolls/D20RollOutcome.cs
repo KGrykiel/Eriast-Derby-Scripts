@@ -23,6 +23,9 @@ namespace Assets.Scripts.Combat.Rolls
         /// <summary>True when the roll was never made — no eligible actor existed to attempt it.</summary>
         public bool IsAutoFail { get; }
 
+        /// <summary>True when success was granted without rolling — e.g. the opposing side cannot attempt.</summary>
+        public bool IsAutoSuccess { get; }
+
         public D20RollOutcome(
             int baseRoll,
             List<RollBonus> bonuses,
@@ -33,7 +36,8 @@ namespace Assets.Scripts.Combat.Rolls
             bool isCriticalHit,
             bool isFumble,
             AdvantageResult advantage = default,
-            bool isAutoFail = false)
+            bool isAutoFail = false,
+            bool isAutoSuccess = false)
         {
             BaseRoll = baseRoll;
             Bonuses = bonuses;
@@ -45,6 +49,31 @@ namespace Assets.Scripts.Combat.Rolls
             IsFumble = isFumble;
             Advantage = advantage;
             IsAutoFail = isAutoFail;
+            IsAutoSuccess = isAutoSuccess;
         }
+
+        /// <summary>Synthetic failed roll — e.g. no suitable character found to attempt.</summary>
+        public static D20RollOutcome AutoFail(int targetValue) => new D20RollOutcome(
+            baseRoll: 0,
+            bonuses: new List<RollBonus>(),
+            totalModifier: 0,
+            total: 0,
+            targetValue: targetValue,
+            success: false,
+            isCriticalHit: false,
+            isFumble: false,
+            isAutoFail: true);
+
+        /// <summary>Synthetic successful roll — e.g. the opposing side cannot attempt.</summary>
+        public static D20RollOutcome AutoSuccess(int targetValue) => new D20RollOutcome(
+            baseRoll: 0,
+            bonuses: new List<RollBonus>(),
+            totalModifier: 0,
+            total: 0,
+            targetValue: targetValue,
+            success: true,
+            isCriticalHit: false,
+            isFumble: false,
+            isAutoSuccess: true);
     }
 }
