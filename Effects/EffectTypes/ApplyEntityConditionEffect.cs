@@ -1,4 +1,5 @@
-﻿using Assets.Scripts.Conditions.EntityConditions;
+﻿using System.Collections.Generic;
+using Assets.Scripts.Conditions.EntityConditions;
 using Assets.Scripts.Entities;
 using Assets.Scripts.Entities.Vehicles;
 using SerializeReferenceEditor;
@@ -26,42 +27,37 @@ namespace Assets.Scripts.Effects.EffectTypes
                 return;
             }
 
+            if (target is Vehicle vehicle)
+            {
+                ApplyToVehicle(vehicle, context.SourceActor?.GetEntity());
+                return;
+            }
+
             Entity entity = ResolveEntity(target);
             if (entity == null) return;
 
             entity.ApplyCondition(condition, context.SourceActor?.GetEntity());
         }
 
-        protected override Entity ResolveEntity(IEffectTarget target)
+        private void ApplyToVehicle(Vehicle vehicle, Object applier)
         {
-            switch (target)
+            if (condition.modifiers == null || condition.modifiers.Count == 0)
             {
-                case Entity e:
-                    return e;
-                case Vehicle vehicle:
-                    return ResolveVehicleTarget(vehicle);
-                case VehicleSeat:
-                    Debug.LogWarning($"[{GetType().Name}] VehicleSeat is not a valid target for this effect.");
-                    return null;
-                default:
-                    Debug.LogWarning($"[{GetType().Name}] Unsupported target type: {(target != null ? target.GetType().Name : "null")}");
-                    return null;
-            }
-        }
-
-        private Entity ResolveVehicleTarget(Vehicle vehicle)
-        {
-            // Route based on the first modifier's attribute so the condition lands on the correct component.
-            // TODO: for conditions with multiple modifiers targeting different components,
-            // each modifier should ideally be applied to its own component.
-            if (condition.modifiers != null && condition.modifiers.Count > 0)
-            {
-                var firstModifier = condition.modifiers[0];
-                var component = VehicleComponentResolver.ResolveForAttribute(vehicle, firstModifier.attribute);
-                if (component != null) return component;
+                vehicle.chassis.ApplyCondition(condition, applier);
+                return;
             }
 
-            return vehicle.chassis;
+            // Apply to each unique component that owns at least one of this condition's modifiers.
+            // A condition with [EnergyRegen, MaxSpeed] lands on PowerCore AND Drive, not just the first.
+            var targets = new HashSet<Entity>();
+            foreach (var modifier in condition.modifiers)
+            {
+                Entity component = VehicleComponentResolver.ResolveForAttribute(vehicle, modifier.attribute);
+                targets.Add(component != null ? component : vehicle.chassis);
+            }
+
+            foreach (var entity in targets)
+                entity.ApplyCondition(condition, applier);
         }
     }
 }

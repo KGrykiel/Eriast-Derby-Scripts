@@ -1,7 +1,6 @@
 using Assets.Scripts.Combat.Restoration;
 using Assets.Scripts.Entities;
 using Assets.Scripts.Entities.Vehicles;
-using Assets.Scripts.Entities.Vehicles.VehicleComponents.ComponentTypes;
 using SerializeReferenceEditor;
 using UnityEngine;
 

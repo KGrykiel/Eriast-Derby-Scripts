@@ -1,5 +1,4 @@
-﻿using Assets.Scripts.Entities;
-using Assets.Scripts.Entities.Vehicles;
+﻿using Assets.Scripts.Entities.Vehicles;
 using Assets.Scripts.Stages.Lanes;
 using SerializeReferenceEditor;
 using UnityEngine;
@@ -31,23 +30,6 @@ namespace Assets.Scripts.Effects.EffectTypes
             if (targetLane == null) return;
 
             vehicle.currentStage.AssignVehicleToLane(vehicle, targetLane);
-        }
-
-        private Vehicle ResolveVehicle(IEffectTarget target)
-        {
-            switch (target)
-            {
-                case Vehicle v:
-                    return v;
-                case Entity entity:
-                    return EntityHelpers.GetParentVehicle(entity);
-                case VehicleSeat:
-                    Debug.LogWarning($"[{GetType().Name}] VehicleSeat is not a valid target for lane changes.");
-                    return null;
-                default:
-                    Debug.LogWarning($"[{GetType().Name}] Unsupported target type: {(target != null ? target.GetType().Name : "null")}");
-                    return null;
-            }
         }
 
         private StageLane DetermineTargetLane(Vehicle vehicle)

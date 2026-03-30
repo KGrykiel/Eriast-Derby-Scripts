@@ -1,6 +1,5 @@
 ﻿using System.Collections.Generic;
 using Assets.Scripts.Effects;
-using Assets.Scripts.Conditions;
 using Assets.Scripts.Stages.Lanes;
 using UnityEngine;
 using Assets.Scripts.Combat.Rolls.RollTypes.Attacks;

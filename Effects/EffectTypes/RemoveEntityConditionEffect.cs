@@ -13,7 +13,7 @@ namespace Assets.Scripts.Effects.EffectTypes
     /// </summary>
     [System.Serializable]
     [SRName("Remove Condition")]
-    public class RemoveStatusEffect : EffectBase
+    public class RemoveEntityConditionEffect : EffectBase
     {
         [Header("Removal Filter")]
         [Tooltip("Categories to remove (e.g., DoT removes all burning/bleeding). Leave None to use specific template.")]
@@ -24,21 +24,36 @@ namespace Assets.Scripts.Effects.EffectTypes
 
         public override void Apply(IEffectTarget target, EffectContext context)
         {
+            if (target is Vehicle vehicle)
+            {
+                RemoveFromVehicle(vehicle);
+                return;
+            }
+
             Entity entity = ResolveEntity(target);
             if (entity == null) return;
 
+            RemoveFromEntity(entity);
+        }
+
+        private void RemoveFromVehicle(Vehicle vehicle)
+        {
+            // Conditions may be distributed across multiple components; remove from all of them.
+            foreach (var component in vehicle.AllComponents)
+            {
+                if (component != null)
+                    RemoveFromEntity(component);
+            }
+        }
+
+        private void RemoveFromEntity(Entity entity)
+        {
             if (specificTemplate != null)
-            {
                 entity.RemoveConditionsByTemplate(specificTemplate);
-            }
             else if (categoriesToRemove != ConditionCategory.None)
-            {
                 entity.RemoveConditionsByCategory(categoriesToRemove);
-            }
             else
-            {
-                Debug.LogWarning("[RemoveConditionEffect] Neither specificTemplate nor categoriesToRemove set!");
-            }
+                Debug.LogWarning("[RemoveEntityConditionEffect] Neither specificTemplate nor categoriesToRemove set!");
         }
     }
 }

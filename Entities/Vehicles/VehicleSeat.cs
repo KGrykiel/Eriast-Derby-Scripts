@@ -138,6 +138,12 @@ namespace Assets.Scripts.Entities.Vehicles
         public AppliedCharacterCondition ApplyCondition(CharacterCondition condition, UnityEngine.Object applier)
             => ConditionManager.Apply(condition, applier);
 
+        public void RemoveConditionsByTemplate(CharacterCondition template)
+            => ConditionManager.RemoveByTemplate(template);
+
+        public void RemoveConditionsByCategory(ConditionCategory categories)
+            => ConditionManager.RemoveByCategory(categories);
+
         public List<AppliedCharacterCondition> GetActiveConditions()
             => ConditionManager.GetActive();
 

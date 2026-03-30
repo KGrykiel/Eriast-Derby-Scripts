@@ -4,7 +4,6 @@ using SerializeReferenceEditor;
 using Assets.Scripts.Combat.Damage.FormulaProviders;
 using Assets.Scripts.Combat.Damage.FormulaProviders.SpecificProviders;
 using Assets.Scripts.Entities;
-using Assets.Scripts.Entities.Vehicles;
 
 namespace Assets.Scripts.Effects.EffectTypes
 {

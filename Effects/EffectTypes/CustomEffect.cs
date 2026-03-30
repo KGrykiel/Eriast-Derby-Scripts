@@ -1,6 +1,5 @@
 using Assets.Scripts.Effects.EffectTypes.CustomEffectCommands;
 using Assets.Scripts.Entities;
-using Assets.Scripts.Entities.Vehicles;
 using SerializeReferenceEditor;
 using System;
 using UnityEngine;
