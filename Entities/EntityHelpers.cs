@@ -13,4 +13,16 @@ public static class EntityHelpers
         }
         return null;
     }
+
+    /// <summary>Resolves a <see cref="Vehicle"/> from an <see cref="IRollTarget"/>. Returns null if the target cannot be mapped to a vehicle.</summary>
+    public static Vehicle GetVehicleFromTarget(IRollTarget target)
+    {
+        return target switch
+        {
+            Vehicle v        => v,
+            Entity entity    => GetParentVehicle(entity),
+            VehicleSeat seat => seat.ParentVehicle,
+            _                => null
+        };
+    }
 }

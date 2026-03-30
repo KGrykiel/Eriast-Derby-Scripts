@@ -25,28 +25,14 @@ namespace Assets.Scripts.Combat.Rolls.Targeting
 
         public IReadOnlyList<IRollTarget> ResolveFrom(RollContext ctx)
         {
-            Vehicle vehicle = ctx.SourceActor != null ? ctx.SourceActor.GetVehicle() : null;
+            Vehicle vehicle = ctx.SourceActor?.GetVehicle();
             if (vehicle == null)
-            {
-                vehicle = ctx.Target switch
-                {
-                    Vehicle v        => v,
-                    Entity entity    => EntityHelpers.GetParentVehicle(entity),
-                    VehicleSeat seat => seat.ParentVehicle,
-                    _                => null
-                };
-            }
+                vehicle = EntityHelpers.GetVehicleFromTarget(ctx.Target);
             if (vehicle == null || vehicle.currentStage == null)
                 return System.Array.Empty<IRollTarget>();
 
             Vehicle self = ExcludeSelf ? vehicle : null;
-            Vehicle primaryTarget = ExcludeTarget ? ctx.Target switch
-            {
-                Vehicle v        => v,
-                Entity entity    => EntityHelpers.GetParentVehicle(entity),
-                VehicleSeat seat => seat.ParentVehicle,
-                _                => null
-            } : null;
+            Vehicle primaryTarget = ExcludeTarget ? EntityHelpers.GetVehicleFromTarget(ctx.Target) : null;
 
             var results = new List<IRollTarget>();
             foreach (var v in vehicle.currentStage.vehiclesInStage)

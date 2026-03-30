@@ -12,5 +12,7 @@ namespace Assets.Scripts.Combat.Rolls.RollSpecs
     {
         public IRollTarget Target;
         public RollActor SourceActor;
+        /// <summary>What triggered this roll, used for logging. Set by the caller before passing to RollNodeExecutor.</summary>
+        public string CausalSource;
     }
 }

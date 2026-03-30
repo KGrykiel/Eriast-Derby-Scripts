@@ -461,10 +461,10 @@ namespace Assets.Scripts.Tests.PlayMode
         {
             var vehicle = BuildVehicle("Target", chassisHealth: 100);
             var node = CreateUnconditionalDamageNode(10, EffectTarget.SelectedTarget);
-            var ctx = new RollContext { Target = vehicle };
+            var ctx = new RollContext { Target = vehicle, CausalSource = "Test" };
 
             int hpBefore = vehicle.chassis.GetCurrentHealth();
-            RollNodeExecutor.Execute(node, ctx, "Test");
+            RollNodeExecutor.Execute(node, ctx);
             yield return null;
 
             Assert.AreEqual(hpBefore - 10, vehicle.chassis.GetCurrentHealth());
@@ -483,11 +483,11 @@ namespace Assets.Scripts.Tests.PlayMode
             var seat = source.seats[0];
             var actor = new CharacterActor(seat);
             var node = CreateUnconditionalDamageNode(15, EffectTarget.SourceVehicle);
-            var ctx = new RollContext { SourceActor = actor, Target = target };
+            var ctx = new RollContext { SourceActor = actor, Target = target, CausalSource = "Test" };
 
             int sourceHpBefore = source.chassis.GetCurrentHealth();
             int targetHpBefore = target.chassis.GetCurrentHealth();
-            RollNodeExecutor.Execute(node, ctx, "Test");
+            RollNodeExecutor.Execute(node, ctx);
             yield return null;
 
             Assert.AreEqual(sourceHpBefore - 15, source.chassis.GetCurrentHealth(), "Source should take damage");
@@ -507,10 +507,10 @@ namespace Assets.Scripts.Tests.PlayMode
             var seat = source.seats[0];
             var actor = new CharacterActor(seat);
             var node = CreateUnconditionalDamageNode(20, EffectTarget.TargetVehicle);
-            var ctx = new RollContext { SourceActor = actor, Target = target };
+            var ctx = new RollContext { SourceActor = actor, Target = target, CausalSource = "Test" };
 
             int targetHpBefore = target.chassis.GetCurrentHealth();
-            RollNodeExecutor.Execute(node, ctx, "Test");
+            RollNodeExecutor.Execute(node, ctx);
             yield return null;
 
             Assert.AreEqual(targetHpBefore - 20, target.chassis.GetCurrentHealth());
@@ -528,9 +528,9 @@ namespace Assets.Scripts.Tests.PlayMode
             PlaceVehicleInLane(vehicleC, stage, lane);
 
             var node = CreateUnconditionalDamageNode(10, EffectTarget.AllVehiclesInTargetLane);
-            var ctx = new RollContext { Target = vehicleA };
+            var ctx = new RollContext { Target = vehicleA, CausalSource = "Test" };
 
-            RollNodeExecutor.Execute(node, ctx, "Test");
+            RollNodeExecutor.Execute(node, ctx);
             yield return null;
 
             Assert.AreEqual(90, vehicleA.chassis.GetCurrentHealth(), "Vehicle A should take 10 damage");
@@ -548,9 +548,9 @@ namespace Assets.Scripts.Tests.PlayMode
             PlaceVehicleInLane(other, stage, lane);
 
             var node = CreateUnconditionalDamageNode(10, EffectTarget.AllOtherVehiclesInTargetLane);
-            var ctx = new RollContext { Target = self };
+            var ctx = new RollContext { Target = self, CausalSource = "Test" };
 
-            RollNodeExecutor.Execute(node, ctx, "Test");
+            RollNodeExecutor.Execute(node, ctx);
             yield return null;
 
             Assert.AreEqual(100, self.chassis.GetCurrentHealth(), "Self should NOT take damage");
@@ -571,9 +571,9 @@ namespace Assets.Scripts.Tests.PlayMode
             PlaceVehicleInLane(otherDiffLane, stage, laneB);
 
             var node = CreateUnconditionalDamageNode(10, EffectTarget.AllOtherVehiclesInStage);
-            var ctx = new RollContext { Target = self };
+            var ctx = new RollContext { Target = self, CausalSource = "Test" };
 
-            RollNodeExecutor.Execute(node, ctx, "Test");
+            RollNodeExecutor.Execute(node, ctx);
             yield return null;
 
             Assert.AreEqual(100, self.chassis.GetCurrentHealth(), "Self should NOT take damage");
@@ -592,13 +592,13 @@ namespace Assets.Scripts.Tests.PlayMode
             gameObjects.Add(vehicle.gameObject);
 
             var node = CreateUnconditionalDamageNode(5, EffectTarget.AllComponentsOnTarget);
-            var ctx = new RollContext { Target = vehicle };
+            var ctx = new RollContext { Target = vehicle, CausalSource = "Test" };
 
             int chassisHp = vehicle.chassis.GetCurrentHealth();
             int weaponHp = vehicle.AllComponents.First(c => c.componentType == ComponentType.Weapon).GetCurrentHealth();
             int powerCoreHp = vehicle.powerCore.GetCurrentHealth();
 
-            RollNodeExecutor.Execute(node, ctx, "Test");
+            RollNodeExecutor.Execute(node, ctx);
             yield return null;
 
             Assert.AreEqual(chassisHp - 5, vehicle.chassis.GetCurrentHealth(), "Chassis should take 5 damage");
@@ -621,12 +621,12 @@ namespace Assets.Scripts.Tests.PlayMode
             VehicleComponent weapon = vehicle.AllComponents.First(c => c.componentType == ComponentType.Weapon);
             var actor = new ComponentActor(weapon);
             var node = CreateUnconditionalDamageNode(8, EffectTarget.SourceComponent);
-            var ctx = new RollContext { SourceActor = actor, Target = vehicle };
+            var ctx = new RollContext { SourceActor = actor, Target = vehicle, CausalSource = "Test" };
 
             int weaponHp = weapon.GetCurrentHealth();
             int chassisHp = vehicle.chassis.GetCurrentHealth();
 
-            RollNodeExecutor.Execute(node, ctx, "Test");
+            RollNodeExecutor.Execute(node, ctx);
             yield return null;
 
             Assert.AreEqual(weaponHp - 8, weapon.GetCurrentHealth(), "Weapon should take damage");
@@ -654,9 +654,9 @@ namespace Assets.Scripts.Tests.PlayMode
                     new() { effect = CreateFlatDamageEffect(20), target = EffectTarget.SelectedTarget }
                 }
             };
-            var ctx = new RollContext { Target = exploder };
+            var ctx = new RollContext { Target = exploder, CausalSource = "You Explode!" };
 
-            RollNodeExecutor.Execute(node, ctx, "You Explode!");
+            RollNodeExecutor.Execute(node, ctx);
             yield return null;
 
             Assert.AreEqual(80, exploder.chassis.GetCurrentHealth(),
@@ -686,9 +686,9 @@ namespace Assets.Scripts.Tests.PlayMode
                     new() { effect = CreateFlatDamageEffect(5), target = EffectTarget.SourceVehicle }
                 }
             };
-            var ctx = new RollContext { SourceActor = actor, Target = target };
+            var ctx = new RollContext { SourceActor = actor, Target = target, CausalSource = "Test" };
 
-            RollNodeExecutor.Execute(node, ctx, "Test");
+            RollNodeExecutor.Execute(node, ctx);
             yield return null;
 
             Assert.AreEqual(75, target.chassis.GetCurrentHealth(), "Target should take 25 damage");
@@ -716,9 +716,9 @@ namespace Assets.Scripts.Tests.PlayMode
                     new() { effect = CreateFlatDamageEffect(10), target = EffectTarget.SelectedTarget }
                 }
             };
-            var ctx = new RollContext { Target = vehicleA };
+            var ctx = new RollContext { Target = vehicleA, CausalSource = "LaneHazard" };
 
-            RollNodeExecutor.Execute(node, ctx, "LaneHazard");
+            RollNodeExecutor.Execute(node, ctx);
             yield return null;
 
             Assert.AreEqual(90, vehicleA.chassis.GetCurrentHealth(), "Vehicle A should take 10 damage");
@@ -744,9 +744,9 @@ namespace Assets.Scripts.Tests.PlayMode
                     new() { effect = CreateFlatDamageEffect(15), target = EffectTarget.SelectedTarget }
                 }
             };
-            var ctx = new RollContext { Target = vehicleA };
+            var ctx = new RollContext { Target = vehicleA, CausalSource = "StageQuake" };
 
-            RollNodeExecutor.Execute(node, ctx, "StageQuake");
+            RollNodeExecutor.Execute(node, ctx);
             yield return null;
 
             Assert.AreEqual(85, vehicleA.chassis.GetCurrentHealth(), "Vehicle A should take 15 damage");
@@ -770,9 +770,9 @@ namespace Assets.Scripts.Tests.PlayMode
                     new() { effect = CreateFlatDamageEffect(7), target = EffectTarget.SelectedTarget }
                 }
             };
-            var ctx = new RollContext { SourceActor = null, Target = vehicleA };
+            var ctx = new RollContext { SourceActor = null, Target = vehicleA, CausalSource = "EventCard" };
 
-            RollNodeExecutor.Execute(node, ctx, "EventCard");
+            RollNodeExecutor.Execute(node, ctx);
             yield return null;
 
             Assert.AreEqual(93, vehicleA.chassis.GetCurrentHealth(), "A should take damage with null SourceActor");
@@ -797,9 +797,9 @@ namespace Assets.Scripts.Tests.PlayMode
                     new() { effect = CreateFlatDamageEffect(99), target = EffectTarget.SelectedTarget }
                 }
             };
-            var ctx = new RollContext { Target = triggerVehicle };
+            var ctx = new RollContext { Target = triggerVehicle, CausalSource = "EmptyLane" };
 
-            bool result = RollNodeExecutor.Execute(node, ctx, "EmptyLane");
+            bool result = RollNodeExecutor.Execute(node, ctx);
             yield return null;
 
             Assert.IsFalse(result, "Should return false when no targets resolved (anySuccess stays false)");
@@ -856,9 +856,9 @@ namespace Assets.Scripts.Tests.PlayMode
                     new() { effect = CreateFlatDamageEffect(10), target = EffectTarget.SelectedTarget }
                 }
             };
-            var ctx = new RollContext { SourceActor = actor, Target = targetA };
+            var ctx = new RollContext { SourceActor = actor, Target = targetA, CausalSource = "ScatterShot" };
 
-            RollNodeExecutor.Execute(node, ctx, "ScatterShot");
+            RollNodeExecutor.Execute(node, ctx);
             yield return null;
 
             Assert.AreEqual(90, targetA.chassis.GetCurrentHealth(), "Target A should take damage");
@@ -882,9 +882,9 @@ namespace Assets.Scripts.Tests.PlayMode
                     new() { effect = CreateFlatDamageEffect(10), target = EffectTarget.SelectedTarget }
                 }
             };
-            var ctx = new RollContext { Target = vehicle };
+            var ctx = new RollContext { Target = vehicle, CausalSource = "Test" };
 
-            RollNodeExecutor.Execute(node, ctx, "Test");
+            RollNodeExecutor.Execute(node, ctx);
             yield return null;
 
             Assert.AreEqual(90, vehicle.chassis.GetCurrentHealth(), "Should execute against single target");
@@ -899,9 +899,9 @@ namespace Assets.Scripts.Tests.PlayMode
         {
             var vehicle = BuildVehicle("EventTarget", chassisHealth: 100);
             var node = CreateUnconditionalDamageNode(12, EffectTarget.SelectedTarget);
-            var ctx = new RollContext { SourceActor = null, Target = vehicle };
+            var ctx = new RollContext { SourceActor = null, Target = vehicle, CausalSource = "EventCard" };
 
-            RollNodeExecutor.Execute(node, ctx, "EventCard");
+            RollNodeExecutor.Execute(node, ctx);
             yield return null;
 
             Assert.AreEqual(88, vehicle.chassis.GetCurrentHealth());
@@ -912,9 +912,9 @@ namespace Assets.Scripts.Tests.PlayMode
         {
             var vehicle = BuildVehicle("EventTarget", chassisHealth: 100);
             var node = CreateUnconditionalDamageNode(10, EffectTarget.SourceVehicle);
-            var ctx = new RollContext { SourceActor = null, Target = vehicle };
+            var ctx = new RollContext { SourceActor = null, Target = vehicle, CausalSource = "EventCard" };
 
-            RollNodeExecutor.Execute(node, ctx, "EventCard");
+            RollNodeExecutor.Execute(node, ctx);
             yield return null;
 
             Assert.AreEqual(90, vehicle.chassis.GetCurrentHealth(),
@@ -931,9 +931,9 @@ namespace Assets.Scripts.Tests.PlayMode
             PlaceVehicleInLane(other, stage, lane);
 
             var node = CreateUnconditionalDamageNode(10, EffectTarget.AllOtherVehiclesInTargetLane);
-            var ctx = new RollContext { SourceActor = null, Target = self };
+            var ctx = new RollContext { SourceActor = null, Target = self, CausalSource = "EventCard" };
 
-            RollNodeExecutor.Execute(node, ctx, "EventCard");
+            RollNodeExecutor.Execute(node, ctx);
             yield return null;
 
             Assert.AreEqual(100, self.chassis.GetCurrentHealth(), "Self excluded with null SourceActor");
@@ -995,9 +995,9 @@ namespace Assets.Scripts.Tests.PlayMode
                     new() { effect = CreateFlatDamageEffect(10), target = EffectTarget.SelectedTarget }
                 }
             };
-            var ctx = new RollContext { Target = lane };
+            var ctx = new RollContext { Target = lane, CausalSource = "Bombardment" };
 
-            RollNodeExecutor.Execute(node, ctx, "Bombardment");
+            RollNodeExecutor.Execute(node, ctx);
             yield return null;
 
             Assert.AreEqual(90, vehicleA.chassis.GetCurrentHealth(), "A should take damage from StageLane target");
@@ -1007,9 +1007,9 @@ namespace Assets.Scripts.Tests.PlayMode
         [UnityTest]
         public IEnumerator NullNode_ReturnsTrue()
         {
-            var ctx = new RollContext();
+            var ctx = new RollContext { CausalSource = "NullNode" };
 
-            bool result = RollNodeExecutor.Execute(null, ctx, "NullNode");
+            bool result = RollNodeExecutor.Execute(null, ctx);
             yield return null;
 
             Assert.IsTrue(result, "Null node should be treated as unconditional success");

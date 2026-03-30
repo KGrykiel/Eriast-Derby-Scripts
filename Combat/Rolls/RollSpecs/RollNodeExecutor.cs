@@ -28,17 +28,18 @@ namespace Assets.Scripts.Combat.Rolls.RollSpecs
         /// </summary>
         /// <param name="node">Node to execute. Null is treated as unconditional success with no effects.</param>
         /// <param name="ctx">Execution context. Source vehicle is derived from context, not passed explicitly.</param>
-        /// <param name="causalSource">What triggered this node, used for logging.</param>
         /// <returns>True if the roll succeeded (or there was no roll), false on failure.</returns>
-        public static bool Execute(RollNode node, RollContext ctx, string causalSource = null, bool scopeAsAction = false)
+        public static bool Execute(RollNode node, RollContext ctx)
         {
             if (node == null)
                 return true;
 
-            return ExecuteNode(node, ctx, causalSource, scopeAsAction);
+            CombatEventBus.BeginAction();
+            try   { return ExecuteNode(node, ctx); }
+            finally { CombatEventBus.EndAction(); }
         }
 
-        private static bool ExecuteNode(RollNode node, RollContext ctx, string causalSource, bool scopeAsAction)
+        private static bool ExecuteNode(RollNode node, RollContext ctx)
         {
             // Fan-out: if the node has a targetResolver, execute once per resolved target
             if (node.targetResolver != null)
@@ -50,48 +51,49 @@ namespace Assets.Scripts.Combat.Rolls.RollSpecs
                     var perTargetCtx = new RollContext
                     {
                         SourceActor = ctx.SourceActor,
-                        Target = target
+                        Target = target,
+                        CausalSource = ctx.CausalSource
                     };
-                    bool result = ExecuteSingleNode(node, perTargetCtx, causalSource, scopeAsAction);
+                    bool result = ExecuteSingleNode(node, perTargetCtx);
                     anySuccess |= result;
                 }
                 return anySuccess;
             }
 
-            return ExecuteSingleNode(node, ctx, causalSource, scopeAsAction);
+            return ExecuteSingleNode(node, ctx);
         }
 
-        private static bool ExecuteSingleNode(RollNode node, RollContext ctx, string causalSource, bool scopeAsAction)
+        private static bool ExecuteSingleNode(RollNode node, RollContext ctx)
         {
-            D20RollOutcome roll = ResolveRoll(node.rollSpec, ctx, causalSource);
+            D20RollOutcome roll = ResolveRoll(node.rollSpec, ctx);
 
             var effects = roll.Success ? node.successEffects : node.failureEffects;
-            ApplyEffects(effects, ctx, roll.IsCriticalHit, causalSource, scopeAsAction);
+            ApplyEffects(effects, ctx, roll.IsCriticalHit);
 
             var chain = roll.Success ? node.onSuccessChain : node.onFailureChain;
             if (chain != null)
-                ExecuteNode(chain, ctx, causalSource, scopeAsAction);
+                ExecuteNode(chain, ctx);
 
             return roll.Success;
         }
 
         // ==================== ROLL RESOLUTION ====================
 
-        private static D20RollOutcome ResolveRoll(IRollSpec spec, RollContext ctx, string causalSource)
+        private static D20RollOutcome ResolveRoll(IRollSpec spec, RollContext ctx)
         {
             return spec switch
             {
                 null                     => D20Calculator.AutoSuccess(0),
-                SkillCheckSpec s         => ResolveSkillCheck(s, ctx, causalSource),
-                SaveSpec s               => ResolveSavingThrow(s, ctx, causalSource),
-                AttackSpec s             => ResolveAttack(s, ctx, causalSource),
+                SkillCheckSpec s         => ResolveSkillCheck(s, ctx),
+                SaveSpec s               => ResolveSavingThrow(s, ctx),
+                AttackSpec s             => ResolveAttack(s, ctx),
                 StateThresholdSpec s     => ResolveStateThreshold(s, ctx),
-                OpposedCheckRollSpec s   => ResolveOpposedCheck(s, ctx, causalSource),
+                OpposedCheckRollSpec s   => ResolveOpposedCheck(s, ctx),
                 _                        => D20Calculator.AutoFail(0)
             };
         }
 
-        private static D20RollOutcome ResolveSkillCheck(SkillCheckSpec spec, RollContext ctx, string causalSource)
+        private static D20RollOutcome ResolveSkillCheck(SkillCheckSpec spec, RollContext ctx)
         {
             Vehicle sourceVehicle = GetSourceVehicle(ctx);
             var routing = CheckRouter.RouteSkillCheck(sourceVehicle, spec, ctx.SourceActor);
@@ -99,14 +101,14 @@ namespace Assets.Scripts.Combat.Rolls.RollSpecs
             {
                 Vehicle = sourceVehicle,
                 Spec = spec,
-                CausalSource = causalSource,
+                CausalSource = ctx.CausalSource,
                 Routing = routing
             };
 
             return SkillCheckPerformer.Execute(checkCtx);
         }
 
-        private static D20RollOutcome ResolveSavingThrow(SaveSpec spec, RollContext ctx, string causalSource)
+        private static D20RollOutcome ResolveSavingThrow(SaveSpec spec, RollContext ctx)
         {
             // In skill context the target makes the save; in event/lane context the acting vehicle makes it.
             Vehicle targetVehicle = GetTargetVehicle(ctx);
@@ -118,7 +120,7 @@ namespace Assets.Scripts.Combat.Rolls.RollSpecs
             {
                 Vehicle = roller,
                 Spec = spec,
-                CausalSource = causalSource,
+                CausalSource = ctx.CausalSource,
                 AttackerEntity = ctx.SourceActor?.GetEntity(),
                 Routing = routing
             };
@@ -126,7 +128,7 @@ namespace Assets.Scripts.Combat.Rolls.RollSpecs
             return SavePerformer.Execute(saveCtx);
         }
 
-        private static D20RollOutcome ResolveAttack(AttackSpec spec, RollContext ctx, string causalSource)
+        private static D20RollOutcome ResolveAttack(AttackSpec spec, RollContext ctx)
         {
             Entity targetEntity = ResolveTargetEntity(ctx);
             if (targetEntity == null)
@@ -139,7 +141,7 @@ namespace Assets.Scripts.Combat.Rolls.RollSpecs
             {
                 Spec         = spec,
                 Target       = targetEntity,
-                CausalSource = causalSource,
+                CausalSource = ctx.CausalSource,
                 Attacker     = ctx.SourceActor
             };
 
@@ -158,7 +160,7 @@ namespace Assets.Scripts.Combat.Rolls.RollSpecs
             return success ? D20Calculator.AutoSuccess(0) : D20Calculator.AutoFail(0);
         }
 
-        private static D20RollOutcome ResolveOpposedCheck(OpposedCheckRollSpec spec, RollContext ctx, string causalSource)
+        private static D20RollOutcome ResolveOpposedCheck(OpposedCheckRollSpec spec, RollContext ctx)
         {
             Vehicle targetVehicle = GetTargetVehicle(ctx);
             if (targetVehicle == null)
@@ -176,7 +178,7 @@ namespace Assets.Scripts.Combat.Rolls.RollSpecs
                 AttackerVehicle = sourceVehicle,
                 DefenderVehicle = targetVehicle,
                 Spec = spec,
-                CausalSource = causalSource,
+                CausalSource = ctx.CausalSource,
                 AttackerRouting = attackerRouting,
                 DefenderRouting = defenderRouting
             };
@@ -186,36 +188,20 @@ namespace Assets.Scripts.Combat.Rolls.RollSpecs
 
         // ==================== EFFECT APPLICATION ====================
 
-        private static void ApplyEffects(List<EffectInvocation> effects, RollContext ctx, bool isCriticalHit, string causalSource, bool scopeAsAction)
+        private static void ApplyEffects(List<EffectInvocation> effects, RollContext ctx, bool isCriticalHit)
         {
             if (effects == null || effects.Count == 0) return;
 
-            if (scopeAsAction)
-            {
-                CombatEventBus.BeginAction();
-                VehicleComponent sourceComponent = ctx.SourceActor?.GetEntity() as VehicleComponent;
-                if (sourceComponent != null)
-                    sourceComponent.NotifyConditionTrigger(RemovalTrigger.OnSkillUsed);
-            }
+            var effectContext = EffectContext.FromRollContext(ctx, isCriticalHit);
+            effectContext.CausalSource = ctx.CausalSource;
 
-            try
+            foreach (var invocation in effects)
             {
-                var effectContext = EffectContext.FromRollContext(ctx, isCriticalHit);
-                effectContext.CausalSource = causalSource;
+                if (invocation?.effect == null) continue;
 
-                foreach (var invocation in effects)
-                {
-                    if (invocation?.effect == null) continue;
-
-                    var targets = ResolveTargets(invocation, ctx);
-                    foreach (var target in targets)
-                        invocation.effect.Apply(target, effectContext);
-                }
-            }
-            finally
-            {
-                if (scopeAsAction)
-                    CombatEventBus.EndAction();
+                var targets = ResolveTargets(invocation, ctx);
+                foreach (var target in targets)
+                    invocation.effect.Apply(target, effectContext);
             }
         }
 

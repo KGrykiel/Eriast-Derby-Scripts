@@ -32,13 +32,7 @@ namespace Assets.Scripts.Combat.Rolls.Targeting
                 return System.Array.Empty<IRollTarget>();
 
             Vehicle self = ExcludeSelf && ctx.SourceActor != null ? ctx.SourceActor.GetVehicle() : null;
-            Vehicle primaryTarget = ExcludeTarget ? ctx.Target switch
-            {
-                Vehicle v        => v,
-                Entity entity    => EntityHelpers.GetParentVehicle(entity),
-                VehicleSeat seat => seat.ParentVehicle,
-                _                => null
-            } : null;
+            Vehicle primaryTarget = ExcludeTarget ? EntityHelpers.GetVehicleFromTarget(ctx.Target) : null;
 
             var results = new List<IRollTarget>();
             foreach (var v in lane.vehiclesInLane)
@@ -54,13 +48,7 @@ namespace Assets.Scripts.Combat.Rolls.Targeting
             if (ctx.Target is StageLane lane)
                 return lane;
 
-            Vehicle vehicle = ctx.Target switch
-            {
-                Vehicle v => v,
-                Entity entity => EntityHelpers.GetParentVehicle(entity),
-                VehicleSeat seat => seat.ParentVehicle,
-                _ => null
-            };
+            Vehicle vehicle = EntityHelpers.GetVehicleFromTarget(ctx.Target);
             return vehicle != null ? vehicle.currentLane : null;
         }
     }

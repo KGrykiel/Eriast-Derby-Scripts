@@ -14,7 +14,7 @@ namespace Assets.Scripts.Combat.Rolls.Targeting
     {
         public IReadOnlyList<IRollTarget> ResolveFrom(RollContext ctx)
         {
-            Vehicle vehicle = ctx.SourceActor != null ? ctx.SourceActor.GetVehicle() : null;
+            Vehicle vehicle = ctx.SourceActor?.GetVehicle();
             if (vehicle == null) vehicle = ctx.Target as Vehicle;
             if (vehicle != null)
                 return new IRollTarget[] { vehicle };

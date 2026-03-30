@@ -181,8 +181,8 @@ namespace Assets.Scripts.Stages
 
         private void ResolveLaneTurnEffect(Vehicle vehicle, StageLane lane, LaneTurnEffect effect)
         {
-            var ctx = new RollContext { Target = vehicle };
-            bool success = RollNodeExecutor.Execute(effect.rollNode, ctx, stage.name);
+            var ctx = new RollContext { Target = vehicle, CausalSource = stage.name };
+            bool success = RollNodeExecutor.Execute(effect.rollNode, ctx);
             stage.LogLaneTurnEffect(vehicle, lane, effect, success);
         }
     }

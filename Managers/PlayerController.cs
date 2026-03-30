@@ -247,7 +247,8 @@ public class PlayerController : MonoBehaviour
         var ctx = new RollContext
         {
             SourceActor = sourceActor,
-            Target = target
+            Target = target,
+            CausalSource = selectedSkill.name
         };
 
         vehicle.ExecuteSkill(ctx, selectedSkill);

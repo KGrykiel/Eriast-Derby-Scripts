@@ -84,7 +84,8 @@ namespace Assets.Scripts.Tests.PlayMode
             var ctx = new RollContext
             {
                 SourceActor = new CharacterWithToolActor(playerVehicle.GetSeatForCharacter(bob), playerVehicle.AllComponents.OfType<WeaponComponent>().First()),
-                Target = enemyVehicle
+                Target = enemyVehicle,
+                CausalSource = cannonShot.name
             };
             playerVehicle.ExecuteSkill(ctx, cannonShot);
             yield return null;
@@ -119,7 +120,8 @@ namespace Assets.Scripts.Tests.PlayMode
             var ctx = new RollContext
             {
                 SourceActor = new CharacterWithToolActor(playerVehicle.GetSeatForCharacter(gunner), playerVehicle.AllComponents.OfType<WeaponComponent>().First()),
-                Target = enemyVehicle
+                Target = enemyVehicle,
+                CausalSource = expensiveSkill.name
             };
             bool executed = playerVehicle.ExecuteSkill(ctx, expensiveSkill);
             yield return null;
@@ -161,7 +163,8 @@ namespace Assets.Scripts.Tests.PlayMode
             var ctx = new RollContext
             {
                 SourceActor = new CharacterWithToolActor(playerVehicle.GetSeatForCharacter(engineer), playerVehicle.powerCore),
-                Target = playerVehicle
+                Target = playerVehicle,
+                CausalSource = reinforceSkill.name
             };
             playerVehicle.ExecuteSkill(ctx, reinforceSkill);
             yield return null;
@@ -210,7 +213,8 @@ namespace Assets.Scripts.Tests.PlayMode
             var ctx = new RollContext
             {
                 SourceActor = new CharacterWithToolActor(playerVehicle.GetSeatForCharacter(pyro), playerVehicle.AllComponents.OfType<WeaponComponent>().First()),
-                Target = enemyVehicle
+                Target = enemyVehicle,
+                CausalSource = flameThrower.name
             };
             playerVehicle.ExecuteSkill(ctx, flameThrower);
             yield return null;
@@ -430,7 +434,8 @@ namespace Assets.Scripts.Tests.PlayMode
             var ctx = new RollContext
             {
                 SourceActor = new CharacterActor(enemyVehicle.GetSeatForCharacter(enemyCaster)),
-                Target = playerVehicle
+                Target = playerVehicle,
+                CausalSource = psychicScream.name
             };
             enemyVehicle.ExecuteSkill(ctx, psychicScream);
             yield return null;
@@ -633,7 +638,8 @@ namespace Assets.Scripts.Tests.PlayMode
                     var playerCtx = new RollContext
                     {
                         SourceActor = new CharacterWithToolActor(playerVehicle.GetSeatForCharacter(pGunner), playerVehicle.AllComponents.OfType<WeaponComponent>().First()),
-                        Target = enemyVehicle
+                        Target = enemyVehicle,
+                        CausalSource = playerAttack.name
                     };
                     playerVehicle.ExecuteSkill(playerCtx, playerAttack);
                 }
@@ -644,7 +650,8 @@ namespace Assets.Scripts.Tests.PlayMode
                     var enemyCtx = new RollContext
                     {
                         SourceActor = new CharacterWithToolActor(enemyVehicle.GetSeatForCharacter(eGunner), enemyVehicle.AllComponents.OfType<WeaponComponent>().First()),
-                        Target = playerVehicle
+                        Target = playerVehicle,
+                        CausalSource = enemyAttack.name
                     };
                     enemyVehicle.ExecuteSkill(enemyCtx, enemyAttack);
                 }

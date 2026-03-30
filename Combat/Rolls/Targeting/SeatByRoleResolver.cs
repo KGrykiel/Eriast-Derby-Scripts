@@ -43,15 +43,9 @@ namespace Assets.Scripts.Combat.Rolls.Targeting
             switch (Source)
             {
                 case SeatSource.TargetVehicle:
-                    return ctx.Target switch
-                    {
-                        Vehicle v => v,
-                        Entity entity => EntityHelpers.GetParentVehicle(entity),
-                        VehicleSeat seat => seat.ParentVehicle,
-                        _ => null
-                    };
+                    return EntityHelpers.GetVehicleFromTarget(ctx.Target);
                 case SeatSource.SourceVehicle:
-                    Vehicle sv = ctx.SourceActor != null ? ctx.SourceActor.GetVehicle() : null;
+                    Vehicle sv = ctx.SourceActor?.GetVehicle();
                     return sv != null ? sv : ctx.Target as Vehicle;
                 default:
                     return null;

@@ -287,8 +287,12 @@ namespace Assets.Scripts.Entities.Vehicles
             if (!SkillValidator.Validate(ctx, skill))
                 return false;
 
+            // Fire OnSkillUsed removal trigger — once per committed skill use
+            if (sourceComponent != null)
+                sourceComponent.NotifyConditionTrigger(RemovalTrigger.OnSkillUsed);
+
             // Execute via RollNodeExecutor
-            return RollNodeExecutor.Execute(skill.rollNode, ctx, skill.name, scopeAsAction: true);
+            return RollNodeExecutor.Execute(skill.rollNode, ctx);
         }
 
         private bool CanAffordSkill(Skill skill)
