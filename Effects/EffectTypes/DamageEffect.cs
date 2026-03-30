@@ -4,6 +4,7 @@ using SerializeReferenceEditor;
 using Assets.Scripts.Combat.Damage.FormulaProviders;
 using Assets.Scripts.Combat.Damage.FormulaProviders.SpecificProviders;
 using Assets.Scripts.Entities;
+using Assets.Scripts.Entities.Vehicles;
 
 namespace Assets.Scripts.Effects.EffectTypes
 {
@@ -19,18 +20,21 @@ namespace Assets.Scripts.Effects.EffectTypes
         [Tooltip("Strategy for resolving damage formula. StaticFormulaProvider for fixed damage, WeaponFormulaProvider for weapon-based attacks.")]
         public IFormulaProvider formulaProvider = new StaticFormulaProvider();
 
-        public override void Apply(Entity target, EffectContext context)
+        public override void Apply(IEffectTarget target, EffectContext context)
         {
+            Entity entity = ResolveEntity(target);
+            if (entity == null) return;
+
             Entity user = context.SourceActor?.GetEntity();
             var formulaContext = new FormulaContext(user);
             DamageFormula formula = formulaProvider.GetFormula(formulaContext);
 
-            ResistanceLevel resistance = target.GetResistance(formula.damageType);
+            ResistanceLevel resistance = entity.GetResistance(formula.damageType);
             DamageResult result = DamageCalculator.Compute(formula, resistance, context.IsCriticalHit);
 
             DamageApplicator.Apply(
                 result: result,
-                target: target,
+                target: entity,
                 actor: context.SourceActor,
                 causalSource: context.CausalSource ?? user?.name
             );

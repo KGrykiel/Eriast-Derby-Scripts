@@ -28,4 +28,17 @@ public enum TargetingMode
     /// UI: Shows enemy vehicle selector, then component selector. Triggers two-stage attack if damage.
     /// </summary>
     EnemyComponent,
+
+    /// <summary>
+    /// Targets a lane. Architecture-only — no player UI yet; AI and event cards only
+    /// until lane selection UI is built.
+    /// </summary>
+    Lane,
+
+    /// <summary>
+    /// Targets the vehicle's own current lane directly — no selection UI shown.
+    /// Use for lane-wide AoE skills that affect everyone around the caster (Oil Slick, Shockwave, etc.).
+    /// UI: No selection screen shown.
+    /// </summary>
+    OwnLane,
 }

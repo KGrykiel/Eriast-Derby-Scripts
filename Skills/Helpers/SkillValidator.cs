@@ -21,7 +21,9 @@ namespace Assets.Scripts.Skills.Helpers
         {
             if (skill.rollNode == null)
             {
-                Debug.LogError($"[SkillValidator] {ctx.SourceVehicle.vehicleName} attempted to use {skill.name} but it has no roll node configured. Fix the skill asset!");
+                Vehicle sourceVehicle = GetSourceVehicle(ctx);
+                string vehicleName = sourceVehicle != null ? sourceVehicle.vehicleName : "<unknown>";
+                Debug.LogError($"[SkillValidator] {vehicleName} attempted to use {skill.name} but it has no roll node configured. Fix the skill asset!");
                 return false;
             }
 
@@ -30,12 +32,15 @@ namespace Assets.Scripts.Skills.Helpers
 
         private static bool ValidateTarget(RollContext ctx, Skill skill)
         {
-            Entity targetEntity = ctx.TargetEntity;
+            Entity targetEntity = ctx.Target as Entity;
             if (targetEntity == null) return true;
+
+            Vehicle sourceVehicle = GetSourceVehicle(ctx);
+            string sourceName = sourceVehicle != null ? sourceVehicle.vehicleName : "<unknown>";
 
             if (targetEntity.IsDestroyed())
             {
-                Debug.LogWarning($"[SkillValidator] {ctx.SourceVehicle.vehicleName} tried to target destroyed entity {targetEntity.name} with {skill.name}");
+                Debug.LogWarning($"[SkillValidator] {sourceName} tried to target destroyed entity {targetEntity.name} with {skill.name}");
                 return false;
             }
 
@@ -43,16 +48,26 @@ namespace Assets.Scripts.Skills.Helpers
             if (targetComponent != null)
             {
                 Vehicle targetVehicle = targetComponent.ParentVehicle;
-                bool isSelfTargeting = ctx.SourceVehicle == targetVehicle;
+                bool isSelfTargeting = sourceVehicle == targetVehicle;
                 if (!isSelfTargeting && !targetVehicle.IsComponentAccessible(targetComponent))
                 {
                     string reason = targetVehicle.GetInaccessibilityReason(targetComponent);
-                    Debug.LogWarning($"[SkillValidator] {ctx.SourceVehicle.vehicleName} cannot target inaccessible component {targetComponent.name}: {reason}");
+                    Debug.LogWarning($"[SkillValidator] {sourceName} cannot target inaccessible component {targetComponent.name}: {reason}");
                     return false;
                 }
             }
 
             return true;
+        }
+
+        private static Vehicle GetSourceVehicle(RollContext ctx)
+        {
+            if (ctx.SourceActor != null)
+            {
+                Vehicle vehicle = ctx.SourceActor.GetVehicle();
+                if (vehicle != null) return vehicle;
+            }
+            return ctx.Target as Vehicle;
         }
     }
 }

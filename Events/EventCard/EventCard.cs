@@ -17,10 +17,6 @@ namespace Assets.Scripts.Events.EventCard
         [Tooltip("How dramatic/important this event is for logging")]
         public Logging.EventImportance dramaticWeight = Logging.EventImportance.Medium;
 
-        [Header("Targeting")]
-        [Tooltip("Who is affected by this card?")]
-        public CardTargetMode targetMode = CardTargetMode.DrawingVehicle;
-
         // ==================== ABSTRACT METHODS ====================
 
         public abstract CardResolutionResult Resolve(Vehicle vehicle);

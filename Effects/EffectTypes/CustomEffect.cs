@@ -1,5 +1,6 @@
 using Assets.Scripts.Effects.EffectTypes.CustomEffectCommands;
 using Assets.Scripts.Entities;
+using Assets.Scripts.Entities.Vehicles;
 using SerializeReferenceEditor;
 using System;
 using UnityEngine;
@@ -26,13 +27,16 @@ namespace Assets.Scripts.Effects.EffectTypes
         [Range(-1, 100)]
         public int intParameter = -1;
 
-        public override void Apply(Entity target, EffectContext context)
+        public override void Apply(IEffectTarget target, EffectContext context)
         {
+            Entity entity = ResolveEntity(target);
+            if (entity == null) return;
+
             // Prefer command pattern (works with prefabs)
             if (command != null)
             {
                 // Pass CustomEffect as source so command can read floatParameter
-                command.Execute(target, context, this);
+                command.Execute(entity, context, this);
             }
         }
     }

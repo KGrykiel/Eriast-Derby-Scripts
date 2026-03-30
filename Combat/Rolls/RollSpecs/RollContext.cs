@@ -1,17 +1,16 @@
 ﻿using Assets.Scripts.Entities;
-using Assets.Scripts.Entities.Vehicles;
 
 namespace Assets.Scripts.Combat.Rolls.RollSpecs
 {
     /// <summary>
     /// Context struct to hold any relevant information about the action being executed.
     /// Used by skills, event cards, lane effects, and any future action sources.
-    /// Most fields optional — only SourceVehicle is required.
+    /// SourceActor is set for player skills; null for event cards and lane effects.
+    /// Source vehicle is derived: ctx.SourceActor?.GetVehicle() ?? ctx.Target as Vehicle.
     /// </summary>
     public struct RollContext
     {
-        public Vehicle SourceVehicle;
-        public Entity TargetEntity;
+        public IRollTarget Target;
         public RollActor SourceActor;
     }
 }

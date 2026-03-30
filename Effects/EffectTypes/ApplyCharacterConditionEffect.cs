@@ -22,7 +22,7 @@ namespace Assets.Scripts.Effects.EffectTypes
         [Tooltip("The CharacterCondition asset to apply to the operator of the targeted component")]
         public CharacterCondition condition;
 
-        public override void Apply(Entity target, EffectContext context)
+        public override void Apply(IEffectTarget target, EffectContext context)
         {
             if (condition == null)
             {
@@ -30,27 +30,40 @@ namespace Assets.Scripts.Effects.EffectTypes
                 return;
             }
 
-            if (target is not VehicleComponent component)
-            {
-                Debug.LogWarning($"[ApplyCharacterConditionEffect] Target '{target.name}' is not a VehicleComponent. Character conditions require a component target.");
-                return;
-            }
+            VehicleSeat seat = ResolveSeat(target);
+            if (seat == null || !seat.IsAssigned) return;
 
+            seat.ApplyCondition(condition, context.SourceActor?.GetEntity());
+        }
+
+        private VehicleSeat ResolveSeat(IEffectTarget target)
+        {
+            switch (target)
+            {
+                case VehicleSeat seat:
+                    return seat;
+                case VehicleComponent component:
+                    return ResolveSeatFromComponent(component);
+                case Vehicle:
+                    Debug.LogWarning($"[{GetType().Name}] Cannot apply to a Vehicle — which crew member? Use a component or VehicleSeat target.");
+                    return null;
+                default:
+                    string typeName = target != null ? target.GetType().Name : "null";
+                    Debug.LogWarning($"[{GetType().Name}] Unsupported target type: {typeName}. Use a component or VehicleSeat target.");
+                    return null;
+            }
+        }
+
+        private VehicleSeat ResolveSeatFromComponent(VehicleComponent component)
+        {
             Vehicle vehicle = component.ParentVehicle;
             if (vehicle == null)
             {
-                Debug.LogWarning($"[ApplyCharacterConditionEffect] Component '{component.name}' has no parent vehicle.");
-                return;
+                Debug.LogWarning($"[{GetType().Name}] Component '{component.name}' has no parent vehicle.");
+                return null;
             }
 
-            VehicleSeat seat = vehicle.GetSeatForComponent(component);
-            if (seat == null || !seat.IsAssigned)
-            {
-                // Uncrewed seat — no operator to apply the condition to, skip silently.
-                return;
-            }
-
-            seat.ApplyCondition(condition, context.SourceActor?.GetEntity());
+            return vehicle.GetSeatForComponent(component);
         }
     }
 }

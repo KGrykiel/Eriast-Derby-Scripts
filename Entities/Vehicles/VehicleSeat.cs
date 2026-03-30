@@ -6,6 +6,7 @@ using Assets.Scripts.Characters;
 using Assets.Scripts.Combat.Rolls.Advantage;
 using Assets.Scripts.Conditions;
 using Assets.Scripts.Conditions.CharacterConditions;
+using Assets.Scripts.Effects;
 using Assets.Scripts.Entities.Vehicles.VehicleComponents;
 
 namespace Assets.Scripts.Entities.Vehicles
@@ -15,7 +16,7 @@ namespace Assets.Scripts.Entities.Vehicles
     /// reachable from their seat.
     /// </summary>
     [Serializable]
-    public class VehicleSeat
+    public class VehicleSeat : IRollTarget, IEffectTarget
     {
         [Header("Seat Identity")]
         [Tooltip("Name of this seat/station (e.g., 'Driver's Seat', 'Left Turret', 'Engineering Bay')")]

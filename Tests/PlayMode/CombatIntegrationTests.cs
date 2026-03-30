@@ -83,9 +83,8 @@ namespace Assets.Scripts.Tests.PlayMode
             // Execute skill through the full pipeline
             var ctx = new RollContext
             {
-                SourceVehicle = playerVehicle,
                 SourceActor = new CharacterWithToolActor(playerVehicle.GetSeatForCharacter(bob), playerVehicle.AllComponents.OfType<WeaponComponent>().First()),
-                TargetEntity = enemyVehicle.chassis
+                Target = enemyVehicle
             };
             playerVehicle.ExecuteSkill(ctx, cannonShot);
             yield return null;
@@ -119,9 +118,8 @@ namespace Assets.Scripts.Tests.PlayMode
 
             var ctx = new RollContext
             {
-                SourceVehicle = playerVehicle,
                 SourceActor = new CharacterWithToolActor(playerVehicle.GetSeatForCharacter(gunner), playerVehicle.AllComponents.OfType<WeaponComponent>().First()),
-                TargetEntity = enemyVehicle.chassis
+                Target = enemyVehicle
             };
             bool executed = playerVehicle.ExecuteSkill(ctx, expensiveSkill);
             yield return null;
@@ -162,9 +160,8 @@ namespace Assets.Scripts.Tests.PlayMode
 
             var ctx = new RollContext
             {
-                SourceVehicle = playerVehicle,
                 SourceActor = new CharacterWithToolActor(playerVehicle.GetSeatForCharacter(engineer), playerVehicle.powerCore),
-                TargetEntity = playerVehicle.chassis
+                Target = playerVehicle
             };
             playerVehicle.ExecuteSkill(ctx, reinforceSkill);
             yield return null;
@@ -212,9 +209,8 @@ namespace Assets.Scripts.Tests.PlayMode
             // Apply Burning to enemy
             var ctx = new RollContext
             {
-                SourceVehicle = playerVehicle,
                 SourceActor = new CharacterWithToolActor(playerVehicle.GetSeatForCharacter(pyro), playerVehicle.AllComponents.OfType<WeaponComponent>().First()),
-                TargetEntity = enemyVehicle.chassis
+                Target = enemyVehicle
             };
             playerVehicle.ExecuteSkill(ctx, flameThrower);
             yield return null;
@@ -433,9 +429,8 @@ namespace Assets.Scripts.Tests.PlayMode
             // Execute save skill against player chassis
             var ctx = new RollContext
             {
-                SourceVehicle = enemyVehicle,
                 SourceActor = new CharacterActor(enemyVehicle.GetSeatForCharacter(enemyCaster)),
-                TargetEntity = playerVehicle.chassis
+                Target = playerVehicle
             };
             enemyVehicle.ExecuteSkill(ctx, psychicScream);
             yield return null;
@@ -637,9 +632,8 @@ namespace Assets.Scripts.Tests.PlayMode
                 {
                     var playerCtx = new RollContext
                     {
-                        SourceVehicle = playerVehicle,
                         SourceActor = new CharacterWithToolActor(playerVehicle.GetSeatForCharacter(pGunner), playerVehicle.AllComponents.OfType<WeaponComponent>().First()),
-                        TargetEntity = enemyVehicle.chassis
+                        Target = enemyVehicle
                     };
                     playerVehicle.ExecuteSkill(playerCtx, playerAttack);
                 }
@@ -649,9 +643,8 @@ namespace Assets.Scripts.Tests.PlayMode
                 {
                     var enemyCtx = new RollContext
                     {
-                        SourceVehicle = enemyVehicle,
                         SourceActor = new CharacterWithToolActor(enemyVehicle.GetSeatForCharacter(eGunner), enemyVehicle.AllComponents.OfType<WeaponComponent>().First()),
-                        TargetEntity = playerVehicle.chassis
+                        Target = playerVehicle
                     };
                     enemyVehicle.ExecuteSkill(enemyCtx, enemyAttack);
                 }

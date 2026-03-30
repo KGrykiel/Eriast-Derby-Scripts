@@ -8,6 +8,7 @@ using Assets.Scripts.Managers.PlayerUI;
 using Assets.Scripts.Combat.Rolls.RollSpecs;
 using Assets.Scripts.Entities;
 using Assets.Scripts.Entities.Vehicles.VehicleComponents;
+using Assets.Scripts.Stages.Lanes;
 
 /// <summary>Orchestrates player input for whichever vehicle is currently taking its turn.</summary>
 public class PlayerController : MonoBehaviour
@@ -27,7 +28,7 @@ public class PlayerController : MonoBehaviour
     private List<VehicleSeat> availableSeats = new();
     private VehicleSeat currentSeat = null;
 
-    private Vehicle selectedTarget = null;
+    private IRollTarget selectedTarget = null;
     private Skill selectedSkill = null;
     private VehicleComponent selectedSkillSourceComponent = null;
     private VehicleComponent selectedTargetComponent = null;
@@ -205,6 +206,18 @@ public class PlayerController : MonoBehaviour
                 validTargets = turnController.GetValidTargets(vehicle);
                 uiCoordinator.TargetSelection.ShowTargetSelection(validTargets, OnTargetSelected, OnTargetCancelClicked);
                 break;
+
+            case TargetingMode.Lane:
+                if (vehicle.currentStage != null)
+                    uiCoordinator.TargetSelection.ShowLaneSelection(
+                        vehicle.currentStage.lanes, OnLaneSelected, OnTargetCancelClicked);
+                break;
+
+            case TargetingMode.OwnLane:
+                selectedTarget = vehicle.currentLane;
+                selectedTargetComponent = null;
+                ExecuteSkill();
+                break;
         }
     }
 
@@ -219,8 +232,9 @@ public class PlayerController : MonoBehaviour
         var vehicle = CurrentPlayerVehicle;
         if (vehicle == null) return;
 
-        Vehicle target = selectedTarget != null ? selectedTarget : vehicle;
-        Entity targetEntity = selectedTargetComponent != null ? selectedTargetComponent : target.chassis;
+        IRollTarget target = selectedTargetComponent != null ? (IRollTarget)selectedTargetComponent
+            : selectedTarget != null ? selectedTarget
+            : vehicle;
 
         RollActor sourceActor = null;
         if (currentSeat != null && selectedSkillSourceComponent != null)
@@ -232,9 +246,8 @@ public class PlayerController : MonoBehaviour
 
         var ctx = new RollContext
         {
-            SourceVehicle = vehicle,
             SourceActor = sourceActor,
-            TargetEntity = targetEntity
+            Target = target
         };
 
         vehicle.ExecuteSkill(ctx, selectedSkill);
@@ -277,6 +290,13 @@ public class PlayerController : MonoBehaviour
         var vehicle = CurrentPlayerVehicle;
         selectedTarget = vehicle;
         selectedTargetComponent = component;
+        uiCoordinator.TargetSelection.Hide();
+        ExecuteSkill();
+    }
+
+    private void OnLaneSelected(StageLane lane)
+    {
+        selectedTarget = lane;
         uiCoordinator.TargetSelection.Hide();
         ExecuteSkill();
     }

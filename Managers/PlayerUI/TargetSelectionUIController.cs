@@ -4,6 +4,7 @@ using Assets.Scripts.Core;
 using Assets.Scripts.Entities.Vehicles;
 using Assets.Scripts.Entities.Vehicles.VehicleComponents;
 using Assets.Scripts.Entities.Vehicles.VehicleComponents.ComponentTypes;
+using Assets.Scripts.Stages.Lanes;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -117,6 +118,40 @@ namespace Assets.Scripts.Managers.PlayerUI
             }
         }
         
+        public void ShowLaneSelection(List<StageLane> lanes, Action<StageLane> onLaneSelected, Action onCancelled)
+        {
+            if (ui.targetSelectionPanel == null || ui.targetButtonContainer == null || ui.targetButtonPrefab == null)
+                return;
+
+            ui.targetSelectionPanel.SetActive(true);
+
+            foreach (Transform child in ui.targetButtonContainer)
+                UnityEngine.Object.Destroy(child.gameObject);
+
+            if (lanes.Count == 0)
+            {
+                Hide();
+                onCancelled?.Invoke();
+                return;
+            }
+
+            foreach (var lane in lanes)
+            {
+                Button btn = UnityEngine.Object.Instantiate(ui.targetButtonPrefab, ui.targetButtonContainer);
+                int count = lane.vehiclesInLane.Count;
+                btn.GetComponentInChildren<TextMeshProUGUI>().text =
+                    $"{lane.laneName} ({count} vehicle{(count == 1 ? "" : "s")})";
+                StageLane captured = lane;
+                btn.onClick.AddListener(() => onLaneSelected?.Invoke(captured));
+            }
+
+            if (ui.targetCancelButton != null)
+            {
+                ui.targetCancelButton.onClick.RemoveAllListeners();
+                ui.targetCancelButton.onClick.AddListener(() => onCancelled?.Invoke());
+            }
+        }
+
         public void Hide()
         {
             if (ui.targetSelectionPanel != null)

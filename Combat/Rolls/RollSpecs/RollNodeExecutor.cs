@@ -17,7 +17,8 @@ namespace Assets.Scripts.Combat.Rolls.RollSpecs
     /// <summary>
     /// Unified executor for RollNode resolution.
     /// Used by skills, event cards, and lane effects.
-    /// Callers fill only the SkillContext fields they have — SourceVehicle is the only required field.
+    /// Callers fill only the RollContext fields they have.
+    /// Source vehicle is derived: ctx.SourceActor?.GetVehicle() ?? ctx.Target as Vehicle.
     /// </summary>
     public static class RollNodeExecutor
     {
@@ -26,7 +27,7 @@ namespace Assets.Scripts.Combat.Rolls.RollSpecs
         /// then follows the success or failure chain if one is set.
         /// </summary>
         /// <param name="node">Node to execute. Null is treated as unconditional success with no effects.</param>
-        /// <param name="ctx">Execution context. Only SourceVehicle is required for event/lane callers.</param>
+        /// <param name="ctx">Execution context. Source vehicle is derived from context, not passed explicitly.</param>
         /// <param name="causalSource">What triggered this node, used for logging.</param>
         /// <returns>True if the roll succeeded (or there was no roll), false on failure.</returns>
         public static bool Execute(RollNode node, RollContext ctx, string causalSource = null, bool scopeAsAction = false)
@@ -38,6 +39,29 @@ namespace Assets.Scripts.Combat.Rolls.RollSpecs
         }
 
         private static bool ExecuteNode(RollNode node, RollContext ctx, string causalSource, bool scopeAsAction)
+        {
+            // Fan-out: if the node has a targetResolver, execute once per resolved target
+            if (node.targetResolver != null)
+            {
+                var targets = node.targetResolver.ResolveFrom(ctx);
+                bool anySuccess = false;
+                foreach (var target in targets)
+                {
+                    var perTargetCtx = new RollContext
+                    {
+                        SourceActor = ctx.SourceActor,
+                        Target = target
+                    };
+                    bool result = ExecuteSingleNode(node, perTargetCtx, causalSource, scopeAsAction);
+                    anySuccess |= result;
+                }
+                return anySuccess;
+            }
+
+            return ExecuteSingleNode(node, ctx, causalSource, scopeAsAction);
+        }
+
+        private static bool ExecuteSingleNode(RollNode node, RollContext ctx, string causalSource, bool scopeAsAction)
         {
             D20RollOutcome roll = ResolveRoll(node.rollSpec, ctx, causalSource);
 
@@ -69,10 +93,11 @@ namespace Assets.Scripts.Combat.Rolls.RollSpecs
 
         private static D20RollOutcome ResolveSkillCheck(SkillCheckSpec spec, RollContext ctx, string causalSource)
         {
-            var routing = CheckRouter.RouteSkillCheck(ctx.SourceVehicle, spec, ctx.SourceActor);
+            Vehicle sourceVehicle = GetSourceVehicle(ctx);
+            var routing = CheckRouter.RouteSkillCheck(sourceVehicle, spec, ctx.SourceActor);
             var checkCtx = new SkillCheckExecutionContext
             {
-                Vehicle = ctx.SourceVehicle,
+                Vehicle = sourceVehicle,
                 Spec = spec,
                 CausalSource = causalSource,
                 Routing = routing
@@ -84,10 +109,10 @@ namespace Assets.Scripts.Combat.Rolls.RollSpecs
         private static D20RollOutcome ResolveSavingThrow(SaveSpec spec, RollContext ctx, string causalSource)
         {
             // In skill context the target makes the save; in event/lane context the acting vehicle makes it.
-            Vehicle targetVehicle = EntityHelpers.GetParentVehicle(ctx.TargetEntity);
-            Vehicle roller = targetVehicle != null ? targetVehicle : ctx.SourceVehicle;
+            Vehicle targetVehicle = GetTargetVehicle(ctx);
+            Vehicle roller = targetVehicle != null ? targetVehicle : GetSourceVehicle(ctx);
 
-            var routing = CheckRouter.RouteSave(roller, spec, ctx.TargetEntity as VehicleComponent);
+            var routing = CheckRouter.RouteSave(roller, spec, ctx.Target as VehicleComponent);
 
             var saveCtx = new SaveExecutionContext
             {
@@ -103,16 +128,17 @@ namespace Assets.Scripts.Combat.Rolls.RollSpecs
 
         private static D20RollOutcome ResolveAttack(AttackSpec spec, RollContext ctx, string causalSource)
         {
-            if (ctx.TargetEntity == null)
+            Entity targetEntity = ResolveTargetEntity(ctx);
+            if (targetEntity == null)
             {
-                Debug.LogError("[RollNodeExecutor] AttackSpec requires a TargetEntity in RollContext.");
+                Debug.LogError("[RollNodeExecutor] AttackSpec requires a targetable Entity in RollContext.");
                 return D20Calculator.AutoFail(0);
             }
 
             var attackCtx = new AttackExecutionContext
             {
                 Spec         = spec,
-                Target       = ctx.TargetEntity,
+                Target       = targetEntity,
                 CausalSource = causalSource,
                 Attacker     = ctx.SourceActor
             };
@@ -122,29 +148,32 @@ namespace Assets.Scripts.Combat.Rolls.RollSpecs
 
         private static D20RollOutcome ResolveStateThreshold(StateThresholdSpec spec, RollContext ctx)
         {
-            int value = ctx.SourceVehicle.GetStateValue(spec.state);
+            Vehicle sourceVehicle = GetSourceVehicle(ctx);
+            int value = sourceVehicle.GetStateValue(spec.state);
             bool success = value >= spec.minimumValue;
 
-            Debug.Log($"[StateThreshold] {ctx.SourceVehicle?.vehicleName}: {spec.state} {value} vs minimum {spec.minimumValue} — {(success ? "PASS" : "FAIL")}");
+            string vehicleName = sourceVehicle != null ? sourceVehicle.vehicleName : "<null>";
+            Debug.Log($"[StateThreshold] {vehicleName}: {spec.state} {value} vs minimum {spec.minimumValue} — {(success ? "PASS" : "FAIL")}");
 
             return success ? D20Calculator.AutoSuccess(0) : D20Calculator.AutoFail(0);
         }
 
         private static D20RollOutcome ResolveOpposedCheck(OpposedCheckRollSpec spec, RollContext ctx, string causalSource)
         {
-            Vehicle targetVehicle = EntityHelpers.GetParentVehicle(ctx.TargetEntity);
+            Vehicle targetVehicle = GetTargetVehicle(ctx);
             if (targetVehicle == null)
             {
-                Debug.LogError("[RollNodeExecutor] OpposedCheck requires a TargetVehicle in RollContext.");
+                Debug.LogError("[RollNodeExecutor] OpposedCheck requires a target vehicle in RollContext.");
                 return D20Calculator.AutoFail(0);
             }
 
-            var attackerRouting = CheckRouter.RouteSkillCheck(ctx.SourceVehicle, spec.attackerSpec, ctx.SourceActor);
+            Vehicle sourceVehicle = GetSourceVehicle(ctx);
+            var attackerRouting = CheckRouter.RouteSkillCheck(sourceVehicle, spec.attackerSpec, ctx.SourceActor);
             var defenderRouting = CheckRouter.RouteSkillCheck(targetVehicle, spec.defenderSpec);
 
             var checkCtx = new OpposedCheckExecutionContext
             {
-                AttackerVehicle = ctx.SourceVehicle,
+                AttackerVehicle = sourceVehicle,
                 DefenderVehicle = targetVehicle,
                 Spec = spec,
                 CausalSource = causalSource,
@@ -190,9 +219,9 @@ namespace Assets.Scripts.Combat.Rolls.RollSpecs
             }
         }
 
-        private static List<Entity> ResolveTargets(EffectInvocation invocation, RollContext ctx)
+        private static List<IEffectTarget> ResolveTargets(EffectInvocation invocation, RollContext ctx)
         {
-            var targets = new List<Entity>();
+            var targets = new List<IEffectTarget>();
 
             switch (invocation.target)
             {
@@ -205,23 +234,31 @@ namespace Assets.Scripts.Combat.Rolls.RollSpecs
                     break;
 
                 case EffectTarget.SourceVehicle:
-                    targets.Add(ctx.SourceVehicle.RouteEffectTarget(invocation.effect));
+                    Vehicle sourceVehicle = GetSourceVehicle(ctx);
+                    if (sourceVehicle != null)
+                        targets.Add(sourceVehicle);
+                    else
+                        Debug.LogWarning("[RollNodeExecutor] EffectTarget.SourceVehicle with no source vehicle.");
                     break;
 
                 case EffectTarget.SourceComponentSelection:
                 case EffectTarget.SelectedTarget:
-                    if (ctx.TargetEntity != null)
-                        targets.Add(ctx.TargetEntity);
+                    IEffectTarget selectedTarget = ResolveTargetAsEffectTarget(ctx);
+                    if (selectedTarget != null)
+                        targets.Add(selectedTarget);
                     break;
 
                 case EffectTarget.TargetVehicle:
-                    Vehicle targetVehicle = EntityHelpers.GetParentVehicle(ctx.TargetEntity);
-                    Vehicle routeVehicle = targetVehicle != null ? targetVehicle : ctx.SourceVehicle;
-                    targets.Add(routeVehicle.RouteEffectTarget(invocation.effect));
+                    Vehicle tv = GetTargetVehicle(ctx);
+                    Vehicle targetVehicle = tv != null ? tv : GetSourceVehicle(ctx);
+                    if (targetVehicle != null)
+                        targets.Add(targetVehicle);
+                    else
+                        Debug.LogWarning("[RollNodeExecutor] EffectTarget.TargetVehicle with no target vehicle.");
                     break;
 
                 case EffectTarget.AllComponentsOnTarget:
-                    Vehicle allCompVehicle = EntityHelpers.GetParentVehicle(ctx.TargetEntity);
+                    Vehicle allCompVehicle = GetTargetVehicle(ctx);
                     if (allCompVehicle != null)
                     {
                         foreach (var component in allCompVehicle.AllComponents)
@@ -232,7 +269,7 @@ namespace Assets.Scripts.Combat.Rolls.RollSpecs
                     break;
 
                 case EffectTarget.RandomComponentOnTarget:
-                    Vehicle randomCompVehicle = EntityHelpers.GetParentVehicle(ctx.TargetEntity);
+                    Vehicle randomCompVehicle = GetTargetVehicle(ctx);
                     if (randomCompVehicle != null)
                     {
                         var components = randomCompVehicle.AllComponents;
@@ -243,22 +280,146 @@ namespace Assets.Scripts.Combat.Rolls.RollSpecs
                         Debug.LogWarning("[RollNodeExecutor] RandomComponentOnTarget: no target vehicle in context.");
                     break;
 
-                case EffectTarget.SameLaneAsTarget:
-                    Vehicle sameLaneVehicle = EntityHelpers.GetParentVehicle(ctx.TargetEntity);
-                    StageLane sameLane = sameLaneVehicle?.currentLane;
-                    if (sameLane != null)
+                case EffectTarget.AllVehiclesInTargetLane:
+                    StageLane lane = ResolveLane(ctx);
+                    if (lane != null)
                     {
-                        foreach (var laneVehicle in sameLane.vehiclesInLane)
-                            targets.Add(laneVehicle.RouteEffectTarget(invocation.effect));
+                        foreach (var laneVehicle in lane.vehiclesInLane)
+                        {
+                            if (laneVehicle != null)
+                                targets.Add(laneVehicle);
+                        }
                     }
-                    else if (sameLaneVehicle != null)
-                        targets.Add(sameLaneVehicle.RouteEffectTarget(invocation.effect));
                     else
-                        Debug.LogWarning("[RollNodeExecutor] SameLaneAsTarget: no target vehicle in context.");
+                    {
+                        Vehicle fallbackVehicle = GetTargetVehicle(ctx);
+                        if (fallbackVehicle != null)
+                            targets.Add(fallbackVehicle);
+                        else
+                            Debug.LogWarning("[RollNodeExecutor] AllVehiclesInTargetLane: no lane or target vehicle in context.");
+                    }
+                    break;
+
+                case EffectTarget.AllOtherVehiclesInTargetLane:
+                    StageLane otherLane = ResolveLane(ctx);
+                    Vehicle selfVehicleLane = GetSourceVehicle(ctx);
+                    if (otherLane != null)
+                    {
+                        foreach (var laneVehicle in otherLane.vehiclesInLane)
+                        {
+                            if (laneVehicle != null && laneVehicle != selfVehicleLane)
+                                targets.Add(laneVehicle);
+                        }
+                    }
+                    else
+                    {
+                        Debug.LogWarning("[RollNodeExecutor] AllOtherVehiclesInTargetLane: no lane in context.");
+                    }
+                    break;
+
+                case EffectTarget.AllOtherVehiclesInStage:
+                    Vehicle selfVehicleStage = GetSourceVehicle(ctx);
+                    if (selfVehicleStage != null && selfVehicleStage.currentStage != null)
+                    {
+                        foreach (var stageVehicle in selfVehicleStage.currentStage.vehiclesInStage)
+                        {
+                            if (stageVehicle != null && stageVehicle != selfVehicleStage)
+                                targets.Add(stageVehicle);
+                        }
+                    }
+                    else
+                    {
+                        Debug.LogWarning("[RollNodeExecutor] AllOtherVehiclesInStage: no target vehicle or stage in context.");
+                    }
+                    break;
+
+                case EffectTarget.AllSeatsOnTargetVehicle:
+                    Vehicle seatTargetVehicle = GetTargetVehicle(ctx);
+                    if (seatTargetVehicle != null)
+                    {
+                        foreach (var seat in seatTargetVehicle.seats)
+                        {
+                            if (seat != null)
+                                targets.Add(seat);
+                        }
+                    }
+                    else
+                        Debug.LogWarning("[RollNodeExecutor] AllSeatsOnTargetVehicle: no target vehicle in context.");
+                    break;
+
+                case EffectTarget.AllSeatsOnSourceVehicle:
+                    Vehicle seatSourceVehicle = GetSourceVehicle(ctx);
+                    if (seatSourceVehicle != null)
+                    {
+                        foreach (var seat in seatSourceVehicle.seats)
+                        {
+                            if (seat != null)
+                                targets.Add(seat);
+                        }
+                    }
+                    else
+                        Debug.LogWarning("[RollNodeExecutor] AllSeatsOnSourceVehicle: no source vehicle in context.");
+                    break;
+
+                case EffectTarget.SourceActorSeat:
+                    VehicleSeat actorSeat = ctx.SourceActor?.GetSeat();
+                    if (actorSeat != null)
+                        targets.Add(actorSeat);
                     break;
             }
 
             return targets;
+        }
+
+        // ==================== CONTEXT HELPERS ====================
+
+        private static Vehicle GetSourceVehicle(RollContext ctx)
+        {
+            if (ctx.SourceActor != null)
+            {
+                Vehicle vehicle = ctx.SourceActor.GetVehicle();
+                if (vehicle != null) return vehicle;
+            }
+            return ctx.Target as Vehicle;
+        }
+
+        private static Vehicle GetTargetVehicle(RollContext ctx)
+        {
+            return ctx.Target switch
+            {
+                Vehicle vehicle => vehicle,
+                Entity entity => EntityHelpers.GetParentVehicle(entity),
+                VehicleSeat seat => seat.ParentVehicle,
+                _ => null
+            };
+        }
+
+        private static Entity ResolveTargetEntity(RollContext ctx)
+        {
+            return ctx.Target switch
+            {
+                Entity entity => entity,
+                Vehicle vehicle => vehicle.chassis,
+                _ => null
+            };
+        }
+
+        private static IEffectTarget ResolveTargetAsEffectTarget(RollContext ctx)
+        {
+            return ctx.Target switch
+            {
+                IEffectTarget effectTarget => effectTarget,
+                _ => null
+            };
+        }
+
+        private static StageLane ResolveLane(RollContext ctx)
+        {
+            if (ctx.Target is StageLane lane)
+                return lane;
+
+            Vehicle vehicle = GetTargetVehicle(ctx);
+            return vehicle != null ? vehicle.currentLane : null;
         }
     }
 }

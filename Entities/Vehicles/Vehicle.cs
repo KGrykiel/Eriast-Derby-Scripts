@@ -10,15 +10,16 @@ using RollContext = Assets.Scripts.Combat.Rolls.RollSpecs.RollContext;
 using Assets.Scripts.Combat.Rolls.RollSpecs;
 using Assets.Scripts.Effects;
 using Assets.Scripts.Entities.Vehicles.VehicleComponents;
+using Assets.Scripts.Skills.Helpers;
 
 namespace Assets.Scripts.Entities.Vehicles
 {
     /// <summary>
     /// Container/coordinator for Entity components. NOT an Entity itself.
     /// Damage to "the vehicle" is actually damage to its chassis.
-    /// Vehicle can be targetted directly, which results in routing the effect to the appropriate component (see RouteEffectTarget).
+    /// Vehicle can be targeted directly — each effect's Apply handles internal routing.
     /// </summary>
-    public class Vehicle : MonoBehaviour
+    public class Vehicle : MonoBehaviour, IRollTarget, IEffectTarget
     {
         [Header("Vehicle Identity")]
         public string vehicleName;
@@ -43,18 +44,16 @@ namespace Assets.Scripts.Entities.Vehicles
 
         // Coordinators (handle distinct concerns)
         private VehicleComponentCoordinator componentCoordinator;
-        private VehicleEffectRouter effectRouter;
 
         public VehicleStatus Status { get; private set; } = VehicleStatus.Active;
 
         void Awake()
         {
             componentCoordinator = new VehicleComponentCoordinator(this);
-            effectRouter = new VehicleEffectRouter(this);
 
             componentCoordinator.InitializeComponents();
 
-            componentCoordinator.ApplySizeModifiers(effectRouter);
+            componentCoordinator.ApplySizeModifiers();
 
             foreach (var seat in seats)
                 seat.ParentVehicle = this;
@@ -199,9 +198,6 @@ namespace Assets.Scripts.Entities.Vehicles
             }
         }
 
-        public Entity RouteEffectTarget(IEffect effect)
-            => effectRouter.RouteEffectTarget(effect);
-
         // ==================== VEHICLE STATUS ====================
 
         public void MarkAsDestroyed()
@@ -265,7 +261,7 @@ namespace Assets.Scripts.Entities.Vehicles
 
         public bool ExecuteSkill(RollContext ctx, Skill skill)
         {
-            if (ctx.TargetEntity == null)
+            if (ctx.Target == null)
             {
                 Debug.LogError($"[Vehicle] ExecuteSkill called with null target!");
                 return false;
@@ -288,7 +284,7 @@ namespace Assets.Scripts.Entities.Vehicles
             }
 
             // Skill configuration validation
-            if (!Assets.Scripts.Skills.Helpers.SkillValidator.Validate(ctx, skill))
+            if (!SkillValidator.Validate(ctx, skill))
                 return false;
 
             // Execute via RollNodeExecutor

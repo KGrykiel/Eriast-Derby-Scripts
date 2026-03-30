@@ -8,9 +8,11 @@ using System.Collections.Generic;
 using Assets.Scripts.Entities.Vehicles;
 using Assets.Scripts.Characters;
 using Assets.Scripts.Conditions;
+using Assets.Scripts.Conditions.CharacterConditions;
 using Assets.Scripts.Conditions.EntityConditions;
 using Assets.Scripts.Combat.Rolls.RollSpecs;
 using Assets.Scripts.Combat.Rolls.RollSpecs.SpecTypes;
+using Assets.Scripts.Combat.Rolls.Targeting;
 using Assets.Scripts.Combat.Rolls.Advantage;
 using Assets.Scripts.Effects;
 using Assets.Scripts.Effects.EffectTypes;
@@ -230,6 +232,22 @@ namespace Assets.Scripts.Skills
             RegenerateSkill(DefineEMPStrike());
             RegenerateSkill(DefineLancerStrike());
 
+            // AoE skills
+            RegenerateSkill(DefineShrapnelBurst());
+            RegenerateSkill(DefineNapalmSpray());
+            RegenerateSkill(DefineShockwave());
+            RegenerateSkill(DefineOilSlick());
+            RegenerateSkill(DefineSelfDestruct());
+
+            // Worked examples from TargettingRefactor.md
+            RegenerateSkill(DefineFireball());
+            RegenerateSkill(DefineEMPPulse());
+            RegenerateSkill(DefineSmokeScreen());
+            RegenerateSkill(DefineFeedbackLoop());
+
+            // Splash attack examples
+            RegenerateSkill(DefineConcussionBlast());
+
             AssetDatabase.SaveAssets();
             Debug.Log("[SkillCreator] All skills regenerated.");
         }
@@ -377,6 +395,102 @@ namespace Assets.Scripts.Skills
                 TargetingMode.EnemyComponent,
                 energyCost: 2);
 
+        // Pattern: attack gates AoE — on hit, splash damage to every vehicle in the target's lane.
+        private static Skill DefineShrapnelBurst()
+            => Make("Shrapnel Burst",
+                Attack(FX(Dmg(2, 6, 0, DamageType.Piercing, EffectTarget.AllVehiclesInTargetLane))),
+                TargetingMode.Enemy,
+                energyCost: 3);
+
+        // Pattern: unconditional lane AoE excluding self — fire damage to everyone else in the caster's lane.
+        private static Skill DefineNapalmSpray()
+            => Make("Napalm Spray",
+                AlwaysApply(FX(Dmg(1, 8, 2, DamageType.Fire, EffectTarget.AllOtherVehiclesInTargetLane))),
+                TargetingMode.OwnLane,
+                energyCost: 3);
+
+        // Pattern: save-based stage AoE — every other vehicle in the stage takes bludgeoning on a failed Stability save.
+        private static Skill DefineShockwave()
+            => Make("Shockwave",
+                Save(SaveSpec.ForVehicle(VehicleCheckAttribute.Stability), 14,
+                    FX(Dmg(2, 6, 2, DamageType.Bludgeoning, EffectTarget.AllOtherVehiclesInStage))),
+                TargetingMode.Self,
+                energyCost: 4);
+
+        // Pattern: status AoE — applies Slowed to all other vehicles in the caster's lane.
+        private static Skill DefineOilSlick()
+            => Make("Oil Slick",
+                AlwaysApply(FX(Status(LoadEntityCondition("Slowed"), EffectTarget.AllOtherVehiclesInTargetLane))),
+                TargetingMode.OwnLane,
+                energyCost: 2);
+
+        // Pattern: AoE with heavy self-harm — damages entire lane (including self), plus extra damage to self.
+        private static Skill DefineSelfDestruct()
+            => Make("Self-Destruct",
+                AlwaysApply(FX(
+                    Dmg(3, 6, 0, DamageType.Fire, EffectTarget.AllOtherVehiclesInTargetLane),
+                    Dmg(4, 6, 0, DamageType.Fire, EffectTarget.SourceVehicle))),
+                TargetingMode.OwnLane,
+                energyCost: 0);
+
+        // ==================== WORKED EXAMPLES (TargettingRefactor.md) ====================
+
+        // Pattern: fan-out save — each vehicle in the lane makes an independent Mobility save.
+        // Full damage on fail, half on save. Caster excluded — they're outside the blast.
+        private static Skill DefineFireball()
+            => Make("Fireball",
+                FanOut(new AllVehiclesInLaneResolver(excludeSelf: true),
+                    Save(SaveSpec.ForVehicle(VehicleCheckAttribute.Mobility), 15,
+                        onFail: FX(Dmg(3, 6, 0, DamageType.Fire, EffectTarget.SelectedTarget)),
+                        onPass: FX(Dmg(1, 6, 2, DamageType.Fire, EffectTarget.SelectedTarget)))),
+                TargetingMode.Lane,
+                energyCost: 4);
+
+        // Pattern: chained fan-out — caster check gates per-target saves.
+        // Node 1: Arcana check DC 14 (single execution). On success chains to Node 2.
+        // Node 2: Mobility save DC 16 (fans out to each vehicle in lane). On fail: Overheating.
+        private static Skill DefineEMPPulse()
+            => Make("EMP Pulse",
+                Check(SkillCheckSpec.ForCharacter(CharacterSkill.Arcana, ComponentType.Sensors), 14,
+                    onSuccess: FX(),
+                    successChain: FanOut(new AllVehiclesInLaneResolver(),
+                        Save(SaveSpec.ForVehicle(VehicleCheckAttribute.Mobility), 16,
+                            onFail: FX(Status(LoadEntityCondition("Overheating"), EffectTarget.SelectedTarget))))),
+                TargetingMode.Lane,
+                energyCost: 3);
+
+        // Pattern: failed check applies character condition to the rolling character's seat.
+        // Navigator makes a Perception check; on fail, Blinded applies to the navigator's own seat.
+        private static Skill DefineSmokeScreen()
+            => Make("Smoke Screen",
+                Check(SkillCheckSpec.ForCharacter(CharacterSkill.Perception, ComponentType.Sensors), 13,
+                    onSuccess: FX(),
+                    successChain: null,
+                    onFail: FX(),
+                    failChain: AlwaysApply(FX(CharacterStatus(LoadCharacterCondition("Blinded"), EffectTarget.SourceActorSeat)))),
+                TargetingMode.Enemy,
+                energyCost: 2);
+
+        // Pattern: role-targeted seat effect — applies Stunned to the navigator on the target vehicle.
+        // SeatByRoleResolver fans out to the navigator seat; if no navigator exists, the effect is skipped.
+        private static Skill DefineFeedbackLoop()
+            => Make("Feedback Loop",
+                FanOut(new SeatByRoleResolver(RoleType.Navigator, SeatSource.TargetVehicle),
+                    AlwaysApply(FX(CharacterStatus(LoadCharacterCondition("Stunned"), EffectTarget.SelectedTarget)))),
+                TargetingMode.Enemy,
+                energyCost: 2);
+
+        // Pattern: attack with lane splash — 5d6 to the primary target, 1d6 to every other vehicle
+        // in the same lane. Caster and primary target are both excluded from the splash.
+        private static Skill DefineConcussionBlast()
+            => Make("Concussion Blast",
+                Attack(
+                    FX(Dmg(5, 6, 0, DamageType.Bludgeoning, EffectTarget.SelectedTarget)),
+                    successChain: FanOut(new AllVehiclesInLaneResolver(excludeSelf: true, excludeTarget: true),
+                        AlwaysApply(FX(Dmg(1, 6, 0, DamageType.Bludgeoning, EffectTarget.SelectedTarget))))),
+                TargetingMode.EnemyComponent,
+                energyCost: 4);
+
         // Part 3 (ApplyCharacterConditionEffect pending): apply Inspired to the active crew seat.
         // private static Skill DefineBattleCry()
         //     => Make("Battle Cry",
@@ -402,9 +516,8 @@ namespace Assets.Scripts.Skills
         private static EntityCondition LoadEntityCondition(string name)
             => AssetDatabase.LoadAssetAtPath<EntityCondition>($"{ConditionCreator.StatusEffectsFolder}/{name}.asset");
 
-        // Part 3 (ApplyCharacterConditionEffect pending): uncomment when CharacterCondition application is implemented.
-        // private static CharacterCondition LoadCharacterCondition(string name)
-        //     => AssetDatabase.LoadAssetAtPath<CharacterCondition>($"{ConditionCreator.ConditionsFolder}/{name}.asset");
+        private static CharacterCondition LoadCharacterCondition(string name)
+            => AssetDatabase.LoadAssetAtPath<CharacterCondition>($"{ConditionCreator.ConditionsFolder}/{name}.asset");
 
         // ==================== BUILDER METHODS ====================
         // Mirrors TestSkillFactory — kept private here to avoid an editor→test assembly dependency.
@@ -449,8 +562,22 @@ namespace Assets.Scripts.Skills
                 effect = new ApplyEntityConditionEffect { condition = effect }
             };
 
+        private static EffectInvocation CharacterStatus(CharacterCondition condition, EffectTarget target = EffectTarget.SourceActorSeat)
+            => new EffectInvocation
+            {
+                target = target,
+                effect = new ApplyCharacterConditionEffect { condition = condition }
+            };
+
         private static RollNode AlwaysApply(List<EffectInvocation> effects)
             => new RollNode { successEffects = effects };
+
+        /// <summary>Wraps a node with a targetResolver for fan-out execution.</summary>
+        private static RollNode FanOut(ITargetResolver resolver, RollNode inner)
+        {
+            inner.targetResolver = resolver;
+            return inner;
+        }
 
         private static RollNode Attack(
             List<EffectInvocation> onHit,
@@ -509,7 +636,8 @@ namespace Assets.Scripts.Skills
             SkillCheckSpec spec, int dc,
             List<EffectInvocation> onSuccess,
             List<EffectInvocation> onFail = null,
-            RollNode successChain = null)
+            RollNode successChain = null,
+            RollNode failChain = null)
         {
             spec.dc = dc;
             return new RollNode
@@ -517,7 +645,8 @@ namespace Assets.Scripts.Skills
                 rollSpec = spec,
                 successEffects = onSuccess ?? new List<EffectInvocation>(),
                 failureEffects = onFail ?? new List<EffectInvocation>(),
-                onSuccessChain = successChain
+                onSuccessChain = successChain,
+                onFailureChain = failChain
             };
         }
 

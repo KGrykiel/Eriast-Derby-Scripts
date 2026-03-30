@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using Assets.Scripts.Combat.Rolls.Targeting;
 using Assets.Scripts.Effects;
 using SerializeReferenceEditor;
 using UnityEngine;
@@ -18,6 +19,10 @@ namespace Assets.Scripts.Combat.Rolls.RollSpecs
         [SerializeReference, SR]
         [Tooltip("What kind of roll this node requires. Leave null for an unconditional effect (always succeeds).")]
         public IRollSpec rollSpec;
+
+        [SerializeReference, SR]
+        [Tooltip("Optional: resolves which targets this node fans out to. Null = single execution with current context.")]
+        public ITargetResolver targetResolver;
 
         [Header("Effects")]
         [Tooltip("Effects applied on a successful roll, or always if rollSpec is null.")]

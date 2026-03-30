@@ -1,6 +1,7 @@
 ﻿using Assets.Scripts.Conditions;
 using Assets.Scripts.Conditions.EntityConditions;
 using Assets.Scripts.Entities;
+using Assets.Scripts.Entities.Vehicles;
 using SerializeReferenceEditor;
 using UnityEngine;
 
@@ -21,19 +22,22 @@ namespace Assets.Scripts.Effects.EffectTypes
         [Tooltip("Optional: remove only this specific status effect template. Takes priority over categories.")]
         public EntityCondition specificTemplate;
 
-        public override void Apply(Entity target, EffectContext context)
+        public override void Apply(IEffectTarget target, EffectContext context)
         {
+            Entity entity = ResolveEntity(target);
+            if (entity == null) return;
+
             if (specificTemplate != null)
             {
-                target.RemoveConditionsByTemplate(specificTemplate);
+                entity.RemoveConditionsByTemplate(specificTemplate);
             }
             else if (categoriesToRemove != ConditionCategory.None)
             {
-                target.RemoveConditionsByCategory(categoriesToRemove);
+                entity.RemoveConditionsByCategory(categoriesToRemove);
             }
             else
             {
-                Debug.LogWarning("[RemoveStatusEffectsEffect] Neither specificTemplate nor categoriesToRemove set!");
+                Debug.LogWarning("[RemoveConditionEffect] Neither specificTemplate nor categoriesToRemove set!");
             }
         }
     }

@@ -1,4 +1,5 @@
 using Assets.Scripts.Entities;
+using Assets.Scripts.Entities.Vehicles;
 using SerializeReferenceEditor;
 using System;
 using UnityEngine;
@@ -33,9 +34,29 @@ namespace Assets.Scripts.Effects.EffectTypes
             );
         }
 
-        public override void Apply(Entity target, EffectContext context)
+        public override void Apply(IEffectTarget target, EffectContext context)
         {
-            target.AddModifier(ToRuntimeModifier());
+            Entity entity = ResolveEntity(target);
+            if (entity == null) return;
+
+            entity.AddModifier(ToRuntimeModifier());
+        }
+
+        protected override Entity ResolveEntity(IEffectTarget target)
+        {
+            switch (target)
+            {
+                case Entity e:
+                    return e;
+                case Vehicle vehicle:
+                    return VehicleComponentResolver.ResolveForAttribute(vehicle, attribute) ?? vehicle.chassis;
+                case VehicleSeat:
+                    Debug.LogWarning($"[{GetType().Name}] VehicleSeat is not a valid target for this effect.");
+                    return null;
+                default:
+                    Debug.LogWarning($"[{GetType().Name}] Unsupported target type: {(target != null ? target.GetType().Name : "null")}");
+                    return null;
+            }
         }
     }
 }

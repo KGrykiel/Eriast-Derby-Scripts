@@ -152,7 +152,7 @@ namespace Assets.Scripts.Entities.Vehicles
             }
         }
 
-        public void ApplySizeModifiers(VehicleEffectRouter effectRouter)
+        public void ApplySizeModifiers()
         {
             if (Chassis == null)
             {
@@ -164,7 +164,7 @@ namespace Assets.Scripts.Entities.Vehicles
 
             foreach (var modifier in sizeModifiers)
             {
-                VehicleComponent targetComponent = effectRouter.ResolveModifierTarget(modifier.Attribute);
+                VehicleComponent targetComponent = VehicleComponentResolver.ResolveForAttribute(vehicle, modifier.Attribute);
 
                 if (targetComponent != null && !targetComponent.IsDestroyed())
                 {

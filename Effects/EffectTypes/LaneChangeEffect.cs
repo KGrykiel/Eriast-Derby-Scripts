@@ -6,7 +6,7 @@ using UnityEngine;
 
 namespace Assets.Scripts.Effects.EffectTypes
 {
-    /// <summary>Effect for vehicle changing lanes. Pass chassis as the vehicle</summary>
+    /// <summary>Effect for vehicle changing lanes. Accepts Vehicle directly or Entity (resolves to parent vehicle).</summary>
     [System.Serializable]
     [SRName("Lane Change")]
     public class LaneChangeEffect : EffectBase
@@ -22,24 +22,32 @@ namespace Assets.Scripts.Effects.EffectTypes
         [Range(-2, 2)]
         public int relativeOffset = 1;
 
-        public override void Apply(Entity target, EffectContext context)
+        public override void Apply(IEffectTarget target, EffectContext context)
         {
-            // Get vehicle (from target or parent)
-            Vehicle vehicle = EntityHelpers.GetParentVehicle(target);
-            if (vehicle == null || vehicle.currentStage == null)
-            {
-                return; // Silent fail - caller should validate before applying
-            }
+            Vehicle vehicle = ResolveVehicle(target);
+            if (vehicle == null || vehicle.currentStage == null) return;
 
-            // Determine target lane
             StageLane targetLane = DetermineTargetLane(vehicle);
-            if (targetLane == null)
-            {
-                return; // Silent fail - invalid lane
-            }
+            if (targetLane == null) return;
 
-            // Execute lane change via Stage (handles StatusEffect application/removal)
             vehicle.currentStage.AssignVehicleToLane(vehicle, targetLane);
+        }
+
+        private Vehicle ResolveVehicle(IEffectTarget target)
+        {
+            switch (target)
+            {
+                case Vehicle v:
+                    return v;
+                case Entity entity:
+                    return EntityHelpers.GetParentVehicle(entity);
+                case VehicleSeat:
+                    Debug.LogWarning($"[{GetType().Name}] VehicleSeat is not a valid target for lane changes.");
+                    return null;
+                default:
+                    Debug.LogWarning($"[{GetType().Name}] Unsupported target type: {(target != null ? target.GetType().Name : "null")}");
+                    return null;
+            }
         }
 
         private StageLane DetermineTargetLane(Vehicle vehicle)

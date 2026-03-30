@@ -7,13 +7,15 @@ using Assets.Scripts.Core;
 using Assets.Scripts.Conditions.EntityConditions;
 using Assets.Scripts.Conditions;
 
+using Assets.Scripts.Effects;
+
 namespace Assets.Scripts.Entities
 {
     /// <summary>
     /// Base class for anything with HP that can be damaged/targeted.
     /// Note: Vehicle itself is NOT an Entity, it's a container for Entity components.
     /// </summary>
-    public abstract class Entity : MonoBehaviour
+    public abstract class Entity : MonoBehaviour, IRollTarget, IEffectTarget
     {
         [Header("Entity Stats")]
         [Tooltip("Current health points")]

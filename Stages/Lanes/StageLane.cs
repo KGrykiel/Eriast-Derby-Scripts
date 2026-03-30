@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using UnityEngine;
 using Assets.Scripts.Conditions.EntityConditions;
+using Assets.Scripts.Entities;
 using Assets.Scripts.Entities.Vehicles;
 
 namespace Assets.Scripts.Stages.Lanes
@@ -9,7 +10,7 @@ namespace Assets.Scripts.Stages.Lanes
     /// Lane system for stage design. Used to give a stage its identity and unique feel.
     /// Moreover made to stimulate interesting player choices and tradeoffs in lane selection prompting discussion and cooperation.
     /// </summary>
-    public class StageLane : MonoBehaviour
+    public class StageLane : MonoBehaviour, IRollTarget
     {
         // ==================== IDENTITY ====================
         
