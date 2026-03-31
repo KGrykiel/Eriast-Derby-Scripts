@@ -2,6 +2,7 @@
 using Assets.Scripts.Characters;
 using Assets.Scripts.Combat.Rolls.Advantage;
 using Assets.Scripts.Entities.Vehicles;
+using Assets.Scripts.Entities.Vehicles.VehicleComponents;
 
 namespace Assets.Scripts.Combat.Rolls.RollSpecs.SpecTypes
 {

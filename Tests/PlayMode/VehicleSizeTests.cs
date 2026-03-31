@@ -2,6 +2,7 @@
 using NUnit.Framework;
 using Assets.Scripts.Entities.Vehicles;
 using Assets.Scripts.Modifiers;
+using Assets.Scripts.Entities;
 
 namespace Assets.Scripts.Tests.PlayMode
 {

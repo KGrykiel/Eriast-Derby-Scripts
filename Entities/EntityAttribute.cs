@@ -1,32 +1,36 @@
-public enum EntityAttribute
+
+namespace Assets.Scripts.Entities
 {
-    // Core stats
-    MaxSpeed,
-    ArmorClass,
-    Integrity,
-    AttackBonus,
-    Mobility,      // Saving throw stat AND skill check stat - dodging, evasion, piloting, reaction speed
-    MaxHealth,
-    MaxEnergy,
-    EnergyRegen,
-    
-    // Drive stats
-    Acceleration,
-    Deceleration,
-    Stability,
-    
-    // Physics stats
-    BaseFriction,     // Mechanical friction (on drive, modified by terrain/status effects)
-    DragCoefficient,  // Aerodynamic drag (on chassis, modified by components)
-    
-    // Weapon stats
-    Ammo,
-    
-    // Component stats
-    ComponentSpace,
-    PowerDraw,
-    
-    // Resistances
-    MagicResistance,
-    PhysicalResistance,
+    public enum EntityAttribute
+    {
+        // Core stats
+        MaxSpeed,
+        ArmorClass,
+        Integrity,
+        AttackBonus,
+        Mobility,      // Saving throw stat AND skill check stat - dodging, evasion, piloting, reaction speed
+        MaxHealth,
+        MaxEnergy,
+        EnergyRegen,
+
+        // Drive stats
+        Acceleration,
+        Deceleration,
+        Stability,
+
+        // Physics stats
+        BaseFriction,     // Mechanical friction (on drive, modified by terrain/status effects)
+        DragCoefficient,  // Aerodynamic drag (on chassis, modified by components)
+
+        // Weapon stats
+        Ammo,
+
+        // Component stats
+        ComponentSpace,
+        PowerDraw,
+
+        // Resistances
+        MagicResistance,
+        PhysicalResistance,
+    }
 }

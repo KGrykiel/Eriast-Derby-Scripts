@@ -7,6 +7,8 @@ using Assets.Scripts.Logging;
 using Assets.Scripts.UI.Components;
 using Assets.Scripts.Entities.Vehicles;
 using Assets.Scripts.Entities.Vehicles.VehicleComponents;
+using Assets.Scripts.Entities;
+using Assets.Scripts.Skills;
 
 public class VehicleInspectorPanel : MonoBehaviour
 {

@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Assets.Scripts.Entities;
+using System;
 
 namespace Assets.Scripts.Modifiers
 {

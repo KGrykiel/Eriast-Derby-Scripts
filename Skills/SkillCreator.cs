@@ -16,6 +16,7 @@ using Assets.Scripts.Combat.Rolls.Targeting;
 using Assets.Scripts.Combat.Rolls.Advantage;
 using Assets.Scripts.Effects;
 using Assets.Scripts.Effects.EffectTypes;
+using Assets.Scripts.Entities.Vehicles.VehicleComponents;
 
 namespace Assets.Scripts.Skills
 {

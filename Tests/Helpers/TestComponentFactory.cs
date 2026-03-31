@@ -1,6 +1,7 @@
 ﻿using UnityEngine;
 using Assets.Scripts.Entities.Vehicles.VehicleComponents.ComponentTypes;
 using Assets.Scripts.Entities;
+using Assets.Scripts.Entities.Vehicles.VehicleComponents;
 
 namespace Assets.Scripts.Tests.Helpers
 {

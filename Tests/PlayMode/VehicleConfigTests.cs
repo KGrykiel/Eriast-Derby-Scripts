@@ -4,6 +4,8 @@ using UnityEngine;
 using UnityEngine.TestTools;
 using Assets.Scripts.Tests.Helpers;
 using Assets.Scripts.Entities.Vehicles;
+using Assets.Scripts.Entities.Vehicles.VehicleComponents;
+using Assets.Scripts.Characters;
 
 namespace Assets.Scripts.Tests.PlayMode
 {

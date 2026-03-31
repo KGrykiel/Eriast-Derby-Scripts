@@ -6,6 +6,7 @@ using TMPro;
 using Assets.Scripts.Stages;
 using Assets.Scripts.Stages.Lanes;
 using Assets.Scripts.Conditions.EntityConditions;
+using Assets.Scripts.Entities;
 
 namespace Assets.Scripts.UI.Tabs.Lanes
 {

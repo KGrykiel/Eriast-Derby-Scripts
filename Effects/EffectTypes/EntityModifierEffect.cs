@@ -15,7 +15,7 @@ namespace Assets.Scripts.Effects.EffectTypes
     /// </summary>
     [Serializable]
     [SRName("Modifier")]
-    public class AttributeModifierEffect : EffectBase
+    public class EntityModifierEffect : EffectBase
     {
         [Header("Modifier Configuration")]
         public EntityAttribute attribute;

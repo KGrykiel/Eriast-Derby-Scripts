@@ -8,6 +8,7 @@ using Assets.Scripts.Conditions;
 using Assets.Scripts.Conditions.EntityConditions;
 using Assets.Scripts.Conditions.CharacterConditions;
 using Assets.Scripts.Modifiers;
+using Assets.Scripts.Entities;
 
 namespace Assets.Scripts.Combat.Logging
 {

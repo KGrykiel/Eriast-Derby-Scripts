@@ -2,7 +2,6 @@
 using UnityEngine.UI;
 using UnityEngine.EventSystems;
 using TMPro;
-using Assets.Scripts.Conditions;
 using Assets.Scripts.Combat.Logging;
 using Assets.Scripts.Conditions.EntityConditions;
 

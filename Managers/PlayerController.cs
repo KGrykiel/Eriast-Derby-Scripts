@@ -9,6 +9,7 @@ using Assets.Scripts.Combat.Rolls.RollSpecs;
 using Assets.Scripts.Entities;
 using Assets.Scripts.Entities.Vehicles.VehicleComponents;
 using Assets.Scripts.Stages.Lanes;
+using Assets.Scripts.Skills;
 
 /// <summary>Orchestrates player input for whichever vehicle is currently taking its turn.</summary>
 public class PlayerController : MonoBehaviour

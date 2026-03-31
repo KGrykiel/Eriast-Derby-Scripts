@@ -14,6 +14,7 @@ using Assets.Scripts.Conditions;
 using StatusEffectTemplate = Assets.Scripts.Conditions.EntityConditions.EntityCondition;
 using Assets.Scripts.Effects;
 using Assets.Scripts.Effects.EffectTypes;
+using Assets.Scripts.Entities.Vehicles.VehicleComponents;
 
 namespace Assets.Scripts.Events.EventCard
 {

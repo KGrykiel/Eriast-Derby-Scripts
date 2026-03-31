@@ -11,6 +11,8 @@ using Assets.Scripts.Combat.Rolls.RollSpecs;
 using Assets.Scripts.Effects;
 using Assets.Scripts.Entities.Vehicles.VehicleComponents;
 using Assets.Scripts.Skills.Helpers;
+using Assets.Scripts.Characters;
+using Assets.Scripts.Skills;
 
 namespace Assets.Scripts.Entities.Vehicles
 {

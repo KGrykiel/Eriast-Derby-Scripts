@@ -2,6 +2,7 @@
 using UnityEngine;
 using Assets.Scripts.Managers.TurnPhases;
 using Assets.Scripts.Entities.Vehicles;
+using Assets.Scripts.Combat;
 
 namespace Assets.Scripts.Managers
 {

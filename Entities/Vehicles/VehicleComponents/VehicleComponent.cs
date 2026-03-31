@@ -5,6 +5,7 @@ using System;
 using Assets.Scripts.Core;
 using Assets.Scripts.Entities.Vehicles.VehicleComponents.ComponentTypes;
 using Assets.Scripts.Modifiers;
+using Assets.Scripts.Skills;
 
 namespace Assets.Scripts.Entities.Vehicles.VehicleComponents
 {

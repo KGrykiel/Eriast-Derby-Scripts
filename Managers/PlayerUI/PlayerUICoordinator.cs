@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using Assets.Scripts.Entities.Vehicles;
+using Assets.Scripts.Skills;
 
 namespace Assets.Scripts.Managers.PlayerUI
 {

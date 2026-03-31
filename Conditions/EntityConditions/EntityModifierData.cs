@@ -1,4 +1,5 @@
-﻿using Assets.Scripts.Modifiers;
+﻿using Assets.Scripts.Entities;
+using Assets.Scripts.Modifiers;
 using System;
 using UnityEngine;
 

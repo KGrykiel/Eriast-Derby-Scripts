@@ -4,6 +4,7 @@ using UnityEngine.UI;
 using TMPro;
 using Assets.Scripts.Stages;
 using Assets.Scripts.Logging;
+using Assets.Scripts.Entities.Vehicles;
 
 namespace Assets.Scripts.UI.Tabs.Lanes
 {

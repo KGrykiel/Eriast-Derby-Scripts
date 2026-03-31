@@ -2,14 +2,13 @@ using System.Collections.Generic;
 using Assets.Scripts.Combat.Rolls.RollSpecs;
 using Assets.Scripts.Entities;
 using Assets.Scripts.Entities.Vehicles;
+using Assets.Scripts.Entities.Vehicles.VehicleComponents;
 
 namespace Assets.Scripts.Combat.Rolls.Targeting
 {
     /// <summary>
     /// Resolves to seats on a vehicle that have the specified role enabled.
     /// Returns an empty list if no seat has the role — effect is silently skipped.
-    /// <c>RoleType</c> is a flags enum on <see cref="Entities.Vehicles.VehicleComponents.VehicleComponent.roleType"/>;
-    /// <see cref="VehicleSeat.GetEnabledRoles"/> aggregates it.
     /// </summary>
     public class SeatByRoleResolver : ITargetResolver
     {

@@ -10,6 +10,8 @@ using Assets.Scripts.Combat.Rolls.RollSpecs.SpecTypes;
 using Assets.Scripts.Entities.Vehicles;
 using Assets.Scripts.Entities.Vehicles.VehicleComponents.ComponentTypes;
 using Assets.Scripts.Modifiers;
+using Assets.Scripts.Characters;
+using Assets.Scripts.Entities;
 
 namespace Assets.Scripts.Tests.PlayMode
 {

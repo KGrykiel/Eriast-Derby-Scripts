@@ -3,6 +3,7 @@ using Assets.Scripts.Conditions;
 using Assets.Scripts.Combat.Damage;
 using Assets.Scripts.Conditions.EntityConditions;
 using Assets.Scripts.Modifiers;
+using Assets.Scripts.Entities;
 
 namespace Assets.Scripts.Tests.Helpers
 {
@@ -42,7 +43,7 @@ namespace Assets.Scripts.Tests.Helpers
             template.removalTriggers = removalTriggers;
             template.modifiers = new System.Collections.Generic.List<EntityModifierData>
             {
-                new EntityModifierData { attribute = attribute, type = ModifierType.Flat, value = value }
+                new() { attribute = attribute, type = ModifierType.Flat, value = value }
             };
             template.periodicEffects = new System.Collections.Generic.List<IPeriodicEffect>();
             template.behavioralEffects = new BehavioralEffectData();

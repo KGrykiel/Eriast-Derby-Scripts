@@ -4,7 +4,7 @@ using Assets.Scripts.Combat.Damage;
 using Assets.Scripts.Combat.Restoration;
 using SerializeReferenceEditor;
 
-namespace Assets.Scripts.Conditions
+namespace Assets.Scripts.Conditions.EntityConditions
 {
     public interface IPeriodicEffect { }
 

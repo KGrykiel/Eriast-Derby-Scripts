@@ -1,4 +1,6 @@
-﻿public static class VehicleComponentUI
+﻿using Assets.Scripts.Entities;
+
+public static class VehicleComponentUI
 {
     public struct DisplayStat
     {

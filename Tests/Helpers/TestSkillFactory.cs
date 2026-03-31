@@ -6,6 +6,8 @@ using Assets.Scripts.Combat.Rolls.RollSpecs.SpecTypes;
 using Assets.Scripts.Combat.Damage.FormulaProviders.SpecificProviders;
 using Assets.Scripts.Effects;
 using Assets.Scripts.Effects.EffectTypes;
+using Assets.Scripts.Entities.Vehicles.VehicleComponents;
+using Assets.Scripts.Skills;
 
 namespace Assets.Scripts.Tests.Helpers
 {
