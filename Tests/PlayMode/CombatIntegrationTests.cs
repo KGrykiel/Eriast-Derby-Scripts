@@ -677,6 +677,5 @@ namespace Assets.Scripts.Tests.PlayMode
             Assert.IsNotNull(playerVehicle.chassis);
             Assert.IsNotNull(enemyVehicle.chassis);
         }
-
-            }
-        }
+    }
+}

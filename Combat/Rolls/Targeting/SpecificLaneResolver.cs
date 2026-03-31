@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using Assets.Scripts.Combat.Rolls.RollSpecs;
 using Assets.Scripts.Entities;
@@ -9,6 +10,7 @@ namespace Assets.Scripts.Combat.Rolls.Targeting
     /// Resolves to a specific pre-configured <see cref="StageLane"/>.
     /// Used for bombardment and other effects that target a lane directly.
     /// </summary>
+    [Serializable]
     public class SpecificLaneResolver : ITargetResolver
     {
         public StageLane Lane;

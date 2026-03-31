@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using Assets.Scripts.Combat.Rolls.RollSpecs;
 using Assets.Scripts.Entities;
@@ -9,6 +10,7 @@ namespace Assets.Scripts.Combat.Rolls.Targeting
     /// Resolves to all vehicles currently in the same stage as the context vehicle.
     /// Replaces <c>CardTargetMode.AllInStage</c>.
     /// </summary>
+    [Serializable]
     public class AllVehiclesInStageResolver : ITargetResolver
     {
         /// <summary>When true, excludes the caster's vehicle (ctx.SourceActor.GetVehicle()) from results.</summary>

@@ -59,4 +59,19 @@
         Special,
         Custom
     }
+
+    /// <summary>
+    /// Which action resource a skill consumes when used.
+    /// </summary>
+    public enum ActionType
+    {
+        /// <summary>Standard main action — one per seat per turn.</summary>
+        Action,
+        /// <summary>Lighter action — one per seat per turn, independent of Action.</summary>
+        BonusAction,
+        /// <summary>Consumes both Action and BonusAction — for powerful abilities that dominate the whole turn.</summary>
+        FullAction,
+        /// <summary>No action resource consumed — always usable if other conditions are met.</summary>
+        Free
+    }
 }

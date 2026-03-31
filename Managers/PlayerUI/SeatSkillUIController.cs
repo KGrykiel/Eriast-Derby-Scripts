@@ -37,13 +37,16 @@ namespace Assets.Scripts.Managers.PlayerUI
                     seatTabButtons[i].gameObject.SetActive(true);
 
                     bool canAct = seat.CanAct();
-                    bool hasActed = seat.HasActedThisTurn();
+                    bool actionSpent = !seat.CanSpendAction(ActionType.Action);
+                    bool bonusSpent = !seat.CanSpendAction(ActionType.BonusAction);
 
                     string statusIcon;
                     if (!canAct)
                         statusIcon = "[X]";
-                    else if (hasActed)
+                    else if (actionSpent && bonusSpent)
                         statusIcon = "[v]";
+                    else if (actionSpent || bonusSpent)
+                        statusIcon = "[~]";
                     else
                         statusIcon = "[ ]";
 
@@ -51,7 +54,7 @@ namespace Assets.Scripts.Managers.PlayerUI
                     string tabText = $"{statusIcon} {seat.seatName} ({characterName})";
 
                     seatTabButtons[i].GetComponentInChildren<TextMeshProUGUI>().text = tabText;
-                    seatTabButtons[i].interactable = canAct && !hasActed;
+                    seatTabButtons[i].interactable = canAct && seat.HasAnyActionsRemaining();
 
                     int seatIndex = i;
                     seatTabButtons[i].onClick.RemoveAllListeners();
@@ -69,7 +72,9 @@ namespace Assets.Scripts.Managers.PlayerUI
             if (ui.currentRoleText == null || currentSeat == null) return;
             
             string characterName = currentSeat.GetDisplayName() ?? "Unassigned";
-            string status = currentSeat.HasActedThisTurn() ? "- ACTED" : "- Ready";
+            bool actionSpent = !currentSeat.CanSpendAction(ActionType.Action);
+            bool bonusSpent = !currentSeat.CanSpendAction(ActionType.BonusAction);
+            string status = (actionSpent && bonusSpent) ? "- Done" : (actionSpent || bonusSpent) ? "- Partial" : "- Ready";
             ui.currentRoleText.text = $"<b>{currentSeat.seatName}</b> ({characterName}) {status}";
         }
         
@@ -89,8 +94,6 @@ namespace Assets.Scripts.Managers.PlayerUI
                 Debug.LogWarning($"[SeatSkillUIController] No available skills for seat {currentSeat.seatName}");
                 return;
             }
-
-            bool seatHasActed = currentSeat.HasActedThisTurn();
 
             while (skillButtons.Count < availableSkills.Count)
             {
@@ -119,7 +122,7 @@ namespace Assets.Scripts.Managers.PlayerUI
                     
                     int currentEnergy = playerVehicle.powerCore != null ? playerVehicle.powerCore.currentEnergy : 0;
                     bool canAfford = currentEnergy >= skill.energyCost;
-                    bool canUse = canAfford && !seatHasActed;
+                    bool canUse = canAfford && currentSeat.CanSpendAction(skill.actionCost);
                     skillButtons[i].interactable = canUse;
                     
                     int skillIndex = i;

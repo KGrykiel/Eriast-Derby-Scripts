@@ -59,9 +59,10 @@ namespace Assets.Scripts.Managers.PlayerUI
             Action<int> onSkillSelected)
         {
             seatSkillUI.ShowSeatTabs(availableSeats, onSeatSelected);
-            
+
             if (currentSeat != null)
             {
+                seatSkillUI.UpdateCurrentSeatDisplay(currentSeat);
                 seatSkillUI.ShowSkillSelection(currentSeat, vehicle, onSkillSelected);
             }
         }

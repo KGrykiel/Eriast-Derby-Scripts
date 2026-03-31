@@ -27,6 +27,13 @@ namespace Assets.Scripts.Skills.Helpers
                 return false;
             }
 
+            VehicleSeat seat = ctx.SourceActor?.GetSeat();
+            if (seat != null && !seat.CanSpendAction(skill.actionCost))
+            {
+                Debug.LogWarning($"[SkillValidator] {seat.seatName} has no {skill.actionCost} remaining to use {skill.name}");
+                return false;
+            }
+
             return true;
         }
 

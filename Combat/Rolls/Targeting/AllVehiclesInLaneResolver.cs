@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using Assets.Scripts.Combat.Rolls.RollSpecs;
 using Assets.Scripts.Entities;
@@ -11,6 +12,7 @@ namespace Assets.Scripts.Combat.Rolls.Targeting
     /// If <c>ctx.Target</c> is a <see cref="StageLane"/>, uses it directly.
     /// Otherwise derives the lane from the target vehicle.
     /// </summary>
+    [Serializable]
     public class AllVehiclesInLaneResolver : ITargetResolver
     {
         /// <summary>When true, excludes the caster's vehicle (ctx.SourceActor.GetVehicle()) from results.</summary>

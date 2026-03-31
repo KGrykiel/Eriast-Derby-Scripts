@@ -260,14 +260,16 @@ namespace Assets.Scripts.Skills
             => Make("Cannon Shot",
                 Attack(FX(Dmg(2, 6, 3, DamageType.Piercing))),
                 TargetingMode.EnemyComponent,
-                energyCost: 2);
+                energyCost: 2,
+                actionCost: ActionType.Action);
 
         // Pattern: no roll, self-repair to a chosen component.
         private static Skill DefineEmergencyPatch()
             => Make("Emergency Patch",
                 AlwaysApply(FX(Heal(8, EffectTarget.SourceComponent))),
                 TargetingMode.SourceComponent,
-                energyCost: 1);
+                energyCost: 1,
+                actionCost: ActionType.BonusAction);
 
         // Pattern: no roll, two effects on the same node targeting self — gain energy, pay force damage as cost.
         private static Skill DefineOverclock()
@@ -276,7 +278,8 @@ namespace Assets.Scripts.Skills
                     Energy(4),
                     Dmg(1, 4, 0, DamageType.Force, EffectTarget.SourceComponent))),
                 TargetingMode.Self,
-                energyCost: 0);
+                energyCost: 0,
+                actionCost: ActionType.BonusAction);
 
         // Pattern: save-based debuff — enemy rolls Stability or takes damage.
         private static Skill DefineStabilityDrain()
@@ -284,7 +287,8 @@ namespace Assets.Scripts.Skills
                 Save(SaveSpec.ForVehicle(VehicleCheckAttribute.Stability), 14,
                     FX(Dmg(1, 6, 2, DamageType.Bludgeoning))),
                 TargetingMode.Enemy,
-                energyCost: 2);
+                energyCost: 2,
+                actionCost: ActionType.Action);
 
         // Pattern: attack with two effects on different targets — damage to enemy, self-heal on the same hit.
         private static Skill DefineArmorPierce()
@@ -293,7 +297,8 @@ namespace Assets.Scripts.Skills
                     Dmg(1, 8, 2, DamageType.Piercing, EffectTarget.SelectedTarget),
                     Heal(3, EffectTarget.SourceComponent))),
                 TargetingMode.EnemyComponent,
-                energyCost: 2);
+                energyCost: 2,
+                actionCost: ActionType.Action);
 
         // Pattern: chained nodes — attack hits, then enemy makes a Stability save or takes extra force damage.
         private static Skill DefineHarpoon()
@@ -303,7 +308,8 @@ namespace Assets.Scripts.Skills
                     successChain: Save(SaveSpec.ForVehicle(VehicleCheckAttribute.Stability), 13,
                         FX(Dmg(1, 4, 0, DamageType.Force)))),
                 TargetingMode.EnemyComponent,
-                energyCost: 2);
+                energyCost: 2,
+                actionCost: ActionType.Action);
 
         // Pattern: check gates an attack — Navigator makes a Perception check (requires Sensors);
         // on success the attack fires with a strong bonus, on fail nothing happens.
@@ -313,7 +319,8 @@ namespace Assets.Scripts.Skills
                     FX(),
                     successChain: Attack(FX(Dmg(2, 8, 4, DamageType.Piercing)))),
                 TargetingMode.EnemyComponent,
-                energyCost: 2);
+                energyCost: 2,
+                actionCost: ActionType.FullAction);
 
         // Pattern: heavy attack with self-damage recoil — both effects fire on a hit.
         private static Skill DefineRecoilCannon()
@@ -322,14 +329,16 @@ namespace Assets.Scripts.Skills
                     Dmg(3, 8, 2, DamageType.Piercing, EffectTarget.SelectedTarget),
                     Dmg(1, 6, 0, DamageType.Force, EffectTarget.SourceComponent))),
                 TargetingMode.EnemyComponent,
-                energyCost: 3);
+                energyCost: 3,
+                actionCost: ActionType.FullAction);
 
         // Pattern: attack with granted advantage — the gunner lines up a careful shot.
         private static Skill DefineAimedShot()
             => Make("Aimed Shot",
                 Attack(new AttackSpec { grantedMode = RollMode.Advantage }, FX(Dmg(2, 8, 2, DamageType.Piercing))),
                 TargetingMode.EnemyComponent,
-                energyCost: 3);
+                energyCost: 3,
+                actionCost: ActionType.FullAction);
 
         // Pattern: opposed check — both sides roll Stability; attacker wins → deal damage;
         // defender wins → attacker takes self-damage from the failed ram.
@@ -344,7 +353,8 @@ namespace Assets.Scripts.Skills
                     onWin:  FX(Dmg(2, 6, 2, DamageType.Bludgeoning, EffectTarget.SelectedTarget)),
                     onLose: FX(Dmg(1, 6, 0, DamageType.Bludgeoning, EffectTarget.SourceComponent))),
                 TargetingMode.Enemy,
-                energyCost: 1);
+                energyCost: 1,
+                actionCost: ActionType.Action);
 
         // Pattern: attack with status effect — fire damage plus Burning DoT on hit.
         private static Skill DefineIncendiaryShot()
@@ -353,7 +363,8 @@ namespace Assets.Scripts.Skills
                     Dmg(1, 6, 2, DamageType.Fire, EffectTarget.SelectedTarget),
                     Status(LoadEntityCondition("Burning"), EffectTarget.SelectedTarget))),
                 TargetingMode.EnemyComponent,
-                energyCost: 2);
+                energyCost: 2,
+                actionCost: ActionType.Action);
 
         // Pattern: attack with stackable debuff — applies Slowed (stacks up to 3 times) on hit.
         private static Skill DefineWebShot()
@@ -362,21 +373,24 @@ namespace Assets.Scripts.Skills
                     Dmg(1, 4, 0, DamageType.Bludgeoning, EffectTarget.SelectedTarget),
                     Status(LoadEntityCondition("Slowed"), EffectTarget.SelectedTarget))),
                 TargetingMode.EnemyComponent,
-                energyCost: 2);
+                energyCost: 2,
+                actionCost: ActionType.BonusAction);
 
         // Pattern: no roll, apply Fortified buff to self — armour and integrity bonus for a short time.
         private static Skill DefineHarden()
             => Make("Harden",
                 AlwaysApply(FX(Status(LoadEntityCondition("Fortified"), EffectTarget.SourceVehicle))),
                 TargetingMode.Self,
-                energyCost: 1);
+                energyCost: 1,
+                actionCost: ActionType.BonusAction);
 
         // Pattern: no roll, apply Regenerating HoT to self — health recovery over time.
         private static Skill DefineStimPack()
             => Make("Stim Pack",
                 AlwaysApply(FX(Status(LoadEntityCondition("Regenerating"), EffectTarget.SourceVehicle))),
                 TargetingMode.Self,
-                energyCost: 2);
+                energyCost: 2,
+                actionCost: ActionType.BonusAction);
 
         // Pattern: attack with electronic debuff — force damage plus Overheating on hit (requires IsElectronic).
         private static Skill DefineEMPStrike()
@@ -385,7 +399,8 @@ namespace Assets.Scripts.Skills
                     Dmg(1, 6, 0, DamageType.Force, EffectTarget.SelectedTarget),
                     Status(LoadEntityCondition("Overheating"), EffectTarget.SelectedTarget))),
                 TargetingMode.EnemyComponent,
-                energyCost: 3);
+                energyCost: 3,
+                actionCost: ActionType.Action);
 
         // Pattern: attack with DoT — piercing damage plus Bleeding on hit.
         private static Skill DefineLancerStrike()
@@ -394,21 +409,24 @@ namespace Assets.Scripts.Skills
                     Dmg(1, 8, 2, DamageType.Piercing, EffectTarget.SelectedTarget),
                     Status(LoadEntityCondition("Bleeding"), EffectTarget.SelectedTarget))),
                 TargetingMode.EnemyComponent,
-                energyCost: 2);
+                energyCost: 2,
+                actionCost: ActionType.Action);
 
         // Pattern: attack gates AoE — on hit, splash damage to every vehicle in the target's lane.
         private static Skill DefineShrapnelBurst()
             => Make("Shrapnel Burst",
                 Attack(FX(Dmg(2, 6, 0, DamageType.Piercing, EffectTarget.AllVehiclesInTargetLane))),
                 TargetingMode.Enemy,
-                energyCost: 3);
+                energyCost: 3,
+                actionCost: ActionType.Action);
 
         // Pattern: unconditional lane AoE excluding self — fire damage to everyone else in the caster's lane.
         private static Skill DefineNapalmSpray()
             => Make("Napalm Spray",
                 AlwaysApply(FX(Dmg(1, 8, 2, DamageType.Fire, EffectTarget.AllOtherVehiclesInTargetLane))),
                 TargetingMode.OwnLane,
-                energyCost: 3);
+                energyCost: 3,
+                actionCost: ActionType.FullAction);
 
         // Pattern: save-based stage AoE — every other vehicle in the stage takes bludgeoning on a failed Stability save.
         private static Skill DefineShockwave()
@@ -416,14 +434,16 @@ namespace Assets.Scripts.Skills
                 Save(SaveSpec.ForVehicle(VehicleCheckAttribute.Stability), 14,
                     FX(Dmg(2, 6, 2, DamageType.Bludgeoning, EffectTarget.AllOtherVehiclesInStage))),
                 TargetingMode.Self,
-                energyCost: 4);
+                energyCost: 4,
+                actionCost: ActionType.FullAction);
 
         // Pattern: status AoE — applies Slowed to all other vehicles in the caster's lane.
         private static Skill DefineOilSlick()
             => Make("Oil Slick",
                 AlwaysApply(FX(Status(LoadEntityCondition("Slowed"), EffectTarget.AllOtherVehiclesInTargetLane))),
                 TargetingMode.OwnLane,
-                energyCost: 2);
+                energyCost: 2,
+                actionCost: ActionType.BonusAction);
 
         // Pattern: AoE with heavy self-harm — damages entire lane (including self), plus extra damage to self.
         private static Skill DefineSelfDestruct()
@@ -432,7 +452,8 @@ namespace Assets.Scripts.Skills
                     Dmg(3, 6, 0, DamageType.Fire, EffectTarget.AllOtherVehiclesInTargetLane),
                     Dmg(4, 6, 0, DamageType.Fire, EffectTarget.SourceVehicle))),
                 TargetingMode.OwnLane,
-                energyCost: 0);
+                energyCost: 0,
+                actionCost: ActionType.FullAction);
 
         // ==================== WORKED EXAMPLES (TargettingRefactor.md) ====================
 
@@ -445,7 +466,8 @@ namespace Assets.Scripts.Skills
                         onFail: FX(Dmg(3, 6, 0, DamageType.Fire, EffectTarget.SelectedTarget)),
                         onPass: FX(Dmg(1, 6, 2, DamageType.Fire, EffectTarget.SelectedTarget)))),
                 TargetingMode.Lane,
-                energyCost: 4);
+                energyCost: 4,
+                actionCost: ActionType.Action);
 
         // Pattern: chained fan-out — caster check gates per-target saves.
         // Node 1: Arcana check DC 14 (single execution). On success chains to Node 2.
@@ -458,7 +480,8 @@ namespace Assets.Scripts.Skills
                         Save(SaveSpec.ForVehicle(VehicleCheckAttribute.Mobility), 16,
                             onFail: FX(Status(LoadEntityCondition("Overheating"), EffectTarget.SelectedTarget))))),
                 TargetingMode.Lane,
-                energyCost: 3);
+                energyCost: 3,
+                actionCost: ActionType.Action);
 
         // Pattern: failed check applies character condition to the rolling character's seat.
         // Navigator makes a Perception check; on fail, Blinded applies to the navigator's own seat.
@@ -470,7 +493,8 @@ namespace Assets.Scripts.Skills
                     onFail: FX(),
                     failChain: AlwaysApply(FX(CharacterStatus(LoadCharacterCondition("Blinded"), EffectTarget.SourceActorSeat)))),
                 TargetingMode.Enemy,
-                energyCost: 2);
+                energyCost: 2,
+                actionCost: ActionType.BonusAction);
 
         // Pattern: role-targeted seat effect — applies Stunned to the navigator on the target vehicle.
         // SeatByRoleResolver fans out to the navigator seat; if no navigator exists, the effect is skipped.
@@ -479,7 +503,8 @@ namespace Assets.Scripts.Skills
                 FanOut(new SeatByRoleResolver(RoleType.Navigator, SeatSource.TargetVehicle),
                     AlwaysApply(FX(CharacterStatus(LoadCharacterCondition("Stunned"), EffectTarget.SelectedTarget)))),
                 TargetingMode.Enemy,
-                energyCost: 2);
+                energyCost: 2,
+                actionCost: ActionType.BonusAction);
 
         // Pattern: attack with lane splash — 5d6 to the primary target, 1d6 to every other vehicle
         // in the same lane. Caster and primary target are both excluded from the splash.
@@ -490,7 +515,8 @@ namespace Assets.Scripts.Skills
                     successChain: FanOut(new AllVehiclesInLaneResolver(excludeSelf: true, excludeTarget: true),
                         AlwaysApply(FX(Dmg(1, 6, 0, DamageType.Bludgeoning, EffectTarget.SelectedTarget))))),
                 TargetingMode.EnemyComponent,
-                energyCost: 4);
+                energyCost: 4,
+                actionCost: ActionType.FullAction);
 
         // Part 3 (ApplyCharacterConditionEffect pending): apply Inspired to the active crew seat.
         // private static Skill DefineBattleCry()
@@ -668,11 +694,13 @@ namespace Assets.Scripts.Skills
             string name,
             RollNode rollNode,
             TargetingMode targeting = TargetingMode.Enemy,
-            int energyCost = 1)
+            int energyCost = 1,
+            ActionType actionCost = ActionType.Action)
         {
             var skill = ScriptableObject.CreateInstance<Skill>();
             skill.name = name;
             skill.energyCost = energyCost;
+            skill.actionCost = actionCost;
             skill.rollNode = rollNode;
             skill.targetingMode = targeting;
             return skill;

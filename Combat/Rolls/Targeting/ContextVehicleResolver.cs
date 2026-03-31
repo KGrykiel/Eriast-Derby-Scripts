@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using Assets.Scripts.Combat.Rolls.RollSpecs;
 using Assets.Scripts.Entities;
@@ -10,6 +11,7 @@ namespace Assets.Scripts.Combat.Rolls.Targeting
     /// or falling back to <c>Target as Vehicle</c>.
     /// Replaces <c>CardTargetMode.DrawingVehicle</c> and <c>LaneManager</c> per-vehicle hardcoding.
     /// </summary>
+    [Serializable]
     public class ContextVehicleResolver : ITargetResolver
     {
         public IReadOnlyList<IRollTarget> ResolveFrom(RollContext ctx)

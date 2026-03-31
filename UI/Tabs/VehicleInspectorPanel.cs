@@ -752,10 +752,15 @@ public class VehicleInspectorPanel : MonoBehaviour
                     statusIcon = "X";
                     statusColor = "#FF6666";
                 }
-                else if (seat.HasActedThisTurn())
+                else if (!seat.CanSpendAction(ActionType.Action) && !seat.CanSpendAction(ActionType.BonusAction))
                 {
                     statusIcon = "/";
                     statusColor = "#888888";
+                }
+                else if (!seat.CanSpendAction(ActionType.Action) || !seat.CanSpendAction(ActionType.BonusAction))
+                {
+                    statusIcon = "~";
+                    statusColor = "#FFAA44";
                 }
                 else
                 {
@@ -770,6 +775,7 @@ public class VehicleInspectorPanel : MonoBehaviour
                 
                 info += $"\n  <b><color={statusColor}>{statusIcon} {seat.seatName}</color></b>{roleText}\n";
                 info += $"    Operator: {characterName}\n";
+                info += BuildSeatActionPoolText(seat);
                 info += BuildSeatConditionsText(seat);
 
                 if (!seat.CanAct())
@@ -808,6 +814,17 @@ public class VehicleInspectorPanel : MonoBehaviour
         skillsSectionText.text = info;
     }
     
+    private string BuildSeatActionPoolText(VehicleSeat seat)
+    {
+        int actions = seat.GetActionCount(ActionType.Action);
+        int bonus = seat.GetActionCount(ActionType.BonusAction);
+
+        string actionColor = actions > 0 ? "#66FF66" : "#888888";
+        string bonusColor  = bonus  > 0 ? "#66FF66" : "#888888";
+
+        return $"    <color={actionColor}>Action ×{actions}</color>  <color={bonusColor}>Bonus ×{bonus}</color>\n";
+    }
+
     private string BuildSeatConditionsText(VehicleSeat seat)
     {
         if (!seat.IsAssigned)

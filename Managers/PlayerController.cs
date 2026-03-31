@@ -254,7 +254,7 @@ public class PlayerController : MonoBehaviour
 
         vehicle.ExecuteSkill(ctx, selectedSkill);
 
-        currentSeat?.MarkAsActed();
+        currentSeat?.SpendAction(selectedSkill.actionCost);
 
         uiCoordinator.RefreshAfterSkill(availableSeats, currentSeat, vehicle, OnSeatSelected, OnSkillSelected);
         uiCoordinator.UpdateTurnStatusDisplay(vehicle);

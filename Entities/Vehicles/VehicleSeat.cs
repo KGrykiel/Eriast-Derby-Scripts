@@ -42,7 +42,7 @@ namespace Assets.Scripts.Entities.Vehicles
         // ==================== TURN STATE ====================
 
         [NonSerialized]
-        private bool _hasActedThisTurn = false;
+        private readonly Dictionary<ActionType, int> _actionPool = new();
 
         // ==================== ROLE QUERIES ====================
 
@@ -96,19 +96,51 @@ namespace Assets.Scripts.Entities.Vehicles
             return null;
         }
 
-        public bool HasActedThisTurn()
+        public bool CanSpendAction(ActionType type)
         {
-            return _hasActedThisTurn;
+            if (type == ActionType.Free) return true;
+            if (type == ActionType.FullAction)
+                return CanSpendAction(ActionType.Action) && CanSpendAction(ActionType.BonusAction);
+            if (!_actionPool.ContainsKey(type)) return true;
+            return _actionPool[type] > 0;
         }
 
-        public void MarkAsActed()
+        public void SpendAction(ActionType type)
         {
-            _hasActedThisTurn = true;
+            if (type == ActionType.Free) return;
+            if (type == ActionType.FullAction)
+            {
+                SpendAction(ActionType.Action);
+                SpendAction(ActionType.BonusAction);
+                return;
+            }
+            if (_actionPool.ContainsKey(type) && _actionPool[type] > 0)
+                _actionPool[type]--;
+        }
+
+        public void GrantExtraAction(ActionType type, int count = 1)
+        {
+            if (type == ActionType.Free || type == ActionType.FullAction) return;
+            _actionPool.TryGetValue(type, out int current);
+            _actionPool[type] = current + count;
+        }
+
+        public bool HasAnyActionsRemaining()
+        {
+            return CanSpendAction(ActionType.Action) || CanSpendAction(ActionType.BonusAction);
+        }
+
+        public int GetActionCount(ActionType type)
+        {
+            if (type == ActionType.Free || type == ActionType.FullAction) return 0;
+            _actionPool.TryGetValue(type, out int count);
+            return count;
         }
 
         public void ResetTurnState()
         {
-            _hasActedThisTurn = false;
+            _actionPool[ActionType.Action] = 1;
+            _actionPool[ActionType.BonusAction] = 1;
         }
 
         public void NotifyConditionTrigger(RemovalTrigger trigger)

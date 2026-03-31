@@ -22,5 +22,9 @@ namespace Assets.Scripts.Skills
         [Header("Targeting")]
         [Tooltip("What targeting UI flow does this skill require?")]
         public TargetingMode targetingMode = TargetingMode.Enemy;
+
+        [Header("Action Economy")]
+        [Tooltip("Which action resource this skill consumes. Free never blocks on the action pool.")]
+        public ActionType actionCost = ActionType.Action;
     }
 }

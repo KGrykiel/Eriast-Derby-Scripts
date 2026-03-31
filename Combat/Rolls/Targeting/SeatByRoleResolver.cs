@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using Assets.Scripts.Combat.Rolls.RollSpecs;
 using Assets.Scripts.Entities;
@@ -10,6 +11,7 @@ namespace Assets.Scripts.Combat.Rolls.Targeting
     /// Resolves to seats on a vehicle that have the specified role enabled.
     /// Returns an empty list if no seat has the role — effect is silently skipped.
     /// </summary>
+    [Serializable]
     public class SeatByRoleResolver : ITargetResolver
     {
         public RoleType Role;
