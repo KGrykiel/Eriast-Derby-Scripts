@@ -32,10 +32,7 @@ namespace Assets.Scripts.Combat.Rolls.RollSpecs
         {
             if (node == null)
                 return true;
-
-            CombatEventBus.BeginAction();
-            try   { return ExecuteNode(node, ctx); }
-            finally { CombatEventBus.EndAction(); }
+            return ExecuteNode(node, ctx);
         }
 
         private static bool ExecuteNode(RollNode node, RollContext ctx)
@@ -64,16 +61,24 @@ namespace Assets.Scripts.Combat.Rolls.RollSpecs
 
         private static bool ExecuteSingleNode(RollNode node, RollContext ctx)
         {
-            D20RollOutcome roll = ResolveRoll(node.rollSpec, ctx);
+            CombatEventBus.BeginAction();
+            try
+            {
+                D20RollOutcome roll = ResolveRoll(node.rollSpec, ctx);
 
-            var effects = roll.Success ? node.successEffects : node.failureEffects;
-            ApplyEffects(effects, ctx, roll.IsCriticalHit);
+                var effects = roll.Success ? node.successEffects : node.failureEffects;
+                ApplyEffects(effects, ctx, roll.IsCriticalHit);
 
-            var chain = roll.Success ? node.onSuccessChain : node.onFailureChain;
-            if (chain != null)
-                ExecuteNode(chain, ctx);
+                var chain = roll.Success ? node.onSuccessChain : node.onFailureChain;
+                if (chain != null)
+                    ExecuteNode(chain, ctx);
 
-            return roll.Success;
+                return roll.Success;
+            }
+            finally
+            {
+                CombatEventBus.EndAction();
+            }
         }
 
         // ==================== ROLL RESOLUTION ====================

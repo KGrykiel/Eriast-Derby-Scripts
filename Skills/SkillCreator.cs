@@ -249,6 +249,9 @@ namespace Assets.Scripts.Skills
             // Splash attack examples
             RegenerateSkill(DefineConcussionBlast());
 
+            // Multi-hit examples
+            RegenerateSkill(DefineRapidFire());
+
             AssetDatabase.SaveAssets();
             Debug.Log("[SkillCreator] All skills regenerated.");
         }
@@ -517,6 +520,15 @@ namespace Assets.Scripts.Skills
                 TargetingMode.EnemyComponent,
                 energyCost: 4,
                 actionCost: ActionType.FullAction);
+
+        // Pattern: multi-hit attack — 3 independent attack rolls against the same target, each resolved separately.
+        private static Skill DefineRapidFire()
+            => Make("Rapid Fire",
+                FanOut(new RepeatTargetResolver(3),
+                    Attack(FX(Dmg(1, 6, 0, DamageType.Piercing)))),
+                TargetingMode.EnemyComponent,
+                energyCost: 2,
+                actionCost: ActionType.Action);
 
         // Part 3 (ApplyCharacterConditionEffect pending): apply Inspired to the active crew seat.
         // private static Skill DefineBattleCry()
