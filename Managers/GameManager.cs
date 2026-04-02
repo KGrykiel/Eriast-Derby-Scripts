@@ -63,9 +63,7 @@ public class GameManager : MonoBehaviour
         foreach (var vehicle in vehicles)
         {
             Stage startStage = entryStage != null ? entryStage : (stages.Count > 0 ? stages[0] : null);
-            vehicle.progress = 0;
-            
-            vehicle.currentStage = startStage;
+            vehicle.InitialisePosition(startStage);
             if (startStage != null)
             {
                 Vector3 stagePos = startStage.transform.position;

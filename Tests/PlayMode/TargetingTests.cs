@@ -67,8 +67,8 @@ namespace Assets.Scripts.Tests.PlayMode
 
         private void PlaceVehicleInLane(Vehicle vehicle, Stage stage, StageLane lane)
         {
-            vehicle.currentStage = stage;
-            vehicle.currentLane = lane;
+            vehicle.SetCurrentStage(stage);
+            vehicle.SetCurrentLane(lane);
             stage.vehiclesInStage.Add(vehicle);
             lane.vehiclesInLane.Add(vehicle);
         }
@@ -785,8 +785,8 @@ namespace Assets.Scripts.Tests.PlayMode
             var (stage, lane) = BuildStageWithLane();
 
             var triggerVehicle = BuildVehicle("Trigger", chassisHealth: 100);
-            triggerVehicle.currentStage = stage;
-            triggerVehicle.currentLane = lane;
+            triggerVehicle.SetCurrentStage(stage);
+            triggerVehicle.SetCurrentLane(lane);
             stage.vehiclesInStage.Add(triggerVehicle);
 
             var node = new RollNode

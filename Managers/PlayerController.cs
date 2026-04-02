@@ -264,12 +264,7 @@ public class PlayerController : MonoBehaviour
             CausalSource = selectedSkill.name
         };
 
-        if (selectedSkill is ConsumableGatedSkill gated && !vehicle.TrySpendConsumable(gated.requiredConsumable, ctx.CausalSource))
-            return;
-
         vehicle.ExecuteSkill(ctx, selectedSkill);
-
-        currentSeat?.SpendAction(selectedSkill.actionCost);
 
         uiCoordinator.RefreshAfterSkill(availableSeats, currentSeat, vehicle, OnSeatSelected, OnSkillSelected, OnConsumableSelected);
         uiCoordinator.UpdateTurnStatusDisplay(vehicle);

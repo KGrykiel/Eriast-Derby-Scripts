@@ -79,7 +79,7 @@ public class TurnService
             {
                 string reason = vehicle.GetCannotMoveReason();
                 TurnEventBus.EmitMovementBlocked(vehicle, reason);
-                vehicle.hasLoggedMovementWarningThisTurn = true;
+                vehicle.MarkMovementWarningLogged();
             }
 
             vehicle.ApplyMovement(0);

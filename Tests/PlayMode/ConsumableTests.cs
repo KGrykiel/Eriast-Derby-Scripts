@@ -9,6 +9,7 @@ using Assets.Scripts.Entities.Vehicles.VehicleComponents.ComponentTypes;
 using Assets.Scripts.Effects;
 using Assets.Scripts.Effects.EffectTypes;
 using Assets.Scripts.Skills;
+using Assets.Scripts.Skills.Costs;
 using Assets.Scripts.Tests.Helpers;
 using Assets.Scripts.Combat.Rolls;
 using Assets.Scripts.Combat.Rolls.RollSpecs;
@@ -66,11 +67,11 @@ namespace Assets.Scripts.Tests.PlayMode
             return a;
         }
 
-        private ConsumableGatedSkill CreateConsumableGatedSkill(ConsumableBase required)
+        private Skill CreateConsumableGatedSkill(ConsumableBase required)
         {
-            var skill = ScriptableObject.CreateInstance<ConsumableGatedSkill>();
+            var skill = ScriptableObject.CreateInstance<Skill>();
             skill.name = "GatedSkill";
-            skill.requiredConsumable = required;
+            skill.costs.Add(new ConsumableCost { template = required });
             skill.rollNode = new RollNode();
             cleanup.Add(skill);
             return skill;
@@ -619,7 +620,9 @@ namespace Assets.Scripts.Tests.PlayMode
             var ammo = CreateAmmo("SpecialAmmo");
             var gatedSkill = CreateConsumableGatedSkill(ammo);
 
-            Assert.AreEqual(ammo, gatedSkill.requiredConsumable);
+            var consumableCost = gatedSkill.costs.OfType<ConsumableCost>().FirstOrDefault();
+            Assert.IsNotNull(consumableCost, "Should have a ConsumableCost in the costs list");
+            Assert.AreEqual(ammo, consumableCost.template);
         }
 
         [Test]

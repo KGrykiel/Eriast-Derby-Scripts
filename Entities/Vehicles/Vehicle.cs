@@ -32,12 +32,12 @@ namespace Assets.Scripts.Entities.Vehicles
         [Tooltip("Vehicles sharing the same team asset are allies. Leave null for independent vehicles.")]
         public VehicleTeam team;
 
-        [HideInInspector] public Stage currentStage;
-        [HideInInspector] public Stage previousStage;
-        [HideInInspector] public int progress = 0;
-        [HideInInspector] public bool hasMovedThisTurn = false;
-        [HideInInspector] public bool hasLoggedMovementWarningThisTurn = false;
-        [HideInInspector] public StageLane currentLane;
+        public Stage currentStage { get; private set; }
+        public Stage previousStage { get; private set; }
+        public int progress { get; private set; }
+        public bool hasMovedThisTurn { get; private set; }
+        public bool hasLoggedMovementWarningThisTurn { get; private set; }
+        public StageLane currentLane { get; private set; }
 
         [Header("Crew & Seats")]
         [Tooltip("Physical positions where characters sit and control components. " +
@@ -125,6 +125,25 @@ namespace Assets.Scripts.Entities.Vehicles
 
             hasMovedThisTurn = true;
         }
+
+        /// <summary>Sets the current stage without movement side effects. Use for test setup.</summary>
+        public void SetCurrentStage(Stage stage) => currentStage = stage;
+
+        /// <summary>Sets current stage and resets progress to zero. Called by GameManager at race start.</summary>
+        public void InitialisePosition(Stage stage)
+        {
+            currentStage = stage;
+            progress = 0;
+        }
+
+        /// <summary>Sets the current lane. Called by LaneManager and lane assignment logic.</summary>
+        public void SetCurrentLane(StageLane lane) => currentLane = lane;
+
+        /// <summary>Records the stage the vehicle just exited. Called by Stage.TriggerLeave.</summary>
+        public void SetPreviousStage(Stage stage) => previousStage = stage;
+
+        /// <summary>Marks that a movement-blocked warning has already been emitted this turn.</summary>
+        public void MarkMovementWarningLogged() => hasLoggedMovementWarningThisTurn = true;
 
         /// <summary>Transitions vehicle to a new stage. Carries over excess progress.</summary>
         public void TransitionToStage(Stage newStage)
@@ -294,56 +313,30 @@ namespace Assets.Scripts.Entities.Vehicles
                 return false;
             }
 
-            // Resource validation
-            if (!CanAffordSkill(skill))
-            {
-                int currentEnergy = PowerCore != null ? PowerCore.currentEnergy : 0;
-                Debug.LogWarning($"[Vehicle] {vehicleName} cannot afford {skill.name} (need {skill.energyCost}, have {currentEnergy})");
-                return false;
-            }
-
-            // Resource consumption
-            VehicleComponent sourceComponent = ctx.SourceActor?.GetEntity() as VehicleComponent;
-            if (!ConsumeSkillCost(skill, sourceComponent))
-            {
-                Debug.LogError($"[Vehicle] {vehicleName} failed to consume resources for {skill.name}");
-                return false;
-            }
-
-            // Skill configuration validation
+            // Skill validation (costs, configuration, and targeting)
             if (!SkillValidator.Validate(ctx, skill))
                 return false;
+
+            // Commit: pay all costs
+            VehicleComponent sourceComponent = ctx.SourceActor?.GetEntity() as VehicleComponent;
+            foreach (var cost in skill.costs)
+                cost.Pay(this, ctx);
 
             // Fire OnSkillUsed removal trigger — once per committed skill use
             if (sourceComponent != null)
                 sourceComponent.NotifyConditionTrigger(RemovalTrigger.OnSkillUsed);
 
+            // Spend action — committed to the attempt regardless of roll outcome
+            ctx.SourceActor.GetSeat().SpendAction(skill.actionCost);
+
             // Execute via RollNodeExecutor
             bool result = RollNodeExecutor.Execute(skill.rollNode, ctx);
 
-            if (result && skill is WeaponAttackSkill)
-            {
-                WeaponComponent weapon = ctx.SourceActor?.GetEntity() as WeaponComponent;
-                if (weapon != null && weapon.loadedAmmunition != null && HasChargesFor(weapon.loadedAmmunition))
-                {
-                    RollNodeExecutor.Execute(weapon.loadedAmmunition.onHitNode, ctx);
-                    TrySpendConsumable(weapon.loadedAmmunition, ctx.CausalSource);
-                }
-            }
+            // Notify source component of success (e.g. WeaponComponent applies ammunition on hit)
+            if (result && sourceComponent != null)
+                sourceComponent.OnSkillSucceeded(ctx, skill);
 
             return result;
-        }
-
-        private bool CanAffordSkill(Skill skill)
-        {
-            if (PowerCore == null || skill == null) return false;
-            return PowerCore.CanDrawPower(skill.energyCost, null);
-        }
-
-        private bool ConsumeSkillCost(Skill skill, VehicleComponent sourceComponent)
-        {
-            if (PowerCore == null || skill == null) return false;
-            return PowerCore.DrawPower(skill.energyCost, sourceComponent, $"Skill: {skill.name}");
         }
     }
 }

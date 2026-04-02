@@ -37,7 +37,7 @@ namespace Assets.Scripts.Tests.PlayMode
             vehicle.team = team;
             if (stage != null)
             {
-                vehicle.currentStage = stage;
+                vehicle.SetCurrentStage(stage);
                 stage.vehiclesInStage.Add(vehicle);
             }
             cleanup.Add(vehicle.gameObject);

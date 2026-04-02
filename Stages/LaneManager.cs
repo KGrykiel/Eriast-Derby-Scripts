@@ -88,7 +88,7 @@ namespace Assets.Scripts.Stages
             if (!targetLane.vehiclesInLane.Contains(vehicle))
                 targetLane.vehiclesInLane.Add(vehicle);
 
-            vehicle.currentLane = targetLane;
+            vehicle.SetCurrentLane(targetLane);
 
             if (targetLane.laneStatusEffect != null)
                 ApplyLaneStatusEffect(vehicle, targetLane.laneStatusEffect, targetLane);

@@ -9,6 +9,7 @@ using Assets.Scripts.Entities.Vehicles;
 using Assets.Scripts.Entities.Vehicles.VehicleComponents;
 using Assets.Scripts.Entities;
 using Assets.Scripts.Skills;
+using Assets.Scripts.Skills.Costs;
 
 public class VehicleInspectorPanel : MonoBehaviour
 {
@@ -793,14 +794,14 @@ public class VehicleInspectorPanel : MonoBehaviour
                 
                 if (seatSkills.Count > 0)
                 {
-                    int currentEnergy = selectedVehicle.PowerCore?.GetCurrentEnergy() ?? 0;
                     foreach (var skill in seatSkills)
                     {
                         if (skill != null)
                         {
-                            bool canAfford = currentEnergy >= skill.energyCost;
+                            string costText = BuildCostDisplay(skill);
+                            bool canAfford = CanPayAllCosts(skill, selectedVehicle);
                             string affordText = canAfford ? "" : " <color=#FF4444>(Can't afford)</color>";
-                            info += $"    • <b>{skill.name}</b> ({skill.energyCost} EN){affordText}\n";
+                            info += $"    • <b>{skill.name}</b> ({costText}){affordText}\n";
                         }
                     }
                 }
@@ -814,6 +815,27 @@ public class VehicleInspectorPanel : MonoBehaviour
         skillsSectionText.text = info;
     }
     
+    private static string BuildCostDisplay(Skill skill)
+    {
+        if (skill.costs.Count == 0)
+            return "Free";
+
+        var parts = new List<string>();
+        foreach (var cost in skill.costs)
+            parts.Add(cost.GetDescription());
+        return string.Join(", ", parts);
+    }
+
+    private static bool CanPayAllCosts(Skill skill, Vehicle vehicle)
+    {
+        foreach (var cost in skill.costs)
+        {
+            if (!cost.CanPay(vehicle))
+                return false;
+        }
+        return true;
+    }
+
     private string BuildSeatActionPoolText(VehicleSeat seat)
     {
         int actions = seat.GetActionCount(ActionType.Action);

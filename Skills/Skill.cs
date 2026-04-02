@@ -1,6 +1,8 @@
 ﻿using UnityEngine;
 using SerializeReferenceEditor;
+using System.Collections.Generic;
 using Assets.Scripts.Combat.Rolls.RollSpecs;
+using Assets.Scripts.Skills.Costs;
 
 namespace Assets.Scripts.Skills
 {
@@ -12,7 +14,11 @@ namespace Assets.Scripts.Skills
 
         [Header("Basic Properties")]
         public string description;
-        public int energyCost = 1;
+
+        [Header("Costs")]
+        [SerializeReference, SR]
+        [Tooltip("Resources spent when this skill is used. All costs are checked before any are paid.")]
+        public List<ISkillCost> costs = new();
 
         [Header("Roll")]
         [SerializeReference, SR]

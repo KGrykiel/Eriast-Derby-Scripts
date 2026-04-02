@@ -5,6 +5,7 @@ using System;
 using Assets.Scripts.Core;
 using Assets.Scripts.Entities.Vehicles.VehicleComponents.ComponentTypes;
 using Assets.Scripts.Modifiers;
+using Assets.Scripts.Combat.Rolls.RollSpecs;
 using Assets.Scripts.Skills;
 
 namespace Assets.Scripts.Entities.Vehicles.VehicleComponents
@@ -302,6 +303,9 @@ namespace Assets.Scripts.Entities.Vehicles.VehicleComponents
 
             return allSkills;
         }
+
+        /// <summary>Called by Vehicle.ExecuteSkill after a successful roll. Override to add post-success behaviour.</summary>
+        public virtual void OnSkillSucceeded(RollContext ctx, Skill skill) { }
 
         // ==================== UI HELPERS ====================
 

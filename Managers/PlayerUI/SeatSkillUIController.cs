@@ -95,8 +95,6 @@ namespace Assets.Scripts.Managers.PlayerUI
                 skillButtons.Add(btn);
             }
 
-            int currentEnergy = playerVehicle.PowerCore != null ? playerVehicle.PowerCore.currentEnergy : 0;
-
             for (int i = 0; i < skillButtons.Count; i++)
             {
                 if (i < availableSkills.Count)
@@ -111,14 +109,12 @@ namespace Assets.Scripts.Managers.PlayerUI
 
                     skillButtons[i].gameObject.SetActive(true);
 
-                    string skillText = $"{skill.name} ({skill.energyCost} EN)";
+                    string skillText = $"{skill.name} ({BuildCostDisplay(skill)})";
                     var textComponent = skillButtons[i].GetComponentInChildren<TextMeshProUGUI>();
                     if (textComponent != null)
                         textComponent.text = skillText;
 
-                    bool canAfford = currentEnergy >= skill.energyCost;
-                    bool hasRequiredConsumable = !(skill is ConsumableGatedSkill gated) || playerVehicle.HasChargesFor(gated.requiredConsumable);
-                    bool canUse = canAfford && currentSeat.CanSpendAction(skill.actionCost) && hasRequiredConsumable;
+                    bool canUse = CanPayAllCosts(skill, playerVehicle) && currentSeat.CanSpendAction(skill.actionCost);
                     skillButtons[i].interactable = canUse;
 
                     int skillIndex = i;
@@ -168,6 +164,27 @@ namespace Assets.Scripts.Managers.PlayerUI
             }
         }
         
+        private static string BuildCostDisplay(Skill skill)
+        {
+            if (skill.costs.Count == 0)
+                return "Free";
+
+            var parts = new System.Collections.Generic.List<string>();
+            foreach (var cost in skill.costs)
+                parts.Add(cost.GetDescription());
+            return string.Join(", ", parts);
+        }
+
+        private static bool CanPayAllCosts(Skill skill, Vehicle vehicle)
+        {
+            foreach (var cost in skill.costs)
+            {
+                if (!cost.CanPay(vehicle))
+                    return false;
+            }
+            return true;
+        }
+
         public List<Skill> GetAvailableSkills(VehicleSeat currentSeat)
         {
             List<Skill> availableSkills = new();

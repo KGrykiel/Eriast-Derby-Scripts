@@ -101,7 +101,7 @@ namespace Assets.Scripts.Stages
 
             if (wasPresent)
             {
-                vehicle.previousStage = this;
+                vehicle.SetPreviousStage(this);
 
                 vehicle.NotifyStatusEffectTrigger(RemovalTrigger.OnStageExit);
 

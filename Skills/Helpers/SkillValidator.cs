@@ -2,6 +2,7 @@
 using Assets.Scripts.Entities;
 using Assets.Scripts.Entities.Vehicles;
 using Assets.Scripts.Entities.Vehicles.VehicleComponents;
+using Assets.Scripts.Skills.Costs;
 using UnityEngine;
 
 namespace Assets.Scripts.Skills.Helpers
@@ -14,7 +15,23 @@ namespace Assets.Scripts.Skills.Helpers
     {
         public static bool Validate(RollContext ctx, Skill skill)
         {
-            return ValidateConfiguration(ctx, skill) && ValidateTarget(ctx, skill);
+            return ValidateConfiguration(ctx, skill) && ValidateCosts(ctx, skill) && ValidateTarget(ctx, skill);
+        }
+
+        private static bool ValidateCosts(RollContext ctx, Skill skill)
+        {
+            Vehicle sourceVehicle = GetSourceVehicle(ctx);
+            if (sourceVehicle == null) return true;
+
+            foreach (var cost in skill.costs)
+            {
+                if (!cost.CanPay(sourceVehicle))
+                {
+                    Debug.LogWarning($"[SkillValidator] {sourceVehicle.vehicleName} cannot pay {cost.GetDescription()} for {skill.name}");
+                    return false;
+                }
+            }
+            return true;
         }
 
         private static bool ValidateConfiguration(RollContext ctx, Skill skill)

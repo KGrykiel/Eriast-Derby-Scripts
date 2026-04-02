@@ -24,6 +24,7 @@ using Assets.Scripts.Entities.Vehicles.VehicleComponents.ComponentTypes;
 using Assets.Scripts.Entities.Vehicles.VehicleComponents;
 using Assets.Scripts.Modifiers;
 using Assets.Scripts.Entities;
+using Assets.Scripts.Skills.Costs;
 
 namespace Assets.Scripts.Tests.PlayMode
 {
@@ -77,7 +78,7 @@ namespace Assets.Scripts.Tests.PlayMode
                 .Build();
 
             // Skill: Cannon Shot, 2d8+5 physical, costs 3 energy
-            var cannonShot = TestSkillFactory.CreateAttackSkill("Cannon Shot", damageDice: 2, dieSize: 8, bonus: 5, energyCost: 3, cleanup: cleanup);
+            var cannonShot = TestSkillFactory.CreateAttackSkill("Cannon Shot", 2, 8, 5, DamageType.Physical, cleanup, new EnergyCost { amount = 3 });
 
             int enemyHPBefore = enemyVehicle.Chassis.GetCurrentHealth();
             int energyBefore = playerVehicle.PowerCore.currentEnergy;
@@ -115,7 +116,7 @@ namespace Assets.Scripts.Tests.PlayMode
                 .WithPowerCore()
                 .Build();
 
-            var expensiveSkill = TestSkillFactory.CreateAttackSkill("Big Gun", 3, 10, 10, energyCost: 3, cleanup: cleanup);
+            var expensiveSkill = TestSkillFactory.CreateAttackSkill("Big Gun", 3, 10, 10, DamageType.Physical, cleanup, new EnergyCost { amount = 3 });
 
             int enemyHPBefore = enemyVehicle.Chassis.GetCurrentHealth();
 
@@ -157,8 +158,8 @@ namespace Assets.Scripts.Tests.PlayMode
                         target = EffectTarget.SelectedTarget
                     }
                 },
-                energyCost: 2,
-                cleanup: cleanup);
+                cleanup: cleanup,
+                new EnergyCost { amount = 2 });
 
             int acBefore = playerVehicle.Chassis.GetArmorClass();
 
@@ -208,8 +209,8 @@ namespace Assets.Scripts.Tests.PlayMode
                         target = EffectTarget.SelectedTarget
                     }
                 },
-                energyCost: 2,
-                cleanup: cleanup);
+                cleanup: cleanup,
+                new EnergyCost { amount = 2 });
 
             // Apply Burning to enemy
             var ctx = new RollContext
@@ -311,7 +312,7 @@ namespace Assets.Scripts.Tests.PlayMode
 
             // Simulate vehicle entering lane ? apply lane status effect
             cliffLane.vehiclesInLane.Add(playerVehicle);
-            playerVehicle.currentLane = cliffLane;
+            playerVehicle.SetCurrentLane(cliffLane);
 
             // Apply lane effect to all vehicle components (as the system does)
             foreach (var component in playerVehicle.AllComponents)
@@ -356,7 +357,7 @@ namespace Assets.Scripts.Tests.PlayMode
             };
             hazardLane.turnEffects.Add(turnEffect);
             hazardLane.vehiclesInLane.Add(playerVehicle);
-            playerVehicle.currentLane = hazardLane;
+            playerVehicle.SetCurrentLane(hazardLane);
 
             // Execute the skill check (simulating what the turn system would do)
             var checkResult = SkillCheckPerformer.Execute(new SkillCheckExecutionContext
@@ -427,8 +428,8 @@ namespace Assets.Scripts.Tests.PlayMode
                         target = EffectTarget.SelectedTarget
                     }
                 },
-                energyCost: 3,
-                cleanup: cleanup);
+                cleanup: cleanup,
+                new EnergyCost { amount = 3 });
 
             int playerHPBefore = playerVehicle.Chassis.GetCurrentHealth();
 
@@ -624,12 +625,12 @@ namespace Assets.Scripts.Tests.PlayMode
             stage.vehiclesInStage.Add(enemyVehicle);
             mainLane.vehiclesInLane.Add(playerVehicle);
             mainLane.vehiclesInLane.Add(enemyVehicle);
-            playerVehicle.currentStage = stage;
-            enemyVehicle.currentStage = stage;
+            playerVehicle.SetCurrentStage(stage);
+            enemyVehicle.SetCurrentStage(stage);
 
             // Skills
-            var playerAttack = TestSkillFactory.CreateAttackSkill("Cannon", 2, 8, 3, energyCost: 3, cleanup: cleanup);
-            var enemyAttack = TestSkillFactory.CreateAttackSkill("Crossbow", 1, 6, 2, energyCost: 2, cleanup: cleanup);
+            var playerAttack = TestSkillFactory.CreateAttackSkill("Cannon", 2, 8, 3, DamageType.Physical, cleanup, new EnergyCost { amount = 3 });
+            var enemyAttack = TestSkillFactory.CreateAttackSkill("Crossbow", 1, 6, 2, DamageType.Physical, cleanup, new EnergyCost { amount = 2 });
 
             // Simulate 3 turns of combat
             for (int turn = 1; turn <= 3; turn++)

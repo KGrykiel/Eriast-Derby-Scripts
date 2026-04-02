@@ -8,6 +8,7 @@ using Assets.Scripts.Effects;
 using Assets.Scripts.Effects.EffectTypes;
 using Assets.Scripts.Entities.Vehicles.VehicleComponents;
 using Assets.Scripts.Skills;
+using Assets.Scripts.Skills.Costs;
 
 namespace Assets.Scripts.Tests.Helpers
 {
@@ -46,12 +47,12 @@ namespace Assets.Scripts.Tests.Helpers
         public static Skill CreateNoRollSkill(
             string name,
             System.Collections.Generic.List<EffectInvocation> effects,
-            int energyCost = 1,
-            System.Collections.Generic.List<Object> cleanup = null)
+            System.Collections.Generic.List<Object> cleanup = null,
+            params ISkillCost[] costs)
         {
             var skill = ScriptableObject.CreateInstance<Skill>();
             skill.name = name;
-            skill.energyCost = energyCost;
+            foreach (var cost in costs) skill.costs.Add(cost);
             skill.rollNode = new RollNode { successEffects = effects };
 
             cleanup?.Add(skill);
@@ -67,12 +68,12 @@ namespace Assets.Scripts.Tests.Helpers
             int dieSize,
             int bonus,
             DamageType damageType = DamageType.Physical,
-            int energyCost = 2,
-            System.Collections.Generic.List<Object> cleanup = null)
+            System.Collections.Generic.List<Object> cleanup = null,
+            params ISkillCost[] costs)
         {
             var skill = ScriptableObject.CreateInstance<Skill>();
             skill.name = name;
-            skill.energyCost = energyCost;
+            foreach (var cost in costs) skill.costs.Add(cost);
             skill.rollNode = new RollNode
             {
                 rollSpec = new AttackSpec(),
@@ -109,12 +110,12 @@ namespace Assets.Scripts.Tests.Helpers
             CharacterAttribute saveAttribute,
             int dc,
             System.Collections.Generic.List<EffectInvocation> effects,
-            int energyCost = 2,
-            System.Collections.Generic.List<Object> cleanup = null)
+            System.Collections.Generic.List<Object> cleanup = null,
+            params ISkillCost[] costs)
         {
             var skill = ScriptableObject.CreateInstance<Skill>();
             skill.name = name;
-            skill.energyCost = energyCost;
+            foreach (var cost in costs) skill.costs.Add(cost);
             // Effects go in failureEffects: the target makes the save, and effects apply when they fail it.
             var saveSpec = SaveSpec.ForCharacter(saveAttribute);
             saveSpec.dc = dc;

@@ -1,6 +1,8 @@
 ﻿using Assets.Scripts.Consumables;
 using Assets.Scripts.Core;
 using Assets.Scripts.Combat.Damage;
+using Assets.Scripts.Combat.Rolls.RollSpecs;
+using Assets.Scripts.Skills;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -85,6 +87,17 @@ namespace Assets.Scripts.Entities.Vehicles.VehicleComponents.ComponentTypes
             stats.AddRange(base.GetDisplayStats());
 
             return stats;
+        }
+
+        public override void OnSkillSucceeded(RollContext ctx, Skill skill)
+        {
+            if (skill is not WeaponAttackSkill) return;
+            if (loadedAmmunition == null) return;
+
+            if (parentVehicle == null || !parentVehicle.HasChargesFor(loadedAmmunition)) return;
+
+            RollNodeExecutor.Execute(loadedAmmunition.onHitNode, ctx);
+            parentVehicle.TrySpendConsumable(loadedAmmunition, ctx.CausalSource);
         }
     }
 }
