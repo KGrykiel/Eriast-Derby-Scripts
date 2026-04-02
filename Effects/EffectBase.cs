@@ -81,7 +81,10 @@ namespace Assets.Scripts.Effects
                 case Vehicle v:
                     return v;
                 case Entity entity:
-                    return EntityHelpers.GetParentVehicle(entity);
+                    Vehicle parent = EntityHelpers.GetParentVehicle(entity);
+                    if (parent == null)
+                        Debug.LogWarning($"[{GetType().Name}] Entity '{entity.name}' has no parent vehicle — effect cannot be applied.");
+                    return parent;
                 case VehicleSeat:
                     Debug.LogWarning($"[{GetType().Name}] VehicleSeat is not a valid target for vehicle-level effects.");
                     return null;

@@ -37,6 +37,10 @@ namespace Assets.Scripts.Effects.EffectTypes
                 // Pass CustomEffect as source so command can read floatParameter
                 command.Execute(entity, context, this);
             }
+            else
+            {
+                Debug.LogWarning($"[CustomEffect] '{effectName}' has no command assigned — effect had no impact.");
+            }
         }
     }
 }

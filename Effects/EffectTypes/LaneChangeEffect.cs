@@ -24,10 +24,14 @@ namespace Assets.Scripts.Effects.EffectTypes
         public override void Apply(IEffectTarget target, EffectContext context)
         {
             Vehicle vehicle = ResolveVehicle(target);
-            if (vehicle == null || vehicle.currentStage == null) return;
+            if (vehicle == null) return;
 
             StageLane targetLane = DetermineTargetLane(vehicle);
-            if (targetLane == null) return;
+            if (targetLane == null)
+            {
+                Debug.LogWarning($"[LaneChangeEffect] Could not resolve a target lane for '{vehicle.name}' — effect had no impact.");
+                return;
+            }
 
             vehicle.currentStage.AssignVehicleToLane(vehicle, targetLane);
         }
@@ -40,12 +44,12 @@ namespace Assets.Scripts.Effects.EffectTypes
             if (useRelativeOffset)
             {
                 // Relative: Add offset to current lane index
-                if (vehicle.currentLane == null)
-                    return null;
-
                 int currentIndex = stage.GetLaneIndex(vehicle.currentLane);
                 if (currentIndex < 0)
+                {
+                    Debug.LogWarning($"[LaneChangeEffect] Current lane of '{vehicle.name}' was not found in stage '{stage.name}'.");
                     return null;
+                }
 
                 targetIndex = currentIndex + relativeOffset;
             }

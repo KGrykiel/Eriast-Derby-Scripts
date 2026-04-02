@@ -43,6 +43,7 @@ namespace Assets.Scripts.Effects.EffectTypes
         {
             if (condition.modifiers == null || condition.modifiers.Count == 0)
             {
+                Debug.LogWarning($"[ApplyEntityConditionEffect] '{condition.name}' has no modifiers — auto-routing to chassis on '{vehicle.name}'.");
                 vehicle.Chassis.ApplyCondition(condition, applier);
                 return;
             }
@@ -53,7 +54,12 @@ namespace Assets.Scripts.Effects.EffectTypes
             foreach (var modifier in condition.modifiers)
             {
                 Entity component = VehicleComponentResolver.ResolveForAttribute(vehicle, modifier.attribute);
-                targets.Add(component != null ? component : vehicle.Chassis);
+                if (component == null)
+                {
+                    Debug.LogWarning($"[ApplyEntityConditionEffect] No component found for attribute '{modifier.attribute}' on '{vehicle.name}' — falling back to chassis for '{condition.name}'.");
+                    component = vehicle.Chassis;
+                }
+                targets.Add(component);
             }
 
             foreach (var entity in targets)
