@@ -473,12 +473,12 @@ namespace Assets.Scripts.Tests.PlayMode
             };
             var effect = CreateAdvantageStatusEffect("Mobility Focus", RollMode.Advantage, targets);
 
-            vehicle.chassis.ApplyCondition(effect, null);
+            vehicle.Chassis.ApplyCondition(effect, null);
 
             var handlingSpec = SkillCheckSpec.ForVehicle(VehicleCheckAttribute.Mobility);
             handlingSpec.dc = 10;
 
-            var handlingSources = RollGatherer.GatherAdvantageSources(vehicle.chassis, null, handlingSpec, default);
+            var handlingSources = RollGatherer.GatherAdvantageSources(vehicle.Chassis, null, handlingSpec, default);
 
             Assert.AreEqual(1, handlingSources.Count,
                 "Should match vehicle check with Mobility attribute");
@@ -487,7 +487,7 @@ namespace Assets.Scripts.Tests.PlayMode
             var speedSpec = SkillCheckSpec.ForVehicle(VehicleCheckAttribute.Stability);
             speedSpec.dc = 10;
 
-            var speedSources = RollGatherer.GatherAdvantageSources(vehicle.chassis, null, speedSpec, default);
+            var speedSources = RollGatherer.GatherAdvantageSources(vehicle.Chassis, null, speedSpec, default);
 
             Assert.AreEqual(0, speedSources.Count,
                 "limitTo [Mobility] should not match Stability checks");

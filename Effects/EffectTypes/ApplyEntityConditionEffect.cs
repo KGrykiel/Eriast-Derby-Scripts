@@ -43,7 +43,7 @@ namespace Assets.Scripts.Effects.EffectTypes
         {
             if (condition.modifiers == null || condition.modifiers.Count == 0)
             {
-                vehicle.chassis.ApplyCondition(condition, applier);
+                vehicle.Chassis.ApplyCondition(condition, applier);
                 return;
             }
 
@@ -53,7 +53,7 @@ namespace Assets.Scripts.Effects.EffectTypes
             foreach (var modifier in condition.modifiers)
             {
                 Entity component = VehicleComponentResolver.ResolveForAttribute(vehicle, modifier.attribute);
-                targets.Add(component != null ? component : vehicle.chassis);
+                targets.Add(component != null ? component : vehicle.Chassis);
             }
 
             foreach (var entity in targets)

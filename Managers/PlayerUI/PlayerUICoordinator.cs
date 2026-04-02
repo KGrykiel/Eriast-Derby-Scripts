@@ -89,10 +89,10 @@ namespace Assets.Scripts.Managers.PlayerUI
 
             if (ui.actionsRemainingText != null)
             {
-                int hp = vehicle.chassis != null ? vehicle.chassis.GetCurrentHealth() : 0;
-                int maxHp = vehicle.chassis != null ? vehicle.chassis.GetMaxHealth() : 0;
-                int energy = vehicle.powerCore != null ? vehicle.powerCore.GetCurrentEnergy() : 0;
-                int maxEnergy = vehicle.powerCore != null ? vehicle.powerCore.GetMaxEnergy() : 0;
+                int hp = vehicle.Chassis != null ? vehicle.Chassis.GetCurrentHealth() : 0;
+                int maxHp = vehicle.Chassis != null ? vehicle.Chassis.GetMaxHealth() : 0;
+                int energy = vehicle.PowerCore != null ? vehicle.PowerCore.GetCurrentEnergy() : 0;
+                int maxEnergy = vehicle.PowerCore != null ? vehicle.PowerCore.GetMaxEnergy() : 0;
                 
                 ui.actionsRemainingText.text = $"HP: {hp}/{maxHp}  Energy: {energy}/{maxEnergy}";
             }

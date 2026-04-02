@@ -35,9 +35,9 @@ namespace Assets.Scripts.Effects.EffectTypes
                 case Entity e:
                     return e;
                 case Vehicle vehicle:
-                    if (formula.resourceType == ResourceType.Energy && vehicle.powerCore != null)
-                        return vehicle.powerCore;
-                    return vehicle.chassis;
+                    if (formula.resourceType == ResourceType.Energy && vehicle.PowerCore != null)
+                        return vehicle.PowerCore;
+                    return vehicle.Chassis;
                 case VehicleSeat:
                     Debug.LogWarning($"[{GetType().Name}] VehicleSeat is not a valid target for this effect.");
                     return null;

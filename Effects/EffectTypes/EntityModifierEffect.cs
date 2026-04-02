@@ -50,7 +50,7 @@ namespace Assets.Scripts.Effects.EffectTypes
                 case Entity e:
                     return e;
                 case Vehicle vehicle:
-                    return VehicleComponentResolver.ResolveForAttribute(vehicle, attribute) ?? vehicle.chassis;
+                    return VehicleComponentResolver.ResolveForAttribute(vehicle, attribute) ?? vehicle.Chassis;
                 case VehicleSeat:
                     Debug.LogWarning($"[{GetType().Name}] VehicleSeat is not a valid target for this effect.");
                     return null;

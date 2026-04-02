@@ -21,7 +21,7 @@ public class TurnService
 
     public void DrawContinuousPowerForAllComponents(Vehicle vehicle)
     {
-        if (vehicle == null || vehicle.powerCore == null) return;
+        if (vehicle == null || vehicle.PowerCore == null) return;
 
         foreach (var component in vehicle.AllComponents)
         {
@@ -35,7 +35,7 @@ public class TurnService
                     vehicle, 
                     component, 
                     component.GetActualPowerDraw(), 
-                    vehicle.powerCore.currentEnergy);
+                    vehicle.PowerCore.currentEnergy);
                 //TODO: should probably add logic to determine which components get priority power instead of just shutting down everything that can't be powered
                 component.SetManuallyDisabled(true);
             }

@@ -40,7 +40,7 @@ namespace Assets.Scripts.Managers.PlayerUI
             foreach (var v in validTargets)
             {
                 Button btn = UnityEngine.Object.Instantiate(ui.targetButtonPrefab, ui.targetButtonContainer);
-                int hp = v.chassis != null ? v.chassis.GetCurrentHealth() : 0;
+                int hp = v.Chassis != null ? v.Chassis.GetCurrentHealth() : 0;
                 btn.GetComponentInChildren<TextMeshProUGUI>().text = $"{v.vehicleName} (HP: {hp})";
                 btn.onClick.AddListener(() => onTargetSelected?.Invoke(v));
             }
@@ -63,9 +63,9 @@ namespace Assets.Scripts.Managers.PlayerUI
                 UnityEngine.Object.Destroy(child.gameObject);
 
             Button chassisBtn = UnityEngine.Object.Instantiate(ui.targetButtonPrefab, ui.targetButtonContainer);
-            int hp = targetVehicle.chassis != null ? targetVehicle.chassis.GetCurrentHealth() : 0;
-            int maxHp = targetVehicle.chassis != null ? targetVehicle.chassis.GetMaxHealth() : 0;
-            int ac = targetVehicle.chassis != null ? targetVehicle.chassis.GetArmorClass() : 10;
+            int hp = targetVehicle.Chassis != null ? targetVehicle.Chassis.GetCurrentHealth() : 0;
+            int maxHp = targetVehicle.Chassis != null ? targetVehicle.Chassis.GetMaxHealth() : 0;
+            int ac = targetVehicle.Chassis != null ? targetVehicle.Chassis.GetArmorClass() : 10;
             chassisBtn.GetComponentInChildren<TextMeshProUGUI>().text = 
                 $"[#] Chassis (HP: {hp}/{maxHp}, AC: {ac})";
             chassisBtn.onClick.AddListener(() => onComponentSelected?.Invoke(null));
@@ -97,9 +97,9 @@ namespace Assets.Scripts.Managers.PlayerUI
                 UnityEngine.Object.Destroy(child.gameObject);
 
             Button chassisBtn = UnityEngine.Object.Instantiate(ui.targetButtonPrefab, ui.targetButtonContainer);
-            int hp = playerVehicle.chassis != null ? playerVehicle.chassis.GetCurrentHealth() : 0;
-            int maxHp = playerVehicle.chassis != null ? playerVehicle.chassis.GetMaxHealth() : 0;
-            int ac = playerVehicle.chassis != null ? playerVehicle.chassis.GetArmorClass() : 10;
+            int hp = playerVehicle.Chassis != null ? playerVehicle.Chassis.GetCurrentHealth() : 0;
+            int maxHp = playerVehicle.Chassis != null ? playerVehicle.Chassis.GetMaxHealth() : 0;
+            int ac = playerVehicle.Chassis != null ? playerVehicle.Chassis.GetArmorClass() : 10;
             chassisBtn.GetComponentInChildren<TextMeshProUGUI>().text = 
                 $"[#] Chassis (HP: {hp}/{maxHp}, AC: {ac})";
             chassisBtn.onClick.AddListener(() => onComponentSelected?.Invoke(null));

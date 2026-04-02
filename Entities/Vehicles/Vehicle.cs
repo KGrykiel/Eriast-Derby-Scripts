@@ -49,8 +49,8 @@ namespace Assets.Scripts.Entities.Vehicles
         public List<ConsumableStack> inventory = new();
 
         [Header("Vehicle Components")]
-        public ChassisComponent chassis => componentCoordinator?.Chassis;
-        public PowerCoreComponent powerCore => componentCoordinator?.PowerCore;
+        public ChassisComponent Chassis => componentCoordinator?.Chassis;
+        public PowerCoreComponent PowerCore => componentCoordinator?.PowerCore;
 
         // Coordinators (handle distinct concerns)
         private VehicleComponentCoordinator componentCoordinator;
@@ -75,7 +75,7 @@ namespace Assets.Scripts.Entities.Vehicles
         void OnValidate()
         {
             // Validate component space usage
-            if (chassis == null) return;
+            if (Chassis == null) return;
 
             int netSpace = componentCoordinator?.CalculateNetComponentSpace() ?? 0;
 
@@ -189,8 +189,8 @@ namespace Assets.Scripts.Entities.Vehicles
             return state switch
             {
                 RuntimeState.CurrentSpeed => drive != null ? drive.GetCurrentSpeed() : 0,
-                RuntimeState.CurrentEnergy => powerCore != null ? powerCore.GetCurrentEnergy() : 0,
-                RuntimeState.CurrentHealth => chassis != null ? chassis.GetCurrentHealth() : 0,
+                RuntimeState.CurrentEnergy => PowerCore != null ? PowerCore.GetCurrentEnergy() : 0,
+                RuntimeState.CurrentHealth => Chassis != null ? Chassis.GetCurrentHealth() : 0,
                 RuntimeState.CurrentProgress => progress,
                 _ => 0
             };
@@ -242,10 +242,10 @@ namespace Assets.Scripts.Entities.Vehicles
         /// <summary>Null if operational.</summary>
         public string GetNonOperationalReason()
         {
-            if (chassis == null) return "No chassis installed";
-            if (chassis.IsDestroyed()) return "Chassis destroyed";
-            if (powerCore == null) return "No power core installed";
-            if (powerCore.IsDestroyed()) return "Power core destroyed - no power";
+            if (Chassis == null) return "No chassis installed";
+            if (Chassis.IsDestroyed()) return "Chassis destroyed";
+            if (PowerCore == null) return "No power core installed";
+            if (PowerCore.IsDestroyed()) return "Power core destroyed - no power";
             return null;
         }
 
@@ -256,8 +256,8 @@ namespace Assets.Scripts.Entities.Vehicles
         {
             get
             {
-                if (chassis == null) return false;
-                foreach (var effect in chassis.GetActiveConditions())
+                if (Chassis == null) return false;
+                foreach (var effect in Chassis.GetActiveConditions())
                 {
                     if (effect.PreventsActions) return true;
                 }
@@ -297,7 +297,7 @@ namespace Assets.Scripts.Entities.Vehicles
             // Resource validation
             if (!CanAffordSkill(skill))
             {
-                int currentEnergy = powerCore != null ? powerCore.currentEnergy : 0;
+                int currentEnergy = PowerCore != null ? PowerCore.currentEnergy : 0;
                 Debug.LogWarning($"[Vehicle] {vehicleName} cannot afford {skill.name} (need {skill.energyCost}, have {currentEnergy})");
                 return false;
             }
@@ -336,14 +336,14 @@ namespace Assets.Scripts.Entities.Vehicles
 
         private bool CanAffordSkill(Skill skill)
         {
-            if (powerCore == null || skill == null) return false;
-            return powerCore.CanDrawPower(skill.energyCost, null);
+            if (PowerCore == null || skill == null) return false;
+            return PowerCore.CanDrawPower(skill.energyCost, null);
         }
 
         private bool ConsumeSkillCost(Skill skill, VehicleComponent sourceComponent)
         {
-            if (powerCore == null || skill == null) return false;
-            return powerCore.DrawPower(skill.energyCost, sourceComponent, $"Skill: {skill.name}");
+            if (PowerCore == null || skill == null) return false;
+            return PowerCore.DrawPower(skill.energyCost, sourceComponent, $"Skill: {skill.name}");
         }
     }
 }

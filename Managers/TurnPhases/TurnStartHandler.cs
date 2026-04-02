@@ -18,12 +18,12 @@
             // === TURN START LOGIC ===
             
             // 1. Regenerate power FIRST (see full resources before paying costs)
-            if (vehicle.powerCore != null && !vehicle.powerCore.IsDestroyed())
-                vehicle.powerCore.RegenerateEnergy();
+            if (vehicle.PowerCore != null && !vehicle.PowerCore.IsDestroyed())
+                vehicle.PowerCore.RegenerateEnergy();
 
             // 2. Reset per-turn power tracking
-            if (vehicle.powerCore != null)
-                vehicle.powerCore.ResetTurnPowerTracking();
+            if (vehicle.PowerCore != null)
+                vehicle.PowerCore.ResetTurnPowerTracking();
 
             // 3. Accelerate toward target speed
             context.TurnController.AccelerateVehicle(vehicle);

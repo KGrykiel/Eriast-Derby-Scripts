@@ -95,7 +95,7 @@ namespace Assets.Scripts.Managers.PlayerUI
                 skillButtons.Add(btn);
             }
 
-            int currentEnergy = playerVehicle.powerCore != null ? playerVehicle.powerCore.currentEnergy : 0;
+            int currentEnergy = playerVehicle.PowerCore != null ? playerVehicle.PowerCore.currentEnergy : 0;
 
             for (int i = 0; i < skillButtons.Count; i++)
             {

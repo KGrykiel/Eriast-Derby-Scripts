@@ -135,7 +135,7 @@ namespace Assets.Scripts.Tests.PlayMode
             vehicle = TestVehicleBuilder.CreateWithChassis(driver);
 
             var spec = SaveSpec.ForCharacter(CharacterAttribute.Dexterity);
-            var result = CheckRouter.RouteSave(vehicle, spec, targetComponent: vehicle.chassis);
+            var result = CheckRouter.RouteSave(vehicle, spec, targetComponent: vehicle.Chassis);
             yield return null;
 
             Assert.IsTrue(result.CanAttempt);

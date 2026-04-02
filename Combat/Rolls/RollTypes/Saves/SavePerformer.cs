@@ -28,7 +28,7 @@ namespace Assets.Scripts.Combat.Rolls.RollTypes.Saves
             }
 
             // Step 2: Emit event automatically
-            RollActor defender = ctx.Routing.Actor ?? new ComponentActor(ctx.Vehicle.chassis);
+            RollActor defender = ctx.Routing.Actor ?? new ComponentActor(ctx.Vehicle.Chassis);
             CombatEventBus.Emit(new SavingThrowEvent(
                 roll,
                 ctx.AttackerEntity,

@@ -38,7 +38,7 @@ namespace Assets.Scripts.Tests.PlayMode
             vehicle = TestVehicleBuilder.CreateWithChassis(ada);
 
             var spec = TestSkillFactory.CharacterSave(CharacterAttribute.Dexterity, dc: 15);
-            var result = SavePerformer.Execute(new SaveExecutionContext { Vehicle = vehicle, Spec = spec, CausalSource = null, Routing = CheckRouter.RouteSave(vehicle, spec, vehicle.chassis) });
+            var result = SavePerformer.Execute(new SaveExecutionContext { Vehicle = vehicle, Spec = spec, CausalSource = null, Routing = CheckRouter.RouteSave(vehicle, spec, vehicle.Chassis) });
             yield return null;
 
             Assert.IsNotNull(result);

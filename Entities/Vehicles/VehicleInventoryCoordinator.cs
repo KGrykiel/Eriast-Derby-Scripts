@@ -103,7 +103,7 @@ namespace Assets.Scripts.Entities.Vehicles
 
         private int GetCargoCapacity()
         {
-            ChassisComponent chassis = vehicle.chassis;
+            ChassisComponent chassis = vehicle.Chassis;
             return chassis != null ? chassis.GetCargoCapacity() : 0;
         }
 

@@ -389,7 +389,7 @@ namespace Assets.Scripts.Combat.Rolls.RollSpecs
             return ctx.Target switch
             {
                 Entity entity => entity,
-                Vehicle vehicle => vehicle.chassis,
+                Vehicle vehicle => vehicle.Chassis,
                 _ => null
             };
         }

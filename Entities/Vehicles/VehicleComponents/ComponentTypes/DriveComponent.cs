@@ -108,7 +108,7 @@ namespace Assets.Scripts.Entities.Vehicles.VehicleComponents.ComponentTypes
                 currentSpeed,
                 GetPowerDrawPerTurn(),
                 GetFriction(),
-                parentVehicle.chassis.GetDragCoefficientPercent()
+                parentVehicle.Chassis.GetDragCoefficientPercent()
             );
         }
 
@@ -120,7 +120,7 @@ namespace Assets.Scripts.Entities.Vehicles.VehicleComponents.ComponentTypes
             int frictionLoss = VehiclePhysicsCalculator.CalculateFrictionLoss(
                 currentSpeed,
                 GetFriction(),
-                parentVehicle.chassis.GetDragCoefficientPercent()
+                parentVehicle.Chassis.GetDragCoefficientPercent()
             );
 
             int oldSpeed = currentSpeed;

@@ -26,7 +26,7 @@ namespace Assets.Scripts.Effects
                 case Entity e:
                     return e;
                 case Vehicle vehicle:
-                    return vehicle.chassis;
+                    return vehicle.Chassis;
                 case VehicleSeat:
                     Debug.LogWarning($"[{GetType().Name}] VehicleSeat is not a valid target for this effect.");
                     return null;

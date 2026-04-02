@@ -161,8 +161,8 @@ namespace Assets.Scripts.Combat
             EntityAttribute attribute = checkAttr.ToAttribute();
             return attribute switch
             {
-                EntityAttribute.Mobility  => vehicle.chassis,
-                EntityAttribute.Integrity => vehicle.chassis,
+                EntityAttribute.Mobility  => vehicle.Chassis,
+                EntityAttribute.Integrity => vehicle.Chassis,
                 _ => null
             };
         }

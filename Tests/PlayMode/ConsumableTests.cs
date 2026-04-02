@@ -87,7 +87,7 @@ namespace Assets.Scripts.Tests.PlayMode
                 .WithChassis(driver)
                 .Build();
 
-            vehicle.chassis.baseCargoCapacity = cargoCapacity;
+            vehicle.Chassis.baseCargoCapacity = cargoCapacity;
 
             foreach (var stack in stacks)
                 vehicle.inventory.Add(stack);
@@ -458,7 +458,7 @@ namespace Assets.Scripts.Tests.PlayMode
             var ctx = new RollContext
             {
                 SourceActor = new CharacterActor(seat),
-                Target = vehicle.chassis
+                Target = vehicle.Chassis
             };
 
             bool valid = ConsumableValidator.Validate(ctx, grenade);
@@ -486,7 +486,7 @@ namespace Assets.Scripts.Tests.PlayMode
             var ctx = new RollContext
             {
                 SourceActor = new CharacterActor(seat),
-                Target = vehicle.chassis
+                Target = vehicle.Chassis
             };
 
             bool valid = ConsumableValidator.Validate(ctx, grenade);
@@ -513,7 +513,7 @@ namespace Assets.Scripts.Tests.PlayMode
             var ctx = new RollContext
             {
                 SourceActor = new CharacterActor(seat),
-                Target = vehicle.chassis
+                Target = vehicle.Chassis
             };
 
             bool valid = ConsumableValidator.Validate(ctx, grenade);
@@ -853,7 +853,7 @@ namespace Assets.Scripts.Tests.PlayMode
                 .AddSeat("Medic", medic)
                 .Build();
 
-            vehicle.chassis.baseCargoCapacity = 100;
+            vehicle.Chassis.baseCargoCapacity = 100;
 
             VehicleSeat driverSeat = vehicle.seats[0];
             VehicleSeat medicSeat = vehicle.seats[1];

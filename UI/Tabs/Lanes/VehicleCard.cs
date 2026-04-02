@@ -34,10 +34,10 @@ namespace Assets.Scripts.UI.Tabs.Lanes
             if (nameText != null)
                 nameText.text = vehicle.vehicleName;
 
-            if (hpBar != null && vehicle.chassis != null)
+            if (hpBar != null && vehicle.Chassis != null)
             {
-                int currentHP = vehicle.chassis.GetCurrentHealth();
-                int maxHP = vehicle.chassis.GetMaxHealth();
+                int currentHP = vehicle.Chassis.GetCurrentHealth();
+                int maxHP = vehicle.Chassis.GetMaxHealth();
                 hpBar.value = maxHP > 0 ? (float)currentHP / maxHP : 0f;
             }
         }

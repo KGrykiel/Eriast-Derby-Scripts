@@ -68,7 +68,7 @@ namespace Assets.Scripts.Tests.PlayMode
                 .WithPowerCore()
                 .WithWeapon(bob, attackBonus: 2)
                 .Build();
-            playerVehicle.powerCore.currentEnergy = 20;
+            playerVehicle.PowerCore.currentEnergy = 20;
 
             // Enemy: Simple vehicle with chassis
             enemyVehicle = new TestVehicleBuilder("EnemyRacer")
@@ -79,8 +79,8 @@ namespace Assets.Scripts.Tests.PlayMode
             // Skill: Cannon Shot, 2d8+5 physical, costs 3 energy
             var cannonShot = TestSkillFactory.CreateAttackSkill("Cannon Shot", damageDice: 2, dieSize: 8, bonus: 5, energyCost: 3, cleanup: cleanup);
 
-            int enemyHPBefore = enemyVehicle.chassis.GetCurrentHealth();
-            int energyBefore = playerVehicle.powerCore.currentEnergy;
+            int enemyHPBefore = enemyVehicle.Chassis.GetCurrentHealth();
+            int energyBefore = playerVehicle.PowerCore.currentEnergy;
 
             // Execute skill through the full pipeline
             var ctx = new RollContext
@@ -93,7 +93,7 @@ namespace Assets.Scripts.Tests.PlayMode
             yield return null;
 
             // Energy should always be consumed (hit or miss)
-            Assert.AreEqual(energyBefore - 3, playerVehicle.powerCore.currentEnergy,
+            Assert.AreEqual(energyBefore - 3, playerVehicle.PowerCore.currentEnergy,
                 "Should consume 3 energy regardless of hit/miss");
         }
 
@@ -108,7 +108,7 @@ namespace Assets.Scripts.Tests.PlayMode
                 .WithPowerCore()
                 .WithWeapon(gunner)
                 .Build();
-            playerVehicle.powerCore.currentEnergy = 1; // Not enough for cost 3
+            playerVehicle.PowerCore.currentEnergy = 1; // Not enough for cost 3
 
             enemyVehicle = new TestVehicleBuilder("Enemy")
                 .WithChassis(maxHealth: 50)
@@ -117,7 +117,7 @@ namespace Assets.Scripts.Tests.PlayMode
 
             var expensiveSkill = TestSkillFactory.CreateAttackSkill("Big Gun", 3, 10, 10, energyCost: 3, cleanup: cleanup);
 
-            int enemyHPBefore = enemyVehicle.chassis.GetCurrentHealth();
+            int enemyHPBefore = enemyVehicle.Chassis.GetCurrentHealth();
 
             var ctx = new RollContext
             {
@@ -129,9 +129,9 @@ namespace Assets.Scripts.Tests.PlayMode
             yield return null;
 
             Assert.IsFalse(executed, "Skill should be blocked when not enough energy");
-            Assert.AreEqual(enemyHPBefore, enemyVehicle.chassis.GetCurrentHealth(),
+            Assert.AreEqual(enemyHPBefore, enemyVehicle.Chassis.GetCurrentHealth(),
                 "Enemy health should be unchanged");
-            Assert.AreEqual(1, playerVehicle.powerCore.currentEnergy,
+            Assert.AreEqual(1, playerVehicle.PowerCore.currentEnergy,
                 "Energy should not be consumed");
         }
 
@@ -145,7 +145,7 @@ namespace Assets.Scripts.Tests.PlayMode
                 .WithChassis()
                 .WithPowerCore(engineer)
                 .Build();
-            playerVehicle.powerCore.currentEnergy = 20;
+            playerVehicle.PowerCore.currentEnergy = 20;
 
             // Buff: "Reinforce Hull" ? +3 AC to chassis for 3 turns
             var reinforceTemplate = TestStatusEffectFactory.CreateModifierEffect("Reinforced", EntityAttribute.ArmorClass, 3f, duration: 3, cleanup: cleanup);
@@ -160,22 +160,22 @@ namespace Assets.Scripts.Tests.PlayMode
                 energyCost: 2,
                 cleanup: cleanup);
 
-            int acBefore = playerVehicle.chassis.GetArmorClass();
+            int acBefore = playerVehicle.Chassis.GetArmorClass();
 
             var ctx = new RollContext
             {
-                SourceActor = new CharacterWithToolActor(playerVehicle.GetSeatForCharacter(engineer), playerVehicle.powerCore),
+                SourceActor = new CharacterWithToolActor(playerVehicle.GetSeatForCharacter(engineer), playerVehicle.PowerCore),
                 Target = playerVehicle,
                 CausalSource = reinforceSkill.name
             };
             playerVehicle.ExecuteSkill(ctx, reinforceSkill);
             yield return null;
 
-            int acAfter = playerVehicle.chassis.GetArmorClass();
+            int acAfter = playerVehicle.Chassis.GetArmorClass();
             Assert.AreEqual(acBefore + 3, acAfter, "AC should increase by 3 from Reinforced buff");
 
             // Verify status effect is active
-            var effects = playerVehicle.chassis.GetActiveConditions();
+            var effects = playerVehicle.Chassis.GetActiveConditions();
             Assert.AreEqual(1, effects.Count, "Should have 1 active status effect");
             Assert.AreEqual("Reinforced", effects[0].template.effectName);
         }
@@ -191,7 +191,7 @@ namespace Assets.Scripts.Tests.PlayMode
                 .WithPowerCore()
                 .WithWeapon(pyro)
                 .Build();
-            playerVehicle.powerCore.currentEnergy = 20;
+            playerVehicle.PowerCore.currentEnergy = 20;
 
             enemyVehicle = new TestVehicleBuilder("Enemy")
                 .WithChassis(maxHealth: 200)
@@ -221,14 +221,14 @@ namespace Assets.Scripts.Tests.PlayMode
             playerVehicle.ExecuteSkill(ctx, flameThrower);
             yield return null;
 
-            Assert.AreEqual(1, enemyVehicle.chassis.GetActiveConditions().Count, "Enemy should be Burning");
+            Assert.AreEqual(1, enemyVehicle.Chassis.GetActiveConditions().Count, "Enemy should be Burning");
 
             // Simulate 3 turns of DoT ticking
-            int healthBefore = enemyVehicle.chassis.GetCurrentHealth();
+            int healthBefore = enemyVehicle.Chassis.GetCurrentHealth();
             for (int turn = 1; turn <= 3; turn++)
             {
-                enemyVehicle.chassis.UpdateConditions();
-                int healthAfter = enemyVehicle.chassis.GetCurrentHealth();
+                enemyVehicle.Chassis.UpdateConditions();
+                int healthAfter = enemyVehicle.Chassis.GetCurrentHealth();
                 int damageTaken = healthBefore - healthAfter;
 
                 if (turn <= 3)
@@ -240,7 +240,7 @@ namespace Assets.Scripts.Tests.PlayMode
             }
 
             // After 3 turns, Burning should expire
-            Assert.AreEqual(0, enemyVehicle.chassis.GetActiveConditions().Count,
+            Assert.AreEqual(0, enemyVehicle.Chassis.GetActiveConditions().Count,
                 "Burning should expire after 3 turns");
         }
 
@@ -307,7 +307,7 @@ namespace Assets.Scripts.Tests.PlayMode
             var stage = TestStageFactory.CreateStage("Rocky Stage", out stageObj);
             var cliffLane = TestStageFactory.CreateLane("Cliff Edge Lane", stage, stageObj, laneEffect);
 
-            int acBefore = playerVehicle.chassis.GetArmorClass();
+            int acBefore = playerVehicle.Chassis.GetArmorClass();
 
             // Simulate vehicle entering lane ? apply lane status effect
             cliffLane.vehiclesInLane.Add(playerVehicle);
@@ -320,11 +320,11 @@ namespace Assets.Scripts.Tests.PlayMode
             }
             yield return null;
 
-            int acAfter = playerVehicle.chassis.GetArmorClass();
+            int acAfter = playerVehicle.Chassis.GetArmorClass();
             Assert.AreEqual(acBefore - 2, acAfter, "AC should drop by 2 from Cliff Edge lane");
 
             // Verify effect is tracked
-            var effects = playerVehicle.chassis.GetActiveConditions();
+            var effects = playerVehicle.Chassis.GetActiveConditions();
             Assert.AreEqual(1, effects.Count);
             Assert.AreEqual("Cliff Edge", effects[0].template.effectName);
         }
@@ -393,7 +393,7 @@ namespace Assets.Scripts.Tests.PlayMode
             var driverSeat = new VehicleSeat
             {
                 seatName = "Driver",
-                controlledComponents = new System.Collections.Generic.List<VehicleComponent> { playerVehicle.chassis }
+                controlledComponents = new System.Collections.Generic.List<VehicleComponent> { playerVehicle.Chassis }
             };
             driverSeat.Assign(driver);
             playerVehicle.seats.Add(driverSeat);
@@ -405,7 +405,7 @@ namespace Assets.Scripts.Tests.PlayMode
                 .WithPowerCore()
                 .AddSeat("Caster", enemyCaster)
                 .Build();
-            enemyVehicle.powerCore.currentEnergy = 20;
+            enemyVehicle.PowerCore.currentEnergy = 20;
 
             // Create save skill: "Psychic Scream" - WIS save DC 20 or take damage
             // DC 20 is nearly impossible with WIS 8 (-1 mod + half level)
@@ -430,7 +430,7 @@ namespace Assets.Scripts.Tests.PlayMode
                 energyCost: 3,
                 cleanup: cleanup);
 
-            int playerHPBefore = playerVehicle.chassis.GetCurrentHealth();
+            int playerHPBefore = playerVehicle.Chassis.GetCurrentHealth();
 
             // Execute save skill against player chassis
             var ctx = new RollContext
@@ -443,7 +443,7 @@ namespace Assets.Scripts.Tests.PlayMode
             yield return null;
 
             // Energy consumed from enemy
-            Assert.AreEqual(17, enemyVehicle.powerCore.currentEnergy, "Enemy should spend 3 energy");
+            Assert.AreEqual(17, enemyVehicle.PowerCore.currentEnergy, "Enemy should spend 3 energy");
 
             // Save routing: should route to Driver (only character, best WIS by default)
             // With DC 20, most likely fails (needs nat 20 basically)
@@ -551,40 +551,40 @@ namespace Assets.Scripts.Tests.PlayMode
                 .WithPowerCore()
                 .Build();
 
-            int baseAC = playerVehicle.chassis.GetArmorClass();
+            int baseAC = playerVehicle.Chassis.GetArmorClass();
 
             // Source 1: Equipment modifier (+2 AC)
-            playerVehicle.chassis.AddModifier(new EntityAttributeModifier(
+            playerVehicle.Chassis.AddModifier(new EntityAttributeModifier(
                 EntityAttribute.ArmorClass, ModifierType.Flat, 2f,
                 "Armor Plating"));
 
             // Source 2: Status effect (+3 AC from buff skill)
             var shieldBuff = TestStatusEffectFactory.CreateModifierEffect("Shield", EntityAttribute.ArmorClass, 3f, duration: 5, cleanup: cleanup);
-            playerVehicle.chassis.ApplyCondition(shieldBuff, playerVehicle);
+            playerVehicle.Chassis.ApplyCondition(shieldBuff, playerVehicle);
 
             // Source 3: Direct modifier (+1 AC from event card)
-            playerVehicle.chassis.AddModifier(new EntityAttributeModifier(
+            playerVehicle.Chassis.AddModifier(new EntityAttributeModifier(
                 EntityAttribute.ArmorClass, ModifierType.Flat, 1f,
                 "Lucky Break"));
 
             yield return null;
 
-            int finalAC = playerVehicle.chassis.GetArmorClass();
+            int finalAC = playerVehicle.Chassis.GetArmorClass();
             Assert.AreEqual(baseAC + 2 + 3 + 1, finalAC,
                 "AC should be base + equipment(2) + status(3) + event(1)");
 
             // Verify breakdown shows all sources
             var (total, bv, modifiers) = Assets.Scripts.Core.StatCalculator.GatherAttributeValueWithBreakdown(
-                playerVehicle.chassis, EntityAttribute.ArmorClass);
+                playerVehicle.Chassis, EntityAttribute.ArmorClass);
             Assert.IsTrue(modifiers.Any(m => m.Label == "Armor Plating"), "Should show Armor Plating");
             Assert.IsTrue(modifiers.Any(m => m.Label == "Lucky Break"), "Should show Lucky Break");
 
             // Remove status effect ? AC should drop by 3
-            var applied = playerVehicle.chassis.GetActiveConditions()[0];
-            playerVehicle.chassis.RemoveCondition(applied);
+            var applied = playerVehicle.Chassis.GetActiveConditions()[0];
+            playerVehicle.Chassis.RemoveCondition(applied);
             yield return null;
 
-            int acAfterRemoval = playerVehicle.chassis.GetArmorClass();
+            int acAfterRemoval = playerVehicle.Chassis.GetArmorClass();
             Assert.AreEqual(baseAC + 2 + 1, acAfterRemoval,
                 "AC should drop by 3 after removing Shield buff");
         }
@@ -604,7 +604,7 @@ namespace Assets.Scripts.Tests.PlayMode
                 .WithPowerCore(pEngineer)
                 .WithWeapon(pGunner, attackBonus: 3)
                 .Build();
-            playerVehicle.powerCore.currentEnergy = 50;
+            playerVehicle.PowerCore.currentEnergy = 50;
 
             // Enemy: 2-person crew
             var eDriver = TestCharacterFactory.CreateWithCleanup("EnemyDriver", dexterity: 14, cleanup: cleanup);
@@ -615,7 +615,7 @@ namespace Assets.Scripts.Tests.PlayMode
                 .WithPowerCore()
                 .WithWeapon(eGunner, attackBonus: 1)
                 .Build();
-            enemyVehicle.powerCore.currentEnergy = 50;
+            enemyVehicle.PowerCore.currentEnergy = 50;
 
             // Create stage + lane
             var stage = TestStageFactory.CreateStage("Combat Arena", out stageObj);
@@ -635,7 +635,7 @@ namespace Assets.Scripts.Tests.PlayMode
             for (int turn = 1; turn <= 3; turn++)
             {
                 // Player attacks enemy
-                if (playerVehicle.powerCore.CanDrawPower(3))
+                if (playerVehicle.PowerCore.CanDrawPower(3))
                 {
                     var playerCtx = new RollContext
                     {
@@ -647,7 +647,7 @@ namespace Assets.Scripts.Tests.PlayMode
                 }
 
                 // Enemy attacks player
-                if (enemyVehicle.powerCore.CanDrawPower(2))
+                if (enemyVehicle.PowerCore.CanDrawPower(2))
                 {
                     var enemyCtx = new RollContext
                     {
@@ -668,14 +668,14 @@ namespace Assets.Scripts.Tests.PlayMode
             // After 3 turns: verify energy was spent (no regen, pure consumption)
             // Player: 50 - (3 * 3) = 41
             // Enemy: 50 - (2 * 3) = 44
-            Assert.AreEqual(41, playerVehicle.powerCore.currentEnergy,
+            Assert.AreEqual(41, playerVehicle.PowerCore.currentEnergy,
                 "Player should have spent 9 energy over 3 turns (3 per turn)");
-            Assert.AreEqual(44, enemyVehicle.powerCore.currentEnergy,
+            Assert.AreEqual(44, enemyVehicle.PowerCore.currentEnergy,
                 "Enemy should have spent 6 energy over 3 turns (2 per turn)");
 
             // Verify neither vehicle crashed (no null refs, no exceptions)
-            Assert.IsNotNull(playerVehicle.chassis);
-            Assert.IsNotNull(enemyVehicle.chassis);
+            Assert.IsNotNull(playerVehicle.Chassis);
+            Assert.IsNotNull(enemyVehicle.Chassis);
         }
     }
 }

@@ -91,7 +91,7 @@ namespace Assets.Scripts.Tests.PlayMode
                 .WithPowerCore()
                 .Build();
 
-            vehicle.chassis.TakeDamage(vehicle.chassis.GetCurrentHealth());
+            vehicle.Chassis.TakeDamage(vehicle.Chassis.GetCurrentHealth());
 
             yield return null;
 
@@ -106,7 +106,7 @@ namespace Assets.Scripts.Tests.PlayMode
             var driver = CreateChar("Driver");
             vehicle = TestVehicleBuilder.CreateWithChassis(driver);
 
-            var seat = vehicle.GetSeatForComponent(vehicle.chassis);
+            var seat = vehicle.GetSeatForComponent(vehicle.Chassis);
             yield return null;
 
             Assert.IsNotNull(seat, "Should find seat controlling chassis");

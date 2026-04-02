@@ -125,7 +125,7 @@ namespace Assets.Scripts.Tests.PlayMode
         public IEnumerator CurrentTargetResolver_ReturnsEntity_WhenTargetIsEntity()
         {
             var vehicle = BuildVehicle();
-            Entity chassis = vehicle.chassis;
+            Entity chassis = vehicle.Chassis;
             var resolver = new CurrentTargetResolver();
             var ctx = new RollContext { Target = chassis };
 
@@ -278,7 +278,7 @@ namespace Assets.Scripts.Tests.PlayMode
             PlaceVehicleInLane(vehicle, stage, lane);
 
             var resolver = new AllVehiclesInLaneResolver();
-            var ctx = new RollContext { Target = vehicle.chassis };
+            var ctx = new RollContext { Target = vehicle.Chassis };
 
             var results = resolver.ResolveFrom(ctx);
             yield return null;
@@ -335,7 +335,7 @@ namespace Assets.Scripts.Tests.PlayMode
             PlaceVehicleInLane(vehicle, stage, lane);
 
             var resolver = new AllVehiclesInStageResolver();
-            var ctx = new RollContext { SourceActor = null, Target = vehicle.chassis };
+            var ctx = new RollContext { SourceActor = null, Target = vehicle.Chassis };
 
             var results = resolver.ResolveFrom(ctx);
             yield return null;
@@ -463,11 +463,11 @@ namespace Assets.Scripts.Tests.PlayMode
             var node = CreateUnconditionalDamageNode(10, EffectTarget.SelectedTarget);
             var ctx = new RollContext { Target = vehicle, CausalSource = "Test" };
 
-            int hpBefore = vehicle.chassis.GetCurrentHealth();
+            int hpBefore = vehicle.Chassis.GetCurrentHealth();
             RollNodeExecutor.Execute(node, ctx);
             yield return null;
 
-            Assert.AreEqual(hpBefore - 10, vehicle.chassis.GetCurrentHealth());
+            Assert.AreEqual(hpBefore - 10, vehicle.Chassis.GetCurrentHealth());
         }
 
         [UnityTest]
@@ -485,13 +485,13 @@ namespace Assets.Scripts.Tests.PlayMode
             var node = CreateUnconditionalDamageNode(15, EffectTarget.SourceVehicle);
             var ctx = new RollContext { SourceActor = actor, Target = target, CausalSource = "Test" };
 
-            int sourceHpBefore = source.chassis.GetCurrentHealth();
-            int targetHpBefore = target.chassis.GetCurrentHealth();
+            int sourceHpBefore = source.Chassis.GetCurrentHealth();
+            int targetHpBefore = target.Chassis.GetCurrentHealth();
             RollNodeExecutor.Execute(node, ctx);
             yield return null;
 
-            Assert.AreEqual(sourceHpBefore - 15, source.chassis.GetCurrentHealth(), "Source should take damage");
-            Assert.AreEqual(targetHpBefore, target.chassis.GetCurrentHealth(), "Target should be unaffected");
+            Assert.AreEqual(sourceHpBefore - 15, source.Chassis.GetCurrentHealth(), "Source should take damage");
+            Assert.AreEqual(targetHpBefore, target.Chassis.GetCurrentHealth(), "Target should be unaffected");
         }
 
         [UnityTest]
@@ -509,11 +509,11 @@ namespace Assets.Scripts.Tests.PlayMode
             var node = CreateUnconditionalDamageNode(20, EffectTarget.TargetVehicle);
             var ctx = new RollContext { SourceActor = actor, Target = target, CausalSource = "Test" };
 
-            int targetHpBefore = target.chassis.GetCurrentHealth();
+            int targetHpBefore = target.Chassis.GetCurrentHealth();
             RollNodeExecutor.Execute(node, ctx);
             yield return null;
 
-            Assert.AreEqual(targetHpBefore - 20, target.chassis.GetCurrentHealth());
+            Assert.AreEqual(targetHpBefore - 20, target.Chassis.GetCurrentHealth());
         }
 
         [UnityTest]
@@ -533,9 +533,9 @@ namespace Assets.Scripts.Tests.PlayMode
             RollNodeExecutor.Execute(node, ctx);
             yield return null;
 
-            Assert.AreEqual(90, vehicleA.chassis.GetCurrentHealth(), "Vehicle A should take 10 damage");
-            Assert.AreEqual(90, vehicleB.chassis.GetCurrentHealth(), "Vehicle B should take 10 damage");
-            Assert.AreEqual(90, vehicleC.chassis.GetCurrentHealth(), "Vehicle C should take 10 damage");
+            Assert.AreEqual(90, vehicleA.Chassis.GetCurrentHealth(), "Vehicle A should take 10 damage");
+            Assert.AreEqual(90, vehicleB.Chassis.GetCurrentHealth(), "Vehicle B should take 10 damage");
+            Assert.AreEqual(90, vehicleC.Chassis.GetCurrentHealth(), "Vehicle C should take 10 damage");
         }
 
         [UnityTest]
@@ -553,8 +553,8 @@ namespace Assets.Scripts.Tests.PlayMode
             RollNodeExecutor.Execute(node, ctx);
             yield return null;
 
-            Assert.AreEqual(100, self.chassis.GetCurrentHealth(), "Self should NOT take damage");
-            Assert.AreEqual(90, other.chassis.GetCurrentHealth(), "Other should take 10 damage");
+            Assert.AreEqual(100, self.Chassis.GetCurrentHealth(), "Self should NOT take damage");
+            Assert.AreEqual(90, other.Chassis.GetCurrentHealth(), "Other should take 10 damage");
         }
 
         [UnityTest]
@@ -576,9 +576,9 @@ namespace Assets.Scripts.Tests.PlayMode
             RollNodeExecutor.Execute(node, ctx);
             yield return null;
 
-            Assert.AreEqual(100, self.chassis.GetCurrentHealth(), "Self should NOT take damage");
-            Assert.AreEqual(90, otherSameLane.chassis.GetCurrentHealth(), "Other in same lane should take damage");
-            Assert.AreEqual(90, otherDiffLane.chassis.GetCurrentHealth(), "Other in different lane should take damage");
+            Assert.AreEqual(100, self.Chassis.GetCurrentHealth(), "Self should NOT take damage");
+            Assert.AreEqual(90, otherSameLane.Chassis.GetCurrentHealth(), "Other in same lane should take damage");
+            Assert.AreEqual(90, otherDiffLane.Chassis.GetCurrentHealth(), "Other in different lane should take damage");
         }
 
         [UnityTest]
@@ -594,18 +594,18 @@ namespace Assets.Scripts.Tests.PlayMode
             var node = CreateUnconditionalDamageNode(5, EffectTarget.AllComponentsOnTarget);
             var ctx = new RollContext { Target = vehicle, CausalSource = "Test" };
 
-            int chassisHp = vehicle.chassis.GetCurrentHealth();
+            int chassisHp = vehicle.Chassis.GetCurrentHealth();
             int weaponHp = vehicle.AllComponents.First(c => c.componentType == ComponentType.Weapon).GetCurrentHealth();
-            int powerCoreHp = vehicle.powerCore.GetCurrentHealth();
+            int powerCoreHp = vehicle.PowerCore.GetCurrentHealth();
 
             RollNodeExecutor.Execute(node, ctx);
             yield return null;
 
-            Assert.AreEqual(chassisHp - 5, vehicle.chassis.GetCurrentHealth(), "Chassis should take 5 damage");
+            Assert.AreEqual(chassisHp - 5, vehicle.Chassis.GetCurrentHealth(), "Chassis should take 5 damage");
             Assert.AreEqual(weaponHp - 5,
                 vehicle.AllComponents.First(c => c.componentType == ComponentType.Weapon).GetCurrentHealth(),
                 "Weapon should take 5 damage");
-            Assert.AreEqual(powerCoreHp - 5, vehicle.powerCore.GetCurrentHealth(), "Power core should take 5 damage");
+            Assert.AreEqual(powerCoreHp - 5, vehicle.PowerCore.GetCurrentHealth(), "Power core should take 5 damage");
         }
 
         [UnityTest]
@@ -624,13 +624,13 @@ namespace Assets.Scripts.Tests.PlayMode
             var ctx = new RollContext { SourceActor = actor, Target = vehicle, CausalSource = "Test" };
 
             int weaponHp = weapon.GetCurrentHealth();
-            int chassisHp = vehicle.chassis.GetCurrentHealth();
+            int chassisHp = vehicle.Chassis.GetCurrentHealth();
 
             RollNodeExecutor.Execute(node, ctx);
             yield return null;
 
             Assert.AreEqual(weaponHp - 8, weapon.GetCurrentHealth(), "Weapon should take damage");
-            Assert.AreEqual(chassisHp, vehicle.chassis.GetCurrentHealth(), "Chassis should be unaffected");
+            Assert.AreEqual(chassisHp, vehicle.Chassis.GetCurrentHealth(), "Chassis should be unaffected");
         }
 
         // ================================================================
@@ -659,9 +659,9 @@ namespace Assets.Scripts.Tests.PlayMode
             RollNodeExecutor.Execute(node, ctx);
             yield return null;
 
-            Assert.AreEqual(80, exploder.chassis.GetCurrentHealth(),
+            Assert.AreEqual(80, exploder.Chassis.GetCurrentHealth(),
                 "Exploder takes 20 self-damage only (excluded from AllOther)");
-            Assert.AreEqual(90, bystander.chassis.GetCurrentHealth(),
+            Assert.AreEqual(90, bystander.Chassis.GetCurrentHealth(),
                 "Bystander takes 10 lane damage only");
         }
 
@@ -691,8 +691,8 @@ namespace Assets.Scripts.Tests.PlayMode
             RollNodeExecutor.Execute(node, ctx);
             yield return null;
 
-            Assert.AreEqual(75, target.chassis.GetCurrentHealth(), "Target should take 25 damage");
-            Assert.AreEqual(95, source.chassis.GetCurrentHealth(), "Source should take 5 recoil damage");
+            Assert.AreEqual(75, target.Chassis.GetCurrentHealth(), "Target should take 25 damage");
+            Assert.AreEqual(95, source.Chassis.GetCurrentHealth(), "Source should take 5 recoil damage");
         }
 
         // ================================================================
@@ -721,8 +721,8 @@ namespace Assets.Scripts.Tests.PlayMode
             RollNodeExecutor.Execute(node, ctx);
             yield return null;
 
-            Assert.AreEqual(90, vehicleA.chassis.GetCurrentHealth(), "Vehicle A should take 10 damage");
-            Assert.AreEqual(90, vehicleB.chassis.GetCurrentHealth(), "Vehicle B should take 10 damage");
+            Assert.AreEqual(90, vehicleA.Chassis.GetCurrentHealth(), "Vehicle A should take 10 damage");
+            Assert.AreEqual(90, vehicleB.Chassis.GetCurrentHealth(), "Vehicle B should take 10 damage");
         }
 
         [UnityTest]
@@ -749,8 +749,8 @@ namespace Assets.Scripts.Tests.PlayMode
             RollNodeExecutor.Execute(node, ctx);
             yield return null;
 
-            Assert.AreEqual(85, vehicleA.chassis.GetCurrentHealth(), "Vehicle A should take 15 damage");
-            Assert.AreEqual(85, vehicleB.chassis.GetCurrentHealth(), "Vehicle B should take 15 damage");
+            Assert.AreEqual(85, vehicleA.Chassis.GetCurrentHealth(), "Vehicle A should take 15 damage");
+            Assert.AreEqual(85, vehicleB.Chassis.GetCurrentHealth(), "Vehicle B should take 15 damage");
         }
 
         [UnityTest]
@@ -775,8 +775,8 @@ namespace Assets.Scripts.Tests.PlayMode
             RollNodeExecutor.Execute(node, ctx);
             yield return null;
 
-            Assert.AreEqual(93, vehicleA.chassis.GetCurrentHealth(), "A should take damage with null SourceActor");
-            Assert.AreEqual(93, vehicleB.chassis.GetCurrentHealth(), "B should take damage with null SourceActor");
+            Assert.AreEqual(93, vehicleA.Chassis.GetCurrentHealth(), "A should take damage with null SourceActor");
+            Assert.AreEqual(93, vehicleB.Chassis.GetCurrentHealth(), "B should take damage with null SourceActor");
         }
 
         [UnityTest]
@@ -803,7 +803,7 @@ namespace Assets.Scripts.Tests.PlayMode
             yield return null;
 
             Assert.IsFalse(result, "Should return false when no targets resolved (anySuccess stays false)");
-            Assert.AreEqual(100, triggerVehicle.chassis.GetCurrentHealth(),
+            Assert.AreEqual(100, triggerVehicle.Chassis.GetCurrentHealth(),
                 "Trigger vehicle should be unaffected (not in vehiclesInLane)");
         }
 
@@ -861,9 +861,9 @@ namespace Assets.Scripts.Tests.PlayMode
             RollNodeExecutor.Execute(node, ctx);
             yield return null;
 
-            Assert.AreEqual(90, targetA.chassis.GetCurrentHealth(), "Target A should take damage");
-            Assert.AreEqual(90, targetB.chassis.GetCurrentHealth(), "Target B should take damage");
-            Assert.AreEqual(100, sourceVehicle.chassis.GetCurrentHealth(), "Source should be unaffected");
+            Assert.AreEqual(90, targetA.Chassis.GetCurrentHealth(), "Target A should take damage");
+            Assert.AreEqual(90, targetB.Chassis.GetCurrentHealth(), "Target B should take damage");
+            Assert.AreEqual(100, sourceVehicle.Chassis.GetCurrentHealth(), "Source should be unaffected");
         }
 
         // ================================================================
@@ -887,7 +887,7 @@ namespace Assets.Scripts.Tests.PlayMode
             RollNodeExecutor.Execute(node, ctx);
             yield return null;
 
-            Assert.AreEqual(90, vehicle.chassis.GetCurrentHealth(), "Should execute against single target");
+            Assert.AreEqual(90, vehicle.Chassis.GetCurrentHealth(), "Should execute against single target");
         }
 
         // ================================================================
@@ -904,7 +904,7 @@ namespace Assets.Scripts.Tests.PlayMode
             RollNodeExecutor.Execute(node, ctx);
             yield return null;
 
-            Assert.AreEqual(88, vehicle.chassis.GetCurrentHealth());
+            Assert.AreEqual(88, vehicle.Chassis.GetCurrentHealth());
         }
 
         [UnityTest]
@@ -917,7 +917,7 @@ namespace Assets.Scripts.Tests.PlayMode
             RollNodeExecutor.Execute(node, ctx);
             yield return null;
 
-            Assert.AreEqual(90, vehicle.chassis.GetCurrentHealth(),
+            Assert.AreEqual(90, vehicle.Chassis.GetCurrentHealth(),
                 "SourceVehicle with null SourceActor should fall back to ctx.Target");
         }
 
@@ -936,8 +936,8 @@ namespace Assets.Scripts.Tests.PlayMode
             RollNodeExecutor.Execute(node, ctx);
             yield return null;
 
-            Assert.AreEqual(100, self.chassis.GetCurrentHealth(), "Self excluded with null SourceActor");
-            Assert.AreEqual(90, other.chassis.GetCurrentHealth(), "Other takes damage with null SourceActor");
+            Assert.AreEqual(100, self.Chassis.GetCurrentHealth(), "Self excluded with null SourceActor");
+            Assert.AreEqual(90, other.Chassis.GetCurrentHealth(), "Other takes damage with null SourceActor");
         }
 
         // ================================================================
@@ -1000,8 +1000,8 @@ namespace Assets.Scripts.Tests.PlayMode
             RollNodeExecutor.Execute(node, ctx);
             yield return null;
 
-            Assert.AreEqual(90, vehicleA.chassis.GetCurrentHealth(), "A should take damage from StageLane target");
-            Assert.AreEqual(90, vehicleB.chassis.GetCurrentHealth(), "B should take damage from StageLane target");
+            Assert.AreEqual(90, vehicleA.Chassis.GetCurrentHealth(), "A should take damage from StageLane target");
+            Assert.AreEqual(90, vehicleB.Chassis.GetCurrentHealth(), "B should take damage from StageLane target");
         }
 
         [UnityTest]

@@ -273,14 +273,14 @@ public class VehicleInspectorPanel : MonoBehaviour
         if (vehicleHPValueText != null)
         {
             var hpDisplay = vehicleHPValueText.GetComponent<StatValueDisplay>();
-            int currentHealth = selectedVehicle.chassis?.GetCurrentHealth() ?? 0;
-            int maxHealth = selectedVehicle.chassis?.GetMaxHealth() ?? 0;
-            int baseMaxHP = selectedVehicle.chassis?.GetBaseMaxHealth() ?? 100;
+            int currentHealth = selectedVehicle.Chassis?.GetCurrentHealth() ?? 0;
+            int maxHealth = selectedVehicle.Chassis?.GetMaxHealth() ?? 0;
+            int baseMaxHP = selectedVehicle.Chassis?.GetBaseMaxHealth() ?? 100;
 
             if (hpDisplay != null)
             {
                 hpDisplay.UpdateDisplay(
-                    selectedVehicle.chassis,
+                    selectedVehicle.Chassis,
                     EntityAttribute.MaxHealth,
                     baseMaxHP,
                     maxHealth,
@@ -304,14 +304,14 @@ public class VehicleInspectorPanel : MonoBehaviour
         if (vehicleEnergyValueText != null)
         {
             var energyDisplay = vehicleEnergyValueText.GetComponent<StatValueDisplay>();
-            int currentEnergy = selectedVehicle.powerCore?.GetCurrentEnergy() ?? 0;
-            int maxEnergy = selectedVehicle.powerCore?.GetMaxEnergy() ?? 0;
-            int baseMaxEnergy = selectedVehicle.powerCore?.GetBaseMaxEnergy() ?? 100;
+            int currentEnergy = selectedVehicle.PowerCore?.GetCurrentEnergy() ?? 0;
+            int maxEnergy = selectedVehicle.PowerCore?.GetMaxEnergy() ?? 0;
+            int baseMaxEnergy = selectedVehicle.PowerCore?.GetBaseMaxEnergy() ?? 100;
             
             if (energyDisplay != null)
             {
                 energyDisplay.UpdateDisplay(
-                    selectedVehicle.powerCore,
+                    selectedVehicle.PowerCore,
                     EntityAttribute.MaxEnergy,
                     baseMaxEnergy,
                     maxEnergy,
@@ -343,14 +343,14 @@ public class VehicleInspectorPanel : MonoBehaviour
         if (vehicleACValueText != null)
         {
             var acDisplay = vehicleACValueText.GetComponent<StatValueDisplay>();
-            int modifiedAC = selectedVehicle.chassis?.GetArmorClass() ?? 10;
+            int modifiedAC = selectedVehicle.Chassis?.GetArmorClass() ?? 10;
             
-            if (acDisplay != null && selectedVehicle.chassis != null)
+            if (acDisplay != null && selectedVehicle.Chassis != null)
             {
-                int baseAC = selectedVehicle.chassis.GetBaseArmorClass();
+                int baseAC = selectedVehicle.Chassis.GetBaseArmorClass();
                 
                 acDisplay.UpdateDisplay(
-                    selectedVehicle.chassis,
+                    selectedVehicle.Chassis,
                     EntityAttribute.ArmorClass,
                     baseAC,
                     modifiedAC,
@@ -370,14 +370,14 @@ public class VehicleInspectorPanel : MonoBehaviour
         if (vehicleEnergyRegenValueText != null)
         {
             var regenDisplay = vehicleEnergyRegenValueText.GetComponent<StatValueDisplay>();
-            int modifiedRegen = selectedVehicle.powerCore?.GetEnergyRegen() ?? 0;
+            int modifiedRegen = selectedVehicle.PowerCore?.GetEnergyRegen() ?? 0;
             
-            if (regenDisplay != null && selectedVehicle.powerCore != null)
+            if (regenDisplay != null && selectedVehicle.PowerCore != null)
             {
-                int baseRegen = selectedVehicle.powerCore.GetBaseEnergyRegen();
+                int baseRegen = selectedVehicle.PowerCore.GetBaseEnergyRegen();
                 
                 regenDisplay.UpdateDisplay(
-                    selectedVehicle.powerCore,
+                    selectedVehicle.PowerCore,
                     EntityAttribute.EnergyRegen,
                     baseRegen,
                     modifiedRegen,
@@ -394,10 +394,10 @@ public class VehicleInspectorPanel : MonoBehaviour
             }
         }
         
-        if (vehicleSizeValueText != null && selectedVehicle.chassis != null)
+        if (vehicleSizeValueText != null && selectedVehicle.Chassis != null)
         {
             var sizeDisplay = vehicleSizeValueText.GetComponent<SizeDisplay>();
-            var sizeCategory = selectedVehicle.chassis.sizeCategory;
+            var sizeCategory = selectedVehicle.Chassis.sizeCategory;
             string sizeText = sizeCategory.ToString();
             Color sizeColor = GetSizeColor(sizeCategory);
             string tooltip = BuildSizeTooltip(sizeCategory);
@@ -793,7 +793,7 @@ public class VehicleInspectorPanel : MonoBehaviour
                 
                 if (seatSkills.Count > 0)
                 {
-                    int currentEnergy = selectedVehicle.powerCore?.GetCurrentEnergy() ?? 0;
+                    int currentEnergy = selectedVehicle.PowerCore?.GetCurrentEnergy() ?? 0;
                     foreach (var skill in seatSkills)
                     {
                         if (skill != null)

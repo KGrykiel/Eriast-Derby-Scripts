@@ -15,18 +15,18 @@ namespace Assets.Scripts.Entities.Vehicles
         {
             return attribute switch
             {
-                EntityAttribute.MaxHealth => vehicle.chassis,
-                EntityAttribute.ArmorClass => vehicle.chassis,
-                EntityAttribute.MagicResistance => vehicle.chassis,
-                EntityAttribute.Mobility => vehicle.chassis,
-                EntityAttribute.DragCoefficient => vehicle.chassis,
-                EntityAttribute.MaxEnergy => vehicle.powerCore,
-                EntityAttribute.EnergyRegen => vehicle.powerCore,
+                EntityAttribute.MaxHealth => vehicle.Chassis,
+                EntityAttribute.ArmorClass => vehicle.Chassis,
+                EntityAttribute.MagicResistance => vehicle.Chassis,
+                EntityAttribute.Mobility => vehicle.Chassis,
+                EntityAttribute.DragCoefficient => vehicle.Chassis,
+                EntityAttribute.MaxEnergy => vehicle.PowerCore,
+                EntityAttribute.EnergyRegen => vehicle.PowerCore,
                 EntityAttribute.MaxSpeed => vehicle.AllComponents.OfType<DriveComponent>().FirstOrDefault(),
                 EntityAttribute.Acceleration => vehicle.AllComponents.OfType<DriveComponent>().FirstOrDefault(),
                 EntityAttribute.Stability => vehicle.AllComponents.OfType<DriveComponent>().FirstOrDefault(),
                 EntityAttribute.BaseFriction => vehicle.AllComponents.OfType<DriveComponent>().FirstOrDefault(),
-                _ => vehicle.chassis
+                _ => vehicle.Chassis
             };
         }
     }

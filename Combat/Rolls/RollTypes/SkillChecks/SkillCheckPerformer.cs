@@ -28,7 +28,7 @@ namespace Assets.Scripts.Combat.Rolls.RollTypes.SkillChecks
             }
 
             // Step 2: Emit event automatically
-            RollActor actor = ctx.Routing.Actor ?? new ComponentActor(ctx.Vehicle.chassis);
+            RollActor actor = ctx.Routing.Actor ?? new ComponentActor(ctx.Vehicle.Chassis);
             CombatEventBus.Emit(new SkillCheckEvent(
                 roll,
                 actor,

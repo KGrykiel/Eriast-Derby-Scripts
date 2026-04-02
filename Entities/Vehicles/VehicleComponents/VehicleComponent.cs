@@ -165,13 +165,13 @@ namespace Assets.Scripts.Entities.Vehicles.VehicleComponents
             switch (targetMode)
             {
                 case ComponentTargetMode.Chassis:
-                    if (vehicle.chassis != null)
-                        targets.Add(vehicle.chassis);
+                    if (vehicle.Chassis != null)
+                        targets.Add(vehicle.Chassis);
                     break;
 
                 case ComponentTargetMode.PowerCore:
-                    if (vehicle.powerCore != null)
-                        targets.Add(vehicle.powerCore);
+                    if (vehicle.PowerCore != null)
+                        targets.Add(vehicle.PowerCore);
                     break;
 
                 case ComponentTargetMode.Drive:
@@ -242,7 +242,7 @@ namespace Assets.Scripts.Entities.Vehicles.VehicleComponents
                 }
 
                 // Vehicle-wide stuns are applied to chassis, so check those too
-                if (parentVehicle != null && parentVehicle.chassis != this && parentVehicle.IsChassisStunned)
+                if (parentVehicle != null && parentVehicle.Chassis != this && parentVehicle.IsChassisStunned)
                     return false;
 
                 return true;
@@ -324,7 +324,7 @@ namespace Assets.Scripts.Entities.Vehicles.VehicleComponents
         {
             if (!IsOperational) return true;
 
-            var powerCore = parentVehicle != null ? parentVehicle.powerCore : null;
+            var powerCore = parentVehicle != null ? parentVehicle.PowerCore : null;
             if (powerCore == null) return true;
 
             int actualDraw = GetActualPowerDraw();

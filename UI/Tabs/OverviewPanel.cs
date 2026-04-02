@@ -107,8 +107,8 @@ public class OverviewPanel : MonoBehaviour
 
             if (showEnergy)
             {
-                int energy = vehicle.powerCore?.GetCurrentEnergy() ?? 0;
-                int maxEnergy = vehicle.powerCore?.GetMaxEnergy() ?? 0;
+                int energy = vehicle.PowerCore?.GetCurrentEnergy() ?? 0;
+                int maxEnergy = vehicle.PowerCore?.GetMaxEnergy() ?? 0;
                 display += $" Energy:{energy}/{maxEnergy}";
             }
 
@@ -128,8 +128,8 @@ public class OverviewPanel : MonoBehaviour
 
             display += "\n";
 
-            int health = vehicle.chassis != null ? vehicle.chassis.GetCurrentHealth() : 0;
-            int maxHealth = vehicle.chassis != null ? vehicle.chassis.GetMaxHealth() : 1;
+            int health = vehicle.Chassis != null ? vehicle.Chassis.GetCurrentHealth() : 0;
+            int maxHealth = vehicle.Chassis != null ? vehicle.Chassis.GetMaxHealth() : 1;
             float healthPercent = (float)health / maxHealth;
             string healthBar = GenerateCompactBar(healthPercent, 8);
             string healthColor = GetHealthColor(healthPercent);
