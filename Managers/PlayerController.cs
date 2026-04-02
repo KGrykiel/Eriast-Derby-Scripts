@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+using Assets.Scripts.Consumables;
 using Assets.Scripts.Entities.Vehicles;
 using Assets.Scripts.Combat.Rolls;
 using Assets.Scripts.Managers;
@@ -31,6 +32,7 @@ public class PlayerController : MonoBehaviour
 
     private IRollTarget selectedTarget = null;
     private Skill selectedSkill = null;
+    private Consumable selectedConsumable = null;
     private VehicleComponent selectedSkillSourceComponent = null;
     private VehicleComponent selectedTargetComponent = null;
     private bool isPlayerTurnActive = false;
@@ -108,7 +110,7 @@ public class PlayerController : MonoBehaviour
         if (ui.moveForwardButton != null)
             ui.moveForwardButton.interactable = true;
 
-        uiCoordinator.ShowTurnUI(availableSeats, vehicle, OnSeatSelected, OnSkillSelected);
+        uiCoordinator.ShowTurnUI(availableSeats, vehicle, OnSeatSelected, OnSkillSelected, OnConsumableSelected);
         uiCoordinator.UpdateTurnStatusDisplay(vehicle);
 
         TurnEventBus.EmitPlayerActionPhaseStarted(vehicle);
@@ -166,7 +168,7 @@ public class PlayerController : MonoBehaviour
         var vehicle = CurrentPlayerVehicle;
         if (vehicle != null)
         {
-            uiCoordinator.ShowSeatDetails(seatIndex, availableSeats, vehicle, OnSkillSelected);
+            uiCoordinator.ShowSeatDetails(seatIndex, availableSeats, vehicle, OnSkillSelected, OnConsumableSelected);
         }
     }
 
@@ -252,17 +254,19 @@ public class PlayerController : MonoBehaviour
             CausalSource = selectedSkill.name
         };
 
+        if (selectedSkill is ConsumableGatedSkill gated && !vehicle.TrySpendConsumable(gated.requiredConsumable, ctx.CausalSource))
+            return;
+
         vehicle.ExecuteSkill(ctx, selectedSkill);
 
         currentSeat?.SpendAction(selectedSkill.actionCost);
 
-        uiCoordinator.RefreshAfterSkill(availableSeats, currentSeat, vehicle, OnSeatSelected, OnSkillSelected);
+        uiCoordinator.RefreshAfterSkill(availableSeats, currentSeat, vehicle, OnSeatSelected, OnSkillSelected, OnConsumableSelected);
         uiCoordinator.UpdateTurnStatusDisplay(vehicle);
         ClearPlayerSelections();
     }
 
     #endregion
-
 
     #region UI Callbacks
 
@@ -311,7 +315,136 @@ public class PlayerController : MonoBehaviour
 
     #endregion
 
-    #region Helpers & Utilities
+    #region Consumable Execution
+
+    public void OnConsumableSelected(int consumableIndex)
+    {
+        if (currentSeat == null) return;
+
+        var vehicle = CurrentPlayerVehicle;
+        if (vehicle == null) return;
+
+        var available = vehicle.GetAvailableConsumables(currentSeat);
+        if (consumableIndex < 0 || consumableIndex >= available.Count) return;
+
+        selectedConsumable = available[consumableIndex].template as Consumable;
+        if (selectedConsumable == null) return;
+
+        switch (selectedConsumable.targetingMode)
+        {
+            case TargetingMode.Self:
+                selectedTarget = vehicle;
+                selectedTargetComponent = null;
+                ExecuteConsumable();
+                break;
+
+            case TargetingMode.SourceComponent:
+                uiCoordinator.TargetSelection.ShowSourceComponentSelection(vehicle, OnConsumableSourceComponentSelected);
+                break;
+
+            case TargetingMode.Enemy:
+                List<Vehicle> validTargets = turnController.GetValidTargets(vehicle);
+                uiCoordinator.TargetSelection.ShowTargetSelection(validTargets, OnConsumableTargetSelected, OnTargetCancelClicked);
+                break;
+
+            case TargetingMode.EnemyComponent:
+                validTargets = turnController.GetValidTargets(vehicle);
+                uiCoordinator.TargetSelection.ShowTargetSelection(validTargets, OnConsumableTargetSelected, OnTargetCancelClicked);
+                break;
+
+            case TargetingMode.Lane:
+                if (vehicle.currentStage != null)
+                    uiCoordinator.TargetSelection.ShowLaneSelection(
+                        vehicle.currentStage.lanes, OnConsumableLaneSelected, OnTargetCancelClicked);
+                break;
+
+            case TargetingMode.OwnLane:
+                selectedTarget = vehicle.currentLane;
+                selectedTargetComponent = null;
+                ExecuteConsumable();
+                break;
+        }
+    }
+
+    private void OnConsumableTargetSelected(Vehicle targetVehicle)
+    {
+        selectedTarget = targetVehicle;
+        uiCoordinator.TargetSelection.Hide();
+
+        if (selectedConsumable != null && selectedConsumable.targetingMode == TargetingMode.EnemyComponent)
+            uiCoordinator.TargetSelection.ShowComponentSelection(targetVehicle, OnConsumableComponentSelected);
+        else
+            ExecuteConsumable();
+    }
+
+    private void OnConsumableComponentSelected(VehicleComponent component)
+    {
+        selectedTargetComponent = component;
+        uiCoordinator.TargetSelection.Hide();
+        ExecuteConsumable();
+    }
+
+    private void OnConsumableSourceComponentSelected(VehicleComponent component)
+    {
+        var vehicle = CurrentPlayerVehicle;
+        selectedTarget = vehicle;
+        selectedTargetComponent = component;
+        uiCoordinator.TargetSelection.Hide();
+        ExecuteConsumable();
+    }
+
+    private void OnConsumableLaneSelected(StageLane lane)
+    {
+        selectedTarget = lane;
+        uiCoordinator.TargetSelection.Hide();
+        ExecuteConsumable();
+    }
+
+    private void ExecuteConsumable()
+    {
+        if (selectedConsumable == null) return;
+
+        var vehicle = CurrentPlayerVehicle;
+        if (vehicle == null) return;
+
+        IRollTarget target = selectedTargetComponent != null ? (IRollTarget)selectedTargetComponent
+            : selectedTarget != null ? selectedTarget
+            : vehicle;
+
+        RollActor sourceActor = null;
+        if (currentSeat != null)
+            sourceActor = new CharacterActor(currentSeat);
+
+        var ctx = new RollContext
+        {
+            SourceActor = sourceActor,
+            Target = target,
+            CausalSource = selectedConsumable.name
+        };
+
+        bool valid = ConsumableValidator.Validate(ctx, selectedConsumable);
+        if (!valid)
+        {
+            ClearPlayerSelections();
+            return;
+        }
+
+        if (!vehicle.TrySpendConsumable(selectedConsumable, ctx.CausalSource))
+        {
+            ClearPlayerSelections();
+            return;
+        }
+        RollNodeExecutor.Execute(selectedConsumable.onUseNode, ctx);
+        currentSeat?.SpendAction(selectedConsumable.actionCost);
+
+        uiCoordinator.RefreshAfterSkill(availableSeats, currentSeat, vehicle, OnSeatSelected, OnSkillSelected, OnConsumableSelected);
+        uiCoordinator.UpdateTurnStatusDisplay(vehicle);
+        ClearPlayerSelections();
+    }
+
+    #endregion
+
+    #region Helpers
 
     private void ClearPlayerSelections()
     {
@@ -319,6 +452,7 @@ public class PlayerController : MonoBehaviour
         selectedSkillSourceComponent = null;
         selectedTarget = null;
         selectedTargetComponent = null;
+        selectedConsumable = null;
     }
 
     #endregion

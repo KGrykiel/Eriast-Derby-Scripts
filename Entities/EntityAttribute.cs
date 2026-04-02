@@ -28,6 +28,7 @@ namespace Assets.Scripts.Entities
         // Component stats
         ComponentSpace,
         PowerDraw,
+        CargoCapacity,
 
         // Resistances
         MagicResistance,

@@ -27,6 +27,10 @@ namespace Assets.Scripts.Entities.Vehicles.VehicleComponents.ComponentTypes
         [Tooltip("Aerodynamic drag coefficient as percentage (10 = 0.10, 15 = 0.15). Higher = more drag.")]
         private int baseDragCoefficientPercent = 10;
 
+        [Header("Cargo")]
+        [Tooltip("Bulk units the chassis provides without a dedicated cargo bay. Heavier chassis have higher values.")]
+        public int baseCargoCapacity = 0;
+
         /// <summary>
         /// Default values for convenience, to be edited manually.
         /// </summary>
@@ -69,6 +73,7 @@ namespace Assets.Scripts.Entities.Vehicles.VehicleComponents.ComponentTypes
                 EntityAttribute.Mobility => baseMobility,
                 EntityAttribute.Integrity => baseIntegrity + GetIntegrityDamagePenalty(),
                 EntityAttribute.DragCoefficient => baseDragCoefficientPercent,
+                EntityAttribute.CargoCapacity => baseCargoCapacity,
                 _ => base.GetBaseValue(attribute)
             };
         }
@@ -105,6 +110,10 @@ namespace Assets.Scripts.Entities.Vehicles.VehicleComponents.ComponentTypes
 
             int modifiedDrag = GetDragCoefficientPercent();
             stats.Add(VehicleComponentUI.DisplayStat.WithTooltip("Drag", "DRAG", EntityAttribute.DragCoefficient, baseDragCoefficientPercent, modifiedDrag, "%"));
+
+            int modifiedCargoCapacity = GetCargoCapacity();
+            if (baseCargoCapacity > 0 || modifiedCargoCapacity > 0)
+                stats.Add(VehicleComponentUI.DisplayStat.WithTooltip("Cargo", "CRGO", EntityAttribute.CargoCapacity, baseCargoCapacity, modifiedCargoCapacity));
 
             return stats;
         }

@@ -17,6 +17,7 @@ using Assets.Scripts.Combat.Rolls.Advantage;
 using Assets.Scripts.Effects;
 using Assets.Scripts.Effects.EffectTypes;
 using Assets.Scripts.Entities.Vehicles.VehicleComponents;
+using Assets.Scripts.Consumables;
 
 namespace Assets.Scripts.Skills
 {
@@ -69,9 +70,24 @@ namespace Assets.Scripts.Skills
             CreateSkillAsset(SkillCategory.Custom, "NewCustomSkill");
         }
 
-        private static void CreateSkillAsset(SkillCategory category, string defaultName)
+        [MenuItem(MenuPath + "Weapon Attack Skill")]
+        public static void CreateWeaponAttackSkill()
         {
-            Skill skill = ScriptableObject.CreateInstance<Skill>();
+            CreateSkillAsset<WeaponAttackSkill>(SkillCategory.Attack, "NewWeaponAttackSkill");
+        }
+
+        [MenuItem(MenuPath + "Consumable Gated Skill")]
+        public static void CreateConsumableGatedSkill()
+        {
+            CreateSkillAsset<ConsumableGatedSkill>(SkillCategory.Custom, "NewConsumableGatedSkill");
+        }
+
+        private static void CreateSkillAsset(SkillCategory category, string defaultName)
+            => CreateSkillAsset<Skill>(category, defaultName);
+
+        private static void CreateSkillAsset<T>(SkillCategory category, string defaultName) where T : Skill
+        {
+            T skill = ScriptableObject.CreateInstance<T>();
             skill.category = category;
             ApplyPresets(skill);
 
@@ -209,48 +225,65 @@ namespace Assets.Scripts.Skills
         // First run: drag generated assets to their prefabs once. Subsequent regenerations overwrite the
         // same .asset file (same GUID) so all prefab references are preserved automatically.
 
-        private const string SkillsFolder = "Assets/Content/Skills";
+        private const string SkillsFolder          = "Assets/Content/Skills";
+        private const string AttackFolder           = SkillsFolder + "/Attack";
+        private const string AoEFolder              = SkillsFolder + "/AoE";
+        private const string BuffFolder             = SkillsFolder + "/Buff";
+        private const string DebuffFolder           = SkillsFolder + "/Debuff";
+        private const string UtilityFolder          = SkillsFolder + "/Utility";
+        private const string WeaponAttackFolder     = SkillsFolder + "/WeaponAttack";
+        private const string ConsumableGatedFolder  = SkillsFolder + "/ConsumableGated";
 
         [MenuItem("Assets/Racing/Regenerate All Skills")]
         public static void RegenerateAllSkills()
         {
-            System.IO.Directory.CreateDirectory(SkillsFolder);
+            foreach (string folder in new[] { AttackFolder, AoEFolder, BuffFolder, DebuffFolder, UtilityFolder, WeaponAttackFolder, ConsumableGatedFolder })
+                System.IO.Directory.CreateDirectory(folder);
 
-            RegenerateSkill(DefineCannonShot());
-            RegenerateSkill(DefineEmergencyPatch());
-            RegenerateSkill(DefineOverclock());
-            RegenerateSkill(DefineStabilityDrain());
-            RegenerateSkill(DefineArmorPierce());
-            RegenerateSkill(DefineHarpoon());
-            RegenerateSkill(DefineTargetingLock());
-            RegenerateSkill(DefineRecoilCannon());
-            RegenerateSkill(DefineRammingContest());
-            RegenerateSkill(DefineAimedShot());
-            RegenerateSkill(DefineIncendiaryShot());
-            RegenerateSkill(DefineWebShot());
-            RegenerateSkill(DefineHarden());
-            RegenerateSkill(DefineStimPack());
-            RegenerateSkill(DefineEMPStrike());
-            RegenerateSkill(DefineLancerStrike());
+            // Attack
+            RegenerateSkill(DefineCannonShot(),      AttackFolder);
+            RegenerateSkill(DefineArmorPierce(),     AttackFolder);
+            RegenerateSkill(DefineHarpoon(),         AttackFolder);
+            RegenerateSkill(DefineTargetingLock(),   AttackFolder);
+            RegenerateSkill(DefineRecoilCannon(),    AttackFolder);
+            RegenerateSkill(DefineRammingContest(),  AttackFolder);
+            RegenerateSkill(DefineAimedShot(),       AttackFolder);
+            RegenerateSkill(DefineIncendiaryShot(),  AttackFolder);
+            RegenerateSkill(DefineWebShot(),         AttackFolder);
+            RegenerateSkill(DefineEMPStrike(),       AttackFolder);
+            RegenerateSkill(DefineLancerStrike(),    AttackFolder);
+            RegenerateSkill(DefineConcussionBlast(), AttackFolder);
+            RegenerateSkill(DefineRapidFire(),       AttackFolder);
 
-            // AoE skills
-            RegenerateSkill(DefineShrapnelBurst());
-            RegenerateSkill(DefineNapalmSpray());
-            RegenerateSkill(DefineShockwave());
-            RegenerateSkill(DefineOilSlick());
-            RegenerateSkill(DefineSelfDestruct());
+            // AoE
+            RegenerateSkill(DefineShrapnelBurst(), AoEFolder);
+            RegenerateSkill(DefineNapalmSpray(),   AoEFolder);
+            RegenerateSkill(DefineShockwave(),     AoEFolder);
+            RegenerateSkill(DefineOilSlick(),      AoEFolder);
+            RegenerateSkill(DefineSelfDestruct(),  AoEFolder);
+            RegenerateSkill(DefineFireball(),      AoEFolder);
+            RegenerateSkill(DefineEMPPulse(),      AoEFolder);
 
-            // Worked examples from TargettingRefactor.md
-            RegenerateSkill(DefineFireball());
-            RegenerateSkill(DefineEMPPulse());
-            RegenerateSkill(DefineSmokeScreen());
-            RegenerateSkill(DefineFeedbackLoop());
+            // Buff
+            RegenerateSkill(DefineOverclock(), BuffFolder);
+            RegenerateSkill(DefineHarden(),    BuffFolder);
+            RegenerateSkill(DefineStimPack(),  BuffFolder);
 
-            // Splash attack examples
-            RegenerateSkill(DefineConcussionBlast());
+            // Debuff
+            RegenerateSkill(DefineStabilityDrain(), DebuffFolder);
+            RegenerateSkill(DefineSmokeScreen(),    DebuffFolder);
+            RegenerateSkill(DefineFeedbackLoop(),   DebuffFolder);
 
-            // Multi-hit examples
-            RegenerateSkill(DefineRapidFire());
+            // Utility
+            RegenerateSkill(DefineEmergencyPatch(), UtilityFolder);
+
+            // Weapon attack
+            RegenerateSkill(DefineRifleShot(), WeaponAttackFolder);
+            RegenerateSkill(DefineBurstFire(), WeaponAttackFolder);
+
+            // Consumable-gated
+            RegenerateSkill(DefineMolotovThrow(), ConsumableGatedFolder);
+            RegenerateSkill(DefineFieldRepair(),  ConsumableGatedFolder);
 
             AssetDatabase.SaveAssets();
             Debug.Log("[SkillCreator] All skills regenerated.");
@@ -530,6 +563,53 @@ namespace Assets.Scripts.Skills
                 energyCost: 2,
                 actionCost: ActionType.Action);
 
+        // ==================== WEAPON ATTACK SKILLS ====================
+
+        // Pattern: standard weapon attack — ammo-eligible, gains onHitNode from loaded AmmunitionType.
+        private static WeaponAttackSkill DefineRifleShot()
+            => Make<WeaponAttackSkill>("Rifle Shot",
+                Attack(FX(Dmg(1, 8, 2, DamageType.Piercing))),
+                TargetingMode.EnemyComponent,
+                energyCost: 1,
+                actionCost: ActionType.Action);
+
+        // Pattern: rapid weapon burst — three independent attack rolls, each ammo-eligible.
+        private static WeaponAttackSkill DefineBurstFire()
+            => Make<WeaponAttackSkill>("Burst Fire",
+                FanOut(new RepeatTargetResolver(3),
+                    Attack(FX(Dmg(1, 6, 0, DamageType.Piercing)))),
+                TargetingMode.EnemyComponent,
+                energyCost: 3,
+                actionCost: ActionType.Action);
+
+        // ==================== CONSUMABLE-GATED SKILLS ====================
+
+        // Pattern: consumable as fuel — requires one Incendiary Flask; fires the skill effects on use.
+        private static ConsumableGatedSkill DefineMolotovThrow()
+        {
+            var skill = Make<ConsumableGatedSkill>("Molotov Throw",
+                AlwaysApply(FX(
+                    Dmg(2, 6, 0, DamageType.Fire, EffectTarget.SelectedTarget),
+                    Status(LoadEntityCondition("Burning"), EffectTarget.SelectedTarget))),
+                TargetingMode.Enemy,
+                energyCost: 0,
+                actionCost: ActionType.Action);
+            skill.requiredConsumable = LoadConsumable("Incendiary Flask");
+            return skill;
+        }
+
+        // Pattern: consumable as fuel — requires one Repair Kit; heals the chosen component on use.
+        private static ConsumableGatedSkill DefineFieldRepair()
+        {
+            var skill = Make<ConsumableGatedSkill>("Field Repair",
+                AlwaysApply(FX(Heal(10, EffectTarget.SourceComponent))),
+                TargetingMode.SourceComponent,
+                energyCost: 0,
+                actionCost: ActionType.BonusAction);
+            skill.requiredConsumable = LoadConsumable("Repair Kit");
+            return skill;
+        }
+
         // Part 3 (ApplyCharacterConditionEffect pending): apply Inspired to the active crew seat.
         // private static Skill DefineBattleCry()
         //     => Make("Battle Cry",
@@ -537,9 +617,9 @@ namespace Assets.Scripts.Skills
         //         TargetingMode.Self,
         //         energyCost: 2);
 
-        private static void RegenerateSkill(Skill definition)
+        private static void RegenerateSkill(Skill definition, string folder)
         {
-            string path = $"{SkillsFolder}/{definition.name}.asset";
+            string path = $"{folder}/{definition.name}.asset";
             var existing = AssetDatabase.LoadAssetAtPath<Skill>(path);
             if (existing != null)
             {
@@ -557,6 +637,9 @@ namespace Assets.Scripts.Skills
 
         private static CharacterCondition LoadCharacterCondition(string name)
             => AssetDatabase.LoadAssetAtPath<CharacterCondition>($"{ConditionCreator.ConditionsFolder}/{name}.asset");
+
+        private static ConsumableBase LoadConsumable(string name)
+            => AssetDatabase.LoadAssetAtPath<ConsumableBase>($"{ConsumableCreator.ConsumablesFolder}/{name}.asset");
 
         // ==================== BUILDER METHODS ====================
         // Mirrors TestSkillFactory — kept private here to avoid an editor→test assembly dependency.
@@ -702,14 +785,14 @@ namespace Assets.Scripts.Skills
                 onSuccessChain = winChain
             };
 
-        private static Skill Make(
+        private static T Make<T>(
             string name,
             RollNode rollNode,
             TargetingMode targeting = TargetingMode.Enemy,
             int energyCost = 1,
-            ActionType actionCost = ActionType.Action)
+            ActionType actionCost = ActionType.Action) where T : Skill
         {
-            var skill = ScriptableObject.CreateInstance<Skill>();
+            var skill = ScriptableObject.CreateInstance<T>();
             skill.name = name;
             skill.energyCost = energyCost;
             skill.actionCost = actionCost;
@@ -717,6 +800,14 @@ namespace Assets.Scripts.Skills
             skill.targetingMode = targeting;
             return skill;
         }
+
+        private static Skill Make(
+            string name,
+            RollNode rollNode,
+            TargetingMode targeting = TargetingMode.Enemy,
+            int energyCost = 1,
+            ActionType actionCost = ActionType.Action)
+            => Make<Skill>(name, rollNode, targeting, energyCost, actionCost);
     }
      #endregion
 }

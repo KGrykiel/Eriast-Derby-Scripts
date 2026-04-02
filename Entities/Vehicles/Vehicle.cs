@@ -1,6 +1,7 @@
 using UnityEngine;
 using System.Collections.Generic;
 using System.Linq;
+using Assets.Scripts.Consumables;
 using Assets.Scripts.Entities.Vehicles.VehicleComponents.ComponentTypes;
 using Assets.Scripts.Managers;
 using Assets.Scripts.Stages;
@@ -40,12 +41,17 @@ namespace Assets.Scripts.Entities.Vehicles
                  "Each seat references components it can operate and has an assigned character.")]
         public List<VehicleSeat> seats = new();
 
+        [Header("Inventory")]
+        [Tooltip("Consumable stacks the vehicle starts with. Total bulk must not exceed the chassis cargo capacity.")]
+        public List<ConsumableStack> inventory = new();
+
         [Header("Vehicle Components")]
         public ChassisComponent chassis => componentCoordinator?.Chassis;
         public PowerCoreComponent powerCore => componentCoordinator?.PowerCore;
 
         // Coordinators (handle distinct concerns)
         private VehicleComponentCoordinator componentCoordinator;
+        private VehicleInventoryCoordinator inventoryCoordinator;
 
         public VehicleStatus Status { get; private set; } = VehicleStatus.Active;
 
@@ -59,6 +65,8 @@ namespace Assets.Scripts.Entities.Vehicles
 
             foreach (var seat in seats)
                 seat.ParentVehicle = this;
+
+            inventoryCoordinator = new VehicleInventoryCoordinator(this);
         }
 
         void OnValidate()
@@ -145,6 +153,20 @@ namespace Assets.Scripts.Entities.Vehicles
         {
             return seats.Where(s => s != null && s.CanAct()).ToList();
         }
+
+        // ==================== CONSUMABLE INVENTORY ====================
+
+        public IReadOnlyList<ConsumableStack> GetConsumables() => inventoryCoordinator.GetConsumables();
+
+        public IReadOnlyList<ConsumableStack> GetAvailableConsumables(VehicleSeat seat) => inventoryCoordinator.GetAvailableConsumables(seat);
+
+        public bool HasChargesFor(ConsumableBase template) => inventoryCoordinator.HasChargesFor(template);
+
+        public bool TrySpendConsumable(ConsumableBase template, string causalSource = "") => inventoryCoordinator.TrySpendConsumable(template, causalSource);
+
+        public void RestoreConsumable(ConsumableBase template, int amount, string causalSource = "") => inventoryCoordinator.RestoreConsumable(template, amount, causalSource);
+
+        public void TrimInventoryToCapacity() => inventoryCoordinator.TrimInventoryToCapacity();
 
         // ==================== STATE QUERIES ====================
 
@@ -294,7 +316,19 @@ namespace Assets.Scripts.Entities.Vehicles
                 sourceComponent.NotifyConditionTrigger(RemovalTrigger.OnSkillUsed);
 
             // Execute via RollNodeExecutor
-            return RollNodeExecutor.Execute(skill.rollNode, ctx);
+            bool result = RollNodeExecutor.Execute(skill.rollNode, ctx);
+
+            if (result && skill is WeaponAttackSkill)
+            {
+                WeaponComponent weapon = ctx.SourceActor?.GetEntity() as WeaponComponent;
+                if (weapon != null && weapon.loadedAmmunition != null && HasChargesFor(weapon.loadedAmmunition))
+                {
+                    RollNodeExecutor.Execute(weapon.loadedAmmunition.onHitNode, ctx);
+                    TrySpendConsumable(weapon.loadedAmmunition, ctx.CausalSource);
+                }
+            }
+
+            return result;
         }
 
         private bool CanAffordSkill(Skill skill)

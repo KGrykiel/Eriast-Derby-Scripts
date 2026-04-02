@@ -1,4 +1,5 @@
-﻿using Assets.Scripts.Core;
+﻿using Assets.Scripts.Consumables;
+using Assets.Scripts.Core;
 using Assets.Scripts.Combat.Damage;
 using System.Collections.Generic;
 using UnityEngine;
@@ -17,30 +18,25 @@ namespace Assets.Scripts.Entities.Vehicles.VehicleComponents.ComponentTypes
         [Tooltip("Attack bonus (for to-hit rolls) (base value before modifiers)")]
         private int baseAttackBonus = 0;
 
-        [SerializeField]
-        [Tooltip("Maximum ammunition count (-1 = unlimited) (base value before modifiers)")]
-        private int baseMaxAmmo = -1;
+        [Header("Ammunition")]
+        [Tooltip("Weapon tags used for ammo compatibility checks, e.g. [\"Ranged\", \"Ballistic\"].")]
+        public List<string> weaponTags = new();
 
-        [Header("Runtime State")]
-        [Tooltip("Current ammunition remaining")]
-        public int currentAmmo;
+        [Tooltip("Currently loaded ammunition type. Null = standard/none.")]
+        public AmmunitionType loadedAmmunition;
 
         // ==================== STAT ACCESSORS ====================
 
-        public int GetCurrentAmmo() => currentAmmo;
         public int GetBaseAttackBonus() => baseAttackBonus;
-        public int GetBaseMaxAmmo() => baseMaxAmmo;
 
         public DamageFormula GetDamageFormula() => baseDamageFormula;
         public int GetAttackBonus() => StatCalculator.GatherAttributeValue(this, EntityAttribute.AttackBonus);
-        public int GetMaxAmmo() => StatCalculator.GatherAttributeValue(this, EntityAttribute.Ammo);
 
         public override int GetBaseValue(EntityAttribute attribute)
         {
             return attribute switch
             {
                 EntityAttribute.AttackBonus => baseAttackBonus,
-                EntityAttribute.Ammo => baseMaxAmmo,
                 _ => base.GetBaseValue(attribute)
             };
         }
@@ -68,7 +64,6 @@ namespace Assets.Scripts.Entities.Vehicles.VehicleComponents.ComponentTypes
         {
             componentType = ComponentType.Weapon;
             roleType = RoleType.Gunner;
-            currentAmmo = GetMaxAmmo();
         }
 
         public override List<VehicleComponentUI.DisplayStat> GetDisplayStats()
@@ -86,12 +81,6 @@ namespace Assets.Scripts.Entities.Vehicles.VehicleComponents.ComponentTypes
 
             int modifiedAttackBonus = GetAttackBonus();
             stats.Add(VehicleComponentUI.DisplayStat.WithTooltip("Attack Bonus", "HIT", EntityAttribute.AttackBonus, baseAttackBonus, modifiedAttackBonus));
-
-            if (baseMaxAmmo != -1)
-            {
-                int modifiedMaxAmmo = GetMaxAmmo();
-                stats.Add(VehicleComponentUI.DisplayStat.BarWithTooltip("Ammo", "AMMO", EntityAttribute.Ammo, currentAmmo, baseMaxAmmo, modifiedMaxAmmo));
-            }
 
             stats.AddRange(base.GetDisplayStats());
 

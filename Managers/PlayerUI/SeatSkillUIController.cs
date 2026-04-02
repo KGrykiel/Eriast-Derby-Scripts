@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using Assets.Scripts.Consumables;
 using Assets.Scripts.Entities.Vehicles;
 using Assets.Scripts.Skills;
 using TMPro;
@@ -13,6 +14,7 @@ namespace Assets.Scripts.Managers.PlayerUI
         private readonly PlayerUIReferences ui;
         private readonly List<Button> seatTabButtons = new();
         private readonly List<Button> skillButtons = new();
+        private readonly List<Button> consumableButtons = new();
 
         public SeatSkillUIController(PlayerUIReferences uiReferences)
         {
@@ -78,28 +80,22 @@ namespace Assets.Scripts.Managers.PlayerUI
             ui.currentRoleText.text = $"<b>{currentSeat.seatName}</b> ({characterName}) {status}";
         }
         
-        public void ShowSkillSelection(VehicleSeat currentSeat, Vehicle playerVehicle, Action<int> onSkillSelected)
+        public void ShowSkillSelection(VehicleSeat currentSeat, Vehicle playerVehicle, Action<int> onSkillSelected, Action<int> onConsumableSelected)
         {
             if (ui.skillButtonContainer == null || ui.skillButtonPrefab == null || currentSeat == null) return;
 
             List<Skill> availableSkills = new();
-
             foreach (var component in currentSeat.GetOperationalComponents())
                 availableSkills.AddRange(component.GetAllSkills());
-
             availableSkills.AddRange(currentSeat.GetPersonalAbilities());
-
-            if (availableSkills.Count == 0)
-            {
-                Debug.LogWarning($"[SeatSkillUIController] No available skills for seat {currentSeat.seatName}");
-                return;
-            }
 
             while (skillButtons.Count < availableSkills.Count)
             {
                 Button btn = UnityEngine.Object.Instantiate(ui.skillButtonPrefab, ui.skillButtonContainer);
                 skillButtons.Add(btn);
             }
+
+            int currentEnergy = playerVehicle.powerCore != null ? playerVehicle.powerCore.currentEnergy : 0;
 
             for (int i = 0; i < skillButtons.Count; i++)
             {
@@ -119,12 +115,12 @@ namespace Assets.Scripts.Managers.PlayerUI
                     var textComponent = skillButtons[i].GetComponentInChildren<TextMeshProUGUI>();
                     if (textComponent != null)
                         textComponent.text = skillText;
-                    
-                    int currentEnergy = playerVehicle.powerCore != null ? playerVehicle.powerCore.currentEnergy : 0;
+
                     bool canAfford = currentEnergy >= skill.energyCost;
-                    bool canUse = canAfford && currentSeat.CanSpendAction(skill.actionCost);
+                    bool hasRequiredConsumable = !(skill is ConsumableGatedSkill gated) || playerVehicle.HasChargesFor(gated.requiredConsumable);
+                    bool canUse = canAfford && currentSeat.CanSpendAction(skill.actionCost) && hasRequiredConsumable;
                     skillButtons[i].interactable = canUse;
-                    
+
                     int skillIndex = i;
                     skillButtons[i].onClick.RemoveAllListeners();
                     skillButtons[i].onClick.AddListener(() => onSkillSelected?.Invoke(skillIndex));
@@ -132,6 +128,42 @@ namespace Assets.Scripts.Managers.PlayerUI
                 else
                 {
                     skillButtons[i].gameObject.SetActive(false);
+                }
+            }
+
+            var availableConsumables = playerVehicle.GetAvailableConsumables(currentSeat);
+
+            while (consumableButtons.Count < availableConsumables.Count)
+            {
+                Button btn = UnityEngine.Object.Instantiate(ui.skillButtonPrefab, ui.skillButtonContainer);
+                consumableButtons.Add(btn);
+            }
+
+            for (int i = 0; i < consumableButtons.Count; i++)
+            {
+                if (i < availableConsumables.Count)
+                {
+                    ConsumableStack stack = availableConsumables[i];
+                    Consumable consumable = stack.template as Consumable;
+
+                    consumableButtons[i].gameObject.SetActive(true);
+
+                    string label = $"{stack.template.name} ({stack.charges})";
+                    var textComponent = consumableButtons[i].GetComponentInChildren<TextMeshProUGUI>();
+                    if (textComponent != null)
+                        textComponent.text = label;
+
+                    bool hasCharges = stack.charges > 0;
+                    bool canUse = hasCharges && (consumable == null || currentSeat.CanSpendAction(consumable.actionCost));
+                    consumableButtons[i].interactable = canUse;
+
+                    int consumableIndex = i;
+                    consumableButtons[i].onClick.RemoveAllListeners();
+                    consumableButtons[i].onClick.AddListener(() => onConsumableSelected?.Invoke(consumableIndex));
+                }
+                else
+                {
+                    consumableButtons[i].gameObject.SetActive(false);
                 }
             }
         }

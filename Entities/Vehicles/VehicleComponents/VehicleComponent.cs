@@ -87,6 +87,7 @@ namespace Assets.Scripts.Entities.Vehicles.VehicleComponents
 
         public virtual int GetComponentSpace() => StatCalculator.GatherAttributeValue(this, EntityAttribute.ComponentSpace);
         public virtual int GetPowerDrawPerTurn() => StatCalculator.GatherAttributeValue(this, EntityAttribute.PowerDraw);
+        public virtual int GetCargoCapacity() => StatCalculator.GatherAttributeValue(this, EntityAttribute.CargoCapacity);
 
         public override int GetBaseValue(EntityAttribute attribute)
         {
@@ -274,6 +275,8 @@ namespace Assets.Scripts.Entities.Vehicles.VehicleComponents
         {
             RemoveProvidedModifiers(parentVehicle);
             RemoveProvidedAdvantageGrants(parentVehicle);
+            if (parentVehicle != null)
+                parentVehicle.TrimInventoryToCapacity();
         }
 
         protected virtual void OnComponentDisabled()

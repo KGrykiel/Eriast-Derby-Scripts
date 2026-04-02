@@ -24,7 +24,8 @@ namespace Assets.Scripts.Managers.PlayerUI
             List<VehicleSeat> availableSeats, 
             Vehicle vehicle,
             Action<int> onSeatSelected,
-            Action<int> onSkillSelected)
+            Action<int> onSkillSelected,
+            Action<int> onConsumableSelected)
         {
             if (ui.playerTurnPanel != null)
                 ui.playerTurnPanel.SetActive(true);
@@ -33,22 +34,23 @@ namespace Assets.Scripts.Managers.PlayerUI
                 ui.endTurnButton.interactable = true;
 
             seatSkillUI.ShowSeatTabs(availableSeats, onSeatSelected);
-            
+
             if (availableSeats.Count > 0)
-                ShowSeatDetails(0, availableSeats, vehicle, onSkillSelected);
+                ShowSeatDetails(0, availableSeats, vehicle, onSkillSelected, onConsumableSelected);
         }
 
         public void ShowSeatDetails(
             int seatIndex, 
             List<VehicleSeat> availableSeats, 
             Vehicle vehicle, 
-            Action<int> onSkillSelected)
+            Action<int> onSkillSelected,
+            Action<int> onConsumableSelected)
         {
             if (seatIndex < 0 || seatIndex >= availableSeats.Count) return;
 
             VehicleSeat seat = availableSeats[seatIndex];
             seatSkillUI.UpdateCurrentSeatDisplay(seat);
-            seatSkillUI.ShowSkillSelection(seat, vehicle, onSkillSelected);
+            seatSkillUI.ShowSkillSelection(seat, vehicle, onSkillSelected, onConsumableSelected);
         }
         
         public void RefreshAfterSkill(
@@ -56,14 +58,15 @@ namespace Assets.Scripts.Managers.PlayerUI
             VehicleSeat currentSeat,
             Vehicle vehicle,
             Action<int> onSeatSelected,
-            Action<int> onSkillSelected)
+            Action<int> onSkillSelected,
+            Action<int> onConsumableSelected)
         {
             seatSkillUI.ShowSeatTabs(availableSeats, onSeatSelected);
 
             if (currentSeat != null)
             {
                 seatSkillUI.UpdateCurrentSeatDisplay(currentSeat);
-                seatSkillUI.ShowSkillSelection(currentSeat, vehicle, onSkillSelected);
+                seatSkillUI.ShowSkillSelection(currentSeat, vehicle, onSkillSelected, onConsumableSelected);
             }
         }
         

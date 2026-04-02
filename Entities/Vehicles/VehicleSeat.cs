@@ -6,6 +6,7 @@ using Assets.Scripts.Characters;
 using Assets.Scripts.Combat.Rolls.Advantage;
 using Assets.Scripts.Conditions;
 using Assets.Scripts.Conditions.CharacterConditions;
+using Assets.Scripts.Consumables;
 using Assets.Scripts.Effects;
 using Assets.Scripts.Entities.Vehicles.VehicleComponents;
 using Assets.Scripts.Modifiers;
@@ -33,6 +34,10 @@ namespace Assets.Scripts.Entities.Vehicles
         [Tooltip("Character currently occupying this seat. Drag PlayerCharacter ScriptableObject here. " +
                  "Leave empty for uncrewed/AI-controlled seats.")]
         [SerializeField] private Character assignedCharacter;
+
+        [Header("Consumable Access")]
+        [Tooltip("Which consumable categories this seat's occupant can physically use.")]
+        public ConsumableAccess consumableAccess = ConsumableAccess.None;
 
         // ==================== VEHICLE REFERENCE ====================
 

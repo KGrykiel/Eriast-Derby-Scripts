@@ -31,6 +31,7 @@ namespace Assets.Scripts.Combat.Logging
             LogEntityConditions(action);
             LogRestorations(action);
             LogCharacterConditions(action);
+            LogConsumables(action);
         }
 
         // ==================== ATTACK ROLL LOGGING ====================
@@ -626,6 +627,61 @@ namespace Assets.Scripts.Combat.Logging
                 $"{targetName}'s {evt.Removed.template.effectName} removed by trigger ({evt.Trigger})");
 
             logEvt.WithMetadata("effectBreakdown", CombatFormatter.FormatCharacterConditionTooltip(evt.Removed));
+        }
+
+        // ==================== CONSUMABLE LOGGING ====================
+
+        private static void LogConsumables(CombatAction action)
+        {
+            foreach (var evt in action.Get<ConsumableSpentEvent>())
+                LogConsumableSpent(evt);
+
+            foreach (var evt in action.Get<ConsumableRestoredEvent>())
+                LogConsumableRestored(evt);
+
+            foreach (var evt in action.Get<ConsumableUnavailableEvent>())
+                LogConsumableUnavailable(evt);
+        }
+
+        private static void LogConsumableSpent(ConsumableSpentEvent evt)
+        {
+            bool isPlayer = evt.Vehicle != null && evt.Vehicle.controlType == ControlType.Player;
+            string vehicleName = evt.Vehicle != null ? evt.Vehicle.vehicleName : "Unknown";
+            string suffix = evt.ChargesRemaining == 0
+                ? " (last charge)"
+                : $" ({evt.ChargesRemaining} remaining)";
+
+            RaceHistory.Log(
+                EventType.Resource,
+                isPlayer ? EventImportance.Medium : EventImportance.Low,
+                $"{vehicleName} used {evt.Template.name}{suffix}",
+                evt.Vehicle != null ? evt.Vehicle.currentStage : null,
+                evt.Vehicle);
+        }
+
+        private static void LogConsumableRestored(ConsumableRestoredEvent evt)
+        {
+            bool isPlayer = evt.Vehicle != null && evt.Vehicle.controlType == ControlType.Player;
+            string vehicleName = evt.Vehicle != null ? evt.Vehicle.vehicleName : "Unknown";
+
+            RaceHistory.Log(
+                EventType.Resource,
+                isPlayer ? EventImportance.Medium : EventImportance.Low,
+                $"{vehicleName} restored {evt.Amount}x {evt.Template.name} ({evt.ChargesAfter} total)",
+                evt.Vehicle != null ? evt.Vehicle.currentStage : null,
+                evt.Vehicle);
+        }
+
+        private static void LogConsumableUnavailable(ConsumableUnavailableEvent evt)
+        {
+            string vehicleName = evt.Vehicle != null ? evt.Vehicle.vehicleName : "Unknown";
+
+            RaceHistory.Log(
+                EventType.Resource,
+                EventImportance.High,
+                $"{vehicleName} tried to use {evt.Template.name} but had no charges",
+                evt.Vehicle != null ? evt.Vehicle.currentStage : null,
+                evt.Vehicle);
         }
     }
 }
