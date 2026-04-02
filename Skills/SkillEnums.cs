@@ -43,6 +43,20 @@
         /// UI: No selection screen shown.
         /// </summary>
         OwnLane,
+
+        /// <summary>
+        /// Player selects any vehicle in the same stage, including their own.
+        /// Used for: Support skills that can also be self-cast (heals, buffs).
+        /// UI: Shows all vehicles in stage including source.
+        /// </summary>
+        Any,
+
+        /// <summary>
+        /// Player selects any vehicle in the same stage including their own, then selects a component on it.
+        /// Used for: Precise support or attack skills with no faction restriction on targeting.
+        /// UI: Shows all vehicles in stage including source, then component selector.
+        /// </summary>
+        AnyComponent,
     }
 
     /// <summary>

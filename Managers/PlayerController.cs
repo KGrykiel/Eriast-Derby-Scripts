@@ -201,12 +201,12 @@ public class PlayerController : MonoBehaviour
                 break;
 
             case TargetingMode.Enemy:
-                List<Vehicle> validTargets = turnController.GetValidTargets(vehicle);
+                List<Vehicle> validTargets = turnController.GetOtherVehiclesInStage(vehicle);
                 uiCoordinator.TargetSelection.ShowTargetSelection(validTargets, OnTargetSelected, OnTargetCancelClicked);
                 break;
 
             case TargetingMode.EnemyComponent:
-                validTargets = turnController.GetValidTargets(vehicle);
+                validTargets = turnController.GetOtherVehiclesInStage(vehicle);
                 uiCoordinator.TargetSelection.ShowTargetSelection(validTargets, OnTargetSelected, OnTargetCancelClicked);
                 break;
 
@@ -220,6 +220,16 @@ public class PlayerController : MonoBehaviour
                 selectedTarget = vehicle.currentLane;
                 selectedTargetComponent = null;
                 ExecuteSkill();
+                break;
+
+            case TargetingMode.Any:
+                List<Vehicle> allTargets = turnController.GetAllTargets(vehicle);
+                uiCoordinator.TargetSelection.ShowTargetSelection(allTargets, OnTargetSelected, OnTargetCancelClicked);
+                break;
+
+            case TargetingMode.AnyComponent:
+                allTargets = turnController.GetAllTargets(vehicle);
+                uiCoordinator.TargetSelection.ShowTargetSelection(allTargets, OnTargetSelected, OnTargetCancelClicked);
                 break;
         }
     }
@@ -278,7 +288,11 @@ public class PlayerController : MonoBehaviour
         selectedTarget = targetVehicle;
         uiCoordinator.TargetSelection.Hide();
 
-        if (selectedSkill != null && selectedSkill.targetingMode == TargetingMode.EnemyComponent)
+        bool needsComponentSelection = selectedSkill != null &&
+            (selectedSkill.targetingMode == TargetingMode.EnemyComponent ||
+             selectedSkill.targetingMode == TargetingMode.AnyComponent);
+
+        if (needsComponentSelection)
             uiCoordinator.TargetSelection.ShowComponentSelection(targetVehicle, OnComponentSelected);
         else
             ExecuteSkill();
@@ -343,12 +357,12 @@ public class PlayerController : MonoBehaviour
                 break;
 
             case TargetingMode.Enemy:
-                List<Vehicle> validTargets = turnController.GetValidTargets(vehicle);
+                List<Vehicle> validTargets = turnController.GetOtherVehiclesInStage(vehicle);
                 uiCoordinator.TargetSelection.ShowTargetSelection(validTargets, OnConsumableTargetSelected, OnTargetCancelClicked);
                 break;
 
             case TargetingMode.EnemyComponent:
-                validTargets = turnController.GetValidTargets(vehicle);
+                validTargets = turnController.GetOtherVehiclesInStage(vehicle);
                 uiCoordinator.TargetSelection.ShowTargetSelection(validTargets, OnConsumableTargetSelected, OnTargetCancelClicked);
                 break;
 
@@ -363,6 +377,16 @@ public class PlayerController : MonoBehaviour
                 selectedTargetComponent = null;
                 ExecuteConsumable();
                 break;
+
+            case TargetingMode.Any:
+                List<Vehicle> allTargets = turnController.GetAllTargets(vehicle);
+                uiCoordinator.TargetSelection.ShowTargetSelection(allTargets, OnConsumableTargetSelected, OnTargetCancelClicked);
+                break;
+
+            case TargetingMode.AnyComponent:
+                allTargets = turnController.GetAllTargets(vehicle);
+                uiCoordinator.TargetSelection.ShowTargetSelection(allTargets, OnConsumableTargetSelected, OnTargetCancelClicked);
+                break;
         }
     }
 
@@ -371,7 +395,11 @@ public class PlayerController : MonoBehaviour
         selectedTarget = targetVehicle;
         uiCoordinator.TargetSelection.Hide();
 
-        if (selectedConsumable != null && selectedConsumable.targetingMode == TargetingMode.EnemyComponent)
+        bool needsComponentSelection = selectedConsumable != null &&
+            (selectedConsumable.targetingMode == TargetingMode.EnemyComponent ||
+             selectedConsumable.targetingMode == TargetingMode.AnyComponent);
+
+        if (needsComponentSelection)
             uiCoordinator.TargetSelection.ShowComponentSelection(targetVehicle, OnConsumableComponentSelected);
         else
             ExecuteConsumable();

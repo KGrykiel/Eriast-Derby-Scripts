@@ -29,6 +29,9 @@ namespace Assets.Scripts.Entities.Vehicles
 
         public ControlType controlType = ControlType.Player;
 
+        [Tooltip("Vehicles sharing the same team asset are allies. Leave null for independent vehicles.")]
+        public VehicleTeam team;
+
         [HideInInspector] public Stage currentStage;
         [HideInInspector] public Stage previousStage;
         [HideInInspector] public int progress = 0;
