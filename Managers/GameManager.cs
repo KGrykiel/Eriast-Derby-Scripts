@@ -49,7 +49,7 @@ public class GameManager : MonoBehaviour
         RaceHistory.Initialize(this);
 
         stages = new List<Stage>(FindObjectsByType<Stage>(FindObjectsSortMode.None));
-        List<Vehicle> vehicles = new(FindObjectsByType<Vehicle>(FindObjectsSortMode.None));
+        List<Vehicle> vehicles = VehicleRegistry.GetAll();
 
         InitializeVehiclePositions(vehicles);
         InitializeControllers(vehicles);
@@ -89,7 +89,7 @@ public class GameManager : MonoBehaviour
 
         foreach (var vehicle in vehicles)
         {
-            Stage startStage = vehicle.currentStage;
+            Stage startStage = vehicle.CurrentStage;
             eventLogger.LogVehiclePlaced(vehicle, startStage);
             eventLogger.LogCrewComposition(vehicle, startStage);
         }
@@ -148,6 +148,18 @@ public class GameManager : MonoBehaviour
     {
         if (statusNotesText != null)
             statusNotesText.text = "<color=#FF0000><b>GAME OVER</b></color>\nAll player vehicles have been destroyed!";
+    }
+
+    // ==================== CLEANUP ====================
+
+    void OnDestroy()
+    {
+        TurnEventBus.OnGameOver -= HandleGameOver;
+        TurnEventBus.OnVehicleDestroyed -= CheckGameOverCondition;
+        if (eventLogger != null)
+            eventLogger.Unsubscribe();
+        if (stateMachine != null)
+            stateMachine.Cleanup();
     }
 
     // ==================== PUBLIC API ====================

@@ -194,19 +194,22 @@ namespace Assets.Scripts.Managers
 
             TurnEventBus.EmitVehicleRemoved(vehicle);
 
-            if (index < currentTurnIndex)
+            if (index <= currentTurnIndex)
                 currentTurnIndex--;
-            else if (index == currentTurnIndex && currentTurnIndex >= vehicles.Count && vehicles.Count > 0)
-                currentTurnIndex = 0;
 
             if (vehicles.Count == 0)
                 TransitionTo(TurnPhase.GameOver);
         }
 
+        public void Cleanup()
+        {
+            TurnEventBus.OnVehicleDestroyed -= HandleVehicleDestroyed;
+        }
+
         public bool ShouldSkipTurn(Vehicle vehicle)
         {
             if (vehicle == null) return true;
-            if (vehicle.currentStage == null) return true;
+            if (vehicle.CurrentStage == null) return true;
             if (vehicle.Status == VehicleStatus.Destroyed) return true;
             return false;
         }

@@ -172,10 +172,11 @@ namespace Assets.Scripts.Conditions
         // ==================== BUILDER METHODS ====================
 
         private static EntityModifierData Mod(EntityAttribute attribute, ModifierType type, float value)
-            => new EntityModifierData { attribute = attribute, type = type, value = value };
+            => new()
+            { attribute = attribute, type = type, value = value };
 
         private static List<EntityModifierData> Mods(params EntityModifierData[] mods)
-            => new List<EntityModifierData>(mods);
+            => new(mods);
 
         private static IPeriodicEffect DamagePeriodic(DamageFormula formula)
             => new PeriodicDamageEffect { damageFormula = formula };
@@ -194,19 +195,19 @@ namespace Assets.Scripts.Conditions
             };
 
         private static List<IPeriodicEffect> Periodics(params IPeriodicEffect[] effects)
-            => new List<IPeriodicEffect>(effects);
+            => new(effects);
 
         private static BehavioralEffectData Behavioral(
             bool preventsActions = false,
             bool preventsMovement = false)
-            => new BehavioralEffectData
+            => new()
             {
                 preventsActions = preventsActions,
                 preventsMovement = preventsMovement
             };
 
         private static AdvantageGrant AdvGrant(string label, RollMode type, params IAdvantageTarget[] targets)
-            => new AdvantageGrant
+            => new()
             {
                 label = label,
                 type = type,

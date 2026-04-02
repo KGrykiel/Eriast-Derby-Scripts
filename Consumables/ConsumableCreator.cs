@@ -291,13 +291,13 @@ namespace Assets.Scripts.Consumables
         private static IEffectTargetResolver OnLane       => new AllVehiclesInLaneEffectResolver();
 
         private static List<EffectInvocation> FX(params EffectInvocation[] effects)
-            => new List<EffectInvocation>(effects);
+            => new(effects);
 
         private static EffectInvocation Dmg(
             int dice, int dieSize, int bonus = 0,
             DamageType type = DamageType.Physical,
             IEffectTargetResolver target = null)
-            => new EffectInvocation
+            => new()
             {
                 targetResolver = target ?? OnTarget,
                 effect = new DamageEffect
@@ -310,41 +310,42 @@ namespace Assets.Scripts.Consumables
             };
 
         private static EffectInvocation Heal(int amount, IEffectTargetResolver target = null)
-            => new EffectInvocation
+            => new()
             {
                 targetResolver = target ?? OnSelf,
                 effect = new ResourceRestorationEffect { formula = new RestorationFormula { resourceType = ResourceType.Health, isDrain = false, bonus = amount } }
             };
 
         private static EffectInvocation Energy(int amount, IEffectTargetResolver target = null)
-            => new EffectInvocation
+            => new()
             {
                 targetResolver = target ?? OnSelf,
                 effect = new ResourceRestorationEffect { formula = new RestorationFormula { resourceType = ResourceType.Energy, isDrain = false, bonus = amount } }
             };
 
         private static EffectInvocation EntityStatus(EntityCondition condition, IEffectTargetResolver target = null)
-            => new EffectInvocation
+            => new()
             {
                 targetResolver = target ?? OnTarget,
                 effect = new ApplyEntityConditionEffect { condition = condition }
             };
 
         private static EffectInvocation CharacterStatus(CharacterCondition condition, IEffectTargetResolver target = null)
-            => new EffectInvocation
+            => new()
             {
                 targetResolver = target ?? OnTarget,
                 effect = new ApplyCharacterConditionEffect { condition = condition }
             };
 
         private static RollNode AlwaysApply(List<EffectInvocation> effects)
-            => new RollNode { targetResolver = new CurrentTargetResolver(), successEffects = effects };
+            => new()
+            { targetResolver = new CurrentTargetResolver(), successEffects = effects };
 
         private static RollNode Attack(
             List<EffectInvocation> onHit,
             List<EffectInvocation> onMiss = null,
             RollNode successChain = null)
-            => new RollNode
+            => new()
             {
                 targetResolver = new CurrentTargetResolver(),
                 rollSpec = new AttackSpec(),

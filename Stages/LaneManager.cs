@@ -55,8 +55,8 @@ namespace Assets.Scripts.Stages
             if (vehicle == null || Lanes == null || Lanes.Count == 0)
                 return null;
 
-            if (vehicle.currentLane != null && Lanes.Contains(vehicle.currentLane))
-                return vehicle.currentLane;
+            if (vehicle.CurrentLane != null && Lanes.Contains(vehicle.CurrentLane))
+                return vehicle.CurrentLane;
 
             foreach (var lane in Lanes)
             {
@@ -110,14 +110,14 @@ namespace Assets.Scripts.Stages
 
             StageLane targetLane = null;
 
-            if (vehicle.previousStage != null && vehicle.currentLane != null)
+            if (vehicle.PreviousStage != null && vehicle.CurrentLane != null)
             {
-                var previousLane = vehicle.currentLane;
+                var previousLane = vehicle.CurrentLane;
 
                 if (previousLane.targetLaneIndex >= 0 && previousLane.targetLaneIndex < Lanes.Count)
                     targetLane = Lanes[previousLane.targetLaneIndex];
                 else
-                    targetLane = GetProportionalLane(vehicle.previousStage, previousLane);
+                    targetLane = GetProportionalLane(vehicle.PreviousStage, previousLane);
             }
 
             if (targetLane == null)

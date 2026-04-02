@@ -248,9 +248,9 @@ public class VehicleInspectorPanel : MonoBehaviour
         
         if (stageValueText != null)
         {
-            if (selectedVehicle.currentStage != null)
+            if (selectedVehicle.CurrentStage != null)
             {
-                stageValueText.text = selectedVehicle.currentStage.stageName;
+                stageValueText.text = selectedVehicle.CurrentStage.stageName;
             }
             else
             {
@@ -258,10 +258,10 @@ public class VehicleInspectorPanel : MonoBehaviour
             }
         }
         
-        if (progressBar != null && progressText != null && selectedVehicle.currentStage != null)
+        if (progressBar != null && progressText != null && selectedVehicle.CurrentStage != null)
         {
-            float progress = selectedVehicle.progress;
-            float length = selectedVehicle.currentStage.length;
+            float progress = selectedVehicle.Progress;
+            float length = selectedVehicle.CurrentStage.length;
             float percent = length > 0 ? progress / length : 0f;
             
             progressBar.value = percent;

@@ -76,10 +76,10 @@ public class FocusPanel : MonoBehaviour
         status += $"<b>Name:</b> {playerVehicle.vehicleName}\n";
         status += $"<b>Status:</b> {GetStatusColor(playerVehicle.Status)}\n\n";
 
-        if (playerVehicle.currentStage != null)
+        if (playerVehicle.CurrentStage != null)
         {
-            status += $"<b>Stage:</b> {playerVehicle.currentStage.stageName}\n";
-            status += $"<b>Progress:</b> {playerVehicle.progress:F1}/{playerVehicle.currentStage.length:F0}m\n\n";
+            status += $"<b>Stage:</b> {playerVehicle.CurrentStage.stageName}\n";
+            status += $"<b>Progress:</b> {playerVehicle.Progress:F1}/{playerVehicle.CurrentStage.length:F0}m\n\n";
         }
         
         int health = playerVehicle.Chassis?.GetCurrentHealth() ?? 0;
@@ -126,7 +126,7 @@ public class FocusPanel : MonoBehaviour
     
     private void UpdateSameStageVehicles()
     {
-        if (sameStageVehiclesText == null || playerVehicle == null || playerVehicle.currentStage == null)
+        if (sameStageVehiclesText == null || playerVehicle == null || playerVehicle.CurrentStage == null)
         {
             if (sameStageVehiclesText != null)
                 sameStageVehiclesText.text = "<color=#888888>No other vehicles in this stage</color>";
@@ -150,7 +150,7 @@ public class FocusPanel : MonoBehaviour
             .Where(v => v != null && 
                         v != playerVehicle && 
                         v.Status == VehicleStatus.Active &&
-                        v.currentStage == playerVehicle.currentStage)
+                        v.CurrentStage == playerVehicle.CurrentStage)
             .ToList();
         
         if (sameStageVehicles.Count == 0)
@@ -159,7 +159,7 @@ public class FocusPanel : MonoBehaviour
             return;
         }
         
-        string display = $"<b><size=16><color=#FF8844>VEHICLES IN {playerVehicle.currentStage.stageName.ToUpper()}</color></size></b>\n\n";
+        string display = $"<b><size=16><color=#FF8844>VEHICLES IN {playerVehicle.CurrentStage.stageName.ToUpper()}</color></size></b>\n\n";
         display += $"<color=#FFAA44> {sameStageVehicles.Count} vehicle(s) in combat range!</color>\n\n";
         
         foreach (var vehicle in sameStageVehicles)
@@ -182,7 +182,7 @@ public class FocusPanel : MonoBehaviour
             display += $"  AC: {armorClass} | ";
             display += $"Speed: {speed:F1}\n";
             
-            display += $"  Progress: {vehicle.progress:F1}/{vehicle.currentStage.length:F0}m\n";
+            display += $"  Progress: {vehicle.Progress:F1}/{vehicle.CurrentStage.length:F0}m\n";
 
             display += "\n";
         }

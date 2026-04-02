@@ -211,13 +211,13 @@ public class PlayerController : MonoBehaviour
                 break;
 
             case TargetingMode.Lane:
-                if (vehicle.currentStage != null)
+                if (vehicle.CurrentStage != null)
                     uiCoordinator.TargetSelection.ShowLaneSelection(
-                        vehicle.currentStage.lanes, OnLaneSelected, OnTargetCancelClicked);
+                        vehicle.CurrentStage.lanes, OnLaneSelected, OnTargetCancelClicked);
                 break;
 
             case TargetingMode.OwnLane:
-                selectedTarget = vehicle.currentLane;
+                selectedTarget = vehicle.CurrentLane;
                 selectedTargetComponent = null;
                 ExecuteSkill();
                 break;
@@ -362,13 +362,13 @@ public class PlayerController : MonoBehaviour
                 break;
 
             case TargetingMode.Lane:
-                if (vehicle.currentStage != null)
+                if (vehicle.CurrentStage != null)
                     uiCoordinator.TargetSelection.ShowLaneSelection(
-                        vehicle.currentStage.lanes, OnConsumableLaneSelected, OnTargetCancelClicked);
+                        vehicle.CurrentStage.lanes, OnConsumableLaneSelected, OnTargetCancelClicked);
                 break;
 
             case TargetingMode.OwnLane:
-                selectedTarget = vehicle.currentLane;
+                selectedTarget = vehicle.CurrentLane;
                 selectedTargetComponent = null;
                 ExecuteConsumable();
                 break;

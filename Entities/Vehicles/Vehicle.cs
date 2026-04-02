@@ -32,12 +32,12 @@ namespace Assets.Scripts.Entities.Vehicles
         [Tooltip("Vehicles sharing the same team asset are allies. Leave null for independent vehicles.")]
         public VehicleTeam team;
 
-        public Stage currentStage { get; private set; }
-        public Stage previousStage { get; private set; }
-        public int progress { get; private set; }
-        public bool hasMovedThisTurn { get; private set; }
-        public bool hasLoggedMovementWarningThisTurn { get; private set; }
-        public StageLane currentLane { get; private set; }
+        public Stage CurrentStage { get; private set; }
+        public Stage PreviousStage { get; private set; }
+        public int Progress { get; private set; }
+        public bool HasMovedThisTurn { get; private set; }
+        public bool HasLoggedMovementWarningThisTurn { get; private set; }
+        public StageLane CurrentLane { get; private set; }
 
         [Header("Crew & Seats")]
         [Tooltip("Physical positions where characters sit and control components. " +
@@ -51,6 +51,7 @@ namespace Assets.Scripts.Entities.Vehicles
         [Header("Vehicle Components")]
         public ChassisComponent Chassis => componentCoordinator?.Chassis;
         public PowerCoreComponent PowerCore => componentCoordinator?.PowerCore;
+        public DriveComponent Drive => componentCoordinator?.Drive;
 
         // Coordinators (handle distinct concerns)
         private VehicleComponentCoordinator componentCoordinator;
@@ -71,6 +72,10 @@ namespace Assets.Scripts.Entities.Vehicles
 
             inventoryCoordinator = new VehicleInventoryCoordinator(this);
         }
+
+        void OnEnable() => VehicleRegistry.Register(this);
+
+        void OnDisable() => VehicleRegistry.Unregister(this);
 
         void OnValidate()
         {
@@ -97,16 +102,15 @@ namespace Assets.Scripts.Entities.Vehicles
 
         public string GetInaccessibilityReason(VehicleComponent target) => componentCoordinator?.GetInaccessibilityReason(target);
 
-        public DriveComponent GetDriveComponent()
-            => AllComponents.OfType<DriveComponent>().FirstOrDefault();
+        public DriveComponent GetDriveComponent() => Drive;
 
         public VehicleComponent GetComponentOfType(ComponentType type)
             => AllComponents.FirstOrDefault(c => c.componentType == type);
 
         public void ResetComponentsForNewTurn()
         {
-            hasMovedThisTurn = false;
-            hasLoggedMovementWarningThisTurn = false;
+            HasMovedThisTurn = false;
+            HasLoggedMovementWarningThisTurn = false;
 
             // Reset seat turn state (seats track action usage now)
             foreach (var seat in seats)
@@ -118,40 +122,40 @@ namespace Assets.Scripts.Entities.Vehicles
         /// <summary>Applies movement distance to progress and marks the vehicle as having moved.</summary>
         public void ApplyMovement(int distance)
         {
-            if (distance > 0 && currentStage != null)
+            if (distance > 0 && CurrentStage != null)
             {
-                progress += distance;
+                Progress += distance;
             }
 
-            hasMovedThisTurn = true;
+            HasMovedThisTurn = true;
         }
 
         /// <summary>Sets the current stage without movement side effects. Use for test setup.</summary>
-        public void SetCurrentStage(Stage stage) => currentStage = stage;
+        public void SetCurrentStage(Stage stage) => CurrentStage = stage;
 
         /// <summary>Sets current stage and resets progress to zero. Called by GameManager at race start.</summary>
         public void InitialisePosition(Stage stage)
         {
-            currentStage = stage;
-            progress = 0;
+            CurrentStage = stage;
+            Progress = 0;
         }
 
         /// <summary>Sets the current lane. Called by LaneManager and lane assignment logic.</summary>
-        public void SetCurrentLane(StageLane lane) => currentLane = lane;
+        public void SetCurrentLane(StageLane lane) => CurrentLane = lane;
 
         /// <summary>Records the stage the vehicle just exited. Called by Stage.TriggerLeave.</summary>
-        public void SetPreviousStage(Stage stage) => previousStage = stage;
+        public void SetPreviousStage(Stage stage) => PreviousStage = stage;
 
         /// <summary>Marks that a movement-blocked warning has already been emitted this turn.</summary>
-        public void MarkMovementWarningLogged() => hasLoggedMovementWarningThisTurn = true;
+        public void MarkMovementWarningLogged() => HasLoggedMovementWarningThisTurn = true;
 
         /// <summary>Transitions vehicle to a new stage. Carries over excess progress.</summary>
         public void TransitionToStage(Stage newStage)
         {
-            Stage oldStage = currentStage;
+            Stage oldStage = CurrentStage;
 
-            progress -= oldStage != null ? oldStage.length : 0;
-            currentStage = newStage;
+            Progress -= oldStage != null ? oldStage.length : 0;
+            CurrentStage = newStage;
 
             Vector3 stagePos = newStage.transform.position;
             transform.position = new Vector3(stagePos.x, stagePos.y, transform.position.z);
@@ -210,7 +214,7 @@ namespace Assets.Scripts.Entities.Vehicles
                 RuntimeState.CurrentSpeed => drive != null ? drive.GetCurrentSpeed() : 0,
                 RuntimeState.CurrentEnergy => PowerCore != null ? PowerCore.GetCurrentEnergy() : 0,
                 RuntimeState.CurrentHealth => Chassis != null ? Chassis.GetCurrentHealth() : 0,
-                RuntimeState.CurrentProgress => progress,
+                RuntimeState.CurrentProgress => Progress,
                 _ => 0
             };
         }

@@ -1,6 +1,5 @@
 using Assets.Scripts.Entities.Vehicles.VehicleComponents;
 using Assets.Scripts.Entities.Vehicles.VehicleComponents.ComponentTypes;
-using System.Linq;
 
 namespace Assets.Scripts.Entities.Vehicles
 {
@@ -22,10 +21,10 @@ namespace Assets.Scripts.Entities.Vehicles
                 EntityAttribute.DragCoefficient => vehicle.Chassis,
                 EntityAttribute.MaxEnergy => vehicle.PowerCore,
                 EntityAttribute.EnergyRegen => vehicle.PowerCore,
-                EntityAttribute.MaxSpeed => vehicle.AllComponents.OfType<DriveComponent>().FirstOrDefault(),
-                EntityAttribute.Acceleration => vehicle.AllComponents.OfType<DriveComponent>().FirstOrDefault(),
-                EntityAttribute.Stability => vehicle.AllComponents.OfType<DriveComponent>().FirstOrDefault(),
-                EntityAttribute.BaseFriction => vehicle.AllComponents.OfType<DriveComponent>().FirstOrDefault(),
+                EntityAttribute.MaxSpeed => vehicle.Drive,
+                EntityAttribute.Acceleration => vehicle.Drive,
+                EntityAttribute.Stability => vehicle.Drive,
+                EntityAttribute.BaseFriction => vehicle.Drive,
                 _ => vehicle.Chassis
             };
         }

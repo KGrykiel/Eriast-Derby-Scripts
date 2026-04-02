@@ -13,6 +13,7 @@ namespace Assets.Scripts.Entities.Vehicles
 
         public ChassisComponent Chassis { get; private set; }
         public PowerCoreComponent PowerCore { get; private set; }
+        public DriveComponent Drive { get; private set; }
 
         public VehicleComponentCoordinator(Vehicle vehicle)
         {
@@ -55,6 +56,8 @@ namespace Assets.Scripts.Entities.Vehicles
                 Chassis = chassis;
             else if (component is PowerCoreComponent powerCore && PowerCore == null)
                 PowerCore = powerCore;
+            else if (component is DriveComponent drive && Drive == null)
+                Drive = drive;
         }
 
         // ==================== COMPONENT ACCESSIBILITY ====================

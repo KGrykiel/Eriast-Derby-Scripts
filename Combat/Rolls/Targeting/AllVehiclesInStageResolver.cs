@@ -32,14 +32,14 @@ namespace Assets.Scripts.Combat.Rolls.Targeting
             Vehicle vehicle = ctx.SourceActor?.GetVehicle();
             if (vehicle == null)
                 vehicle = EntityHelpers.GetVehicleFromTarget(ctx.Target);
-            if (vehicle == null || vehicle.currentStage == null)
+            if (vehicle == null || vehicle.CurrentStage == null)
                 return System.Array.Empty<IRollTarget>();
 
             Vehicle self = ExcludeSelf ? vehicle : null;
             Vehicle primaryTarget = ExcludeTarget ? EntityHelpers.GetVehicleFromTarget(ctx.Target) : null;
 
             var results = new List<IRollTarget>();
-            foreach (var v in vehicle.currentStage.vehiclesInStage)
+            foreach (var v in vehicle.CurrentStage.vehiclesInStage)
             {
                 if (v != null && v != self && v != primaryTarget)
                     results.Add(v);

@@ -23,10 +23,10 @@ namespace Assets.Scripts.UI.Tabs.Lanes
         [SerializeField] private GameObject vehicleCardPrefab;
         
         [Header("Lane Type Colors")]
-        [SerializeField] private Color defaultColor = new Color(0.3f, 0.3f, 0.3f, 1f);
-        [SerializeField] private Color fastColor = new Color(0.9f, 0.7f, 0.2f, 1f);
-        [SerializeField] private Color safeColor = new Color(0.3f, 0.5f, 0.8f, 1f);
-        [SerializeField] private Color hazardousColor = new Color(0.8f, 0.2f, 0.2f, 1f);
+        [SerializeField] private Color defaultColor = new(0.3f, 0.3f, 0.3f, 1f);
+        [SerializeField] private Color fastColor = new(0.9f, 0.7f, 0.2f, 1f);
+        [SerializeField] private Color safeColor = new(0.3f, 0.5f, 0.8f, 1f);
+        [SerializeField] private Color hazardousColor = new(0.8f, 0.2f, 0.2f, 1f);
         
         private StageLane lane;
         private Stage stage;
@@ -146,7 +146,7 @@ namespace Assets.Scripts.UI.Tabs.Lanes
 
             var sortedVehicles = lane.vehiclesInLane
                 .Where(v => v != null)
-                .OrderByDescending(v => v.progress)
+                .OrderByDescending(v => v.Progress)
                 .ToList();
 
             foreach (var vehicle in sortedVehicles)

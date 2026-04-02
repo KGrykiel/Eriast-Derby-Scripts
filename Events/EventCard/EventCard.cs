@@ -55,7 +55,7 @@ namespace Assets.Scripts.Events.EventCard
                 Logging.EventType.EventCard,
                 dramaticWeight,
                 logText,
-                vehicle.currentStage,
+                vehicle.CurrentStage,
                 vehicle
             ).WithMetadata("cardName", cardName)
              .WithMetadata("success", result.success);

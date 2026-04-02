@@ -53,7 +53,7 @@ namespace Assets.Scripts.Combat.Rolls.Targeting
                 return lane;
 
             Vehicle vehicle = EntityHelpers.GetVehicleFromTarget(ctx.Target);
-            return vehicle != null ? vehicle.currentLane : null;
+            return vehicle != null ? vehicle.CurrentLane : null;
         }
     }
 }

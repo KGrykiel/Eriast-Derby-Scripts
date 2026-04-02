@@ -99,7 +99,7 @@ namespace Assets.Scripts.Managers.Logging
                 EventType.System,
                 EventImportance.Low,
                 $"{vehicle.vehicleName}'s turn begins (Turn {turnIndex + 1}/{totalVehicles})",
-                vehicle.currentStage,
+                vehicle.CurrentStage,
                 vehicle
             );
         }
@@ -110,7 +110,7 @@ namespace Assets.Scripts.Managers.Logging
                 EventType.System,
                 EventImportance.Low,
                 $"{vehicle.vehicleName}'s turn ends",
-                vehicle.currentStage,
+                vehicle.CurrentStage,
                 vehicle
             );
         }
@@ -141,7 +141,7 @@ namespace Assets.Scripts.Managers.Logging
                 EventType.System,
                 EventImportance.High,
                 $"{vehicle.vehicleName} removed from turn order",
-                vehicle.currentStage,
+                vehicle.CurrentStage,
                 vehicle
             );
         }
@@ -152,7 +152,7 @@ namespace Assets.Scripts.Managers.Logging
                 EventType.Destruction,
                 EventImportance.Critical,
                 $"<color=#FF6600>{vehicle.vehicleName} has been destroyed!</color>",
-                vehicle.currentStage,
+                vehicle.CurrentStage,
                 vehicle
             );
         }
@@ -165,7 +165,7 @@ namespace Assets.Scripts.Managers.Logging
                 EventType.Movement,
                 EventImportance.Low,
                 $"{vehicle.vehicleName} automatically moved (movement not triggered manually)",
-                vehicle.currentStage,
+                vehicle.CurrentStage,
                 vehicle
             );
         }
@@ -176,7 +176,7 @@ namespace Assets.Scripts.Managers.Logging
                 EventType.Resource,
                 EventImportance.Medium,
                 $"{vehicle.vehicleName}: {component.name} shut down (needs {required}, have {available})",
-                vehicle.currentStage,
+                vehicle.CurrentStage,
                 vehicle
             );
         }
@@ -187,7 +187,7 @@ namespace Assets.Scripts.Managers.Logging
                 EventType.Movement,
                 EventImportance.Medium,
                 $"{vehicle.vehicleName} cannot move: {reason}",
-                vehicle.currentStage,
+                vehicle.CurrentStage,
                 vehicle
             );
         }
@@ -198,7 +198,7 @@ namespace Assets.Scripts.Managers.Logging
                 EventType.Movement,
                 EventImportance.Low,
                 $"{vehicle.vehicleName} moved {distance} units (speed {speed})",
-                vehicle.currentStage,
+                vehicle.CurrentStage,
                 vehicle
             );
         }
@@ -235,7 +235,7 @@ namespace Assets.Scripts.Managers.Logging
                 EventType.System,
                 EventImportance.High,
                 $"{vehicle.vehicleName} cannot act: {reason}",
-                vehicle.currentStage,
+                vehicle.CurrentStage,
                 vehicle
             );
         }
@@ -246,7 +246,7 @@ namespace Assets.Scripts.Managers.Logging
                 EventType.System,
                 EventImportance.Medium,
                 $"{vehicle.vehicleName} can now take actions",
-                vehicle.currentStage,
+                vehicle.CurrentStage,
                 vehicle
             );
         }
@@ -257,7 +257,7 @@ namespace Assets.Scripts.Managers.Logging
                 EventType.System,
                 EventImportance.Low,
                 $"{vehicle.vehicleName} ended turn",
-                vehicle.currentStage,
+                vehicle.CurrentStage,
                 vehicle
             );
         }
@@ -268,7 +268,7 @@ namespace Assets.Scripts.Managers.Logging
                 EventType.Movement,
                 EventImportance.Low,
                 $"{vehicle.vehicleName} moved forward (player triggered)",
-                vehicle.currentStage,
+                vehicle.CurrentStage,
                 vehicle
             );
         }

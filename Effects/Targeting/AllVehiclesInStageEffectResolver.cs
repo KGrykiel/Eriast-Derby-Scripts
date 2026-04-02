@@ -30,7 +30,7 @@ namespace Assets.Scripts.Effects.Targeting
             if (sourceVehicle == null)
                 sourceVehicle = ctx.Target as Vehicle;
 
-            if (sourceVehicle == null || sourceVehicle.currentStage == null)
+            if (sourceVehicle == null || sourceVehicle.CurrentStage == null)
             {
                 Debug.LogWarning("[AllVehiclesInStageEffectResolver] No source vehicle or stage in context.");
                 return Array.Empty<IEffectTarget>();
@@ -40,7 +40,7 @@ namespace Assets.Scripts.Effects.Targeting
             Vehicle primaryTarget = ExcludeTarget ? EntityHelpers.GetVehicleFromTarget(ctx.Target) : null;
 
             var results = new List<IEffectTarget>();
-            foreach (var v in sourceVehicle.currentStage.vehiclesInStage)
+            foreach (var v in sourceVehicle.CurrentStage.vehiclesInStage)
             {
                 if (v != null && v != self && v != primaryTarget)
                     results.Add(v);

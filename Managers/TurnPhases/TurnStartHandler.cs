@@ -38,8 +38,8 @@
             vehicle.UpdateStatusEffects();
 
             // 7. Process lane turn effects (hazards, environmental checks)
-            if (vehicle.currentStage != null)
-                vehicle.currentStage.ProcessLaneTurnEffects(vehicle);
+            if (vehicle.CurrentStage != null)
+                vehicle.CurrentStage.ProcessLaneTurnEffects(vehicle);
 
             TurnEventBus.EmitTurnStarted(vehicle);
 

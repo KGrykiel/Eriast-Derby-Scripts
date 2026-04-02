@@ -86,17 +86,17 @@ public class OverviewPanel : MonoBehaviour
 
             display += $"{posIcon} {name}\n";
 
-            string stageName = vehicle.currentStage != null ? vehicle.currentStage.stageName : "Unknown";
-            float stageLength = vehicle.currentStage != null ? vehicle.currentStage.length : 0;
-            display += $"   {stageName} ({vehicle.progress:F1}/{stageLength:F0}m)";
+            string stageName = vehicle.CurrentStage != null ? vehicle.CurrentStage.stageName : "Unknown";
+            float stageLength = vehicle.CurrentStage != null ? vehicle.CurrentStage.length : 0;
+            display += $"   {stageName} ({vehicle.Progress:F1}/{stageLength:F0}m)";
 
             if (showDistanceToFinish)
             {
                 float distToFinish = -CalculateTotalProgress(vehicle);
 
-                if (vehicle.currentStage != null && vehicle.currentStage.isFinishLine)
+                if (vehicle.CurrentStage != null && vehicle.CurrentStage.isFinishLine)
                 {
-                    float remaining = vehicle.currentStage.length - vehicle.progress;
+                    float remaining = vehicle.CurrentStage.length - vehicle.Progress;
                     display += $" <color=#FFD700>[{remaining:F1}m to finish!]</color>";
                 }
                 else
@@ -187,15 +187,15 @@ public class OverviewPanel : MonoBehaviour
 
     private float CalculateTotalProgress(Vehicle vehicle)
     {
-        if (vehicle.currentStage == null)
+        if (vehicle.CurrentStage == null)
             return float.MinValue;
 
-        if (vehicle.currentStage.isFinishLine)
+        if (vehicle.CurrentStage.isFinishLine)
         {
-            return -(vehicle.currentStage.length - vehicle.progress);
+            return -(vehicle.CurrentStage.length - vehicle.Progress);
         }
 
-        float shortestDistanceToFinish = FindShortestDistanceToFinish(vehicle.currentStage, vehicle.progress);
+        float shortestDistanceToFinish = FindShortestDistanceToFinish(vehicle.CurrentStage, vehicle.Progress);
         return -shortestDistanceToFinish;
     }
 

@@ -25,7 +25,7 @@ namespace Assets.Scripts.Conditions.CharacterConditions
         protected override bool CanApply(CharacterCondition template) => seat.IsAssigned;
 
         protected override AppliedCharacterCondition CreateApplied(CharacterCondition template, Object applier)
-            => new AppliedCharacterCondition(template, applier);
+            => new(template, applier);
 
         protected override float GetTemplateMagnitude(CharacterCondition template)
             => template.modifiers.Sum(m => Mathf.Abs(m.value));

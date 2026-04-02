@@ -80,8 +80,8 @@ namespace Assets.Scripts.UI.Tabs.Lanes
             {
                 if (vehicle == null) continue;
                 hash = hash * 31 + vehicle.GetInstanceID();
-                hash = hash * 31 + vehicle.progress;
-                hash = hash * 31 + (vehicle.currentLane?.GetInstanceID() ?? 0);
+                hash = hash * 31 + vehicle.Progress;
+                hash = hash * 31 + (vehicle.CurrentLane?.GetInstanceID() ?? 0);
             }
             return hash;
         }
@@ -122,13 +122,13 @@ namespace Assets.Scripts.UI.Tabs.Lanes
                 {
                     foreach (var vehicle in vehicles)
                     {
-                        if (vehicle != null && vehicle.controlType == ControlType.Player && vehicle.currentStage != null)
+                        if (vehicle != null && vehicle.controlType == ControlType.Player && vehicle.CurrentStage != null)
                         {
-                            int index = stagesWithLanes.IndexOf(vehicle.currentStage);
+                            int index = stagesWithLanes.IndexOf(vehicle.CurrentStage);
                             if (index >= 0)
                             {
                                 stageDropdown.value = index;
-                                SetCurrentStage(vehicle.currentStage);
+                                SetCurrentStage(vehicle.CurrentStage);
                                 return;
                             }
                         }

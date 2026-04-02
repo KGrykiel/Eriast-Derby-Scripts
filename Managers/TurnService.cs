@@ -67,7 +67,7 @@ public class TurnService
     {
         if (vehicle == null) return false;
 
-        if (vehicle.hasMovedThisTurn)
+        if (vehicle.HasMovedThisTurn)
         {
             Debug.LogWarning($"[TurnController] {vehicle.vehicleName} has already moved this turn");
             return false;
@@ -75,7 +75,7 @@ public class TurnService
 
         if (!vehicle.CanMove())
         {
-            if (!vehicle.hasLoggedMovementWarningThisTurn)
+            if (!vehicle.HasLoggedMovementWarningThisTurn)
             {
                 string reason = vehicle.GetCannotMoveReason();
                 TurnEventBus.EmitMovementBlocked(vehicle, reason);
@@ -91,9 +91,9 @@ public class TurnService
 
         if (distance > 0)
         {
-            int oldProgress = vehicle.progress;
+            int oldProgress = vehicle.Progress;
             vehicle.ApplyMovement(distance);
-            TurnEventBus.EmitMovementExecuted(vehicle, distance, drive.GetCurrentSpeed(), oldProgress, vehicle.progress);
+            TurnEventBus.EmitMovementExecuted(vehicle, distance, drive.GetCurrentSpeed(), oldProgress, vehicle.Progress);
             vehicle.NotifyStatusEffectTrigger(RemovalTrigger.OnMovement);
         }
         else
@@ -108,7 +108,7 @@ public class TurnService
     {
         if (vehicle == null || stage == null) return;
 
-        Stage previousStage = vehicle.currentStage;
+        Stage previousStage = vehicle.CurrentStage;
 
         if (previousStage != null)
             previousStage.TriggerLeave(vehicle);
@@ -120,7 +120,7 @@ public class TurnService
         if (stage.isFinishLine)
             TurnEventBus.EmitFinishLineCrossed(vehicle, stage);
 
-        TurnEventBus.EmitStageEntered(vehicle, stage, previousStage, vehicle.progress, isPlayerChoice);
+        TurnEventBus.EmitStageEntered(vehicle, stage, previousStage, vehicle.Progress, isPlayerChoice);
     }
     
     // ==================== COMBAT ====================
@@ -128,14 +128,14 @@ public class TurnService
     /// <summary>Returns all active vehicles in the same stage as <paramref name="source"/>, excluding source itself.</summary>
     public List<Vehicle> GetOtherVehiclesInStage(Vehicle source)
     {
-        if (source == null || source.currentStage == null)
+        if (source == null || source.CurrentStage == null)
             return new List<Vehicle>();
 
         var others = new List<Vehicle>();
         foreach (var v in vehicles)
         {
             if (v == source) continue;
-            if (v.currentStage != source.currentStage) continue;
+            if (v.CurrentStage != source.CurrentStage) continue;
             if (v.Status != VehicleStatus.Active) continue;
             others.Add(v);
         }
@@ -146,13 +146,13 @@ public class TurnService
     /// <summary>Returns all active vehicles in the same stage as <paramref name="source"/>, including source itself.</summary>
     public List<Vehicle> GetAllTargets(Vehicle source)
     {
-        if (source == null || source.currentStage == null)
+        if (source == null || source.CurrentStage == null)
             return new List<Vehicle>();
 
         var targets = new List<Vehicle>();
         foreach (var v in vehicles)
         {
-            if (v.currentStage != source.currentStage) continue;
+            if (v.CurrentStage != source.CurrentStage) continue;
             if (v.Status != VehicleStatus.Active) continue;
             targets.Add(v);
         }
@@ -163,7 +163,7 @@ public class TurnService
     /// <summary>Returns all active allies of <paramref name="source"/> in the same stage.</summary>
     public List<Vehicle> GetAlliedTargets(Vehicle source)
     {
-        if (source == null || source.team == null || source.currentStage == null)
+        if (source == null || source.team == null || source.CurrentStage == null)
             return new List<Vehicle>();
 
         var allies = new List<Vehicle>();
@@ -171,7 +171,7 @@ public class TurnService
         {
             if (v == source) continue;
             if (v.team != source.team) continue;
-            if (v.currentStage != source.currentStage) continue;
+            if (v.CurrentStage != source.CurrentStage) continue;
             if (v.Status != VehicleStatus.Active) continue;
             allies.Add(v);
         }

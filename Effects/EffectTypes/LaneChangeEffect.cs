@@ -33,18 +33,18 @@ namespace Assets.Scripts.Effects.EffectTypes
                 return;
             }
 
-            vehicle.currentStage.AssignVehicleToLane(vehicle, targetLane);
+            vehicle.CurrentStage.AssignVehicleToLane(vehicle, targetLane);
         }
 
         private StageLane DetermineTargetLane(Vehicle vehicle)
         {
-            var stage = vehicle.currentStage;
+            var stage = vehicle.CurrentStage;
             int targetIndex;
 
             if (useRelativeOffset)
             {
                 // Relative: Add offset to current lane index
-                int currentIndex = stage.GetLaneIndex(vehicle.currentLane);
+                int currentIndex = stage.GetLaneIndex(vehicle.CurrentLane);
                 if (currentIndex < 0)
                 {
                     Debug.LogWarning($"[LaneChangeEffect] Current lane of '{vehicle.name}' was not found in stage '{stage.name}'.");

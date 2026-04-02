@@ -194,13 +194,13 @@ namespace Assets.Scripts.Events.EventCard
         private static IEffectTargetResolver OnSelf => new SourceVehicleResolver();
 
         private static List<EffectInvocation> FX(params EffectInvocation[] effects)
-            => new List<EffectInvocation>(effects);
+            => new(effects);
 
         private static EffectInvocation Dmg(
             int dice, int dieSize, int bonus = 0,
             DamageType type = DamageType.Physical,
             IEffectTargetResolver target = null)
-            => new EffectInvocation
+            => new()
             {
                 targetResolver = target ?? OnSelf,
                 effect = new DamageEffect
@@ -213,21 +213,22 @@ namespace Assets.Scripts.Events.EventCard
             };
 
         private static EffectInvocation Energy(int amount, IEffectTargetResolver target = null)
-            => new EffectInvocation
+            => new()
             {
                 targetResolver = target ?? OnSelf,
                 effect = new ResourceRestorationEffect { formula = new RestorationFormula { resourceType = ResourceType.Energy, isDrain = false, bonus = amount } }
             };
 
         private static EffectInvocation Status(StatusEffectTemplate effect, IEffectTargetResolver target = null)
-            => new EffectInvocation
+            => new()
             {
                 targetResolver = target ?? OnSelf,
                 effect = new ApplyEntityConditionEffect { condition = effect }
             };
 
         private static RollNode AlwaysApply(List<EffectInvocation> effects, string narrative = "")
-            => new RollNode { targetResolver = new CurrentTargetResolver(), successEffects = effects, successNarrative = narrative };
+            => new()
+            { targetResolver = new CurrentTargetResolver(), successEffects = effects, successNarrative = narrative };
 
         private static RollNode Save(
             SaveSpec spec, int dc,
@@ -272,7 +273,8 @@ namespace Assets.Scripts.Events.EventCard
         }
 
         private static CardChoice Choice(string text, RollNode rollNode)
-            => new CardChoice { choiceText = text, rollNode = rollNode };
+            => new()
+            { choiceText = text, rollNode = rollNode };
 
         private static ChoiceCard Make(string name, string narrative, params CardChoice[] choices)
         {

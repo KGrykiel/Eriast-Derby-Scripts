@@ -60,7 +60,7 @@ namespace Assets.Scripts.Effects.Targeting
             if (ctx.Target is StageLane lane)
                 return lane;
             Vehicle vehicle = EntityHelpers.GetVehicleFromTarget(ctx.Target);
-            return vehicle != null ? vehicle.currentLane : null;
+            return vehicle != null ? vehicle.CurrentLane : null;
         }
     }
 }

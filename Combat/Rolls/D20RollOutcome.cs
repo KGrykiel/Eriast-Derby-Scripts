@@ -53,7 +53,7 @@ namespace Assets.Scripts.Combat.Rolls
         }
 
         /// <summary>Synthetic failed roll — e.g. no suitable character found to attempt.</summary>
-        public static D20RollOutcome AutoFail(int targetValue) => new D20RollOutcome(
+        public static D20RollOutcome AutoFail(int targetValue) => new(
             baseRoll: 0,
             bonuses: new List<RollBonus>(),
             totalModifier: 0,
@@ -65,7 +65,7 @@ namespace Assets.Scripts.Combat.Rolls
             isAutoFail: true);
 
         /// <summary>Synthetic successful roll — e.g. the opposing side cannot attempt.</summary>
-        public static D20RollOutcome AutoSuccess(int targetValue) => new D20RollOutcome(
+        public static D20RollOutcome AutoSuccess(int targetValue) => new(
             baseRoll: 0,
             bonuses: new List<RollBonus>(),
             totalModifier: 0,

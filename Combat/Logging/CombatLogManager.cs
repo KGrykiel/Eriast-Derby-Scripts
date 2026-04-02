@@ -58,7 +58,7 @@ namespace Assets.Scripts.Combat.Logging
 
             var logEvt = RaceHistory.Log(
                 EventType.Combat, importance, message,
-                targetVehicle?.currentStage,
+                targetVehicle?.CurrentStage,
                 attackerVehicle, targetVehicle);
 
             logEvt.WithMetadata("rollBreakdown", CombatFormatter.FormatAttackDetailed(evt.Roll));
@@ -100,7 +100,7 @@ namespace Assets.Scripts.Combat.Logging
 
             var logEvt = RaceHistory.Log(
                 EventType.Combat, importance, message,
-                targetVehicle?.currentStage,
+                targetVehicle?.CurrentStage,
                 sourceVehicle, targetVehicle);
 
             logEvt.WithMetadata("rollBreakdown", CombatFormatter.FormatSaveDetailed(evt.Roll, saveTypeName));
@@ -138,7 +138,7 @@ namespace Assets.Scripts.Combat.Logging
 
             var logEvt = RaceHistory.Log(
                 EventType.Combat, importance, message,
-                sourceVehicle?.currentStage,
+                sourceVehicle?.CurrentStage,
                 sourceVehicle);
 
             logEvt.WithMetadata("rollBreakdown", CombatFormatter.FormatSkillCheckDetailed(evt.Roll, checkTypeName));
@@ -174,7 +174,7 @@ namespace Assets.Scripts.Combat.Logging
 
             var logEvt = RaceHistory.Log(
                 EventType.Combat, EventImportance.High, message,
-                attackerVehicle?.currentStage,
+                attackerVehicle?.CurrentStage,
                 attackerVehicle, defenderVehicle);
 
             logEvt.WithMetadata("rollBreakdown", CombatFormatter.FormatOpposedCheckDetailed(evt.Roll, evt.DefenderRoll, evt.AttackerCheckName, evt.DefenderCheckName));
@@ -212,7 +212,7 @@ namespace Assets.Scripts.Combat.Logging
 
             var logEvt = RaceHistory.Log(
                 EventType.Combat, EventImportance.High, message,
-                targetVehicle?.currentStage ?? attackerVehicle?.currentStage,
+                targetVehicle?.CurrentStage ?? attackerVehicle?.CurrentStage,
                 attackerVehicle, targetVehicle);
 
             var results = damages.Select(d => d.Result).ToList();
@@ -294,7 +294,7 @@ namespace Assets.Scripts.Combat.Logging
 
             var logEvt = RaceHistory.Log(
                 EventType.Condition, importance, message,
-                targetVehicle?.currentStage,
+                targetVehicle?.CurrentStage,
                 sourceVehicle, targetVehicle);
 
             logEvt.WithMetadata("effectBreakdown", CombatFormatter.FormatEntityConditionTooltip(applied));
@@ -308,7 +308,7 @@ namespace Assets.Scripts.Combat.Logging
             var logEvt = RaceHistory.Log(
                 EventType.Condition, EventImportance.Low,
                 $"{targetName}'s {evt.Expired.template.effectName} has expired",
-                targetVehicle?.currentStage,
+                targetVehicle?.CurrentStage,
                 targetVehicle);
 
             logEvt.WithMetadata("effectBreakdown", CombatFormatter.FormatEntityConditionTooltip(evt.Expired));
@@ -326,7 +326,7 @@ namespace Assets.Scripts.Combat.Logging
             var logEvt = RaceHistory.Log(
                 EventType.Condition, EventImportance.Low,
                 $"{targetName}'s {evt.Refreshed.template.effectName} refreshed ({durationText})",
-                targetVehicle?.currentStage,
+                targetVehicle?.CurrentStage,
                 targetVehicle);
 
             logEvt.WithMetadata("effectBreakdown", CombatFormatter.FormatEntityConditionTooltip(evt.Refreshed));
@@ -340,7 +340,7 @@ namespace Assets.Scripts.Combat.Logging
             var logEvt = RaceHistory.Log(
                 EventType.Condition, EventImportance.Low,
                 $"{targetName}'s {evt.Existing.template.effectName} reapplication ignored (already active)",
-                targetVehicle?.currentStage,
+                targetVehicle?.CurrentStage,
                 targetVehicle);
 
             logEvt.WithMetadata("effectBreakdown", CombatFormatter.FormatEntityConditionTooltip(evt.Existing));
@@ -362,7 +362,7 @@ namespace Assets.Scripts.Combat.Logging
             var logEvt = RaceHistory.Log(
                 EventType.Condition, EventImportance.Low,
                 $"{targetName}'s {evt.NewEffect.template.effectName} replaced ({oldDurationText} → {newDurationText})",
-                targetVehicle?.currentStage,
+                targetVehicle?.CurrentStage,
                 targetVehicle);
 
             logEvt.WithMetadata("effectBreakdown", CombatFormatter.FormatEntityConditionTooltip(evt.NewEffect));
@@ -380,7 +380,7 @@ namespace Assets.Scripts.Combat.Logging
             var logEvt = RaceHistory.Log(
                 EventType.Condition, EventImportance.Low,
                 $"{targetName}'s {evt.Kept.template.effectName} kept stronger version ({durationText})",
-                targetVehicle?.currentStage,
+                targetVehicle?.CurrentStage,
                 targetVehicle);
 
             logEvt.WithMetadata("effectBreakdown", CombatFormatter.FormatEntityConditionTooltip(evt.Kept));
@@ -394,7 +394,7 @@ namespace Assets.Scripts.Combat.Logging
             RaceHistory.Log(
                 EventType.Condition, EventImportance.Low,
                 $"{targetName}'s {evt.Template.effectName} stack limit reached ({evt.MaxStacks})",
-                targetVehicle?.currentStage,
+                targetVehicle?.CurrentStage,
                 targetVehicle);
         }
 
@@ -434,7 +434,7 @@ namespace Assets.Scripts.Combat.Logging
                 EventType.Resource,
                 playerInvolved ? EventImportance.Medium : EventImportance.Low,
                 message,
-                targetVehicle?.currentStage,
+                targetVehicle?.CurrentStage,
                 sourceVehicle, targetVehicle);
 
             var results = restorations.Select(r => r.Result).ToList();
@@ -612,7 +612,7 @@ namespace Assets.Scripts.Combat.Logging
             var logEvt = RaceHistory.Log(
                 EventType.Condition, EventImportance.Low,
                 $"{targetName}'s {evt.Removed.template.effectName} removed by trigger ({evt.Trigger})",
-                targetVehicle?.currentStage,
+                targetVehicle?.CurrentStage,
                 targetVehicle);
 
             logEvt.WithMetadata("effectBreakdown", CombatFormatter.FormatEntityConditionTooltip(evt.Removed));
@@ -655,7 +655,7 @@ namespace Assets.Scripts.Combat.Logging
                 EventType.Resource,
                 isPlayer ? EventImportance.Medium : EventImportance.Low,
                 $"{vehicleName} used {evt.Template.name}{suffix}",
-                evt.Vehicle != null ? evt.Vehicle.currentStage : null,
+                evt.Vehicle != null ? evt.Vehicle.CurrentStage : null,
                 evt.Vehicle);
         }
 
@@ -668,7 +668,7 @@ namespace Assets.Scripts.Combat.Logging
                 EventType.Resource,
                 isPlayer ? EventImportance.Medium : EventImportance.Low,
                 $"{vehicleName} restored {evt.Amount}x {evt.Template.name} ({evt.ChargesAfter} total)",
-                evt.Vehicle != null ? evt.Vehicle.currentStage : null,
+                evt.Vehicle != null ? evt.Vehicle.CurrentStage : null,
                 evt.Vehicle);
         }
 
@@ -680,7 +680,7 @@ namespace Assets.Scripts.Combat.Logging
                 EventType.Resource,
                 EventImportance.High,
                 $"{vehicleName} tried to use {evt.Template.name} but had no charges",
-                evt.Vehicle != null ? evt.Vehicle.currentStage : null,
+                evt.Vehicle != null ? evt.Vehicle.CurrentStage : null,
                 evt.Vehicle);
         }
     }
