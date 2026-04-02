@@ -6,6 +6,8 @@ using Assets.Scripts.Combat.Rolls.RollSpecs.SpecTypes;
 using Assets.Scripts.Combat.Damage.FormulaProviders.SpecificProviders;
 using Assets.Scripts.Effects;
 using Assets.Scripts.Effects.EffectTypes;
+using Assets.Scripts.Effects.Targeting;
+using Assets.Scripts.Combat.Rolls.Targeting;
 using Assets.Scripts.Entities.Vehicles.VehicleComponents;
 using Assets.Scripts.Skills;
 using Assets.Scripts.Skills.Costs;
@@ -53,7 +55,7 @@ namespace Assets.Scripts.Tests.Helpers
             var skill = ScriptableObject.CreateInstance<Skill>();
             skill.name = name;
             foreach (var cost in costs) skill.costs.Add(cost);
-            skill.rollNode = new RollNode { successEffects = effects };
+            skill.rollNode = new RollNode { targetResolver = new CurrentTargetResolver(), successEffects = effects };
 
             cleanup?.Add(skill);
             return skill;
@@ -76,6 +78,7 @@ namespace Assets.Scripts.Tests.Helpers
             foreach (var cost in costs) skill.costs.Add(cost);
             skill.rollNode = new RollNode
             {
+                targetResolver = new CurrentTargetResolver(),
                 rollSpec = new AttackSpec(),
                 successEffects = new System.Collections.Generic.List<EffectInvocation>
                 {
@@ -93,7 +96,7 @@ namespace Assets.Scripts.Tests.Helpers
                                 }
                             }
                         },
-                        target = EffectTarget.SelectedTarget
+                        targetResolver = new SelectedTargetResolver()
                     }
                 }
             };
@@ -121,6 +124,7 @@ namespace Assets.Scripts.Tests.Helpers
             saveSpec.dc = dc;
             skill.rollNode = new RollNode
             {
+                targetResolver = new CurrentTargetResolver(),
                 rollSpec = saveSpec,
                 failureEffects = effects
             };

@@ -6,7 +6,7 @@ namespace Assets.Scripts.Combat.Rolls
     /// <summary>
     /// All information related to the outcome of a D20 roll.
     /// </summary>
-    public class D20RollOutcome
+    public readonly struct D20RollOutcome
     {
         public int BaseRoll { get; }
         public List<RollBonus> Bonuses { get; }

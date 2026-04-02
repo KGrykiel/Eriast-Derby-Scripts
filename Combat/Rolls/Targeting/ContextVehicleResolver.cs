@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using Assets.Scripts.Combat.Rolls.RollSpecs;
 using Assets.Scripts.Entities;
 using Assets.Scripts.Entities.Vehicles;
+using SerializeReferenceEditor;
 
 namespace Assets.Scripts.Combat.Rolls.Targeting
 {
@@ -12,7 +13,8 @@ namespace Assets.Scripts.Combat.Rolls.Targeting
     /// Replaces <c>CardTargetMode.DrawingVehicle</c> and <c>LaneManager</c> per-vehicle hardcoding.
     /// </summary>
     [Serializable]
-    public class ContextVehicleResolver : ITargetResolver
+    [SRName("Context Vehicle")]
+    public class ContextVehicleResolver : IRollTargetResolver
     {
         public IReadOnlyList<IRollTarget> ResolveFrom(RollContext ctx)
         {

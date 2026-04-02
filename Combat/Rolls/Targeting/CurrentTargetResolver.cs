@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using Assets.Scripts.Combat.Rolls.RollSpecs;
 using Assets.Scripts.Entities;
+using SerializeReferenceEditor;
 
 namespace Assets.Scripts.Combat.Rolls.Targeting
 {
@@ -10,7 +11,8 @@ namespace Assets.Scripts.Combat.Rolls.Targeting
     /// Explicit equivalent of leaving <see cref="RollNode.targetResolver"/> null.
     /// </summary>
     [Serializable]
-    public class CurrentTargetResolver : ITargetResolver
+    [SRName("Current Target")]
+    public class CurrentTargetResolver : IRollTargetResolver
     {
         public IReadOnlyList<IRollTarget> ResolveFrom(RollContext ctx)
         {

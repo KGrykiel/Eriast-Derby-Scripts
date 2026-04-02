@@ -82,26 +82,21 @@ namespace Assets.Scripts.Combat.Logging
         // ==================== DOMAIN ROLL FORMATTERS ====================
         public static string FormatAttackDetailed(D20RollOutcome roll)
         {
-            if (roll == null) return "No roll data";
             return FormatD20RollDetailed(roll, "Attack Roll Breakdown", "AC", "HIT", "MISS");
         }
 
         public static string FormatSaveDetailed(D20RollOutcome roll, string checkName)
         {
-            if (roll == null) return "No roll data";
             return FormatD20RollDetailed(roll, $"{checkName} Save", "DC", "SAVED", "FAILED");
         }
 
         public static string FormatSkillCheckDetailed(D20RollOutcome roll, string checkName)
         {
-            if (roll == null) return "No roll data";
             return FormatD20RollDetailed(roll, $"{checkName} Check", "DC", "SUCCESS", "FAILURE");
         }
 
-        public static string FormatOpposedCheckDetailed(D20RollOutcome roll, D20RollOutcome defenderRoll, string attackerCheckName, string defenderCheckName)
+        public static string FormatOpposedCheckDetailed(D20RollOutcome roll, D20RollOutcome? defenderRoll, string attackerCheckName, string defenderCheckName)
         {
-            if (roll == null) return "No roll data";
-
             string winner = roll.Success ? "Attacker wins" : "Defender wins";
             string winnerColor = roll.Success ? Colors.Success : Colors.Failure;
 
@@ -113,11 +108,11 @@ namespace Assets.Scripts.Combat.Logging
                 $"Attacker ({attackerCheckName})",
                 $"Defender ({defenderCheckName})", "WINS", "LOSES"));
 
-            if (defenderRoll != null)
+            if (defenderRoll.HasValue)
             {
                 sb.AppendLine();
                 sb.Append(FormatD20RollDetailed(
-                    defenderRoll,
+                    defenderRoll.Value,
                     $"Defender ({defenderCheckName})",
                     "Opponent", "WINS", "LOSES",
                     showResult: false));
@@ -162,8 +157,6 @@ namespace Assets.Scripts.Combat.Logging
 
         public static string FormatDamageDetailed(DamageResult result)
         {
-            if (result == null) return "No damage";
-
             var sb = new StringBuilder();
             sb.AppendLine($"Damage Breakdown ({result.DamageType}):");
 
@@ -212,8 +205,6 @@ namespace Assets.Scripts.Combat.Logging
 
         public static string FormatRestorationDetailed(RestorationResult result)
         {
-            if (result == null) return "No restoration";
-
             var sb = new StringBuilder();
             sb.AppendLine($"Restoration Breakdown ({result.ResourceType}):");
 

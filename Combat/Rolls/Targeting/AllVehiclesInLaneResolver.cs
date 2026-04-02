@@ -4,6 +4,7 @@ using Assets.Scripts.Combat.Rolls.RollSpecs;
 using Assets.Scripts.Entities;
 using Assets.Scripts.Entities.Vehicles;
 using Assets.Scripts.Stages.Lanes;
+using SerializeReferenceEditor;
 
 namespace Assets.Scripts.Combat.Rolls.Targeting
 {
@@ -13,7 +14,8 @@ namespace Assets.Scripts.Combat.Rolls.Targeting
     /// Otherwise derives the lane from the target vehicle.
     /// </summary>
     [Serializable]
-    public class AllVehiclesInLaneResolver : ITargetResolver
+    [SRName("All Vehicles In Lane")]
+    public class AllVehiclesInLaneResolver : IRollTargetResolver
     {
         /// <summary>When true, excludes the caster's vehicle (ctx.SourceActor.GetVehicle()) from results.</summary>
         public bool ExcludeSelf;

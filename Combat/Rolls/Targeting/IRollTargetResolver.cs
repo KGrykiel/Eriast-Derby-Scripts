@@ -9,7 +9,7 @@ namespace Assets.Scripts.Combat.Rolls.Targeting
     /// Placed as an optional field on RollNode. Null means "use the current context as-is"
     /// (single execution, no fan-out). Each resolved target gets its own roll and effects.
     /// </summary>
-    public interface ITargetResolver
+    public interface IRollTargetResolver
     {
         IReadOnlyList<IRollTarget> ResolveFrom(RollContext ctx);
     }

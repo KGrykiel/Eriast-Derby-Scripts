@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using Assets.Scripts.Combat.Rolls.RollSpecs;
 using Assets.Scripts.Entities;
+using SerializeReferenceEditor;
 using UnityEngine;
 
 namespace Assets.Scripts.Combat.Rolls.Targeting
@@ -12,7 +13,8 @@ namespace Assets.Scripts.Combat.Rolls.Targeting
     /// Use this for burst-fire and multi-hit weapons.
     /// </summary>
     [Serializable]
-    public class RepeatTargetResolver : ITargetResolver
+    [SRName("Repeat Target")]
+    public class RepeatTargetResolver : IRollTargetResolver
     {
         [Min(1)]
         [Tooltip("Number of times to repeat the roll against the same target. Each repetition is an independent roll.")]

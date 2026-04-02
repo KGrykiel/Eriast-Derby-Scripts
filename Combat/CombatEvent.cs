@@ -121,7 +121,7 @@ namespace Assets.Scripts.Combat
     public class OpposedCheckEvent : CombatEvent
     {
         public D20RollOutcome Roll { get; set; }
-        public D20RollOutcome DefenderRoll { get; set; }
+        public D20RollOutcome? DefenderRoll { get; set; }
         public RollActor AttackerActor { get; set; }
         public RollActor DefenderActor { get; set; }
         public string AttackerCheckName { get; set; }
@@ -129,7 +129,7 @@ namespace Assets.Scripts.Combat
 
         public OpposedCheckEvent(
             D20RollOutcome roll,
-            D20RollOutcome defenderRoll,
+            D20RollOutcome? defenderRoll,
             RollActor attackerActor,
             RollActor defenderActor,
             string causalSource,

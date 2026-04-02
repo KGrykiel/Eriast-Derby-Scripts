@@ -13,7 +13,7 @@ namespace Assets.Scripts.Combat.Rolls.RollTypes.OpposedChecks
         public static D20RollOutcome Execute(OpposedCheckExecutionContext ctx)
         {
             D20RollOutcome result;
-            D20RollOutcome defenderRoll = null;
+            D20RollOutcome? defenderRoll = null;
 
             if (!ctx.AttackerRouting.CanAttempt)
             {

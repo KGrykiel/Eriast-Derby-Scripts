@@ -19,6 +19,8 @@ using Assets.Scripts.Conditions.EntityConditions;
 using Assets.Scripts.Combat.Damage.FormulaProviders.SpecificProviders;
 using Assets.Scripts.Effects;
 using Assets.Scripts.Effects.EffectTypes;
+using Assets.Scripts.Effects.Targeting;
+using Assets.Scripts.Combat.Rolls.Targeting;
 using Assets.Scripts.Entities.Vehicles;
 using Assets.Scripts.Entities.Vehicles.VehicleComponents.ComponentTypes;
 using Assets.Scripts.Entities.Vehicles.VehicleComponents;
@@ -155,7 +157,7 @@ namespace Assets.Scripts.Tests.PlayMode
                 {
                     new() {
                         effect = new ApplyEntityConditionEffect { condition = reinforceTemplate },
-                        target = EffectTarget.SelectedTarget
+                        targetResolver = new SelectedTargetResolver()
                     }
                 },
                 cleanup: cleanup,
@@ -206,7 +208,7 @@ namespace Assets.Scripts.Tests.PlayMode
                 {
                     new() {
                         effect = new ApplyEntityConditionEffect { condition = burningTemplate },
-                        target = EffectTarget.SelectedTarget
+                        targetResolver = new SelectedTargetResolver()
                     }
                 },
                 cleanup: cleanup,
@@ -352,6 +354,7 @@ namespace Assets.Scripts.Tests.PlayMode
                 description = "Navigate treacherous rocks",
                 rollNode = new RollNode
                 {
+                    targetResolver = new CurrentTargetResolver(),
                     rollSpec = checkSpec
                 }
             };
@@ -425,7 +428,7 @@ namespace Assets.Scripts.Tests.PlayMode
                                 }
                             }
                         },
-                        target = EffectTarget.SelectedTarget
+                        targetResolver = new SelectedTargetResolver()
                     }
                 },
                 cleanup: cleanup,

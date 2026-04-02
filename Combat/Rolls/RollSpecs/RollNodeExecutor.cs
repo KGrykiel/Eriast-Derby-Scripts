@@ -1,6 +1,5 @@
 ﻿using System.Collections.Generic;
 using Assets.Scripts.Effects;
-using Assets.Scripts.Stages.Lanes;
 using UnityEngine;
 using Assets.Scripts.Combat.Rolls.RollTypes.Attacks;
 using Assets.Scripts.Combat.Rolls.RollTypes.OpposedChecks;
@@ -56,7 +55,8 @@ namespace Assets.Scripts.Combat.Rolls.RollSpecs
                 return anySuccess;
             }
 
-            return ExecuteSingleNode(node, ctx);
+            Debug.LogWarning($"[RollNodeExecutor] RollNode has no targetResolver — skipping execution. CausalSource: {ctx.CausalSource ?? "<none>"}");
+            return false;
         }
 
         private static bool ExecuteSingleNode(RollNode node, RollContext ctx)
@@ -203,162 +203,16 @@ namespace Assets.Scripts.Combat.Rolls.RollSpecs
             {
                 if (invocation?.effect == null) continue;
 
-                var targets = ResolveTargets(invocation, ctx);
+                if (invocation.targetResolver == null)
+                {
+                    Debug.LogWarning($"[RollNodeExecutor] EffectInvocation has no targetResolver. CausalSource: {ctx.CausalSource ?? "<none>"}");
+                    continue;
+                }
+
+                var targets = invocation.targetResolver.Resolve(ctx);
                 foreach (var target in targets)
                     invocation.effect.Apply(target, effectContext);
             }
-        }
-
-        private static List<IEffectTarget> ResolveTargets(EffectInvocation invocation, RollContext ctx)
-        {
-            var targets = new List<IEffectTarget>();
-
-            switch (invocation.target)
-            {
-                case EffectTarget.SourceComponent:
-                    VehicleComponent sourceComponent = ctx.SourceActor?.GetEntity() as VehicleComponent;
-                    if (sourceComponent != null)
-                        targets.Add(sourceComponent);
-                    else
-                        Debug.LogWarning("[RollNodeExecutor] EffectTarget.SourceComponent with no SourceComponent in context.");
-                    break;
-
-                case EffectTarget.SourceVehicle:
-                    Vehicle sourceVehicle = GetSourceVehicle(ctx);
-                    if (sourceVehicle != null)
-                        targets.Add(sourceVehicle);
-                    else
-                        Debug.LogWarning("[RollNodeExecutor] EffectTarget.SourceVehicle with no source vehicle.");
-                    break;
-
-                case EffectTarget.SourceComponentSelection:
-                case EffectTarget.SelectedTarget:
-                    IEffectTarget selectedTarget = ResolveTargetAsEffectTarget(ctx);
-                    if (selectedTarget != null)
-                        targets.Add(selectedTarget);
-                    break;
-
-                case EffectTarget.TargetVehicle:
-                    Vehicle tv = GetTargetVehicle(ctx);
-                    Vehicle targetVehicle = tv != null ? tv : GetSourceVehicle(ctx);
-                    if (targetVehicle != null)
-                        targets.Add(targetVehicle);
-                    else
-                        Debug.LogWarning("[RollNodeExecutor] EffectTarget.TargetVehicle with no target vehicle.");
-                    break;
-
-                case EffectTarget.AllComponentsOnTarget:
-                    Vehicle allCompVehicle = GetTargetVehicle(ctx);
-                    if (allCompVehicle != null)
-                    {
-                        foreach (var component in allCompVehicle.AllComponents)
-                            targets.Add(component);
-                    }
-                    else
-                        Debug.LogWarning("[RollNodeExecutor] AllComponentsOnTarget: no target vehicle in context.");
-                    break;
-
-                case EffectTarget.RandomComponentOnTarget:
-                    Vehicle randomCompVehicle = GetTargetVehicle(ctx);
-                    if (randomCompVehicle != null)
-                    {
-                        var components = randomCompVehicle.AllComponents;
-                        if (components.Count > 0)
-                            targets.Add(components[Random.Range(0, components.Count)]);
-                    }
-                    else
-                        Debug.LogWarning("[RollNodeExecutor] RandomComponentOnTarget: no target vehicle in context.");
-                    break;
-
-                case EffectTarget.AllVehiclesInTargetLane:
-                    StageLane lane = ResolveLane(ctx);
-                    if (lane != null)
-                    {
-                        foreach (var laneVehicle in lane.vehiclesInLane)
-                        {
-                            if (laneVehicle != null)
-                                targets.Add(laneVehicle);
-                        }
-                    }
-                    else
-                    {
-                        Vehicle fallbackVehicle = GetTargetVehicle(ctx);
-                        if (fallbackVehicle != null)
-                            targets.Add(fallbackVehicle);
-                        else
-                            Debug.LogWarning("[RollNodeExecutor] AllVehiclesInTargetLane: no lane or target vehicle in context.");
-                    }
-                    break;
-
-                case EffectTarget.AllOtherVehiclesInTargetLane:
-                    StageLane otherLane = ResolveLane(ctx);
-                    Vehicle selfVehicleLane = GetSourceVehicle(ctx);
-                    if (otherLane != null)
-                    {
-                        foreach (var laneVehicle in otherLane.vehiclesInLane)
-                        {
-                            if (laneVehicle != null && laneVehicle != selfVehicleLane)
-                                targets.Add(laneVehicle);
-                        }
-                    }
-                    else
-                    {
-                        Debug.LogWarning("[RollNodeExecutor] AllOtherVehiclesInTargetLane: no lane in context.");
-                    }
-                    break;
-
-                case EffectTarget.AllOtherVehiclesInStage:
-                    Vehicle selfVehicleStage = GetSourceVehicle(ctx);
-                    if (selfVehicleStage != null && selfVehicleStage.currentStage != null)
-                    {
-                        foreach (var stageVehicle in selfVehicleStage.currentStage.vehiclesInStage)
-                        {
-                            if (stageVehicle != null && stageVehicle != selfVehicleStage)
-                                targets.Add(stageVehicle);
-                        }
-                    }
-                    else
-                    {
-                        Debug.LogWarning("[RollNodeExecutor] AllOtherVehiclesInStage: no target vehicle or stage in context.");
-                    }
-                    break;
-
-                case EffectTarget.AllSeatsOnTargetVehicle:
-                    Vehicle seatTargetVehicle = GetTargetVehicle(ctx);
-                    if (seatTargetVehicle != null)
-                    {
-                        foreach (var seat in seatTargetVehicle.seats)
-                        {
-                            if (seat != null)
-                                targets.Add(seat);
-                        }
-                    }
-                    else
-                        Debug.LogWarning("[RollNodeExecutor] AllSeatsOnTargetVehicle: no target vehicle in context.");
-                    break;
-
-                case EffectTarget.AllSeatsOnSourceVehicle:
-                    Vehicle seatSourceVehicle = GetSourceVehicle(ctx);
-                    if (seatSourceVehicle != null)
-                    {
-                        foreach (var seat in seatSourceVehicle.seats)
-                        {
-                            if (seat != null)
-                                targets.Add(seat);
-                        }
-                    }
-                    else
-                        Debug.LogWarning("[RollNodeExecutor] AllSeatsOnSourceVehicle: no source vehicle in context.");
-                    break;
-
-                case EffectTarget.SourceActorSeat:
-                    VehicleSeat actorSeat = ctx.SourceActor?.GetSeat();
-                    if (actorSeat != null)
-                        targets.Add(actorSeat);
-                    break;
-            }
-
-            return targets;
         }
 
         // ==================== CONTEXT HELPERS ====================
@@ -392,24 +246,6 @@ namespace Assets.Scripts.Combat.Rolls.RollSpecs
                 Vehicle vehicle => vehicle.Chassis,
                 _ => null
             };
-        }
-
-        private static IEffectTarget ResolveTargetAsEffectTarget(RollContext ctx)
-        {
-            return ctx.Target switch
-            {
-                IEffectTarget effectTarget => effectTarget,
-                _ => null
-            };
-        }
-
-        private static StageLane ResolveLane(RollContext ctx)
-        {
-            if (ctx.Target is StageLane lane)
-                return lane;
-
-            Vehicle vehicle = GetTargetVehicle(ctx);
-            return vehicle != null ? vehicle.currentLane : null;
         }
     }
 }

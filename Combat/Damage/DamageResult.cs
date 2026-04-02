@@ -4,8 +4,7 @@
     /// Immutable result of a single damage roll. One formula = one roll = one result.
     /// Composite damage (e.g. physical + fire) uses multiple DamageResults, aggregated by CombatEventBus.
     /// </summary>
-    [System.Serializable]
-    public class DamageResult
+    public readonly struct DamageResult
     {
         public DamageType DamageType { get; }
         public int DiceCount { get; }

@@ -11,10 +11,12 @@ using Assets.Scripts.Conditions.CharacterConditions;
 using Assets.Scripts.Conditions.EntityConditions;
 using Assets.Scripts.Combat.Rolls.RollSpecs;
 using Assets.Scripts.Combat.Rolls.RollSpecs.SpecTypes;
+using Assets.Scripts.Combat.Rolls.Targeting;
 using Assets.Scripts.Entities.Vehicles;
 using Assets.Scripts.Entities.Vehicles.VehicleComponents;
 using Assets.Scripts.Effects;
 using Assets.Scripts.Effects.EffectTypes;
+using Assets.Scripts.Effects.Targeting;
 using Assets.Scripts.Skills;
 
 namespace Assets.Scripts.Consumables
@@ -64,7 +66,7 @@ namespace Assets.Scripts.Consumables
         private static CombatConsumable DefineFragGrenade()
             => MakeCombat("Frag Grenade",
                 "A fragmentation grenade that scatters shrapnel across the target lane.",
-                Attack(FX(Dmg(2, 6, 0, DamageType.Bludgeoning, EffectTarget.AllVehiclesInTargetLane))),
+                Attack(FX(Dmg(2, 6, 0, DamageType.Bludgeoning, OnLane))),
                 TargetingMode.Enemy,
                 ActionType.Action);
 
@@ -73,8 +75,8 @@ namespace Assets.Scripts.Consumables
             => MakeCombat("Incendiary Flask",
                 "A flask of combustible fluid. Failed Stability save: fire damage and Burning.",
                 Save(SaveSpec.ForVehicle(VehicleCheckAttribute.Stability), 13,
-                    FX(Dmg(1, 6, 0, DamageType.Fire, EffectTarget.SelectedTarget),
-                       EntityStatus(LoadEntityCondition("Burning"), EffectTarget.SelectedTarget))),
+                    FX(Dmg(1, 6, 0, DamageType.Fire, OnTarget),
+                       EntityStatus(LoadEntityCondition("Burning"), OnTarget))),
                 TargetingMode.Enemy,
                 ActionType.Action);
 
@@ -82,8 +84,8 @@ namespace Assets.Scripts.Consumables
         private static CombatConsumable DefineShockCharge()
             => MakeCombat("Shock Charge",
                 "An electromagnetic pulse device. On hit: force damage and Overheating.",
-                Attack(FX(Dmg(1, 6, 0, DamageType.Force, EffectTarget.SelectedTarget),
-                           EntityStatus(LoadEntityCondition("Overheating"), EffectTarget.SelectedTarget))),
+                Attack(FX(Dmg(1, 6, 0, DamageType.Force, OnTarget),
+                           EntityStatus(LoadEntityCondition("Overheating"), OnTarget))),
                 TargetingMode.EnemyComponent,
                 ActionType.Action);
 
@@ -92,7 +94,7 @@ namespace Assets.Scripts.Consumables
             => MakeCombat("Concussion Grenade",
                 "A concussive device. Failed Mobility save: Slowed.",
                 Save(SaveSpec.ForVehicle(VehicleCheckAttribute.Mobility), 14,
-                    FX(EntityStatus(LoadEntityCondition("Slowed"), EffectTarget.SelectedTarget))),
+                    FX(EntityStatus(LoadEntityCondition("Slowed"), OnTarget))),
                 TargetingMode.Enemy,
                 ActionType.BonusAction);
 
@@ -103,7 +105,7 @@ namespace Assets.Scripts.Consumables
                 "Dense smoke dispersal. Pass a Perception check DC 13 to blind the opposing navigator.",
                 Check(SkillCheckSpec.ForCharacter(CharacterSkill.Perception, ComponentType.Sensors), 13,
                     FX(),
-                    successChain: AlwaysApply(FX(CharacterStatus(LoadCharacterCondition("Blinded"), EffectTarget.SelectedTarget)))),
+                    successChain: AlwaysApply(FX(CharacterStatus(LoadCharacterCondition("Blinded"), OnTarget)))),
                 TargetingMode.Enemy,
                 ActionType.BonusAction);
 
@@ -113,7 +115,7 @@ namespace Assets.Scripts.Consumables
         private static UtilityConsumable DefineRepairKit()
             => MakeUtility("Repair Kit",
                 "A basic patch kit. Restores health to the using component.",
-                AlwaysApply(FX(Heal(8, EffectTarget.SourceComponent))),
+                AlwaysApply(FX(Heal(8, OnSourceComp))),
                 TargetingMode.SourceComponent,
                 ActionType.BonusAction);
 
@@ -121,7 +123,7 @@ namespace Assets.Scripts.Consumables
         private static UtilityConsumable DefineEnergyCell()
             => MakeUtility("Energy Cell",
                 "A rechargeable cell. Restores energy to the vehicle.",
-                AlwaysApply(FX(Energy(4, EffectTarget.SourceVehicle))),
+                AlwaysApply(FX(Energy(4, OnSelf))),
                 TargetingMode.Self,
                 ActionType.BonusAction);
 
@@ -129,7 +131,7 @@ namespace Assets.Scripts.Consumables
         private static UtilityConsumable DefineFortifyingTonic()
             => MakeUtility("Fortifying Tonic",
                 "A structural sealant compound. Applies Fortified to the vehicle.",
-                AlwaysApply(FX(EntityStatus(LoadEntityCondition("Fortified"), EffectTarget.SourceVehicle))),
+                AlwaysApply(FX(EntityStatus(LoadEntityCondition("Fortified"), OnSelf))),
                 TargetingMode.Self,
                 ActionType.BonusAction);
 
@@ -137,7 +139,7 @@ namespace Assets.Scripts.Consumables
         private static UtilityConsumable DefineStimulant()
             => MakeUtility("Stimulant",
                 "A nanite repair solution. Applies Regenerating to the vehicle.",
-                AlwaysApply(FX(EntityStatus(LoadEntityCondition("Regenerating"), EffectTarget.SourceVehicle))),
+                AlwaysApply(FX(EntityStatus(LoadEntityCondition("Regenerating"), OnSelf))),
                 TargetingMode.Self,
                 ActionType.BonusAction);
 
@@ -146,8 +148,8 @@ namespace Assets.Scripts.Consumables
             => MakeUtility("Armour Sealant",
                 "Emergency spray-on armour. Heals the component and applies Fortified to the vehicle.",
                 AlwaysApply(FX(
-                    Heal(4, EffectTarget.SourceComponent),
-                    EntityStatus(LoadEntityCondition("Fortified"), EffectTarget.SourceVehicle))),
+                    Heal(4, OnSourceComp),
+                    EntityStatus(LoadEntityCondition("Fortified"), OnSelf))),
                 TargetingMode.SourceComponent,
                 ActionType.BonusAction);
 
@@ -157,7 +159,7 @@ namespace Assets.Scripts.Consumables
         private static AmmunitionType DefineHollowPoint()
             => MakeAmmo("Hollow Point",
                 "Rounds designed to deform on impact, dealing bonus physical damage.",
-                AlwaysApply(FX(Dmg(1, 4, 0, DamageType.Physical, EffectTarget.SelectedTarget))),
+                AlwaysApply(FX(Dmg(1, 4, 0, DamageType.Physical, OnTarget))),
                 "Ranged", "Ballistic");
 
         // Pattern: fire DoT on hit — rounds coated in combustible compound.
@@ -165,8 +167,8 @@ namespace Assets.Scripts.Consumables
             => MakeAmmo("Incendiary Rounds",
                 "Combustible-tipped rounds. On hit: fire damage and Burning.",
                 AlwaysApply(FX(
-                    Dmg(1, 4, 0, DamageType.Fire, EffectTarget.SelectedTarget),
-                    EntityStatus(LoadEntityCondition("Burning"), EffectTarget.SelectedTarget))),
+                    Dmg(1, 4, 0, DamageType.Fire, OnTarget),
+                    EntityStatus(LoadEntityCondition("Burning"), OnTarget))),
                 "Ranged", "Ballistic");
 
         // Pattern: save-based Overheating on hit — electromagnetic slugs.
@@ -174,21 +176,21 @@ namespace Assets.Scripts.Consumables
             => MakeAmmo("Shock Rounds",
                 "Electromagnetic slugs. On hit: target makes a Mobility save DC 13 or gains Overheating.",
                 Save(SaveSpec.ForVehicle(VehicleCheckAttribute.Mobility), 13,
-                    FX(EntityStatus(LoadEntityCondition("Overheating"), EffectTarget.SelectedTarget))),
+                    FX(EntityStatus(LoadEntityCondition("Overheating"), OnTarget))),
                 "Ranged", "Ballistic");
 
         // Pattern: bonus piercing damage — hardened penetrator rounds.
         private static AmmunitionType DefineArmourPiercing()
             => MakeAmmo("Armour-Piercing",
                 "Hardened penetrator rounds. On hit: bonus piercing damage.",
-                AlwaysApply(FX(Dmg(1, 6, 2, DamageType.Piercing, EffectTarget.SelectedTarget))),
+                AlwaysApply(FX(Dmg(1, 6, 2, DamageType.Piercing, OnTarget))),
                 "Ranged", "Ballistic", "Heavy");
 
         // Pattern: AoE splash on hit — micro-explosive tips that detonate on contact.
         private static AmmunitionType DefineExplosiveTips()
             => MakeAmmo("Explosive Tips",
                 "Micro-explosive rounds. On hit: bludgeoning splash to all vehicles in the target lane.",
-                AlwaysApply(FX(Dmg(1, 4, 0, DamageType.Bludgeoning, EffectTarget.AllVehiclesInTargetLane))),
+                AlwaysApply(FX(Dmg(1, 4, 0, DamageType.Bludgeoning, OnLane))),
                 "Ranged", "Ballistic");
 
         // ==================== REGENERATION HELPERS ====================
@@ -283,16 +285,21 @@ namespace Assets.Scripts.Consumables
 
         // ==================== BUILDER METHODS ====================
 
+        private static IEffectTargetResolver OnTarget     => new SelectedTargetResolver();
+        private static IEffectTargetResolver OnSelf       => new SourceVehicleResolver();
+        private static IEffectTargetResolver OnSourceComp => new SourceComponentResolver();
+        private static IEffectTargetResolver OnLane       => new AllVehiclesInLaneEffectResolver();
+
         private static List<EffectInvocation> FX(params EffectInvocation[] effects)
             => new List<EffectInvocation>(effects);
 
         private static EffectInvocation Dmg(
             int dice, int dieSize, int bonus = 0,
             DamageType type = DamageType.Physical,
-            EffectTarget target = EffectTarget.SelectedTarget)
+            IEffectTargetResolver target = null)
             => new EffectInvocation
             {
-                target = target,
+                targetResolver = target ?? OnTarget,
                 effect = new DamageEffect
                 {
                     formulaProvider = new StaticFormulaProvider
@@ -302,36 +309,36 @@ namespace Assets.Scripts.Consumables
                 }
             };
 
-        private static EffectInvocation Heal(int amount, EffectTarget target = EffectTarget.SourceVehicle)
+        private static EffectInvocation Heal(int amount, IEffectTargetResolver target = null)
             => new EffectInvocation
             {
-                target = target,
+                targetResolver = target ?? OnSelf,
                 effect = new ResourceRestorationEffect { formula = new RestorationFormula { resourceType = ResourceType.Health, isDrain = false, bonus = amount } }
             };
 
-        private static EffectInvocation Energy(int amount, EffectTarget target = EffectTarget.SourceVehicle)
+        private static EffectInvocation Energy(int amount, IEffectTargetResolver target = null)
             => new EffectInvocation
             {
-                target = target,
+                targetResolver = target ?? OnSelf,
                 effect = new ResourceRestorationEffect { formula = new RestorationFormula { resourceType = ResourceType.Energy, isDrain = false, bonus = amount } }
             };
 
-        private static EffectInvocation EntityStatus(EntityCondition condition, EffectTarget target = EffectTarget.SelectedTarget)
+        private static EffectInvocation EntityStatus(EntityCondition condition, IEffectTargetResolver target = null)
             => new EffectInvocation
             {
-                target = target,
+                targetResolver = target ?? OnTarget,
                 effect = new ApplyEntityConditionEffect { condition = condition }
             };
 
-        private static EffectInvocation CharacterStatus(CharacterCondition condition, EffectTarget target = EffectTarget.SelectedTarget)
+        private static EffectInvocation CharacterStatus(CharacterCondition condition, IEffectTargetResolver target = null)
             => new EffectInvocation
             {
-                target = target,
+                targetResolver = target ?? OnTarget,
                 effect = new ApplyCharacterConditionEffect { condition = condition }
             };
 
         private static RollNode AlwaysApply(List<EffectInvocation> effects)
-            => new RollNode { successEffects = effects };
+            => new RollNode { targetResolver = new CurrentTargetResolver(), successEffects = effects };
 
         private static RollNode Attack(
             List<EffectInvocation> onHit,
@@ -339,6 +346,7 @@ namespace Assets.Scripts.Consumables
             RollNode successChain = null)
             => new RollNode
             {
+                targetResolver = new CurrentTargetResolver(),
                 rollSpec = new AttackSpec(),
                 successEffects = onHit ?? new List<EffectInvocation>(),
                 failureEffects = onMiss ?? new List<EffectInvocation>(),
@@ -354,6 +362,7 @@ namespace Assets.Scripts.Consumables
             spec.dc = dc;
             return new RollNode
             {
+                targetResolver = new CurrentTargetResolver(),
                 rollSpec = spec,
                 failureEffects = onFail ?? new List<EffectInvocation>(),
                 successEffects = onPass ?? new List<EffectInvocation>(),
@@ -371,6 +380,7 @@ namespace Assets.Scripts.Consumables
             spec.dc = dc;
             return new RollNode
             {
+                targetResolver = new CurrentTargetResolver(),
                 rollSpec = spec,
                 successEffects = onSuccess ?? new List<EffectInvocation>(),
                 failureEffects = onFail ?? new List<EffectInvocation>(),

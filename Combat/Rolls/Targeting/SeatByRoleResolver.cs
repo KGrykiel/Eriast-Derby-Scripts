@@ -4,6 +4,7 @@ using Assets.Scripts.Combat.Rolls.RollSpecs;
 using Assets.Scripts.Entities;
 using Assets.Scripts.Entities.Vehicles;
 using Assets.Scripts.Entities.Vehicles.VehicleComponents;
+using SerializeReferenceEditor;
 
 namespace Assets.Scripts.Combat.Rolls.Targeting
 {
@@ -12,7 +13,8 @@ namespace Assets.Scripts.Combat.Rolls.Targeting
     /// Returns an empty list if no seat has the role — effect is silently skipped.
     /// </summary>
     [Serializable]
-    public class SeatByRoleResolver : ITargetResolver
+    [SRName("Seat By Role")]
+    public class SeatByRoleResolver : IRollTargetResolver
     {
         public RoleType Role;
         public SeatSource Source;

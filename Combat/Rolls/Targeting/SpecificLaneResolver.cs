@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using Assets.Scripts.Combat.Rolls.RollSpecs;
 using Assets.Scripts.Entities;
 using Assets.Scripts.Stages.Lanes;
+using SerializeReferenceEditor;
 
 namespace Assets.Scripts.Combat.Rolls.Targeting
 {
@@ -11,7 +12,8 @@ namespace Assets.Scripts.Combat.Rolls.Targeting
     /// Used for bombardment and other effects that target a lane directly.
     /// </summary>
     [Serializable]
-    public class SpecificLaneResolver : ITargetResolver
+    [SRName("Specific Lane")]
+    public class SpecificLaneResolver : IRollTargetResolver
     {
         public StageLane Lane;
 

@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using Assets.Scripts.Events.EventCard.EventCardTypes;
 using Assets.Scripts.Combat.Rolls.RollSpecs;
 using Assets.Scripts.Combat.Rolls.RollSpecs.SpecTypes;
+using Assets.Scripts.Combat.Rolls.Targeting;
 using Assets.Scripts.Entities.Vehicles;
 using Assets.Scripts.Characters;
 using Assets.Scripts.Combat.Damage;
@@ -14,6 +15,7 @@ using Assets.Scripts.Conditions;
 using StatusEffectTemplate = Assets.Scripts.Conditions.EntityConditions.EntityCondition;
 using Assets.Scripts.Effects;
 using Assets.Scripts.Effects.EffectTypes;
+using Assets.Scripts.Effects.Targeting;
 using Assets.Scripts.Entities.Vehicles.VehicleComponents;
 
 namespace Assets.Scripts.Events.EventCard
@@ -59,7 +61,7 @@ namespace Assets.Scripts.Events.EventCard
                 "Boulders crash down across the track!",
                 Choice("Dodge the rocks",
                     Save(SaveSpec.ForVehicle(VehicleCheckAttribute.Mobility), 14,
-                        FX(Dmg(2, 6, 0, DamageType.Bludgeoning)),
+                        FX(Dmg(2, 6, 0, DamageType.Bludgeoning, OnSelf)),
                         successNarrative: "You weave through the debris unscathed.",
                         failureNarrative: "Rocks slam into your vehicle.")));
 
@@ -69,7 +71,7 @@ namespace Assets.Scripts.Events.EventCard
                 "The road ahead is slicked with oil.",
                 Choice("Power through",
                     AlwaysApply(
-                        FX(Dmg(1, 4, 0, DamageType.Physical)),
+                        FX(Dmg(1, 4, 0, DamageType.Physical, OnSelf)),
                         "Your tyres screech as you slide through the slick.")));
 
         // Pattern: 2-choice — character check gates a bonus; safe fallback costs nothing.
@@ -78,7 +80,7 @@ namespace Assets.Scripts.Events.EventCard
                 "Your navigator spots what might be a shortcut through the ruins.",
                 Choice("Scout the shortcut",
                     Check(SkillCheckSpec.ForCharacter(CharacterSkill.Perception, ComponentType.Sensors), 13,
-                        FX(Energy(3)),
+                        FX(Energy(3, OnSelf)),
                         successNarrative: "The shortcut shaves precious time — you surge ahead.",
                         failureNarrative: "The path dead-ends. You rejoin the main track having lost nothing but time.")),
                 Choice("Stay on track",
@@ -90,12 +92,12 @@ namespace Assets.Scripts.Events.EventCard
                 "A sudden squall hammers the course. Batten down or push through?",
                 Choice("Shelter the crew",
                     Save(SaveSpec.ForCharacter(CharacterAttribute.Constitution), 13,
-                        FX(Dmg(1, 6, 0, DamageType.Physical)),
+                        FX(Dmg(1, 6, 0, DamageType.Physical, OnSelf)),
                         successNarrative: "The crew braces tight — minimal damage.",
                         failureNarrative: "The storm batters the hull.")),
                 Choice("Full throttle",
                     AlwaysApply(
-                        FX(Dmg(1, 4, 0, DamageType.Physical)),
+                        FX(Dmg(1, 4, 0, DamageType.Physical, OnSelf)),
                         "You punch through the squall at cost.")));
 
         // Pattern: chained saves — first vehicle save, on failure a second vehicle save triggers.
@@ -108,7 +110,7 @@ namespace Assets.Scripts.Events.EventCard
                         successNarrative: "You ride the gust with steady nerves.",
                         failureNarrative: "The wind shunts you sideways.",
                         failChain: Save(SaveSpec.ForVehicle(VehicleCheckAttribute.Mobility), 14,
-                            FX(Dmg(2, 4, 0, DamageType.Force)),
+                            FX(Dmg(2, 4, 0, DamageType.Force, OnSelf)),
                             successNarrative: "You correct before hitting anything.",
                             failureNarrative: "You clip a barrier hard."))));
 
@@ -121,7 +123,7 @@ namespace Assets.Scripts.Events.EventCard
                         FX(),
                         successNarrative: "You snag the crate without breaking stride.",
                         failureNarrative: "You fumble it — the crate tumbles away.",
-                        successChain: AlwaysApply(FX(Energy(4)), "The salvage yields useful components."))),
+                        successChain: AlwaysApply(FX(Energy(4, OnSelf)), "The salvage yields useful components."))),
                 Choice("Leave it",
                     AlwaysApply(FX(), "You keep your eyes on the race.")));
 
@@ -131,8 +133,8 @@ namespace Assets.Scripts.Events.EventCard
                 "Burning wreckage scatters across the track!",
                 Choice("Power through",
                     Save(SaveSpec.ForVehicle(VehicleCheckAttribute.Stability), 14,
-                        FX(Dmg(1, 6, 0, DamageType.Fire),
-                           Status(LoadEntityCondition("Burning"))),
+                        FX(Dmg(1, 6, 0, DamageType.Fire, OnSelf),
+                           Status(LoadEntityCondition("Burning"), OnSelf)),
                         successNarrative: "You weave through the flames untouched.",
                         failureNarrative: "Your hull catches fire!")));
 
@@ -142,7 +144,7 @@ namespace Assets.Scripts.Events.EventCard
                 "The track ahead is thick with adhesive tar. There's no way around it.",
                 Choice("Plough through",
                     AlwaysApply(
-                        FX(Status(LoadEntityCondition("Slowed"))),
+                        FX(Status(LoadEntityCondition("Slowed"), OnSelf)),
                         "The tar clings to your wheels — you're slowed for the next stretch.")));
 
         // Pattern: positive event — no roll, apply Regenerating HoT to the vehicle.
@@ -151,7 +153,7 @@ namespace Assets.Scripts.Events.EventCard
                 "A race-sponsor's repair drone swoops alongside your vehicle.",
                 Choice("Accept the assist",
                     AlwaysApply(
-                        FX(Status(LoadEntityCondition("Regenerating"))),
+                        FX(Status(LoadEntityCondition("Regenerating"), OnSelf)),
                         "The drone patches your damage. You'll be back up to speed shortly.")),
                 Choice("Wave it off",
                     AlwaysApply(FX(), "You decline the offer and press on.")));
@@ -189,16 +191,18 @@ namespace Assets.Scripts.Events.EventCard
 
         // ==================== BUILDER METHODS ====================
 
+        private static IEffectTargetResolver OnSelf => new SourceVehicleResolver();
+
         private static List<EffectInvocation> FX(params EffectInvocation[] effects)
             => new List<EffectInvocation>(effects);
 
         private static EffectInvocation Dmg(
             int dice, int dieSize, int bonus = 0,
             DamageType type = DamageType.Physical,
-            EffectTarget target = EffectTarget.SourceVehicle)
+            IEffectTargetResolver target = null)
             => new EffectInvocation
             {
-                target = target,
+                targetResolver = target ?? OnSelf,
                 effect = new DamageEffect
                 {
                     formulaProvider = new StaticFormulaProvider
@@ -208,22 +212,22 @@ namespace Assets.Scripts.Events.EventCard
                 }
             };
 
-        private static EffectInvocation Energy(int amount, EffectTarget target = EffectTarget.SourceVehicle)
+        private static EffectInvocation Energy(int amount, IEffectTargetResolver target = null)
             => new EffectInvocation
             {
-                target = target,
+                targetResolver = target ?? OnSelf,
                 effect = new ResourceRestorationEffect { formula = new RestorationFormula { resourceType = ResourceType.Energy, isDrain = false, bonus = amount } }
             };
 
-        private static EffectInvocation Status(StatusEffectTemplate effect, EffectTarget target = EffectTarget.SourceVehicle)
+        private static EffectInvocation Status(StatusEffectTemplate effect, IEffectTargetResolver target = null)
             => new EffectInvocation
             {
-                target = target,
+                targetResolver = target ?? OnSelf,
                 effect = new ApplyEntityConditionEffect { condition = effect }
             };
 
         private static RollNode AlwaysApply(List<EffectInvocation> effects, string narrative = "")
-            => new RollNode { successEffects = effects, successNarrative = narrative };
+            => new RollNode { targetResolver = new CurrentTargetResolver(), successEffects = effects, successNarrative = narrative };
 
         private static RollNode Save(
             SaveSpec spec, int dc,
@@ -236,6 +240,7 @@ namespace Assets.Scripts.Events.EventCard
             spec.dc = dc;
             return new RollNode
             {
+                targetResolver = new CurrentTargetResolver(),
                 rollSpec = spec,
                 failureEffects = onFail ?? new List<EffectInvocation>(),
                 successEffects = onPass ?? new List<EffectInvocation>(),
@@ -256,6 +261,7 @@ namespace Assets.Scripts.Events.EventCard
             spec.dc = dc;
             return new RollNode
             {
+                targetResolver = new CurrentTargetResolver(),
                 rollSpec = spec,
                 successEffects = onSuccess ?? new List<EffectInvocation>(),
                 failureEffects = onFail ?? new List<EffectInvocation>(),

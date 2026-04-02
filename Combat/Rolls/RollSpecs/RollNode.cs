@@ -21,8 +21,8 @@ namespace Assets.Scripts.Combat.Rolls.RollSpecs
         public IRollSpec rollSpec;
 
         [SerializeReference, SR]
-        [Tooltip("Optional: resolves which targets this node fans out to. Null = single execution with current context.")]
-        public ITargetResolver targetResolver;
+        [Tooltip("Required: resolves which targets this node fans out to. Use CurrentTargetResolver for single-target execution. Null will log a warning and skip the node.")]
+        public IRollTargetResolver targetResolver;
 
         [Header("Effects")]
         [Tooltip("Effects applied on a successful roll, or always if rollSpec is null.")]

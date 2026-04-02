@@ -4,8 +4,7 @@
     /// Immutable result of a single restoration roll. One formula = one roll = one result.
     /// Includes both requested and actual change after target-specific clamping.
     /// </summary>
-    [System.Serializable]
-    public class RestorationResult
+    public readonly struct RestorationResult
     {
         public ResourceType ResourceType { get; }
         public int DiceCount { get; }

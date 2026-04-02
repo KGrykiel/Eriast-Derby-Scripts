@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using Assets.Scripts.Combat.Rolls.RollSpecs;
 using Assets.Scripts.Entities;
 using Assets.Scripts.Entities.Vehicles;
+using SerializeReferenceEditor;
 
 namespace Assets.Scripts.Combat.Rolls.Targeting
 {
@@ -11,7 +12,8 @@ namespace Assets.Scripts.Combat.Rolls.Targeting
     /// Replaces <c>CardTargetMode.AllInStage</c>.
     /// </summary>
     [Serializable]
-    public class AllVehiclesInStageResolver : ITargetResolver
+    [SRName("All Vehicles In Stage")]
+    public class AllVehiclesInStageResolver : IRollTargetResolver
     {
         /// <summary>When true, excludes the caster's vehicle (ctx.SourceActor.GetVehicle()) from results.</summary>
         public bool ExcludeSelf;
