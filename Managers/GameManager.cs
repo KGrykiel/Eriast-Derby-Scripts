@@ -48,7 +48,7 @@ public class GameManager : MonoBehaviour
         RaceHistory.ClearHistory();
         RaceHistory.Initialize(this);
 
-        stages = new List<Stage>(FindObjectsByType<Stage>(FindObjectsSortMode.None));
+        stages = StageRegistry.GetAll();
         List<Vehicle> vehicles = VehicleRegistry.GetAll();
 
         InitializeVehiclePositions(vehicles);

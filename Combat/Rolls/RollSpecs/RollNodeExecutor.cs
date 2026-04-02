@@ -155,11 +155,16 @@ namespace Assets.Scripts.Combat.Rolls.RollSpecs
         private static D20RollOutcome ResolveStateThreshold(StateThresholdSpec spec, RollContext ctx)
         {
             Vehicle sourceVehicle = GetSourceVehicle(ctx);
+            if (sourceVehicle == null)
+            {
+                Debug.LogError("[RollNodeExecutor] StateThresholdSpec requires a source vehicle in RollContext.");
+                return D20RollOutcome.AutoFail(0);
+            }
+
             int value = sourceVehicle.GetStateValue(spec.state);
             bool success = value >= spec.minimumValue;
 
-            string vehicleName = sourceVehicle != null ? sourceVehicle.vehicleName : "<null>";
-            Debug.Log($"[StateThreshold] {vehicleName}: {spec.state} {value} vs minimum {spec.minimumValue} — {(success ? "PASS" : "FAIL")}");
+            Debug.Log($"[StateThreshold] {sourceVehicle.vehicleName}: {spec.state} {value} vs minimum {spec.minimumValue} — {(success ? "PASS" : "FAIL")}");
 
             return success ? D20RollOutcome.AutoSuccess(0) : D20RollOutcome.AutoFail(0);
         }

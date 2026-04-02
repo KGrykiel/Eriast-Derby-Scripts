@@ -5,6 +5,7 @@ using Assets.Scripts.Conditions;
 using EventCard = Assets.Scripts.Events.EventCard.EventCard;
 using Assets.Scripts.Conditions.EntityConditions;
 using Assets.Scripts.Entities.Vehicles;
+using Assets.Scripts.Managers;
 
 namespace Assets.Scripts.Stages
 {
@@ -44,6 +45,9 @@ namespace Assets.Scripts.Stages
         private LaneManager laneManager;
 
         // ==================== UNITY LIFECYCLE ====================
+
+        private void OnEnable() => StageRegistry.Register(this);
+        private void OnDisable() => StageRegistry.Unregister(this);
 
         private void Awake()
         {
