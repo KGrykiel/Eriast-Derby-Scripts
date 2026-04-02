@@ -47,19 +47,23 @@ namespace Assets.Scripts.Conditions
         {
             ProcessRemovalTrigger(RemovalTrigger.OnTurnStart);
 
-            foreach (var applied in activeConditions.ToList())
+            var snapshot = activeConditions.ToList();
+
+            foreach (var applied in snapshot)
                 OnTick(applied);
 
-            for (int i = activeConditions.Count - 1; i >= 0; i--)
+            foreach (var applied in snapshot)
             {
-                var applied = activeConditions[i];
+                if (!activeConditions.Contains(applied))
+                    continue;
+
                 applied.DecrementDuration();
 
                 if (applied.IsExpired)
                 {
                     OnExpired(applied);
                     OnDeactivate(applied);
-                    activeConditions.RemoveAt(i);
+                    activeConditions.Remove(applied);
                 }
             }
         }
@@ -78,7 +82,9 @@ namespace Assets.Scripts.Conditions
                 .ToList();
 
             foreach (var applied in toRemove)
-                Remove(applied);
+                OnDeactivate(applied);
+
+            activeConditions.RemoveAll(toRemove.Contains);
         }
 
         public void RemoveByTemplate(TTemplate template)
@@ -88,7 +94,9 @@ namespace Assets.Scripts.Conditions
                 .ToList();
 
             foreach (var applied in toRemove)
-                Remove(applied);
+                OnDeactivate(applied);
+
+            activeConditions.RemoveAll(toRemove.Contains);
         }
 
         public void ProcessRemovalTrigger(RemovalTrigger trigger)
@@ -100,8 +108,10 @@ namespace Assets.Scripts.Conditions
             foreach (var applied in toRemove)
             {
                 OnRemovedByTrigger(applied, trigger);
-                Remove(applied);
+                OnDeactivate(applied);
             }
+
+            activeConditions.RemoveAll(toRemove.Contains);
         }
 
         // ==================== ABSTRACT ====================
