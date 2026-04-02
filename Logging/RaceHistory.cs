@@ -21,7 +21,8 @@ namespace Assets.Scripts.Logging
 
         public static void Initialize(GameManager gm)
         {
-            Instance.gameManager = gm;
+            instance = new RaceHistory();
+            instance.gameManager = gm;
         }
 
         public static RaceEvent Log(
