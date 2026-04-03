@@ -3,6 +3,7 @@ using System.Linq;
 using Assets.Scripts.Entities.Vehicles;
 using Assets.Scripts.Entities.Vehicles.VehicleComponents;
 using Assets.Scripts.Logging;
+using Assets.Scripts.Managers.Logging.Results;
 using Assets.Scripts.Stages;
 using EventType = Assets.Scripts.Logging.EventType;
 
@@ -25,9 +26,11 @@ namespace Assets.Scripts.Managers.Logging
             TurnEventBus.OnTurnStarted += LogTurnStart;
             TurnEventBus.OnTurnEnded += LogTurnEnd;
             TurnEventBus.OnGameOver += LogGameOver;
+            TurnEventBus.OnRaceOver += LogRaceOver;
             TurnEventBus.OnInitiativeRolled += LogInitiativeRoll;
             TurnEventBus.OnVehicleRemoved += LogVehicleRemoved;
             TurnEventBus.OnVehicleDestroyed += LogVehicleDestroyed;
+            TurnEventBus.OnVehicleFinished += LogVehicleFinished;
 
             // Operation events
             TurnEventBus.OnAutoMovement += LogAutoMovement;
@@ -51,9 +54,11 @@ namespace Assets.Scripts.Managers.Logging
             TurnEventBus.OnTurnStarted -= LogTurnStart;
             TurnEventBus.OnTurnEnded -= LogTurnEnd;
             TurnEventBus.OnGameOver -= LogGameOver;
+            TurnEventBus.OnRaceOver -= LogRaceOver;
             TurnEventBus.OnInitiativeRolled -= LogInitiativeRoll;
             TurnEventBus.OnVehicleRemoved -= LogVehicleRemoved;
             TurnEventBus.OnVehicleDestroyed -= LogVehicleDestroyed;
+            TurnEventBus.OnVehicleFinished -= LogVehicleFinished;
 
             // Operation events
             TurnEventBus.OnAutoMovement -= LogAutoMovement;
@@ -123,6 +128,39 @@ namespace Assets.Scripts.Managers.Logging
                 "<color=#FF0000><b>GAME OVER</b></color> - All player vehicles have been destroyed!"
             );
         }
+
+        private void LogRaceOver(RaceResult result)
+        {
+            string winnerName = result.Winner != null ? result.Winner.vehicleName : "nobody";
+            RaceHistory.Log(
+                EventType.FinishLine,
+                EventImportance.Critical,
+                $"<color=#FFD700><b>RACE COMPLETE — {winnerName} wins! ({result.TotalParticipants} starters, {result.TotalRounds} rounds)</b></color>"
+            );
+
+            foreach (var record in result.Finishers)
+            {
+                RaceHistory.Log(
+                    EventType.FinishLine,
+                    EventImportance.High,
+                    $"  #{record.Position} {record.Vehicle.vehicleName} — finished Round {record.Round}",
+                    null,
+                    record.Vehicle
+                );
+            }
+
+            foreach (var record in result.DidNotFinish)
+            {
+                string stageName = record.EliminatedAt != null ? record.EliminatedAt.stageName : "unknown";
+                RaceHistory.Log(
+                    EventType.FinishLine,
+                    EventImportance.High,
+                    $"  DNF {record.Vehicle.vehicleName} — eliminated Round {record.Round} at {stageName} (progress {record.ProgressAtElimination})",
+                    record.EliminatedAt,
+                    record.Vehicle
+                );
+            }
+        }
         
         private void LogInitiativeRoll(Vehicle vehicle, int initiative)
         {
@@ -152,6 +190,17 @@ namespace Assets.Scripts.Managers.Logging
                 EventType.Destruction,
                 EventImportance.Critical,
                 $"<color=#FF6600>{vehicle.vehicleName} has been destroyed!</color>",
+                vehicle.CurrentStage,
+                vehicle
+            );
+        }
+
+        private void LogVehicleFinished(Vehicle vehicle)
+        {
+            RaceHistory.Log(
+                EventType.FinishLine,
+                EventImportance.Critical,
+                $"<color=#FFD700>{vehicle.vehicleName} has finished the race!</color>",
                 vehicle.CurrentStage,
                 vehicle
             );

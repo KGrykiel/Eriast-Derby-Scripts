@@ -24,6 +24,7 @@ namespace Assets.Scripts.Managers.TurnPhases
         public bool IsPlayerTurn => CurrentVehicle != null && CurrentVehicle.controlType == ControlType.Player;
 
         public bool IsGameOver { get; set; }
+        public bool IsRaceOver { get; set; }
         public bool ShouldRefreshUI { get; set; }
         
         public TurnPhaseContext(TurnStateMachine stateMachine, TurnService turnController, 

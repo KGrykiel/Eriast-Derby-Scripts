@@ -1,6 +1,7 @@
 ﻿using System;
 using Assets.Scripts.Entities.Vehicles;
 using Assets.Scripts.Entities.Vehicles.VehicleComponents;
+using Assets.Scripts.Managers.Logging.Results;
 using Assets.Scripts.Stages;
 
 namespace Assets.Scripts.Managers
@@ -27,6 +28,9 @@ namespace Assets.Scripts.Managers
         
         /// <summary>Fired when game ends</summary>
         public static event Action OnGameOver;
+
+        /// <summary>Fired when all vehicles have either finished or been eliminated. Args: result</summary>
+        public static event Action<RaceResult> OnRaceOver;
         
         /// <summary>Fired when initiative is rolled. Args: (vehicle, initiativeValue)</summary>
         public static event Action<Vehicle, int> OnInitiativeRolled;
@@ -36,6 +40,9 @@ namespace Assets.Scripts.Managers
         
         /// <summary>Fired when a vehicle is destroyed (by Vehicle itself). Args: vehicle</summary>
         public static event Action<Vehicle> OnVehicleDestroyed;
+
+        /// <summary>Fired when a vehicle crosses the finish line and is marked finished. Args: vehicle</summary>
+        public static event Action<Vehicle> OnVehicleFinished;
         
         // ==================== MOVEMENT EVENTS ====================
         
@@ -94,6 +101,9 @@ namespace Assets.Scripts.Managers
         
         public static void EmitGameOver()
             => OnGameOver?.Invoke();
+
+        public static void EmitRaceOver(RaceResult result)
+            => OnRaceOver?.Invoke(result);
         
         public static void EmitInitiativeRolled(Vehicle vehicle, int initiative)
             => OnInitiativeRolled?.Invoke(vehicle, initiative);
@@ -103,6 +113,9 @@ namespace Assets.Scripts.Managers
         
         public static void EmitVehicleDestroyed(Vehicle vehicle)
             => OnVehicleDestroyed?.Invoke(vehicle);
+
+        public static void EmitVehicleFinished(Vehicle vehicle)
+            => OnVehicleFinished?.Invoke(vehicle);
         
         // ==================== EMIT METHODS - OPERATIONS ====================
         
@@ -149,9 +162,11 @@ namespace Assets.Scripts.Managers
             OnTurnStarted = null;
             OnTurnEnded = null;
             OnGameOver = null;
+            OnRaceOver = null;
             OnInitiativeRolled = null;
             OnVehicleRemoved = null;
             OnVehicleDestroyed = null;
+            OnVehicleFinished = null;
             
             // Operations
             OnAutoMovement = null;

@@ -132,10 +132,10 @@ namespace Assets.Scripts.Managers
             return handler.Execute(context);
         }
 
-        /// <summary>Runs until a pause point (player input or game over).</summary>
+        /// <summary>Runs until a pause point (player input, game over, or race complete).</summary>
         public void Run(TurnPhaseContext context)
         {
-            while (IsActive && !IsWaitingForPlayer && !context.IsGameOver)
+            while (IsActive && !IsWaitingForPlayer && !context.IsGameOver && !context.IsRaceOver)
             {
                 TurnPhase? nextPhase = ProcessCurrentPhase(context);
 
@@ -211,6 +211,7 @@ namespace Assets.Scripts.Managers
             if (vehicle == null) return true;
             if (vehicle.CurrentStage == null) return true;
             if (vehicle.Status == VehicleStatus.Destroyed) return true;
+            if (vehicle.Status == VehicleStatus.Finished) return true;
             return false;
         }
     }

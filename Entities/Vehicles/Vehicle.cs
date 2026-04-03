@@ -260,6 +260,16 @@ namespace Assets.Scripts.Entities.Vehicles
             TurnEventBus.EmitVehicleDestroyed(this);
         }
 
+        public void MarkAsFinished()
+        {
+            if (Status == VehicleStatus.Finished) return; // Already handled
+
+            Status = VehicleStatus.Finished;
+
+            // Emit event - GameManager records ranking, TurnStateMachine skips future turns
+            TurnEventBus.EmitVehicleFinished(this);
+        }
+
         // ==================== OPERATIONAL STATUS ====================
 
         /// <summary>Null if operational.</summary>

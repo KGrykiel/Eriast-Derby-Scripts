@@ -8,6 +8,7 @@ using Assets.Scripts.Managers.TurnPhases;
 using Assets.Scripts.Logging;
 using Assets.Scripts.Stages;
 using Assets.Scripts.Entities.Vehicles;
+using Assets.Scripts.Managers.Logging.Results;
 
 [RequireComponent(typeof(PlayerController))]
 
@@ -19,6 +20,10 @@ public class GameManager : MonoBehaviour
 {
     public Stage entryStage;
 
+    [Header("Race Settings")]
+    [Tooltip("Maximum number of rounds before the race ends. Vehicles still active at this point are classified as DNF.")]
+    [SerializeField] private int maxRounds = 100;
+
     [Header("Game Over UI")]
     [Tooltip("Optional - status text for game over message")]
     public TextMeshProUGUI statusNotesText;
@@ -28,6 +33,7 @@ public class GameManager : MonoBehaviour
     private TurnService turnController;
     private PlayerController playerController;
     private TurnEventLogger eventLogger;
+    private RaceCompletionTracker raceTracker;
     
     // Phase context (passed to handlers)
     private TurnPhaseContext phaseContext;
@@ -102,6 +108,10 @@ public class GameManager : MonoBehaviour
 
         TurnEventBus.OnGameOver += HandleGameOver;
         TurnEventBus.OnVehicleDestroyed += CheckGameOverCondition;
+        TurnEventBus.OnRaceOver += HandleRaceOver;
+
+        raceTracker = new RaceCompletionTracker(stateMachine, vehicles, maxRounds);
+        raceTracker.Subscribe();
 
         eventLogger.LogTurnOrderEstablished(stateMachine.AllVehicles);
 
@@ -150,12 +160,27 @@ public class GameManager : MonoBehaviour
             statusNotesText.text = "<color=#FF0000><b>GAME OVER</b></color>\nAll player vehicles have been destroyed!";
     }
 
+    private void HandleRaceOver(RaceResult result)
+    {
+        if (phaseContext != null)
+            phaseContext.IsRaceOver = true;
+
+        if (statusNotesText != null)
+        {
+            string winnerName = result.Winner != null ? result.Winner.vehicleName : "Nobody";
+            statusNotesText.text = $"<color=#FFD700><b>RACE COMPLETE!</b></color>\n{winnerName} wins!";
+        }
+    }
+
     // ==================== CLEANUP ====================
 
     void OnDestroy()
     {
         TurnEventBus.OnGameOver -= HandleGameOver;
         TurnEventBus.OnVehicleDestroyed -= CheckGameOverCondition;
+        TurnEventBus.OnRaceOver -= HandleRaceOver;
+        if (raceTracker != null)
+            raceTracker.Unsubscribe();
         if (eventLogger != null)
             eventLogger.Unsubscribe();
         if (stateMachine != null)

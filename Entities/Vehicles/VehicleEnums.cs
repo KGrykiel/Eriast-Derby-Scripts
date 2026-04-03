@@ -9,6 +9,7 @@
     public enum VehicleStatus
     {
         Active,
+        Finished,
         Destroyed,
     }
 }
