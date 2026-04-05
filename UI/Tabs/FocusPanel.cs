@@ -95,7 +95,7 @@ public class FocusPanel : MonoBehaviour
         string energyBar = GenerateBar(energyPercent, 15);
         status += $"<b>Energy:</b> <color=#88DDFF>{energyBar} {energy}/{maxEnergy}</color>\n\n";
 
-        float speed = playerVehicle.GetDriveComponent()?.GetMaxSpeed() ?? 0f;
+        float speed = playerVehicle.Drive?.GetMaxSpeed() ?? 0f;
         int armorClass = playerVehicle.Chassis?.GetArmorClass() ?? 10;
         status += $"<b>Speed:</b> {speed:F1}\n";
         status += $"<b>Armor Class:</b> {armorClass}\n";
@@ -178,7 +178,7 @@ public class FocusPanel : MonoBehaviour
             display += $"  Energy: {energy}/{maxEnergy}\n";
 
             int armorClass = vehicle.Chassis?.GetArmorClass() ?? 10;
-            float speed = vehicle.GetDriveComponent()?.GetMaxSpeed() ?? 0f;
+            float speed = vehicle.Drive?.GetMaxSpeed() ?? 0f;
             display += $"  AC: {armorClass} | ";
             display += $"Speed: {speed:F1}\n";
             

@@ -103,8 +103,6 @@ namespace Assets.Scripts.Entities.Vehicles
 
         public string GetInaccessibilityReason(VehicleComponent target) => componentCoordinator?.GetInaccessibilityReason(target);
 
-        public DriveComponent GetDriveComponent() => Drive;
-
         public VehicleComponent GetComponentOfType(ComponentType type)
             => AllComponents.FirstOrDefault(c => c.componentType == type);
 
@@ -222,7 +220,7 @@ namespace Assets.Scripts.Entities.Vehicles
         /// <summary>Returns the current value of a live vehicle state. Used by StateThresholdSpec.</summary>
         public int GetStateValue(RuntimeState state)
         {
-            var drive = GetDriveComponent();
+            var drive = Drive;
             return state switch
             {
                 RuntimeState.CurrentSpeed => drive != null ? drive.GetCurrentSpeed() : 0,
@@ -394,7 +392,7 @@ namespace Assets.Scripts.Entities.Vehicles
             if (reason != null) return reason;
 
             // Check drive system
-            var driveComponent = GetDriveComponent();
+            var driveComponent = Drive;
             if (driveComponent == null) return "No drive system installed";
             if (driveComponent.IsDestroyed()) return "Drive system destroyed";
             if (driveComponent.isManuallyDisabled) return "Drive system manually disabled by engineer";

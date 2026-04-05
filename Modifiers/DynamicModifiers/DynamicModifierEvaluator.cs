@@ -37,7 +37,7 @@ namespace Assets.Scripts.Modifiers.DynamicModifiers
             Vehicle vehicle = EntityHelpers.GetParentVehicle(entity);
             if (vehicle == null) return;
 
-            var drive = vehicle.GetDriveComponent();
+            var drive = vehicle.Drive;
             if (drive == null) return;
 
             float currentSpeed = drive.GetCurrentSpeed();

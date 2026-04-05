@@ -334,7 +334,7 @@ public class VehicleInspectorPanel : MonoBehaviour
         
         if (vehicleSpeedValueText != null)
         {
-            var drive = selectedVehicle.GetDriveComponent();
+            var drive = selectedVehicle.Drive;
 
             float speed = drive?.GetCurrentSpeed() ?? 0f;
             vehicleSpeedValueText.text = $"{speed:F1}";

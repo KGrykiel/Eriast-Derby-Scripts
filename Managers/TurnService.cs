@@ -48,9 +48,9 @@ public class TurnService
     {
         if (vehicle == null) return;
         
-        var drive = vehicle.GetDriveComponent();
+        var drive = vehicle.Drive;
         if (drive == null) return;
-        
+
         if (!drive.IsOperational)
         {
             drive.ApplyFriction();
@@ -86,7 +86,7 @@ public class TurnService
             return false;
         }
 
-        var drive = vehicle.GetDriveComponent();
+        var drive = vehicle.Drive;
         int distance = drive != null ? drive.GetCurrentSpeed() : 0;
 
         if (distance > 0)

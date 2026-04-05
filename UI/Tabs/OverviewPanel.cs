@@ -114,7 +114,7 @@ public class OverviewPanel : MonoBehaviour
 
             if (showSpeed)
             {
-                float speed = vehicle.GetDriveComponent()?.GetMaxSpeed() ?? 0f;
+                float speed = vehicle.Drive?.GetMaxSpeed() ?? 0f;
                 display += $" Speed:{speed:F1}";
             }
 
