@@ -3,40 +3,48 @@ using Assets.Scripts.Combat.Damage;
 using SerializeReferenceEditor;
 using Assets.Scripts.Combat.Damage.FormulaProviders;
 using Assets.Scripts.Combat.Damage.FormulaProviders.SpecificProviders;
+using Assets.Scripts.Combat.Restoration;
 using Assets.Scripts.Entities;
+using Assets.Scripts.Entities.Vehicles;
 
-namespace Assets.Scripts.Effects.EffectTypes
+namespace Assets.Scripts.Effects.EffectTypes.EntityEffects
 {
     /// <summary>
-    /// The effect for applying damage to an entity target.
-    /// Uses a formula provider to determine the damage formula, which is then processed by the DamageCalculator and applied via the DamageApplicator.
+    /// Applies damage to an entity target.
+    /// When used in a VehicleEffectInvocation, defaults to the chassis as the vehicle's
+    /// structural representative. All components have independent health pools; use an
+    /// EntityEffectInvocation with a specific resolver to target a different component.
     /// </summary>
     [System.Serializable]
     [SRName("Damage")]
-    public class DamageEffect : EffectBase
+    public class DamageEffect : IEntityEffect, IVehicleEffect
     {
         [SerializeReference, SR]
         [Tooltip("Strategy for resolving damage formula. StaticFormulaProvider for fixed damage, WeaponFormulaProvider for weapon-based attacks.")]
         public IFormulaProvider formulaProvider = new StaticFormulaProvider();
 
-        public override void Apply(IEffectTarget target, EffectContext context)
+        void IEntityEffect.Apply(Entity target, EffectContext context)
         {
-            Entity entity = ResolveEntity(target);
-            if (entity == null) return;
-
             Entity user = context.SourceActor?.GetEntity();
             var formulaContext = new FormulaContext(user);
             DamageFormula formula = formulaProvider.GetFormula(formulaContext);
 
-            ResistanceLevel resistance = entity.GetResistance(formula.damageType);
+            ResistanceLevel resistance = target.GetResistance(formula.damageType);
             DamageResult result = DamageCalculator.Compute(formula, resistance, context.IsCriticalHit);
 
             DamageApplicator.Apply(
                 result: result,
-                target: entity,
+                target: target,
                 actor: context.SourceActor,
-                causalSource: context.CausalSource ?? user?.name
+                causalSource: context.CausalSource
             );
+        }
+
+        void IVehicleEffect.Apply(Vehicle target, EffectContext context)
+        {
+            Entity entity = target.GetDefaultTargetForResource(ResourceType.Health);
+            if (entity == null) return;
+            ((IEntityEffect)this).Apply(entity, context);
         }
     }
 }

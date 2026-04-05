@@ -3,11 +3,11 @@ using Assets.Scripts.Entities.Vehicles;
 using SerializeReferenceEditor;
 using UnityEngine;
 
-namespace Assets.Scripts.Effects.EffectTypes
+namespace Assets.Scripts.Effects.EffectTypes.VehicleEffects
 {
     [System.Serializable]
     [SRName("Restore Consumable")]
-    public class RestoreConsumableEffect : EffectBase
+    public class RestoreConsumableEffect : IVehicleEffect
     {
         [Header("Restore Configuration")]
         [Tooltip("Which consumable type to restore charges for.")]
@@ -16,22 +16,15 @@ namespace Assets.Scripts.Effects.EffectTypes
         [Tooltip("Number of charges to restore.")]
         public int amount = 1;
 
-        public override void Apply(IEffectTarget target, EffectContext context)
+        void IVehicleEffect.Apply(Vehicle target, EffectContext context)
         {
-            Vehicle vehicle = ResolveVehicle(target);
-            if (vehicle == null)
-            {
-                Debug.LogWarning($"[RestoreConsumableEffect] Could not resolve target to a Vehicle.");
-                return;
-            }
-
             if (targetConsumable == null)
             {
                 Debug.LogWarning($"[RestoreConsumableEffect] targetConsumable is not set.");
                 return;
             }
 
-            vehicle.RestoreConsumable(targetConsumable, amount, context.CausalSource);
+            target.RestoreConsumable(targetConsumable, amount, context.CausalSource);
         }
     }
 }

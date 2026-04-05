@@ -169,7 +169,7 @@ namespace Assets.Scripts.Managers.PlayerUI
             if (skill.costs.Count == 0)
                 return "Free";
 
-            var parts = new System.Collections.Generic.List<string>();
+            var parts = new List<string>();
             foreach (var cost in skill.costs)
                 parts.Add(cost.GetDescription());
             return string.Join(", ", parts);

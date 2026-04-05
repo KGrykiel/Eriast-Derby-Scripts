@@ -4,13 +4,14 @@ using Assets.Scripts.Combat.Damage;
 using Assets.Scripts.Combat.Rolls.RollSpecs;
 using Assets.Scripts.Combat.Rolls.RollSpecs.SpecTypes;
 using Assets.Scripts.Combat.Damage.FormulaProviders.SpecificProviders;
-using Assets.Scripts.Effects;
 using Assets.Scripts.Effects.EffectTypes;
 using Assets.Scripts.Effects.Targeting;
 using Assets.Scripts.Combat.Rolls.Targeting;
 using Assets.Scripts.Entities.Vehicles.VehicleComponents;
 using Assets.Scripts.Skills;
 using Assets.Scripts.Skills.Costs;
+using Assets.Scripts.Effects.Invocations;
+using Assets.Scripts.Effects.EffectTypes.EntityEffects;
 
 namespace Assets.Scripts.Tests.Helpers
 {
@@ -48,7 +49,7 @@ namespace Assets.Scripts.Tests.Helpers
         /// </summary>
         public static Skill CreateNoRollSkill(
             string name,
-            System.Collections.Generic.List<EffectInvocation> effects,
+            System.Collections.Generic.List<IEffectInvocation> effects,
             System.Collections.Generic.List<Object> cleanup = null,
             params ISkillCost[] costs)
         {
@@ -80,9 +81,10 @@ namespace Assets.Scripts.Tests.Helpers
             {
                 targetResolver = new CurrentTargetResolver(),
                 rollSpec = new AttackSpec(),
-                successEffects = new System.Collections.Generic.List<EffectInvocation>
+                successEffects = new System.Collections.Generic.List<IEffectInvocation>
                 {
-                    new() {
+                    new EntityEffectInvocation
+                    {
                         effect = new DamageEffect
                         {
                             formulaProvider = new StaticFormulaProvider
@@ -95,8 +97,7 @@ namespace Assets.Scripts.Tests.Helpers
                                     damageType = damageType
                                 }
                             }
-                        },
-                        targetResolver = new SelectedTargetResolver()
+                        }
                     }
                 }
             };
@@ -112,7 +113,7 @@ namespace Assets.Scripts.Tests.Helpers
             string name,
             CharacterAttribute saveAttribute,
             int dc,
-            System.Collections.Generic.List<EffectInvocation> effects,
+            System.Collections.Generic.List<IEffectInvocation> effects,
             System.Collections.Generic.List<Object> cleanup = null,
             params ISkillCost[] costs)
         {

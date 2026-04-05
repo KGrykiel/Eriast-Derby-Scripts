@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using Assets.Scripts.Combat.Rolls.Targeting;
-using Assets.Scripts.Effects;
+using Assets.Scripts.Effects.Invocations;
 using SerializeReferenceEditor;
 using UnityEngine;
 
@@ -25,11 +25,13 @@ namespace Assets.Scripts.Combat.Rolls.RollSpecs
         public IRollTargetResolver targetResolver;
 
         [Header("Effects")]
+        [SerializeReference, SR]
         [Tooltip("Effects applied on a successful roll, or always if rollSpec is null.")]
-        public List<EffectInvocation> successEffects = new();
+        public List<IEffectInvocation> successEffects = new();
 
+        [SerializeReference, SR]
         [Tooltip("Effects applied on a failed roll. Ignored if rollSpec is null.")]
-        public List<EffectInvocation> failureEffects = new();
+        public List<IEffectInvocation> failureEffects = new();
 
         [Header("Narrative")]
         [Tooltip("Text shown to the DM when this node succeeds.")]

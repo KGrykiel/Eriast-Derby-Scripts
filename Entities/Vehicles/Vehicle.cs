@@ -7,13 +7,14 @@ using Assets.Scripts.Managers;
 using Assets.Scripts.Stages;
 using Assets.Scripts.Stages.Lanes;
 using Assets.Scripts.Conditions;
-using RollContext = Assets.Scripts.Combat.Rolls.RollSpecs.RollContext;
 using Assets.Scripts.Combat.Rolls.RollSpecs;
 using Assets.Scripts.Effects;
 using Assets.Scripts.Entities.Vehicles.VehicleComponents;
 using Assets.Scripts.Skills.Helpers;
 using Assets.Scripts.Characters;
 using Assets.Scripts.Skills;
+using Assets.Scripts.Conditions.EntityConditions;
+using Assets.Scripts.Combat.Restoration;
 
 namespace Assets.Scripts.Entities.Vehicles
 {
@@ -220,6 +221,80 @@ namespace Assets.Scripts.Entities.Vehicles
         }
 
         // ==================== EFFECT ROUTING ====================
+
+        /// <summary>
+        /// Applies an entity condition to the correct component(s) based on the condition's modifier attributes.
+        /// A condition with [MaxSpeed, EnergyRegen] lands on both Drive and PowerCore.
+        /// Conditions with no modifiers (e.g., pure DoTs) fall back to chassis.
+        /// </summary>
+        public void ApplyCondition(EntityCondition condition, Object applier)
+        {
+            if (condition == null) return;
+
+            if (condition.modifiers == null || condition.modifiers.Count == 0)
+            {
+                if (Chassis != null)
+                    Chassis.ApplyCondition(condition, applier);
+                return;
+            }
+
+            var targeted = new HashSet<Entity>();
+            foreach (var modifier in condition.modifiers)
+            {
+                VehicleComponent component = VehicleComponentResolver.ResolveForAttribute(this, modifier.attribute);
+                if (component == null)
+                    component = Chassis;
+                if (component != null)
+                    targeted.Add(component);
+            }
+
+            foreach (var entity in targeted)
+                entity.ApplyCondition(condition, applier);
+        }
+
+        /// <summary>
+        /// Removes conditions matching a specific template from all components on this vehicle.
+        /// </summary>
+        public void RemoveConditionsByTemplate(EntityCondition template)
+        {
+            foreach (var component in AllComponents)
+                component.RemoveConditionsByTemplate(template);
+        }
+
+        /// <summary>
+        /// Removes conditions matching the given categories from all components on this vehicle.
+        /// </summary>
+        public void RemoveConditionsByCategory(ConditionCategory categories)
+        {
+            foreach (var component in AllComponents)
+                component.RemoveConditionsByCategory(categories);
+        }
+
+        /// <summary>
+        /// Returns the default component to target for a vehicle-level resource effect
+        /// when no specific component has been selected.
+        /// Energy routes exclusively to the power core (the sole energy holder).
+        /// Health defaults to the chassis as the vehicle's structural representative —
+        /// all components have independent health pools; chassis is only the fallback target.
+        /// </summary>
+        public Entity GetDefaultTargetForResource(ResourceType resourceType)
+        {
+            if (resourceType == ResourceType.Energy && PowerCore != null)
+                return PowerCore;
+            return Chassis;
+        }
+
+        /// <summary>
+        /// Adds a permanent modifier to the component that owns the modifier's attribute.
+        /// </summary>
+        public void AddModifier(Modifiers.EntityAttributeModifier modifier)
+        {
+            VehicleComponent component = VehicleComponentResolver.ResolveForAttribute(this, modifier.Attribute);
+            if (component == null)
+                component = Chassis;
+            if (component != null)
+                component.AddModifier(modifier);
+        }
 
         public void UpdateStatusEffects()
         {

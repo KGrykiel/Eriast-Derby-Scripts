@@ -86,7 +86,7 @@ namespace Assets.Scripts.Conditions.EntityConditions
                         break;
 
                     case PeriodicRestorationEffect hot:
-                        int amount = RestorationCalculator.Roll(hot.formula);
+                        int amount = RestorationCalculator.Compute(hot.formula);
                         RestorationApplicator.Apply(hot.formula, amount, entity, causalSource: applied.template.effectName);
                         break;
                 }

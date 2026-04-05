@@ -21,6 +21,10 @@ namespace Assets.Scripts.Combat.Rolls.RollSpecs.SpecTypes
         [Tooltip("Advantage or disadvantage granted by this spec. Normal = no grant.")]
         public RollMode grantedMode;
 
+        [Header("Roller")]
+        [Tooltip("Who makes this save — the source of the action or its target. Default is Target (target resists the effect).")]
+        public RollerSource roller = RollerSource.Target;
+
         /// <summary>Display-friendly name for logs and tooltips.</summary>
         public abstract string DisplayName { get; }
 

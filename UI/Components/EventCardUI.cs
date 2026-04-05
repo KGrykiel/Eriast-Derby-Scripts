@@ -9,8 +9,8 @@ using Assets.Scripts.Events.EventCard;
 using Assets.Scripts.Combat.Restoration;
 using Assets.Scripts.Combat.Rolls.RollSpecs.SpecTypes;
 using Assets.Scripts.Combat.Damage.FormulaProviders.SpecificProviders;
-using Assets.Scripts.Effects;
-using Assets.Scripts.Effects.EffectTypes;
+using Assets.Scripts.Effects.Invocations;
+using Assets.Scripts.Effects.EffectTypes.EntityEffects;
 
 namespace Assets.Scripts.UI.Components
 {
@@ -227,10 +227,9 @@ namespace Assets.Scripts.UI.Components
                 tooltip += "\n<color=green><b>On Success:</b></color>";
                 foreach (var effect in successEffects)
                 {
-                    if (effect != null && effect.effect != null)
-                    {
-                        tooltip += $"\n  • {GetEffectDescription(effect)}";
-                    }
+                    string desc = GetEffectDescription(effect);
+                    if (desc != null)
+                        tooltip += $"\n  • {desc}";
                 }
             }
 
@@ -240,44 +239,53 @@ namespace Assets.Scripts.UI.Components
                 tooltip += "\n<color=red><b>On Failure:</b></color>";
                 foreach (var effect in failureEffects)
                 {
-                    if (effect != null && effect.effect != null)
-                    {
-                        tooltip += $"\n  • {GetEffectDescription(effect)}";
-                    }
+                    string desc = GetEffectDescription(effect);
+                    if (desc != null)
+                        tooltip += $"\n  • {desc}";
                 }
             }
 
             return tooltip;
         }
-        
-        private string GetEffectDescription(EffectInvocation invocation)
+
+        private string GetEffectDescription(IEffectInvocation invocation)
         {
-            if (invocation?.effect == null) return "Unknown effect";
-            
-            string effectType = invocation.effect.GetType().Name;
-            
+            if (invocation == null) return null;
+
+            object effect = invocation switch
+            {
+                EntityEffectInvocation e => (object)e.effect,
+                SeatEffectInvocation s   => s.effect,
+                VehicleEffectInvocation v => v.effect,
+                _ => null
+            };
+
+            if (effect == null) return null;
+
+            string effectType = effect.GetType().Name;
+
             string description = effectType.Replace("Effect", "");
 
-            if (invocation.effect is DamageEffect damageEffect && damageEffect.formulaProvider is StaticFormulaProvider staticProvider)
+            if (effect is DamageEffect damageEffect && damageEffect.formulaProvider is StaticFormulaProvider staticProvider)
             {
                 var formula = staticProvider.formula;
                 description = $"Damage ({formula.baseDice}d{formula.dieSize}+{formula.bonus})";
             }
-            else if (invocation.effect is DamageEffect weaponDamage && weaponDamage.formulaProvider is WeaponFormulaProvider)
+            else if (effect is DamageEffect weaponDamage && weaponDamage.formulaProvider is WeaponFormulaProvider)
             {
                 description = "Damage (Weapon)";
             }
-            else if (invocation.effect is ApplyEntityConditionEffect statusEffect && statusEffect.condition != null)
+            else if (effect is ApplyEntityConditionEffect statusEffect && statusEffect.condition != null)
             {
                 description = $"Apply: {statusEffect.condition.effectName}";
             }
-            else if (invocation.effect is ResourceRestorationEffect restorationEffect)
+            else if (effect is ResourceRestorationEffect restorationEffect)
             {
                 string verb = restorationEffect.formula.isDrain ? "Drain" : "Restore";
-                int expectedAmount = Mathf.Abs(RestorationCalculator.Roll(restorationEffect.formula));
+                int expectedAmount = Mathf.Abs(RestorationCalculator.Compute(restorationEffect.formula));
                 description = $"{verb} {expectedAmount} {restorationEffect.formula.resourceType}";
             }
-            
+
             return description;
         }
     }

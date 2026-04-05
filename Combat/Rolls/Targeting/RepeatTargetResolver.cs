@@ -20,11 +20,6 @@ namespace Assets.Scripts.Combat.Rolls.Targeting
         [Tooltip("Number of times to repeat the roll against the same target. Each repetition is an independent roll.")]
         public int hitCount = 2;
 
-        public RepeatTargetResolver(int hitCount = 2)
-        {
-            this.hitCount = hitCount;
-        }
-
         public IReadOnlyList<IRollTarget> ResolveFrom(RollContext ctx)
         {
             if (ctx.Target == null)

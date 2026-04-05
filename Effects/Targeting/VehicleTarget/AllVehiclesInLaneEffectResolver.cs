@@ -7,7 +7,7 @@ using Assets.Scripts.Stages.Lanes;
 using SerializeReferenceEditor;
 using UnityEngine;
 
-namespace Assets.Scripts.Effects.Targeting
+namespace Assets.Scripts.Effects.Targeting.VehicleTarget
 {
     /// <summary>
     /// Resolves to all vehicles in the lane derived from the roll context target.
@@ -17,8 +17,8 @@ namespace Assets.Scripts.Effects.Targeting
     /// falls back to excluding <c>ctx.Target as Vehicle</c> (event card context).
     /// </summary>
     [Serializable]
-    [SRName("Vehicle/All In Lane")]
-    public class AllVehiclesInLaneEffectResolver : IEffectTargetResolver
+    [SRName("All In Lane")]
+    public class AllVehiclesInLaneEffectResolver : IVehicleEffectResolver
     {
         /// <summary>When true, excludes the caster's vehicle from results. Falls back to excluding the target vehicle when no SourceActor is present.</summary>
         public bool ExcludeSelf;
@@ -26,13 +26,13 @@ namespace Assets.Scripts.Effects.Targeting
         /// <summary>When true, excludes the primary target vehicle (derived from ctx.Target) from results.</summary>
         public bool ExcludeTarget;
 
-        public IReadOnlyList<IEffectTarget> Resolve(RollContext ctx)
+        public IReadOnlyList<Vehicle> Resolve(RollContext ctx)
         {
             StageLane lane = ResolveLane(ctx);
             if (lane == null)
             {
                 Debug.LogWarning("[AllVehiclesInLaneEffectResolver] No lane in context.");
-                return Array.Empty<IEffectTarget>();
+                return Array.Empty<Vehicle>();
             }
 
             Vehicle selfVehicle = null;
@@ -46,7 +46,7 @@ namespace Assets.Scripts.Effects.Targeting
 
             Vehicle primaryTarget = ExcludeTarget ? EntityHelpers.GetVehicleFromTarget(ctx.Target) : null;
 
-            var results = new List<IEffectTarget>();
+            var results = new List<Vehicle>();
             foreach (var v in lane.vehiclesInLane)
             {
                 if (v != null && v != selfVehicle && v != primaryTarget)

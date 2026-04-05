@@ -16,7 +16,13 @@ using Assets.Scripts.Entities.Vehicles;
 using Assets.Scripts.Entities.Vehicles.VehicleComponents;
 using Assets.Scripts.Effects;
 using Assets.Scripts.Effects.EffectTypes;
+using Assets.Scripts.Effects.EffectTypes.EntityEffects;
+using Assets.Scripts.Effects.EffectTypes.SeatEffects;
+using Assets.Scripts.Effects.Invocations;
 using Assets.Scripts.Effects.Targeting;
+using Assets.Scripts.Effects.Targeting.VehicleTarget;
+using Assets.Scripts.Effects.Targeting.EntityTarget;
+using Assets.Scripts.Effects.Targeting.SeatTarget;
 using Assets.Scripts.Skills;
 
 namespace Assets.Scripts.Consumables
@@ -105,7 +111,7 @@ namespace Assets.Scripts.Consumables
                 "Dense smoke dispersal. Pass a Perception check DC 13 to blind the opposing navigator.",
                 Check(SkillCheckSpec.ForCharacter(CharacterSkill.Perception, ComponentType.Sensors), 13,
                     FX(),
-                    successChain: AlwaysApply(FX(CharacterStatus(LoadCharacterCondition("Blinded"), OnTarget)))),
+                    successChain: AlwaysApply(FX(CharacterStatus(LoadCharacterCondition("Blinded"), null)))),
                 TargetingMode.Enemy,
                 ActionType.BonusAction);
 
@@ -285,19 +291,19 @@ namespace Assets.Scripts.Consumables
 
         // ==================== BUILDER METHODS ====================
 
-        private static IEffectTargetResolver OnTarget     => new SelectedTargetResolver();
-        private static IEffectTargetResolver OnSelf       => new SourceVehicleResolver();
-        private static IEffectTargetResolver OnSourceComp => new SourceComponentResolver();
-        private static IEffectTargetResolver OnLane       => new AllVehiclesInLaneEffectResolver();
+        private static IVehicleEffectResolver OnTarget => new TargetVehicleResolver();
+        private static IVehicleEffectResolver OnSelf => new SourceVehicleResolver();
+        private static IEntityEffectResolver OnSourceComp => new SourceComponentResolver();
+        private static IVehicleEffectResolver OnLane => new AllVehiclesInLaneEffectResolver();
 
-        private static List<EffectInvocation> FX(params EffectInvocation[] effects)
+        private static List<IEffectInvocation> FX(params IEffectInvocation[] effects)
             => new(effects);
 
-        private static EffectInvocation Dmg(
+        private static IEffectInvocation Dmg(
             int dice, int dieSize, int bonus = 0,
             DamageType type = DamageType.Physical,
-            IEffectTargetResolver target = null)
-            => new()
+            IVehicleEffectResolver target = null)
+            => new VehicleEffectInvocation
             {
                 targetResolver = target ?? OnTarget,
                 effect = new DamageEffect
@@ -309,55 +315,62 @@ namespace Assets.Scripts.Consumables
                 }
             };
 
-        private static EffectInvocation Heal(int amount, IEffectTargetResolver target = null)
-            => new()
+        private static IEffectInvocation Heal(int amount, IVehicleEffectResolver target = null)
+            => new VehicleEffectInvocation
             {
                 targetResolver = target ?? OnSelf,
                 effect = new ResourceRestorationEffect { formula = new RestorationFormula { resourceType = ResourceType.Health, isDrain = false, bonus = amount } }
             };
 
-        private static EffectInvocation Energy(int amount, IEffectTargetResolver target = null)
-            => new()
+        private static IEffectInvocation Heal(int amount, IEntityEffectResolver target)
+            => new EntityEffectInvocation
+            {
+                targetResolver = target,
+                effect = new ResourceRestorationEffect { formula = new RestorationFormula { resourceType = ResourceType.Health, isDrain = false, bonus = amount } }
+            };
+
+        private static IEffectInvocation Energy(int amount, IVehicleEffectResolver target = null)
+            => new VehicleEffectInvocation
             {
                 targetResolver = target ?? OnSelf,
                 effect = new ResourceRestorationEffect { formula = new RestorationFormula { resourceType = ResourceType.Energy, isDrain = false, bonus = amount } }
             };
 
-        private static EffectInvocation EntityStatus(EntityCondition condition, IEffectTargetResolver target = null)
-            => new()
+        private static IEffectInvocation EntityStatus(EntityCondition condition, IVehicleEffectResolver target = null)
+            => new VehicleEffectInvocation
             {
                 targetResolver = target ?? OnTarget,
                 effect = new ApplyEntityConditionEffect { condition = condition }
             };
 
-        private static EffectInvocation CharacterStatus(CharacterCondition condition, IEffectTargetResolver target = null)
-            => new()
+        private static IEffectInvocation CharacterStatus(CharacterCondition condition, ISeatEffectResolver target = null)
+            => new SeatEffectInvocation
             {
-                targetResolver = target ?? OnTarget,
+                targetResolver = target ?? new SourceActorSeatResolver(),
                 effect = new ApplyCharacterConditionEffect { condition = condition }
             };
 
-        private static RollNode AlwaysApply(List<EffectInvocation> effects)
+        private static RollNode AlwaysApply(List<IEffectInvocation> effects)
             => new()
             { targetResolver = new CurrentTargetResolver(), successEffects = effects };
 
         private static RollNode Attack(
-            List<EffectInvocation> onHit,
-            List<EffectInvocation> onMiss = null,
+            List<IEffectInvocation> onHit,
+            List<IEffectInvocation> onMiss = null,
             RollNode successChain = null)
             => new()
             {
                 targetResolver = new CurrentTargetResolver(),
                 rollSpec = new AttackSpec(),
-                successEffects = onHit ?? new List<EffectInvocation>(),
-                failureEffects = onMiss ?? new List<EffectInvocation>(),
+                successEffects = onHit ?? new List<IEffectInvocation>(),
+                failureEffects = onMiss ?? new List<IEffectInvocation>(),
                 onSuccessChain = successChain
             };
 
         private static RollNode Save(
             SaveSpec spec, int dc,
-            List<EffectInvocation> onFail,
-            List<EffectInvocation> onPass = null,
+            List<IEffectInvocation> onFail,
+            List<IEffectInvocation> onPass = null,
             RollNode failChain = null)
         {
             spec.dc = dc;
@@ -365,16 +378,16 @@ namespace Assets.Scripts.Consumables
             {
                 targetResolver = new CurrentTargetResolver(),
                 rollSpec = spec,
-                failureEffects = onFail ?? new List<EffectInvocation>(),
-                successEffects = onPass ?? new List<EffectInvocation>(),
+                failureEffects = onFail ?? new List<IEffectInvocation>(),
+                successEffects = onPass ?? new List<IEffectInvocation>(),
                 onFailureChain = failChain
             };
         }
 
         private static RollNode Check(
             SkillCheckSpec spec, int dc,
-            List<EffectInvocation> onSuccess,
-            List<EffectInvocation> onFail = null,
+            List<IEffectInvocation> onSuccess,
+            List<IEffectInvocation> onFail = null,
             RollNode successChain = null,
             RollNode failChain = null)
         {
@@ -383,8 +396,8 @@ namespace Assets.Scripts.Consumables
             {
                 targetResolver = new CurrentTargetResolver(),
                 rollSpec = spec,
-                successEffects = onSuccess ?? new List<EffectInvocation>(),
-                failureEffects = onFail ?? new List<EffectInvocation>(),
+                successEffects = onSuccess ?? new List<IEffectInvocation>(),
+                failureEffects = onFail ?? new List<IEffectInvocation>(),
                 onSuccessChain = successChain,
                 onFailureChain = failChain
             };

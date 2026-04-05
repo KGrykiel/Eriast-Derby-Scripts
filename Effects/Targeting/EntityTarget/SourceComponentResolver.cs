@@ -1,27 +1,28 @@
 using System;
 using System.Collections.Generic;
 using Assets.Scripts.Combat.Rolls.RollSpecs;
+using Assets.Scripts.Entities;
 using Assets.Scripts.Entities.Vehicles.VehicleComponents;
 using SerializeReferenceEditor;
 using UnityEngine;
 
-namespace Assets.Scripts.Effects.Targeting
+namespace Assets.Scripts.Effects.Targeting.EntityTarget
 {
     /// <summary>
     /// Resolves to the component that is acting (the skill's source component).
     /// Expects <c>ctx.SourceActor.GetEntity()</c> to be a <see cref="VehicleComponent"/>.
     /// </summary>
     [Serializable]
-    [SRName("Entity/Source Component")]
-    public class SourceComponentResolver : IEffectTargetResolver
+    [SRName("Source Component")]
+    public class SourceComponentResolver : IEntityEffectResolver
     {
-        public IReadOnlyList<IEffectTarget> Resolve(RollContext ctx)
+        public IReadOnlyList<Entity> Resolve(RollContext ctx)
         {
             VehicleComponent component = ctx.SourceActor != null ? ctx.SourceActor.GetEntity() as VehicleComponent : null;
             if (component != null)
-                return new IEffectTarget[] { component };
+                return new Entity[] { component };
             Debug.LogWarning("[SourceComponentResolver] No source component in context.");
-            return Array.Empty<IEffectTarget>();
+            return Array.Empty<Entity>();
         }
     }
 }

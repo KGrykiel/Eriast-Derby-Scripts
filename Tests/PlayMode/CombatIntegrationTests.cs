@@ -18,7 +18,8 @@ using Assets.Scripts.Combat.Rolls.RollSpecs.SpecTypes;
 using Assets.Scripts.Conditions.EntityConditions;
 using Assets.Scripts.Combat.Damage.FormulaProviders.SpecificProviders;
 using Assets.Scripts.Effects;
-using Assets.Scripts.Effects.EffectTypes;
+using Assets.Scripts.Effects.EffectTypes.EntityEffects;
+using Assets.Scripts.Effects.Invocations;
 using Assets.Scripts.Effects.Targeting;
 using Assets.Scripts.Combat.Rolls.Targeting;
 using Assets.Scripts.Entities.Vehicles;
@@ -153,11 +154,12 @@ namespace Assets.Scripts.Tests.PlayMode
             // Buff: "Reinforce Hull" ? +3 AC to chassis for 3 turns
             var reinforceTemplate = TestStatusEffectFactory.CreateModifierEffect("Reinforced", EntityAttribute.ArmorClass, 3f, duration: 3, cleanup: cleanup);
             var reinforceSkill = TestSkillFactory.CreateNoRollSkill("Reinforce Hull",
-                new System.Collections.Generic.List<EffectInvocation>
+                new System.Collections.Generic.List<IEffectInvocation>
                 {
-                    new() {
+                    new VehicleEffectInvocation
+                    {
                         effect = new ApplyEntityConditionEffect { condition = reinforceTemplate },
-                        targetResolver = new SelectedTargetResolver()
+                        targetResolver = new TargetVehicleResolver()
                     }
                 },
                 cleanup: cleanup,
@@ -204,11 +206,12 @@ namespace Assets.Scripts.Tests.PlayMode
             // "Flame Thrower" applies Burning: 5 fire damage per turn for 3 turns
             var burningTemplate = TestStatusEffectFactory.CreateDoTEffect("Burning", damage: 5, DamageType.Fire, duration: 3, cleanup: cleanup);
             var flameThrower = TestSkillFactory.CreateNoRollSkill("Flame Thrower",
-                new System.Collections.Generic.List<EffectInvocation>
+                new System.Collections.Generic.List<IEffectInvocation>
                 {
-                    new() {
+                    new VehicleEffectInvocation
+                    {
                         effect = new ApplyEntityConditionEffect { condition = burningTemplate },
-                        targetResolver = new SelectedTargetResolver()
+                        targetResolver = new TargetVehicleResolver()
                     }
                 },
                 cleanup: cleanup,
@@ -414,9 +417,10 @@ namespace Assets.Scripts.Tests.PlayMode
             // Create save skill: "Psychic Scream" - WIS save DC 20 or take damage
             // DC 20 is nearly impossible with WIS 8 (-1 mod + half level)
             var psychicScream = TestSkillFactory.CreateSaveSkill("Psychic Scream", CharacterAttribute.Wisdom, dc: 20,
-                new System.Collections.Generic.List<EffectInvocation>
+                new System.Collections.Generic.List<IEffectInvocation>
                 {
-                    new() {
+                    new VehicleEffectInvocation
+                    {
                         effect = new DamageEffect
                         {
                             formulaProvider = new StaticFormulaProvider
@@ -428,7 +432,7 @@ namespace Assets.Scripts.Tests.PlayMode
                                 }
                             }
                         },
-                        targetResolver = new SelectedTargetResolver()
+                        targetResolver = new TargetVehicleResolver()
                     }
                 },
                 cleanup: cleanup,

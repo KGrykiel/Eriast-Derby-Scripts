@@ -6,15 +6,15 @@ using Assets.Scripts.Entities.Vehicles;
 using SerializeReferenceEditor;
 using UnityEngine;
 
-namespace Assets.Scripts.Effects.Targeting
+namespace Assets.Scripts.Effects.Targeting.VehicleTarget
 {
     /// <summary>
     /// Resolves to all vehicles in the same stage as the source vehicle.
     /// Stage is derived from the source vehicle; falls back to the target vehicle when no SourceActor is present.
     /// </summary>
     [Serializable]
-    [SRName("Vehicle/All In Stage")]
-    public class AllVehiclesInStageEffectResolver : IEffectTargetResolver
+    [SRName("All In Stage")]
+    public class AllVehiclesInStageEffectResolver : IVehicleEffectResolver
     {
         /// <summary>When true, excludes the source vehicle from results.</summary>
         public bool ExcludeSelf;
@@ -22,7 +22,7 @@ namespace Assets.Scripts.Effects.Targeting
         /// <summary>When true, excludes the primary target vehicle (derived from ctx.Target) from results.</summary>
         public bool ExcludeTarget;
 
-        public IReadOnlyList<IEffectTarget> Resolve(RollContext ctx)
+        public IReadOnlyList<Vehicle> Resolve(RollContext ctx)
         {
             Vehicle sourceVehicle = null;
             if (ctx.SourceActor != null)
@@ -33,13 +33,13 @@ namespace Assets.Scripts.Effects.Targeting
             if (sourceVehicle == null || sourceVehicle.CurrentStage == null)
             {
                 Debug.LogWarning("[AllVehiclesInStageEffectResolver] No source vehicle or stage in context.");
-                return Array.Empty<IEffectTarget>();
+                return Array.Empty<Vehicle>();
             }
 
             Vehicle self = ExcludeSelf ? sourceVehicle : null;
             Vehicle primaryTarget = ExcludeTarget ? EntityHelpers.GetVehicleFromTarget(ctx.Target) : null;
 
-            var results = new List<IEffectTarget>();
+            var results = new List<Vehicle>();
             foreach (var v in sourceVehicle.CurrentStage.vehiclesInStage)
             {
                 if (v != null && v != self && v != primaryTarget)

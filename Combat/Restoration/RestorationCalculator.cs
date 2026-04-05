@@ -8,7 +8,7 @@ namespace Assets.Scripts.Combat.Restoration
     /// </summary>
     public static class RestorationCalculator
     {
-        public static int Roll(RestorationFormula formula)
+        public static int Compute(RestorationFormula formula)
         {
             if (formula.isDrain && formula.resourceType == ResourceType.Health)
             {

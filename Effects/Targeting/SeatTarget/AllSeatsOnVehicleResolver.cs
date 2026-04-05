@@ -6,30 +6,33 @@ using Assets.Scripts.Entities.Vehicles;
 using SerializeReferenceEditor;
 using UnityEngine;
 
-namespace Assets.Scripts.Effects.Targeting
+namespace Assets.Scripts.Effects.Targeting.Seat
 {
     /// <summary>
-    /// Resolves to all components on the chosen vehicle.
+    /// Resolves to all seats on the chosen vehicle.
     /// Use <see cref="VehicleSource"/> to select the source or target vehicle.
     /// </summary>
     [Serializable]
-    [SRName("Entity/All On Vehicle")]
-    public class ComponentsOnVehicleResolver : IEffectTargetResolver
+    [SRName("All On Vehicle")]
+    public class AllSeatsOnVehicleResolver : ISeatEffectResolver
     {
         public VehicleSource source = VehicleSource.TargetVehicle;
 
-        public IReadOnlyList<IEffectTarget> Resolve(RollContext ctx)
+        public IReadOnlyList<VehicleSeat> Resolve(RollContext ctx)
         {
             Vehicle vehicle = ResolveVehicle(ctx);
             if (vehicle == null)
             {
-                Debug.LogWarning($"[ComponentsOnVehicleResolver] No {source} in context.");
-                return Array.Empty<IEffectTarget>();
+                Debug.LogWarning($"[AllSeatsOnVehicleResolver] No {source} in context.");
+                return Array.Empty<VehicleSeat>();
             }
 
-            var results = new List<IEffectTarget>();
-            foreach (var component in vehicle.AllComponents)
-                results.Add(component);
+            var results = new List<VehicleSeat>();
+            foreach (var seat in vehicle.seats)
+            {
+                if (seat != null)
+                    results.Add(seat);
+            }
             return results;
         }
 

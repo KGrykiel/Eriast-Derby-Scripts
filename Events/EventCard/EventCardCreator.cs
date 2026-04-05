@@ -15,7 +15,11 @@ using Assets.Scripts.Conditions;
 using StatusEffectTemplate = Assets.Scripts.Conditions.EntityConditions.EntityCondition;
 using Assets.Scripts.Effects;
 using Assets.Scripts.Effects.EffectTypes;
+using Assets.Scripts.Effects.EffectTypes.EntityEffects;
+using Assets.Scripts.Effects.Invocations;
 using Assets.Scripts.Effects.Targeting;
+using Assets.Scripts.Effects.Targeting.VehicleTarget;
+using Assets.Scripts.Effects.Targeting.EntityTarget;
 using Assets.Scripts.Entities.Vehicles.VehicleComponents;
 
 namespace Assets.Scripts.Events.EventCard
@@ -191,16 +195,16 @@ namespace Assets.Scripts.Events.EventCard
 
         // ==================== BUILDER METHODS ====================
 
-        private static IEffectTargetResolver OnSelf => new SourceVehicleResolver();
+        private static IVehicleEffectResolver OnSelf => new SourceVehicleResolver();
 
-        private static List<EffectInvocation> FX(params EffectInvocation[] effects)
+        private static List<IEffectInvocation> FX(params IEffectInvocation[] effects)
             => new(effects);
 
-        private static EffectInvocation Dmg(
+        private static IEffectInvocation Dmg(
             int dice, int dieSize, int bonus = 0,
             DamageType type = DamageType.Physical,
-            IEffectTargetResolver target = null)
-            => new()
+            IVehicleEffectResolver target = null)
+            => new VehicleEffectInvocation
             {
                 targetResolver = target ?? OnSelf,
                 effect = new DamageEffect
@@ -212,28 +216,28 @@ namespace Assets.Scripts.Events.EventCard
                 }
             };
 
-        private static EffectInvocation Energy(int amount, IEffectTargetResolver target = null)
-            => new()
+        private static IEffectInvocation Energy(int amount, IVehicleEffectResolver target = null)
+            => new VehicleEffectInvocation
             {
                 targetResolver = target ?? OnSelf,
                 effect = new ResourceRestorationEffect { formula = new RestorationFormula { resourceType = ResourceType.Energy, isDrain = false, bonus = amount } }
             };
 
-        private static EffectInvocation Status(StatusEffectTemplate effect, IEffectTargetResolver target = null)
-            => new()
+        private static IEffectInvocation Status(StatusEffectTemplate effect, IVehicleEffectResolver target = null)
+            => new VehicleEffectInvocation
             {
                 targetResolver = target ?? OnSelf,
                 effect = new ApplyEntityConditionEffect { condition = effect }
             };
 
-        private static RollNode AlwaysApply(List<EffectInvocation> effects, string narrative = "")
+        private static RollNode AlwaysApply(List<IEffectInvocation> effects, string narrative = "")
             => new()
             { targetResolver = new CurrentTargetResolver(), successEffects = effects, successNarrative = narrative };
 
         private static RollNode Save(
             SaveSpec spec, int dc,
-            List<EffectInvocation> onFail,
-            List<EffectInvocation> onPass = null,
+            List<IEffectInvocation> onFail,
+            List<IEffectInvocation> onPass = null,
             string successNarrative = "",
             string failureNarrative = "",
             RollNode failChain = null)
@@ -243,8 +247,8 @@ namespace Assets.Scripts.Events.EventCard
             {
                 targetResolver = new CurrentTargetResolver(),
                 rollSpec = spec,
-                failureEffects = onFail ?? new List<EffectInvocation>(),
-                successEffects = onPass ?? new List<EffectInvocation>(),
+                failureEffects = onFail ?? new List<IEffectInvocation>(),
+                successEffects = onPass ?? new List<IEffectInvocation>(),
                 successNarrative = successNarrative,
                 failureNarrative = failureNarrative,
                 onFailureChain = failChain
@@ -253,8 +257,8 @@ namespace Assets.Scripts.Events.EventCard
 
         private static RollNode Check(
             SkillCheckSpec spec, int dc,
-            List<EffectInvocation> onSuccess,
-            List<EffectInvocation> onFail = null,
+            List<IEffectInvocation> onSuccess,
+            List<IEffectInvocation> onFail = null,
             string successNarrative = "",
             string failureNarrative = "",
             RollNode successChain = null)
@@ -264,8 +268,8 @@ namespace Assets.Scripts.Events.EventCard
             {
                 targetResolver = new CurrentTargetResolver(),
                 rollSpec = spec,
-                successEffects = onSuccess ?? new List<EffectInvocation>(),
-                failureEffects = onFail ?? new List<EffectInvocation>(),
+                successEffects = onSuccess ?? new List<IEffectInvocation>(),
+                failureEffects = onFail ?? new List<IEffectInvocation>(),
                 successNarrative = successNarrative,
                 failureNarrative = failureNarrative,
                 onSuccessChain = successChain

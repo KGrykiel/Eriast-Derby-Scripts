@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using Assets.Scripts.Effects;
 using UnityEngine;
+using Assets.Scripts.Combat.Rolls;
 using Assets.Scripts.Combat.Rolls.RollTypes.Attacks;
 using Assets.Scripts.Combat.Rolls.RollTypes.OpposedChecks;
 using Assets.Scripts.Combat.Rolls.RollTypes.Saves;
@@ -9,6 +10,7 @@ using Assets.Scripts.Combat.Rolls.RollSpecs.SpecTypes;
 using Assets.Scripts.Entities.Vehicles;
 using Assets.Scripts.Entities;
 using Assets.Scripts.Entities.Vehicles.VehicleComponents;
+using Assets.Scripts.Effects.Invocations;
 
 namespace Assets.Scripts.Combat.Rolls.RollSpecs
 {
@@ -61,6 +63,9 @@ namespace Assets.Scripts.Combat.Rolls.RollSpecs
 
         private static bool ExecuteSingleNode(RollNode node, RollContext ctx)
         {
+            RollNode chain;
+            bool success;
+
             CombatEventBus.BeginAction();
             try
             {
@@ -69,16 +74,18 @@ namespace Assets.Scripts.Combat.Rolls.RollSpecs
                 var effects = roll.Success ? node.successEffects : node.failureEffects;
                 ApplyEffects(effects, ctx, roll.IsCriticalHit);
 
-                var chain = roll.Success ? node.onSuccessChain : node.onFailureChain;
-                if (chain != null)
-                    ExecuteNode(chain, ctx);
-
-                return roll.Success;
+                chain = roll.Success ? node.onSuccessChain : node.onFailureChain;
+                success = roll.Success;
             }
             finally
             {
                 CombatEventBus.EndAction();
             }
+
+            if (chain != null)
+                ExecuteNode(chain, ctx);
+
+            return success;
         }
 
         // ==================== ROLL RESOLUTION ====================
@@ -99,11 +106,13 @@ namespace Assets.Scripts.Combat.Rolls.RollSpecs
 
         private static D20RollOutcome ResolveSkillCheck(SkillCheckSpec spec, RollContext ctx)
         {
-            Vehicle sourceVehicle = GetSourceVehicle(ctx);
-            var routing = CheckRouter.RouteSkillCheck(sourceVehicle, spec, ctx.SourceActor);
+            bool useTarget = spec.roller == RollerSource.Target;
+            Vehicle roller = useTarget ? GetTargetVehicle(ctx) : GetSourceVehicle(ctx);
+            RollActor actorHint = useTarget ? GetTargetActor(ctx) : ctx.SourceActor;
+            var routing = CheckRouter.RouteSkillCheck(roller, spec, actorHint);
             var checkCtx = new SkillCheckExecutionContext
             {
-                Vehicle = sourceVehicle,
+                Vehicle = roller,
                 Spec = spec,
                 CausalSource = ctx.CausalSource,
                 Routing = routing
@@ -114,9 +123,9 @@ namespace Assets.Scripts.Combat.Rolls.RollSpecs
 
         private static D20RollOutcome ResolveSavingThrow(SaveSpec spec, RollContext ctx)
         {
-            // In skill context the target makes the save; in event/lane context the acting vehicle makes it.
-            Vehicle targetVehicle = GetTargetVehicle(ctx);
-            Vehicle roller = targetVehicle != null ? targetVehicle : GetSourceVehicle(ctx);
+            Vehicle roller = spec.roller == RollerSource.Source
+                ? GetSourceVehicle(ctx)
+                : GetTargetVehicle(ctx) ?? GetSourceVehicle(ctx);
 
             var routing = CheckRouter.RouteSave(roller, spec, ctx.Target as VehicleComponent);
 
@@ -197,7 +206,7 @@ namespace Assets.Scripts.Combat.Rolls.RollSpecs
 
         // ==================== EFFECT APPLICATION ====================
 
-        private static void ApplyEffects(List<EffectInvocation> effects, RollContext ctx, bool isCriticalHit)
+        private static void ApplyEffects(List<IEffectInvocation> effects, RollContext ctx, bool isCriticalHit)
         {
             if (effects == null || effects.Count == 0) return;
 
@@ -205,19 +214,7 @@ namespace Assets.Scripts.Combat.Rolls.RollSpecs
             effectContext.CausalSource = ctx.CausalSource;
 
             foreach (var invocation in effects)
-            {
-                if (invocation?.effect == null) continue;
-
-                if (invocation.targetResolver == null)
-                {
-                    Debug.LogWarning($"[RollNodeExecutor] EffectInvocation has no targetResolver. CausalSource: {ctx.CausalSource ?? "<none>"}");
-                    continue;
-                }
-
-                var targets = invocation.targetResolver.Resolve(ctx);
-                foreach (var target in targets)
-                    invocation.effect.Apply(target, effectContext);
-            }
+                invocation?.Execute(ctx, effectContext);
         }
 
         // ==================== CONTEXT HELPERS ====================
@@ -240,6 +237,16 @@ namespace Assets.Scripts.Combat.Rolls.RollSpecs
                 Entity entity => EntityHelpers.GetParentVehicle(entity),
                 VehicleSeat seat => seat.ParentVehicle,
                 _ => null
+            };
+        }
+
+        private static RollActor GetTargetActor(RollContext ctx)
+        {
+            return ctx.Target switch
+            {
+                VehicleSeat seat => new CharacterActor(seat),
+                Entity entity    => new ComponentActor(entity),
+                _                => null
             };
         }
 

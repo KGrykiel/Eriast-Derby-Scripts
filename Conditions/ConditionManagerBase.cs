@@ -19,6 +19,12 @@ namespace Assets.Scripts.Conditions
 
         public TApplied Apply(TTemplate template, Object applier)
         {
+            if (template == null)
+            {
+                Debug.LogWarning($"[Conditions] Attempted to apply a null condition to {GetOwnerDisplayName()}.");
+                return null;
+            }
+
             if (!CanApply(template))
             {
                 Debug.LogWarning($"[Conditions] Cannot apply {template.effectName} to {GetOwnerDisplayName()}");

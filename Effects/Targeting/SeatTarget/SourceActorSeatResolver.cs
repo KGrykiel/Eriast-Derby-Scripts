@@ -4,22 +4,22 @@ using Assets.Scripts.Combat.Rolls.RollSpecs;
 using Assets.Scripts.Entities.Vehicles;
 using SerializeReferenceEditor;
 
-namespace Assets.Scripts.Effects.Targeting
+namespace Assets.Scripts.Effects.Targeting.SeatTarget
 {
     /// <summary>
     /// Resolves to the seat occupied by the rolling character (<c>ctx.SourceActor</c>).
     /// Returns empty if the actor is not seated (e.g. vehicle-level actors).
     /// </summary>
     [Serializable]
-    [SRName("Seat/Source Actor")]
-    public class SourceActorSeatResolver : IEffectTargetResolver
+    [SRName("Source Actor")]
+    public class SourceActorSeatResolver : ISeatEffectResolver
     {
-        public IReadOnlyList<IEffectTarget> Resolve(RollContext ctx)
+        public IReadOnlyList<VehicleSeat> Resolve(RollContext ctx)
         {
-            VehicleSeat seat = ctx.SourceActor != null ? ctx.SourceActor.GetSeat() : null;
+            VehicleSeat seat = ctx.SourceActor?.GetSeat();
             if (seat != null)
-                return new IEffectTarget[] { seat };
-            return Array.Empty<IEffectTarget>();
+                return new VehicleSeat[] { seat };
+            return Array.Empty<VehicleSeat>();
         }
     }
 }

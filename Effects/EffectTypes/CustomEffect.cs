@@ -13,7 +13,7 @@ namespace Assets.Scripts.Effects.EffectTypes
     /// </summary>
     [Serializable]
     [SRName("Custom")]
-    public class CustomEffect : EffectBase
+    public class CustomEffect : IEntityEffect
     {
         [Tooltip("Name/description of this custom effect for logging purposes")]
         public string effectName = "Custom Effect";
@@ -26,16 +26,12 @@ namespace Assets.Scripts.Effects.EffectTypes
         [Range(-1, 100)]
         public int intParameter = -1;
 
-        public override void Apply(IEffectTarget target, EffectContext context)
+        void IEntityEffect.Apply(Entity target, EffectContext context)
         {
-            Entity entity = ResolveEntity(target);
-            if (entity == null) return;
-
-            // Prefer command pattern (works with prefabs)
             if (command != null)
             {
                 // Pass CustomEffect as source so command can read floatParameter
-                command.Execute(entity, context, this);
+                command.Execute(target, context, this);
             }
             else
             {

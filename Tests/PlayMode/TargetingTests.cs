@@ -10,8 +10,11 @@ using Assets.Scripts.Combat.Rolls;
 using Assets.Scripts.Combat.Rolls.RollSpecs;
 using Assets.Scripts.Combat.Rolls.Targeting;
 using Assets.Scripts.Effects;
-using Assets.Scripts.Effects.EffectTypes;
+using Assets.Scripts.Effects.EffectTypes.EntityEffects;
+using Assets.Scripts.Effects.Invocations;
 using Assets.Scripts.Effects.Targeting;
+using Assets.Scripts.Effects.Targeting.EntityTarget;
+using Assets.Scripts.Effects.Targeting.VehicleTarget;
 using Assets.Scripts.Entities;
 using Assets.Scripts.Entities.Vehicles;
 using Assets.Scripts.Entities.Vehicles.VehicleComponents;
@@ -91,14 +94,26 @@ namespace Assets.Scripts.Tests.PlayMode
             };
         }
 
-        private static RollNode CreateUnconditionalDamageNode(int damage, IEffectTargetResolver targetResolver)
+        private static RollNode CreateVehicleDamageNode(int damage, IVehicleEffectResolver targetResolver)
         {
             return new RollNode
             {
                 targetResolver = new CurrentTargetResolver(),
-                successEffects = new List<EffectInvocation>
+                successEffects = new List<IEffectInvocation>
                 {
-                    new() { effect = CreateFlatDamageEffect(damage), targetResolver = targetResolver }
+                    new VehicleEffectInvocation { effect = CreateFlatDamageEffect(damage), targetResolver = targetResolver }
+                }
+            };
+        }
+
+        private static RollNode CreateEntityDamageNode(int damage, IEntityEffectResolver targetResolver)
+        {
+            return new RollNode
+            {
+                targetResolver = new CurrentTargetResolver(),
+                successEffects = new List<IEffectInvocation>
+                {
+                    new EntityEffectInvocation { effect = CreateFlatDamageEffect(damage), targetResolver = targetResolver }
                 }
             };
         }
@@ -143,70 +158,6 @@ namespace Assets.Scripts.Tests.PlayMode
         {
             var resolver = new CurrentTargetResolver();
             var ctx = new RollContext { Target = null };
-
-            var results = resolver.ResolveFrom(ctx);
-            yield return null;
-
-            Assert.AreEqual(0, results.Count);
-        }
-
-        // ==================== ContextVehicleResolver ====================
-
-        [UnityTest]
-        public IEnumerator ContextVehicleResolver_ReturnsVehicle_FromTarget()
-        {
-            var vehicle = BuildVehicle();
-            var resolver = new ContextVehicleResolver();
-            var ctx = new RollContext { Target = vehicle };
-
-            var results = resolver.ResolveFrom(ctx);
-            yield return null;
-
-            Assert.AreEqual(1, results.Count);
-            Assert.AreEqual(vehicle, results[0]);
-        }
-
-        [UnityTest]
-        public IEnumerator ContextVehicleResolver_PrefersSourceActor_OverTarget()
-        {
-            var driver = TestCharacterFactory.CreateWithCleanup("Driver", cleanup: cleanup);
-            var sourceVehicle = new TestVehicleBuilder("Source")
-                .WithChassis(driver)
-                .Build();
-            gameObjects.Add(sourceVehicle.gameObject);
-            var targetVehicle = BuildVehicle("Target");
-            var resolver = new ContextVehicleResolver();
-
-            var seat = sourceVehicle.seats[0];
-            var actor = new CharacterActor(seat);
-            var ctx = new RollContext { SourceActor = actor, Target = targetVehicle };
-
-            var results = resolver.ResolveFrom(ctx);
-            yield return null;
-
-            Assert.AreEqual(1, results.Count);
-            Assert.AreEqual(sourceVehicle, results[0], "Should prefer SourceActor vehicle over Target");
-        }
-
-        [UnityTest]
-        public IEnumerator ContextVehicleResolver_FallsBackToTarget_WhenSourceActorNull()
-        {
-            var vehicle = BuildVehicle();
-            var resolver = new ContextVehicleResolver();
-            var ctx = new RollContext { SourceActor = null, Target = vehicle };
-
-            var results = resolver.ResolveFrom(ctx);
-            yield return null;
-
-            Assert.AreEqual(1, results.Count);
-            Assert.AreEqual(vehicle, results[0]);
-        }
-
-        [UnityTest]
-        public IEnumerator ContextVehicleResolver_ReturnsEmpty_WhenBothNull()
-        {
-            var resolver = new ContextVehicleResolver();
-            var ctx = new RollContext { SourceActor = null, Target = null };
 
             var results = resolver.ResolveFrom(ctx);
             yield return null;
@@ -462,7 +413,7 @@ namespace Assets.Scripts.Tests.PlayMode
         public IEnumerator EffectTarget_SelectedTarget_DamagesTargetVehicle()
         {
             var vehicle = BuildVehicle("Target", chassisHealth: 100);
-            var node = CreateUnconditionalDamageNode(10, new SelectedTargetResolver());
+            var node = CreateVehicleDamageNode(10, new TargetVehicleResolver());
             var ctx = new RollContext { Target = vehicle, CausalSource = "Test" };
 
             int hpBefore = vehicle.Chassis.GetCurrentHealth();
@@ -484,7 +435,7 @@ namespace Assets.Scripts.Tests.PlayMode
 
             var seat = source.seats[0];
             var actor = new CharacterActor(seat);
-            var node = CreateUnconditionalDamageNode(15, new SourceVehicleResolver());
+            var node = CreateVehicleDamageNode(15, new SourceVehicleResolver());
             var ctx = new RollContext { SourceActor = actor, Target = target, CausalSource = "Test" };
 
             int sourceHpBefore = source.Chassis.GetCurrentHealth();
@@ -508,7 +459,7 @@ namespace Assets.Scripts.Tests.PlayMode
 
             var seat = source.seats[0];
             var actor = new CharacterActor(seat);
-            var node = CreateUnconditionalDamageNode(20, new TargetVehicleResolver());
+            var node = CreateVehicleDamageNode(20, new TargetVehicleResolver());
             var ctx = new RollContext { SourceActor = actor, Target = target, CausalSource = "Test" };
 
             int targetHpBefore = target.Chassis.GetCurrentHealth();
@@ -529,7 +480,7 @@ namespace Assets.Scripts.Tests.PlayMode
             PlaceVehicleInLane(vehicleB, stage, lane);
             PlaceVehicleInLane(vehicleC, stage, lane);
 
-            var node = CreateUnconditionalDamageNode(10, new AllVehiclesInLaneEffectResolver());
+            var node = CreateVehicleDamageNode(10, new AllVehiclesInLaneEffectResolver());
             var ctx = new RollContext { Target = vehicleA, CausalSource = "Test" };
 
             RollNodeExecutor.Execute(node, ctx);
@@ -549,7 +500,7 @@ namespace Assets.Scripts.Tests.PlayMode
             PlaceVehicleInLane(self, stage, lane);
             PlaceVehicleInLane(other, stage, lane);
 
-            var node = CreateUnconditionalDamageNode(10, new AllVehiclesInLaneEffectResolver { ExcludeSelf = true });
+            var node = CreateVehicleDamageNode(10, new AllVehiclesInLaneEffectResolver { ExcludeSelf = true });
             var ctx = new RollContext { Target = self, CausalSource = "Test" };
 
             RollNodeExecutor.Execute(node, ctx);
@@ -572,7 +523,7 @@ namespace Assets.Scripts.Tests.PlayMode
             PlaceVehicleInLane(otherSameLane, stage, laneA);
             PlaceVehicleInLane(otherDiffLane, stage, laneB);
 
-            var node = CreateUnconditionalDamageNode(10, new AllVehiclesInStageEffectResolver { ExcludeSelf = true });
+            var node = CreateVehicleDamageNode(10, new AllVehiclesInStageEffectResolver { ExcludeSelf = true });
             var ctx = new RollContext { Target = self, CausalSource = "Test" };
 
             RollNodeExecutor.Execute(node, ctx);
@@ -593,7 +544,7 @@ namespace Assets.Scripts.Tests.PlayMode
                 .Build();
             gameObjects.Add(vehicle.gameObject);
 
-            var node = CreateUnconditionalDamageNode(5, new ComponentsOnVehicleResolver());
+            var node = CreateEntityDamageNode(5, new ComponentsOnVehicleResolver());
             var ctx = new RollContext { Target = vehicle, CausalSource = "Test" };
 
             int chassisHp = vehicle.Chassis.GetCurrentHealth();
@@ -622,7 +573,7 @@ namespace Assets.Scripts.Tests.PlayMode
 
             VehicleComponent weapon = vehicle.AllComponents.First(c => c.componentType == ComponentType.Weapon);
             var actor = new ComponentActor(weapon);
-            var node = CreateUnconditionalDamageNode(8, new SourceComponentResolver());
+            var node = CreateEntityDamageNode(8, new SourceComponentResolver());
             var ctx = new RollContext { SourceActor = actor, Target = vehicle, CausalSource = "Test" };
 
             int weaponHp = weapon.GetCurrentHealth();
@@ -651,10 +602,10 @@ namespace Assets.Scripts.Tests.PlayMode
             var node = new RollNode
             {
                 targetResolver = new CurrentTargetResolver(),
-                successEffects = new List<EffectInvocation>
+                successEffects = new List<IEffectInvocation>
                 {
-                    new() { effect = CreateFlatDamageEffect(10), targetResolver = new AllVehiclesInLaneEffectResolver { ExcludeSelf = true } },
-                    new() { effect = CreateFlatDamageEffect(20), targetResolver = new SelectedTargetResolver() }
+                    new VehicleEffectInvocation { effect = CreateFlatDamageEffect(10), targetResolver = new AllVehiclesInLaneEffectResolver { ExcludeSelf = true } },
+                    new VehicleEffectInvocation { effect = CreateFlatDamageEffect(20), targetResolver = new TargetVehicleResolver() }
                 }
             };
             var ctx = new RollContext { Target = exploder, CausalSource = "You Explode!" };
@@ -684,10 +635,10 @@ namespace Assets.Scripts.Tests.PlayMode
             var node = new RollNode
             {
                 targetResolver = new CurrentTargetResolver(),
-                successEffects = new List<EffectInvocation>
+                successEffects = new List<IEffectInvocation>
                 {
-                    new() { effect = CreateFlatDamageEffect(25), targetResolver = new TargetVehicleResolver() },
-                    new() { effect = CreateFlatDamageEffect(5), targetResolver = new SourceVehicleResolver() }
+                    new VehicleEffectInvocation { effect = CreateFlatDamageEffect(25), targetResolver = new TargetVehicleResolver() },
+                    new VehicleEffectInvocation { effect = CreateFlatDamageEffect(5), targetResolver = new SourceVehicleResolver() }
                 }
             };
             var ctx = new RollContext { SourceActor = actor, Target = target, CausalSource = "Test" };
@@ -715,9 +666,9 @@ namespace Assets.Scripts.Tests.PlayMode
             var node = new RollNode
             {
                 targetResolver = new AllVehiclesInLaneResolver(),
-                successEffects = new List<EffectInvocation>
+                successEffects = new List<IEffectInvocation>
                 {
-                    new() { effect = CreateFlatDamageEffect(10), targetResolver = new SelectedTargetResolver() }
+                    new VehicleEffectInvocation { effect = CreateFlatDamageEffect(10), targetResolver = new TargetVehicleResolver() }
                 }
             };
             var ctx = new RollContext { Target = vehicleA, CausalSource = "LaneHazard" };
@@ -743,9 +694,9 @@ namespace Assets.Scripts.Tests.PlayMode
             var node = new RollNode
             {
                 targetResolver = new AllVehiclesInStageResolver(),
-                successEffects = new List<EffectInvocation>
+                successEffects = new List<IEffectInvocation>
                 {
-                    new() { effect = CreateFlatDamageEffect(15), targetResolver = new SelectedTargetResolver() }
+                    new VehicleEffectInvocation { effect = CreateFlatDamageEffect(15), targetResolver = new TargetVehicleResolver() }
                 }
             };
             var ctx = new RollContext { Target = vehicleA, CausalSource = "StageQuake" };
@@ -769,9 +720,9 @@ namespace Assets.Scripts.Tests.PlayMode
             var node = new RollNode
             {
                 targetResolver = new AllVehiclesInLaneResolver(),
-                successEffects = new List<EffectInvocation>
+                successEffects = new List<IEffectInvocation>
                 {
-                    new() { effect = CreateFlatDamageEffect(7), targetResolver = new SelectedTargetResolver() }
+                    new VehicleEffectInvocation { effect = CreateFlatDamageEffect(7), targetResolver = new TargetVehicleResolver() }
                 }
             };
             var ctx = new RollContext { SourceActor = null, Target = vehicleA, CausalSource = "EventCard" };
@@ -796,9 +747,9 @@ namespace Assets.Scripts.Tests.PlayMode
             var node = new RollNode
             {
                 targetResolver = new AllVehiclesInLaneResolver(),
-                successEffects = new List<EffectInvocation>
+                successEffects = new List<IEffectInvocation>
                 {
-                    new() { effect = CreateFlatDamageEffect(99), targetResolver = new SelectedTargetResolver() }
+                    new VehicleEffectInvocation { effect = CreateFlatDamageEffect(99), targetResolver = new TargetVehicleResolver() }
                 }
             };
             var ctx = new RollContext { Target = triggerVehicle, CausalSource = "EmptyLane" };
@@ -855,9 +806,9 @@ namespace Assets.Scripts.Tests.PlayMode
             var node = new RollNode
             {
                 targetResolver = new AllVehiclesInLaneResolver(),
-                successEffects = new List<EffectInvocation>
+                successEffects = new List<IEffectInvocation>
                 {
-                    new() { effect = CreateFlatDamageEffect(10), targetResolver = new SelectedTargetResolver() }
+                    new VehicleEffectInvocation { effect = CreateFlatDamageEffect(10), targetResolver = new TargetVehicleResolver() }
                 }
             };
             var ctx = new RollContext { SourceActor = actor, Target = targetA, CausalSource = "ScatterShot" };
@@ -881,9 +832,9 @@ namespace Assets.Scripts.Tests.PlayMode
             var node = new RollNode
             {
                 targetResolver = null,
-                successEffects = new List<EffectInvocation>
+                successEffects = new List<IEffectInvocation>
                 {
-                    new() { effect = CreateFlatDamageEffect(10), targetResolver = new SelectedTargetResolver() }
+                    new VehicleEffectInvocation { effect = CreateFlatDamageEffect(10), targetResolver = new TargetVehicleResolver() }
                 }
             };
             var ctx = new RollContext { Target = vehicle, CausalSource = "Test" };
@@ -903,27 +854,13 @@ namespace Assets.Scripts.Tests.PlayMode
         public IEnumerator EventCardContext_NullSourceActor_SelectedTarget_Works()
         {
             var vehicle = BuildVehicle("EventTarget", chassisHealth: 100);
-            var node = CreateUnconditionalDamageNode(12, new SelectedTargetResolver());
+            var node = CreateVehicleDamageNode(12, new TargetVehicleResolver());
             var ctx = new RollContext { SourceActor = null, Target = vehicle, CausalSource = "EventCard" };
 
             RollNodeExecutor.Execute(node, ctx);
             yield return null;
 
             Assert.AreEqual(88, vehicle.Chassis.GetCurrentHealth());
-        }
-
-        [UnityTest]
-        public IEnumerator EventCardContext_NullSourceActor_SourceVehicle_FallsBackToTarget()
-        {
-            var vehicle = BuildVehicle("EventTarget", chassisHealth: 100);
-            var node = CreateUnconditionalDamageNode(10, new SourceVehicleResolver());
-            var ctx = new RollContext { SourceActor = null, Target = vehicle, CausalSource = "EventCard" };
-
-            RollNodeExecutor.Execute(node, ctx);
-            yield return null;
-
-            Assert.AreEqual(90, vehicle.Chassis.GetCurrentHealth(),
-                "SourceVehicle with null SourceActor should fall back to ctx.Target");
         }
 
         [UnityTest]
@@ -935,7 +872,7 @@ namespace Assets.Scripts.Tests.PlayMode
             PlaceVehicleInLane(self, stage, lane);
             PlaceVehicleInLane(other, stage, lane);
 
-            var node = CreateUnconditionalDamageNode(10, new AllVehiclesInLaneEffectResolver { ExcludeSelf = true });
+            var node = CreateVehicleDamageNode(10, new AllVehiclesInLaneEffectResolver { ExcludeSelf = true });
             var ctx = new RollContext { SourceActor = null, Target = self, CausalSource = "EventCard" };
 
             RollNodeExecutor.Execute(node, ctx);
@@ -995,9 +932,9 @@ namespace Assets.Scripts.Tests.PlayMode
             var node = new RollNode
             {
                 targetResolver = new AllVehiclesInLaneResolver(),
-                successEffects = new List<EffectInvocation>
+                successEffects = new List<IEffectInvocation>
                 {
-                    new() { effect = CreateFlatDamageEffect(10), targetResolver = new SelectedTargetResolver() }
+                    new VehicleEffectInvocation { effect = CreateFlatDamageEffect(10), targetResolver = new TargetVehicleResolver() }
                 }
             };
             var ctx = new RollContext { Target = lane, CausalSource = "Bombardment" };

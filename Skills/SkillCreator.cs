@@ -16,7 +16,13 @@ using Assets.Scripts.Combat.Rolls.Targeting;
 using Assets.Scripts.Combat.Rolls.Advantage;
 using Assets.Scripts.Effects;
 using Assets.Scripts.Effects.EffectTypes;
+using Assets.Scripts.Effects.EffectTypes.EntityEffects;
+using Assets.Scripts.Effects.EffectTypes.SeatEffects;
+using Assets.Scripts.Effects.Invocations;
 using Assets.Scripts.Effects.Targeting;
+using Assets.Scripts.Effects.Targeting.VehicleTarget;
+using Assets.Scripts.Effects.Targeting.EntityTarget;
+using Assets.Scripts.Effects.Targeting.SeatTarget;
 using Assets.Scripts.Entities.Vehicles.VehicleComponents;
 using Assets.Scripts.Consumables;
 using Assets.Scripts.Skills.Costs;
@@ -104,17 +110,17 @@ namespace Assets.Scripts.Skills
             Selection.activeObject = skill;
             EditorUtility.FocusProjectWindow();
         }
-        
+
         private static void ApplyPresets(Skill skill)
         {
             var successEffects = skill.category switch
             {
-                SkillCategory.Attack     => GetAttackPreset(),
+                SkillCategory.Attack => GetAttackPreset(),
                 SkillCategory.Restoration => GetRestorationPreset(),
-                SkillCategory.Buff       => GetBuffPreset(),
-                SkillCategory.Debuff     => GetDebuffPreset(),
-                SkillCategory.Special    => GetSpecialPreset(),
-                _                        => new List<EffectInvocation>()
+                SkillCategory.Buff => GetBuffPreset(),
+                SkillCategory.Debuff => GetDebuffPreset(),
+                SkillCategory.Special => GetSpecialPreset(),
+                _ => new List<IEffectInvocation>()
             };
 
             skill.rollNode = skill.category switch
@@ -142,82 +148,59 @@ namespace Assets.Scripts.Skills
 
             skill.targetingMode = skill.category switch
             {
-                SkillCategory.Attack      => TargetingMode.Enemy,
-                SkillCategory.Debuff      => TargetingMode.Enemy,
-                SkillCategory.Special     => TargetingMode.Enemy,
-                SkillCategory.Buff        => TargetingMode.Self,
+                SkillCategory.Attack => TargetingMode.Enemy,
+                SkillCategory.Debuff => TargetingMode.Enemy,
+                SkillCategory.Special => TargetingMode.Enemy,
+                SkillCategory.Buff => TargetingMode.Self,
                 SkillCategory.Restoration => TargetingMode.SourceComponent,
-                SkillCategory.Utility     => TargetingMode.Self,
-                SkillCategory.Custom      => TargetingMode.Self,
-                _                         => TargetingMode.Self
+                SkillCategory.Utility => TargetingMode.Self,
+                SkillCategory.Custom => TargetingMode.Self,
+                _ => TargetingMode.Self
             };
         }
-        
+
         // ==================== PRESET GENERATORS ====================
-        
-        private static List<EffectInvocation> GetAttackPreset()
+
+        private static List<IEffectInvocation> GetAttackPreset()
         {
-            return new List<EffectInvocation>
+            return new List<IEffectInvocation>
             {
-                new() {
-                    effect = new DamageEffect
-                    {
-                        formulaProvider = new StaticFormulaProvider
-                        {
-                            formula = new DamageFormula
-                            {
-                                baseDice = 1,
-                                dieSize = 6,
-                                bonus = 0,
-                                damageType = DamageType.Physical
-                            }
-                        }
-                    },
-                    targetResolver = OnTarget
-                }
-            };
-        }
-        
-        private static List<EffectInvocation> GetRestorationPreset()
-        {
-            return new List<EffectInvocation>
-            {
-                new() {
-                    effect = new ResourceRestorationEffect(),
-                    targetResolver = OnSelf
-                }
-            };
-        }
-        
-        private static List<EffectInvocation> GetBuffPreset()
-        {
-            return new List<EffectInvocation>
-            {
-                new() {
-                    effect = new ApplyEntityConditionEffect(),
-                    targetResolver = OnSelf
-                }
+                Dmg(1, 6, 0, DamageType.Physical, OnTarget)
             };
         }
 
-        private static List<EffectInvocation> GetDebuffPreset()
+        private static List<IEffectInvocation> GetRestorationPreset()
         {
-            return new List<EffectInvocation>
+            return new List<IEffectInvocation>
             {
-                new() {
-                    effect = new ApplyEntityConditionEffect(),
-                    targetResolver = OnTarget
-                }
+                Heal(0, OnSelf)
             };
         }
 
-        private static List<EffectInvocation> GetSpecialPreset()
+        private static List<IEffectInvocation> GetBuffPreset()
         {
-            return new List<EffectInvocation>
+            return new List<IEffectInvocation>
             {
-                new() {
+                Status(null, OnSelf)
+            };
+        }
+
+        private static List<IEffectInvocation> GetDebuffPreset()
+        {
+            return new List<IEffectInvocation>
+            {
+                Status(null, OnTarget)
+            };
+        }
+
+        private static List<IEffectInvocation> GetSpecialPreset()
+        {
+            return new List<IEffectInvocation>
+            {
+                new EntityEffectInvocation
+                {
                     effect = new CustomEffect(),
-                    targetResolver = OnTarget
+                    targetResolver = OnTargetEntity
                 }
             };
         }
@@ -227,14 +210,14 @@ namespace Assets.Scripts.Skills
         // First run: drag generated assets to their prefabs once. Subsequent regenerations overwrite the
         // same .asset file (same GUID) so all prefab references are preserved automatically.
 
-        private const string SkillsFolder          = "Assets/Content/Skills";
-        private const string AttackFolder           = SkillsFolder + "/Attack";
-        private const string AoEFolder              = SkillsFolder + "/AoE";
-        private const string BuffFolder             = SkillsFolder + "/Buff";
-        private const string DebuffFolder           = SkillsFolder + "/Debuff";
-        private const string UtilityFolder          = SkillsFolder + "/Utility";
-        private const string WeaponAttackFolder     = SkillsFolder + "/WeaponAttack";
-        private const string ConsumableGatedFolder  = SkillsFolder + "/ConsumableGated";
+        private const string SkillsFolder = "Assets/Content/Skills";
+        private const string AttackFolder = SkillsFolder + "/Attack";
+        private const string AoEFolder = SkillsFolder + "/AoE";
+        private const string BuffFolder = SkillsFolder + "/Buff";
+        private const string DebuffFolder = SkillsFolder + "/Debuff";
+        private const string UtilityFolder = SkillsFolder + "/Utility";
+        private const string WeaponAttackFolder = SkillsFolder + "/WeaponAttack";
+        private const string ConsumableGatedFolder = SkillsFolder + "/ConsumableGated";
 
         [MenuItem("Assets/Racing/Regenerate All Skills")]
         public static void RegenerateAllSkills()
@@ -243,38 +226,38 @@ namespace Assets.Scripts.Skills
                 System.IO.Directory.CreateDirectory(folder);
 
             // Attack
-            RegenerateSkill(DefineCannonShot(),      AttackFolder);
-            RegenerateSkill(DefineArmorPierce(),     AttackFolder);
-            RegenerateSkill(DefineHarpoon(),         AttackFolder);
-            RegenerateSkill(DefineTargetingLock(),   AttackFolder);
-            RegenerateSkill(DefineRecoilCannon(),    AttackFolder);
-            RegenerateSkill(DefineRammingContest(),  AttackFolder);
-            RegenerateSkill(DefineAimedShot(),       AttackFolder);
-            RegenerateSkill(DefineIncendiaryShot(),  AttackFolder);
-            RegenerateSkill(DefineWebShot(),         AttackFolder);
-            RegenerateSkill(DefineEMPStrike(),       AttackFolder);
-            RegenerateSkill(DefineLancerStrike(),    AttackFolder);
+            RegenerateSkill(DefineCannonShot(), AttackFolder);
+            RegenerateSkill(DefineArmorPierce(), AttackFolder);
+            RegenerateSkill(DefineHarpoon(), AttackFolder);
+            RegenerateSkill(DefineTargetingLock(), AttackFolder);
+            RegenerateSkill(DefineRecoilCannon(), AttackFolder);
+            RegenerateSkill(DefineRammingContest(), AttackFolder);
+            RegenerateSkill(DefineAimedShot(), AttackFolder);
+            RegenerateSkill(DefineIncendiaryShot(), AttackFolder);
+            RegenerateSkill(DefineWebShot(), AttackFolder);
+            RegenerateSkill(DefineEMPStrike(), AttackFolder);
+            RegenerateSkill(DefineLancerStrike(), AttackFolder);
             RegenerateSkill(DefineConcussionBlast(), AttackFolder);
-            RegenerateSkill(DefineRapidFire(),       AttackFolder);
+            RegenerateSkill(DefineRapidFire(), AttackFolder);
 
             // AoE
             RegenerateSkill(DefineShrapnelBurst(), AoEFolder);
-            RegenerateSkill(DefineNapalmSpray(),   AoEFolder);
-            RegenerateSkill(DefineShockwave(),     AoEFolder);
-            RegenerateSkill(DefineOilSlick(),      AoEFolder);
-            RegenerateSkill(DefineSelfDestruct(),  AoEFolder);
-            RegenerateSkill(DefineFireball(),      AoEFolder);
-            RegenerateSkill(DefineEMPPulse(),      AoEFolder);
+            RegenerateSkill(DefineNapalmSpray(), AoEFolder);
+            RegenerateSkill(DefineShockwave(), AoEFolder);
+            RegenerateSkill(DefineOilSlick(), AoEFolder);
+            RegenerateSkill(DefineSelfDestruct(), AoEFolder);
+            RegenerateSkill(DefineFireball(), AoEFolder);
+            RegenerateSkill(DefineEMPPulse(), AoEFolder);
 
             // Buff
             RegenerateSkill(DefineOverclock(), BuffFolder);
-            RegenerateSkill(DefineHarden(),    BuffFolder);
-            RegenerateSkill(DefineStimPack(),  BuffFolder);
+            RegenerateSkill(DefineHarden(), BuffFolder);
+            RegenerateSkill(DefineStimPack(), BuffFolder);
 
             // Debuff
             RegenerateSkill(DefineStabilityDrain(), DebuffFolder);
-            RegenerateSkill(DefineSmokeScreen(),    DebuffFolder);
-            RegenerateSkill(DefineFeedbackLoop(),   DebuffFolder);
+            RegenerateSkill(DefineSmokeScreen(), DebuffFolder);
+            RegenerateSkill(DefineFeedbackLoop(), DebuffFolder);
 
             // Utility
             RegenerateSkill(DefineEmergencyPatch(), UtilityFolder);
@@ -285,7 +268,7 @@ namespace Assets.Scripts.Skills
 
             // Consumable-gated
             RegenerateSkill(DefineMolotovThrow(), ConsumableGatedFolder);
-            RegenerateSkill(DefineFieldRepair(),  ConsumableGatedFolder);
+            RegenerateSkill(DefineFieldRepair(), ConsumableGatedFolder);
 
             AssetDatabase.SaveAssets();
             Debug.Log("[SkillCreator] All skills regenerated.");
@@ -387,7 +370,7 @@ namespace Assets.Scripts.Skills
                         attackerSpec = SkillCheckSpec.ForVehicle(VehicleCheckAttribute.Mobility),
                         defenderSpec = SkillCheckSpec.ForVehicle(VehicleCheckAttribute.Mobility)
                     },
-                    onWin:  FX(Dmg(2, 6, 2, DamageType.Bludgeoning, OnTarget)),
+                    onWin: FX(Dmg(2, 6, 2, DamageType.Bludgeoning, OnTarget)),
                     onLose: FX(Dmg(1, 6, 0, DamageType.Bludgeoning, OnSourceComp))),
                 TargetingMode.Enemy,
                 ActionType.Action,
@@ -537,7 +520,7 @@ namespace Assets.Scripts.Skills
         private static Skill DefineFeedbackLoop()
             => Make("Feedback Loop",
                 FanOut(new SeatByRoleResolver(RoleType.Navigator, SeatSource.TargetVehicle),
-                    AlwaysApply(FX(CharacterStatus(LoadCharacterCondition("Stunned"), OnTarget)))),
+                    AlwaysApply(FX(CharacterStatus(LoadCharacterCondition("Stunned"), OnTargetSeat)))),
                 TargetingMode.Enemy,
                 ActionType.BonusAction,
                 new EnergyCost { amount = 2 });
@@ -557,7 +540,7 @@ namespace Assets.Scripts.Skills
         // Pattern: multi-hit attack — 3 independent attack rolls against the same target, each resolved separately.
         private static Skill DefineRapidFire()
             => Make("Rapid Fire",
-                FanOut(new RepeatTargetResolver(3),
+                FanOut(new RepeatTargetResolver { hitCount = 3 },
                     Attack(FX(Dmg(1, 6, 0, DamageType.Piercing, OnTarget)))),
                 TargetingMode.EnemyComponent,
                 ActionType.Action,
@@ -576,7 +559,7 @@ namespace Assets.Scripts.Skills
         // Pattern: rapid weapon burst — three independent attack rolls, each ammo-eligible.
         private static WeaponAttackSkill DefineBurstFire()
             => Make<WeaponAttackSkill>("Burst Fire",
-                FanOut(new RepeatTargetResolver(3),
+                FanOut(new RepeatTargetResolver { hitCount = 3 },
                     Attack(FX(Dmg(1, 6, 0, DamageType.Piercing, OnTarget)))),
                 TargetingMode.EnemyComponent,
                 ActionType.Action,
@@ -638,22 +621,29 @@ namespace Assets.Scripts.Skills
 
         // ==================== RESOLVER SHORTCUTS ====================
 
-        private static IEffectTargetResolver OnTarget     => new SelectedTargetResolver();
-        private static IEffectTargetResolver OnSelf       => new SourceVehicleResolver();
-        private static IEffectTargetResolver OnSourceComp => new SourceComponentResolver();
-        private static IEffectTargetResolver OnActorSeat  => new SourceActorSeatResolver();
-        private static IEffectTargetResolver OnLane       => new AllVehiclesInLaneEffectResolver();
-        private static IEffectTargetResolver OnOtherLane  => new AllVehiclesInLaneEffectResolver { ExcludeSelf = true };
-        private static IEffectTargetResolver OnOtherStage => new AllVehiclesInStageEffectResolver { ExcludeSelf = true };
+        // Vehicle resolvers (default for Dmg, Heal, Energy, Status effects)
+        private static IVehicleEffectResolver OnTarget => new TargetVehicleResolver();
+        private static IVehicleEffectResolver OnSelf => new SourceVehicleResolver();
+        private static IVehicleEffectResolver OnLane => new AllVehiclesInLaneEffectResolver();
+        private static IVehicleEffectResolver OnOtherLane => new AllVehiclesInLaneEffectResolver { ExcludeSelf = true };
+        private static IVehicleEffectResolver OnOtherStage => new AllVehiclesInStageEffectResolver { ExcludeSelf = true };
 
-        private static List<EffectInvocation> FX(params EffectInvocation[] effects)
+        // Entity resolvers (for component-specific and CustomEffect)
+        private static IEntityEffectResolver OnTargetEntity => new TargetEntityResolver();
+        private static IEntityEffectResolver OnSourceComp => new SourceComponentResolver();
+
+        // Seat resolvers (for CharacterStatus effects)
+        private static ISeatEffectResolver OnActorSeat => new SourceActorSeatResolver();
+        private static ISeatEffectResolver OnTargetSeat => new TargetSeatResolver();
+
+        private static List<IEffectInvocation> FX(params IEffectInvocation[] effects)
             => new(effects);
 
-        private static EffectInvocation Dmg(
+        private static IEffectInvocation Dmg(
             int dice, int dieSize, int bonus = 0,
             DamageType type = DamageType.Physical,
-            IEffectTargetResolver target = null)
-            => new()
+            IVehicleEffectResolver target = null)
+            => new VehicleEffectInvocation
             {
                 targetResolver = target ?? OnTarget,
                 effect = new DamageEffect
@@ -665,35 +655,58 @@ namespace Assets.Scripts.Skills
                 }
             };
 
-        private static EffectInvocation Heal(int amount, IEffectTargetResolver target = null)
-            => new()
+        private static IEffectInvocation Dmg(
+            int dice, int dieSize, int bonus,
+            DamageType type,
+            IEntityEffectResolver target)
+            => new EntityEffectInvocation
+            {
+                targetResolver = target,
+                effect = new DamageEffect
+                {
+                    formulaProvider = new StaticFormulaProvider
+                    {
+                        formula = new DamageFormula { baseDice = dice, dieSize = dieSize, bonus = bonus, damageType = type }
+                    }
+                }
+            };
+
+        private static IEffectInvocation Heal(int amount, IVehicleEffectResolver target = null)
+            => new VehicleEffectInvocation
             {
                 targetResolver = target ?? OnSelf,
                 effect = new ResourceRestorationEffect { formula = new RestorationFormula { resourceType = ResourceType.Health, isDrain = false, bonus = amount } }
             };
 
-        private static EffectInvocation Energy(int amount, IEffectTargetResolver target = null)
-            => new()
+        private static IEffectInvocation Heal(int amount, IEntityEffectResolver target)
+            => new EntityEffectInvocation
+            {
+                targetResolver = target,
+                effect = new ResourceRestorationEffect { formula = new RestorationFormula { resourceType = ResourceType.Health, isDrain = false, bonus = amount } }
+            };
+
+        private static IEffectInvocation Energy(int amount, IVehicleEffectResolver target = null)
+            => new VehicleEffectInvocation
             {
                 targetResolver = target ?? OnSelf,
                 effect = new ResourceRestorationEffect { formula = new RestorationFormula { resourceType = ResourceType.Energy, isDrain = false, bonus = amount } }
             };
 
-        private static EffectInvocation Status(EntityCondition effect, IEffectTargetResolver target = null)
-            => new()
+        private static IEffectInvocation Status(EntityCondition condition, IVehicleEffectResolver target = null)
+            => new VehicleEffectInvocation
             {
                 targetResolver = target ?? OnTarget,
-                effect = new ApplyEntityConditionEffect { condition = effect }
+                effect = new ApplyEntityConditionEffect { condition = condition }
             };
 
-        private static EffectInvocation CharacterStatus(CharacterCondition condition, IEffectTargetResolver target = null)
-            => new()
+        private static IEffectInvocation CharacterStatus(CharacterCondition condition, ISeatEffectResolver target = null)
+            => new SeatEffectInvocation
             {
                 targetResolver = target ?? OnActorSeat,
                 effect = new ApplyCharacterConditionEffect { condition = condition }
             };
 
-        private static RollNode AlwaysApply(List<EffectInvocation> effects)
+        private static RollNode AlwaysApply(List<IEffectInvocation> effects)
             => new()
             { targetResolver = new CurrentTargetResolver(), successEffects = effects };
 
@@ -705,29 +718,29 @@ namespace Assets.Scripts.Skills
         }
 
         private static RollNode Attack(
-            List<EffectInvocation> onHit,
-            List<EffectInvocation> onMiss = null,
+            List<IEffectInvocation> onHit,
+            List<IEffectInvocation> onMiss = null,
             RollNode successChain = null)
             => new()
             {
                 targetResolver = new CurrentTargetResolver(),
                 rollSpec = new AttackSpec(),
-                successEffects = onHit ?? new List<EffectInvocation>(),
-                failureEffects = onMiss ?? new List<EffectInvocation>(),
+                successEffects = onHit ?? new List<IEffectInvocation>(),
+                failureEffects = onMiss ?? new List<IEffectInvocation>(),
                 onSuccessChain = successChain
             };
 
         private static RollNode Attack(
             AttackSpec spec,
-            List<EffectInvocation> onHit,
-            List<EffectInvocation> onMiss = null,
+            List<IEffectInvocation> onHit,
+            List<IEffectInvocation> onMiss = null,
             RollNode successChain = null)
             => new()
             {
                 targetResolver = new CurrentTargetResolver(),
                 rollSpec = spec,
-                successEffects = onHit ?? new List<EffectInvocation>(),
-                failureEffects = onMiss ?? new List<EffectInvocation>(),
+                successEffects = onHit ?? new List<IEffectInvocation>(),
+                failureEffects = onMiss ?? new List<IEffectInvocation>(),
                 onSuccessChain = successChain
             };
 
@@ -745,8 +758,8 @@ namespace Assets.Scripts.Skills
 
         private static RollNode Save(
             SaveSpec spec, int dc,
-            List<EffectInvocation> onFail,
-            List<EffectInvocation> onPass = null,
+            List<IEffectInvocation> onFail,
+            List<IEffectInvocation> onPass = null,
             RollNode failChain = null)
         {
             spec.dc = dc;
@@ -754,16 +767,16 @@ namespace Assets.Scripts.Skills
             {
                 targetResolver = new CurrentTargetResolver(),
                 rollSpec = spec,
-                failureEffects = onFail ?? new List<EffectInvocation>(),
-                successEffects = onPass ?? new List<EffectInvocation>(),
+                failureEffects = onFail ?? new List<IEffectInvocation>(),
+                successEffects = onPass ?? new List<IEffectInvocation>(),
                 onFailureChain = failChain
             };
         }
 
         private static RollNode Check(
             SkillCheckSpec spec, int dc,
-            List<EffectInvocation> onSuccess,
-            List<EffectInvocation> onFail = null,
+            List<IEffectInvocation> onSuccess,
+            List<IEffectInvocation> onFail = null,
             RollNode successChain = null,
             RollNode failChain = null)
         {
@@ -772,8 +785,8 @@ namespace Assets.Scripts.Skills
             {
                 targetResolver = new CurrentTargetResolver(),
                 rollSpec = spec,
-                successEffects = onSuccess ?? new List<EffectInvocation>(),
-                failureEffects = onFail ?? new List<EffectInvocation>(),
+                successEffects = onSuccess ?? new List<IEffectInvocation>(),
+                failureEffects = onFail ?? new List<IEffectInvocation>(),
                 onSuccessChain = successChain,
                 onFailureChain = failChain
             };
@@ -781,15 +794,15 @@ namespace Assets.Scripts.Skills
 
         private static RollNode Opposed(
             OpposedCheckRollSpec spec,
-            List<EffectInvocation> onWin,
-            List<EffectInvocation> onLose = null,
+            List<IEffectInvocation> onWin,
+            List<IEffectInvocation> onLose = null,
             RollNode winChain = null)
             => new()
             {
                 targetResolver = new CurrentTargetResolver(),
                 rollSpec = spec,
-                successEffects = onWin ?? new List<EffectInvocation>(),
-                failureEffects = onLose ?? new List<EffectInvocation>(),
+                successEffects = onWin ?? new List<IEffectInvocation>(),
+                failureEffects = onLose ?? new List<IEffectInvocation>(),
                 onSuccessChain = winChain
             };
 
@@ -818,6 +831,6 @@ namespace Assets.Scripts.Skills
             params ISkillCost[] costs)
             => Make<Skill>(name, rollNode, targeting, actionCost, costs);
     }
-     #endregion
+        #endregion
 }
 #endif

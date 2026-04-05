@@ -13,6 +13,7 @@ using Assets.Scripts.Skills.Costs;
 using Assets.Scripts.Tests.Helpers;
 using Assets.Scripts.Combat.Rolls;
 using Assets.Scripts.Combat.Rolls.RollSpecs;
+using Assets.Scripts.Effects.EffectTypes.VehicleEffects;
 
 namespace Assets.Scripts.Tests.PlayMode
 {
@@ -776,7 +777,7 @@ namespace Assets.Scripts.Tests.PlayMode
             SetPrivateField(effect, "amount", 3);
 
             var context = new EffectContext { CausalSource = "ResupplyEffect" };
-            effect.Apply(vehicle, context);
+            ((IVehicleEffect)effect).Apply(vehicle, context);
 
             Assert.AreEqual(4, vehicle.inventory[0].charges, "1 + 3 restored");
         }

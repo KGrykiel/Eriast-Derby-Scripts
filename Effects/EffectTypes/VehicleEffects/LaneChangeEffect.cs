@@ -3,12 +3,12 @@ using Assets.Scripts.Stages.Lanes;
 using SerializeReferenceEditor;
 using UnityEngine;
 
-namespace Assets.Scripts.Effects.EffectTypes
+namespace Assets.Scripts.Effects.EffectTypes.VehicleEffects
 {
     /// <summary>Effect for vehicle changing lanes. Accepts Vehicle directly or Entity (resolves to parent vehicle).</summary>
     [System.Serializable]
     [SRName("Lane Change")]
-    public class LaneChangeEffect : EffectBase
+    public class LaneChangeEffect : IVehicleEffect
     {
         [Header("Target Lane")]
         [Tooltip("Absolute lane index to move to (ignored if using relative offset)")]
@@ -21,19 +21,16 @@ namespace Assets.Scripts.Effects.EffectTypes
         [Range(-2, 2)]
         public int relativeOffset = 1;
 
-        public override void Apply(IEffectTarget target, EffectContext context)
+        void IVehicleEffect.Apply(Vehicle target, EffectContext context)
         {
-            Vehicle vehicle = ResolveVehicle(target);
-            if (vehicle == null) return;
-
-            StageLane targetLane = DetermineTargetLane(vehicle);
+            StageLane targetLane = DetermineTargetLane(target);
             if (targetLane == null)
             {
-                Debug.LogWarning($"[LaneChangeEffect] Could not resolve a target lane for '{vehicle.name}' — effect had no impact.");
+                Debug.LogWarning($"[LaneChangeEffect] Could not resolve a target lane for '{target.name}' — effect had no impact.");
                 return;
             }
 
-            vehicle.CurrentStage.AssignVehicleToLane(vehicle, targetLane);
+            target.CurrentStage.AssignVehicleToLane(target, targetLane);
         }
 
         private StageLane DetermineTargetLane(Vehicle vehicle)

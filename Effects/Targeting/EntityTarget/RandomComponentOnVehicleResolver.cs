@@ -6,31 +6,31 @@ using Assets.Scripts.Entities.Vehicles;
 using SerializeReferenceEditor;
 using UnityEngine;
 
-namespace Assets.Scripts.Effects.Targeting
+namespace Assets.Scripts.Effects.Targeting.EntityTarget
 {
     /// <summary>
     /// Resolves to one randomly selected component on the chosen vehicle.
     /// Use <see cref="VehicleSource"/> to select the source or target vehicle.
     /// </summary>
     [Serializable]
-    [SRName("Entity/Random On Vehicle")]
-    public class RandomComponentOnVehicleResolver : IEffectTargetResolver
+    [SRName("Random On Vehicle")]
+    public class RandomComponentOnVehicleResolver : IEntityEffectResolver
     {
         public VehicleSource source = VehicleSource.TargetVehicle;
 
-        public IReadOnlyList<IEffectTarget> Resolve(RollContext ctx)
+        public IReadOnlyList<Entity> Resolve(RollContext ctx)
         {
             Vehicle vehicle = ResolveVehicle(ctx);
             if (vehicle == null)
             {
                 Debug.LogWarning($"[RandomComponentOnVehicleResolver] No {source} in context.");
-                return Array.Empty<IEffectTarget>();
+                return Array.Empty<Entity>();
             }
 
             var components = vehicle.AllComponents;
             if (components.Count > 0)
-                return new IEffectTarget[] { components[UnityEngine.Random.Range(0, components.Count)] };
-            return Array.Empty<IEffectTarget>();
+                return new Entity[] { components[UnityEngine.Random.Range(0, components.Count)] };
+            return Array.Empty<Entity>();
         }
 
         private Vehicle ResolveVehicle(RollContext ctx)
