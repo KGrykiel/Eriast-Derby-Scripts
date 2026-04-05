@@ -14,8 +14,6 @@ using Assets.Scripts.Combat.Rolls.RollSpecs.SpecTypes;
 using Assets.Scripts.Combat.Rolls.Targeting;
 using Assets.Scripts.Entities.Vehicles;
 using Assets.Scripts.Entities.Vehicles.VehicleComponents;
-using Assets.Scripts.Effects;
-using Assets.Scripts.Effects.EffectTypes;
 using Assets.Scripts.Effects.EffectTypes.EntityEffects;
 using Assets.Scripts.Effects.EffectTypes.SeatEffects;
 using Assets.Scripts.Effects.Invocations;

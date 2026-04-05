@@ -9,7 +9,6 @@ using Assets.Scripts.Entities.Vehicles;
 using Assets.Scripts.Entities.Vehicles.VehicleComponents;
 using Assets.Scripts.Entities;
 using Assets.Scripts.Skills;
-using Assets.Scripts.Skills.Costs;
 
 public class VehicleInspectorPanel : MonoBehaviour
 {

@@ -13,13 +13,10 @@ using Assets.Scripts.Combat.Restoration;
 using Assets.Scripts.Combat.Damage.FormulaProviders.SpecificProviders;
 using Assets.Scripts.Conditions;
 using StatusEffectTemplate = Assets.Scripts.Conditions.EntityConditions.EntityCondition;
-using Assets.Scripts.Effects;
-using Assets.Scripts.Effects.EffectTypes;
 using Assets.Scripts.Effects.EffectTypes.EntityEffects;
 using Assets.Scripts.Effects.Invocations;
 using Assets.Scripts.Effects.Targeting;
 using Assets.Scripts.Effects.Targeting.VehicleTarget;
-using Assets.Scripts.Effects.Targeting.EntityTarget;
 using Assets.Scripts.Entities.Vehicles.VehicleComponents;
 
 namespace Assets.Scripts.Events.EventCard

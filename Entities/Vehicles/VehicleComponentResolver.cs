@@ -1,5 +1,4 @@
 using Assets.Scripts.Entities.Vehicles.VehicleComponents;
-using Assets.Scripts.Entities.Vehicles.VehicleComponents.ComponentTypes;
 
 namespace Assets.Scripts.Entities.Vehicles
 {

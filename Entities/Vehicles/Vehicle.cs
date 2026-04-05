@@ -131,6 +131,19 @@ namespace Assets.Scripts.Entities.Vehicles
             HasMovedThisTurn = true;
         }
 
+        /// <summary>Sets the target speed percentage on the drive component. No-op with a warning if no drive is present.</summary>
+        public void SetTargetSpeed(int speedPercent)
+        {
+            var drive = Drive;
+            if (drive == null)
+            {
+                Debug.LogWarning($"[Vehicle] '{name}' has no drive component — SetTargetSpeed had no effect.");
+                return;
+            }
+
+            drive.SetTargetSpeed(speedPercent);
+        }
+
         /// <summary>Sets the current stage without movement side effects. Use for test setup.</summary>
         public void SetCurrentStage(Stage stage) => CurrentStage = stage;
 

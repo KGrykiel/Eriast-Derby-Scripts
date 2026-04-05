@@ -14,10 +14,9 @@ using Assets.Scripts.Combat.Rolls.RollSpecs;
 using Assets.Scripts.Combat.Rolls.RollSpecs.SpecTypes;
 using Assets.Scripts.Combat.Rolls.Targeting;
 using Assets.Scripts.Combat.Rolls.Advantage;
-using Assets.Scripts.Effects;
-using Assets.Scripts.Effects.EffectTypes;
 using Assets.Scripts.Effects.EffectTypes.EntityEffects;
 using Assets.Scripts.Effects.EffectTypes.SeatEffects;
+using Assets.Scripts.Effects.EffectTypes.VehicleEffects;
 using Assets.Scripts.Effects.Invocations;
 using Assets.Scripts.Effects.Targeting;
 using Assets.Scripts.Effects.Targeting.VehicleTarget;
@@ -197,10 +196,10 @@ namespace Assets.Scripts.Skills
         {
             return new List<IEffectInvocation>
             {
-                new EntityEffectInvocation
+                new VehicleEffectInvocation
                 {
-                    effect = new CustomEffect(),
-                    targetResolver = OnTargetEntity
+                    effect = new SetSpeedEffect(),
+                    targetResolver = OnSelf
                 }
             };
         }
