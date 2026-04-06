@@ -22,5 +22,11 @@ namespace Assets.Scripts.Managers
 
         /// <summary>Returns a snapshot of all currently registered stages.</summary>
         public static List<Stage> GetAll() => new(_stages);
+
+        /// <summary>Returns the registered scene instance whose stageName matches, or null.</summary>
+        public static Stage FindByName(string stageName)
+        {
+            return _stages.Find(s => s.stageName == stageName);
+        }
     }
 }

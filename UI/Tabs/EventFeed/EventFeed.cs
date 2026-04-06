@@ -56,31 +56,29 @@ public class EventFeed : MonoBehaviour
 
     private void AppendNewEvents()
     {
-        var filteredEvents = GetFilteredEvents();
-
-        var newEvents = filteredEvents
-            .Skip(currentlyDisplayedEvents.Count)
-            .ToList();
-
-        if (newEvents.Count == 0)
-            return;
+        var allEvents = RaceHistory.AllEvents;
 
         bool wasAtBottom = scrollRect != null && scrollRect.verticalNormalizedPosition <= 0.01f;
+        bool addedAny = false;
 
-        foreach (var evt in newEvents)
+        for (int i = lastProcessedEventCount; i < allEvents.Count; i++)
         {
+            var evt = allEvents[i];
+            if (!IsEventVisible(evt)) continue;
+
             CreateEventEntry(evt);
             currentlyDisplayedEvents.Add(evt);
+            addedAny = true;
+
+            if (currentlyDisplayedEvents.Count > maxDisplayedEvents)
+            {
+                if (contentContainer.childCount > 0)
+                    Destroy(contentContainer.GetChild(0).gameObject);
+                currentlyDisplayedEvents.RemoveAt(0);
+            }
         }
 
-        while (currentlyDisplayedEvents.Count > maxDisplayedEvents)
-        {
-            if (contentContainer.childCount > 0)
-                Destroy(contentContainer.GetChild(0).gameObject);
-            currentlyDisplayedEvents.RemoveAt(0);
-        }
-
-        if (autoScrollToBottom || wasAtBottom)
+        if (addedAny && (autoScrollToBottom || wasAtBottom))
         {
             Canvas.ForceUpdateCanvases();
             if (scrollRect != null)
@@ -119,22 +117,22 @@ public class EventFeed : MonoBehaviour
         FullRefreshFeed();
     }
 
+    private bool IsEventVisible(RaceEvent evt)
+    {
+        return evt.importance switch
+        {
+            EventImportance.Critical => criticalToggle == null || criticalToggle.isOn,
+            EventImportance.High => highToggle == null || highToggle.isOn,
+            EventImportance.Medium => mediumToggle == null || mediumToggle.isOn,
+            EventImportance.Low => lowToggle != null && lowToggle.isOn,
+            EventImportance.Debug => debugToggle != null && debugToggle.isOn,
+            _ => false
+        };
+    }
+
     private List<RaceEvent> GetFilteredEvents()
     {
-        var events = RaceHistory.AllEvents.ToList();
-
-        return events.Where(evt =>
-        {
-            return evt.importance switch
-            {
-                EventImportance.Critical => criticalToggle == null || criticalToggle.isOn,
-                EventImportance.High => highToggle == null || highToggle.isOn,
-                EventImportance.Medium => mediumToggle == null || mediumToggle.isOn,
-                EventImportance.Low => lowToggle != null && lowToggle.isOn,
-                EventImportance.Debug => debugToggle != null && debugToggle.isOn,
-                _ => false
-            };
-        }).ToList();
+        return RaceHistory.AllEvents.Where(IsEventVisible).ToList();
     }
 
     private void CreateEventEntry(RaceEvent evt)

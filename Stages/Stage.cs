@@ -56,6 +56,35 @@ namespace Assets.Scripts.Stages
             laneManager.DiscoverLanes();
         }
 
+        private void Start()
+        {
+            // WireStageLinks stores references to prefab assets, not scene instances.
+            // Re-resolve them here so nextStage/nextStages point at live objects with
+            // initialised laneManagers. All stages are registered by OnEnable, which
+            // runs before any Start, so the registry is fully populated at this point.
+            ResolveStageLinks();
+        }
+
+        private void ResolveStageLinks()
+        {
+            for (int i = 0; i < nextStages.Count; i++)
+            {
+                Stage asset = nextStages[i];
+                if (asset == null) continue;
+                Stage instance = StageRegistry.FindByName(asset.stageName);
+                if (instance != null && instance != asset)
+                    nextStages[i] = instance;
+            }
+
+            foreach (var lane in lanes)
+            {
+                if (lane == null || lane.nextStage == null) continue;
+                Stage instance = StageRegistry.FindByName(lane.nextStage.stageName);
+                if (instance != null && instance != lane.nextStage)
+                    lane.nextStage = instance;
+            }
+        }
+
         /// <summary>
         /// Gizmos for visualisation. 
         /// </summary>
