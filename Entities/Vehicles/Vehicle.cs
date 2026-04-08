@@ -131,6 +131,21 @@ namespace Assets.Scripts.Entities.Vehicles
             HasMovedThisTurn = true;
         }
 
+        /// <summary>Adjusts progress by delta (positive = forward, negative = backward). Clamped to [0, stage length].</summary>
+        public void ModifyProgress(int delta)
+        {
+            if (delta == 0) return;
+            int maxProgress = CurrentStage != null ? CurrentStage.length : int.MaxValue;
+            Progress = Mathf.Clamp(Progress + delta, 0, maxProgress);
+        }
+
+        /// <summary>Sets progress to an absolute position in the current stage. Clamped to [0, stage length].</summary>
+        public void SetProgress(int value)
+        {
+            int maxProgress = CurrentStage != null ? CurrentStage.length : int.MaxValue;
+            Progress = Mathf.Clamp(value, 0, maxProgress);
+        }
+
         /// <summary>Sets the target speed percentage on the drive component. No-op with a warning if no drive is present.</summary>
         public void SetTargetSpeed(int speedPercent)
         {
