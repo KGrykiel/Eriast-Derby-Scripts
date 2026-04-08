@@ -2,7 +2,6 @@
 using UnityEngine;
 using Assets.Scripts.Stages.Lanes;
 using Assets.Scripts.Combat.Rolls.RollSpecs;
-using Assets.Scripts.Conditions.EntityConditions;
 using Assets.Scripts.Entities.Vehicles;
 
 namespace Assets.Scripts.Stages
@@ -83,7 +82,11 @@ namespace Assets.Scripts.Stages
             StageLane currentLane = GetVehicleLane(vehicle);
 
             if (currentLane != null && currentLane != targetLane)
+            {
                 currentLane.vehiclesInLane.Remove(vehicle);
+                if (currentLane.laneStatusEffect != null)
+                    vehicle.RemoveVehicleConditionsByTemplate(currentLane.laneStatusEffect);
+            }
 
             if (!targetLane.vehiclesInLane.Contains(vehicle))
                 targetLane.vehiclesInLane.Add(vehicle);
@@ -91,7 +94,7 @@ namespace Assets.Scripts.Stages
             vehicle.SetCurrentLane(targetLane);
 
             if (targetLane.laneStatusEffect != null)
-                ApplyLaneStatusEffect(vehicle, targetLane.laneStatusEffect, targetLane);
+                vehicle.ApplyVehicleCondition(targetLane.laneStatusEffect, targetLane);
         }
 
         public void AssignVehicleToDefaultLane(Vehicle vehicle)
@@ -149,17 +152,6 @@ namespace Assets.Scripts.Stages
             newLaneIndex = Mathf.Clamp(newLaneIndex, 0, Lanes.Count - 1);
 
             return Lanes[newLaneIndex];
-        }
-
-        // ==================== LANE STATUS EFFECTS ====================
-
-        private void ApplyLaneStatusEffect(Vehicle vehicle, EntityCondition laneEffect, StageLane lane)
-        {
-            foreach (var component in vehicle.AllComponents)
-            {
-                if (component != null)
-                    component.ApplyCondition(laneEffect, lane);
-            }
         }
 
         // ==================== LANE TURN EFFECTS ====================

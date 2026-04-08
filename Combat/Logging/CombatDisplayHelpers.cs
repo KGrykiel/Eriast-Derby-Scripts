@@ -2,9 +2,11 @@
 using Assets.Scripts.Combat.Rolls;
 using Assets.Scripts.Conditions.EntityConditions;
 using Assets.Scripts.Conditions.CharacterConditions;
+using Assets.Scripts.Conditions.VehicleConditions;
 using Assets.Scripts.Entities.Vehicles;
 using Assets.Scripts.Entities;
 using Assets.Scripts.Entities.Vehicles.VehicleComponents;
+using Assets.Scripts.Conditions;
 
 namespace Assets.Scripts.Combat.Logging
 {
@@ -99,6 +101,27 @@ namespace Assets.Scripts.Combat.Logging
 
             if (hasBehavioralRestrictions)
                 return false;
+            return totalModifierValue >= 0;
+        }
+
+        public static bool DetermineIfBuff(VehicleCondition condition)
+        {
+            float totalModifierValue = condition.modifiers.Sum(m => m.value);
+
+            bool hasPeriodicDamage = condition.periodicEffects.Any(p => p is PeriodicDamageEffect);
+            bool hasPeriodicRestoration = condition.periodicEffects.Any(p =>
+                p is PeriodicRestorationEffect pr && (pr.formula.baseDice > 0 || pr.formula.bonus > 0));
+            bool hasPeriodicDrain = condition.periodicEffects.Any(p =>
+                p is PeriodicRestorationEffect pr && pr.formula.baseDice == 0 && pr.formula.bonus < 0);
+
+            bool hasBehavioralRestrictions = condition.behavioralEffects != null &&
+                (condition.behavioralEffects.preventsActions ||
+                 condition.behavioralEffects.preventsMovement);
+
+            if (hasPeriodicDamage || hasPeriodicDrain || hasBehavioralRestrictions)
+                return false;
+            if (hasPeriodicRestoration || totalModifierValue > 0)
+                return true;
             return totalModifierValue >= 0;
         }
 

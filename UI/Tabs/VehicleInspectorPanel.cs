@@ -33,6 +33,7 @@ public class VehicleInspectorPanel : MonoBehaviour
     public TMP_Text vehicleACValueText;
     public TMP_Text vehicleEnergyRegenValueText;
     public TMP_Text vehicleSizeValueText;
+    public StatusEffectBar vehicleConditionsBar;
     
     [Header("Components Section")]
     public Transform componentListContainer;
@@ -222,6 +223,7 @@ public class VehicleInspectorPanel : MonoBehaviour
         
         PopulateBasicInfo();
         PopulateStats();
+        PopulateVehicleConditions();
         PopulateComponents();
         PopulateSkills();
         PopulateEventHistory();
@@ -414,6 +416,14 @@ public class VehicleInspectorPanel : MonoBehaviour
         }
     }
     
+    private void PopulateVehicleConditions()
+    {
+        if (vehicleConditionsBar == null) return;
+
+        vehicleConditionsBar.SetVehicle(selectedVehicle);
+        vehicleConditionsBar.Refresh();
+    }
+
     private void PopulateComponents()
     {
         if (componentListContainer == null || componentEntryPrefab == null)

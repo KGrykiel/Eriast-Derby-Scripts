@@ -2,6 +2,7 @@
 using Assets.Scripts.Conditions;
 using Assets.Scripts.Combat.Damage;
 using Assets.Scripts.Conditions.EntityConditions;
+using Assets.Scripts.Conditions.VehicleConditions;
 using Assets.Scripts.Modifiers;
 using Assets.Scripts.Entities;
 
@@ -41,6 +42,32 @@ namespace Assets.Scripts.Tests.Helpers
             template.maxStacks = maxStacks;
             template.categories = categories;
             template.removalTriggers = removalTriggers;
+            template.modifiers = new System.Collections.Generic.List<EntityModifierData>
+            {
+                new() { attribute = attribute, type = ModifierType.Flat, value = value }
+            };
+            template.periodicEffects = new System.Collections.Generic.List<IPeriodicEffect>();
+            template.behavioralEffects = new BehavioralEffectData();
+
+            cleanup?.Add(template);
+            return template;
+        }
+
+        /// <summary>
+        /// Create a VehicleCondition with a single stat modifier, for testing lane status effects.
+        /// </summary>
+        public static VehicleCondition CreateVehicleModifierEffect(
+            string name,
+            EntityAttribute attribute,
+            float value,
+            int duration = -1,
+            StackBehaviour stackBehaviour = StackBehaviour.Refresh,
+            System.Collections.Generic.List<Object> cleanup = null)
+        {
+            var template = ScriptableObject.CreateInstance<VehicleCondition>();
+            template.effectName = name;
+            template.baseDuration = duration;
+            template.stackBehaviour = stackBehaviour;
             template.modifiers = new System.Collections.Generic.List<EntityModifierData>
             {
                 new() { attribute = attribute, type = ModifierType.Flat, value = value }

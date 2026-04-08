@@ -5,6 +5,7 @@ using System.Linq;
 using Assets.Scripts.Logging;
 using Assets.Scripts.Conditions.EntityConditions;
 using Assets.Scripts.Entities.Vehicles;
+using Assets.Scripts.UI;
 
 public class FocusPanel : MonoBehaviour
 {
@@ -85,14 +86,14 @@ public class FocusPanel : MonoBehaviour
         int health = playerVehicle.Chassis?.GetCurrentHealth() ?? 0;
         int maxHealth = playerVehicle.Chassis?.GetMaxHealth() ?? 0;
         float healthPercent = maxHealth > 0 ? (float)health / maxHealth : 0f;
-        string healthBar = GenerateBar(healthPercent, 15);
-        string healthColor = GetHealthColor(healthPercent);
+        string healthBar = UITextHelpers.GenerateBar(healthPercent, 15, brackets: true);
+        string healthColor = UITextHelpers.GetHealthColor(healthPercent);
         status += $"<b>Health:</b> <color={healthColor}>{healthBar} {health}/{maxHealth}</color>\n";
 
         int energy = playerVehicle.PowerCore?.GetCurrentEnergy() ?? 0;
         int maxEnergy = playerVehicle.PowerCore?.GetMaxEnergy() ?? 0;
         float energyPercent = maxEnergy > 0 ? (float)energy / maxEnergy : 0f;
-        string energyBar = GenerateBar(energyPercent, 15);
+        string energyBar = UITextHelpers.GenerateBar(energyPercent, 15, brackets: true);
         status += $"<b>Energy:</b> <color=#88DDFF>{energyBar} {energy}/{maxEnergy}</color>\n\n";
 
         float speed = playerVehicle.Drive?.GetMaxSpeed() ?? 0f;
@@ -169,8 +170,8 @@ public class FocusPanel : MonoBehaviour
             int health = vehicle.Chassis?.GetCurrentHealth() ?? 0;
             int maxHealth = vehicle.Chassis?.GetMaxHealth() ?? 0;
             float healthPercent = maxHealth > 0 ? (float)health / maxHealth : 0f;
-            string healthBar = GenerateBar(healthPercent, 10);
-            string healthColor = GetHealthColor(healthPercent);
+            string healthBar = UITextHelpers.GenerateBar(healthPercent, 10, brackets: true);
+            string healthColor = UITextHelpers.GetHealthColor(healthPercent);
             display += $"  HP: <color={healthColor}>{healthBar} {health}/{maxHealth}</color>\n";
 
             int energy = vehicle.PowerCore?.GetCurrentEnergy() ?? 0;
@@ -225,25 +226,4 @@ public class FocusPanel : MonoBehaviour
         };
     }
     
-    private string GetHealthColor(float percent)
-    {
-        if (percent > 0.6f) return "#44FF44";
-        if (percent > 0.3f) return "#FFFF44";
-        return "#FF4444";
     }
-    
-    private string GenerateBar(float percent, int length)
-    {
-        int filled = Mathf.RoundToInt(percent * length);
-        filled = Mathf.Clamp(filled, 0, length);
-        
-        string bar = "[";
-        for (int i = 0; i < length; i++)
-        {
-            bar += i < filled ? "#" : "-";
-        }
-        bar += "]";
-        
-        return bar;
-    }
-}

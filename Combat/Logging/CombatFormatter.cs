@@ -7,6 +7,7 @@ using Assets.Scripts.Combat.Rolls;
 using Assets.Scripts.Conditions;
 using Assets.Scripts.Conditions.EntityConditions;
 using Assets.Scripts.Conditions.CharacterConditions;
+using Assets.Scripts.Conditions.VehicleConditions;
 using Assets.Scripts.Modifiers;
 using Assets.Scripts.Entities;
 
@@ -288,8 +289,8 @@ namespace Assets.Scripts.Combat.Logging
             sb.AppendLine($"Duration: {durationStr}");
             sb.AppendLine();
 
-            AppendStatusModifiers(sb, effect);
-            AppendPeriodicEffects(sb, effect);
+            AppendStatusModifiers(sb, effect.modifiers);
+            AppendPeriodicEffects(sb, effect.periodicEffects);
             AppendBehavioralEffects(sb, effect);
 
             if (!string.IsNullOrEmpty(effect.description))
@@ -320,6 +321,37 @@ namespace Assets.Scripts.Combat.Logging
             sb.AppendLine();
 
             AppendCharacterModifiers(sb, condition);
+            AppendBehavioralEffects(sb, condition);
+
+            if (!string.IsNullOrEmpty(condition.description))
+            {
+                sb.AppendLine(condition.description);
+                sb.AppendLine();
+            }
+
+            sb.AppendLine("═══════════════════════════════");
+            return sb.ToString().TrimEnd();
+        }
+
+        public static string FormatVehicleConditionTooltip(AppliedVehicleCondition applied)
+        {
+            if (applied == null || applied.template == null)
+                return "Unknown vehicle condition";
+
+            var condition = applied.template;
+            var sb = new StringBuilder();
+
+            sb.AppendLine($"{condition.effectName}");
+            sb.AppendLine("═══════════════════════════════");
+
+            string durationStr = applied.IsIndefinite
+                ? "Indefinite (∞)"
+                : $"{applied.turnsRemaining} turns remaining";
+            sb.AppendLine($"Duration: {durationStr}");
+            sb.AppendLine();
+
+            AppendStatusModifiers(sb, condition.modifiers);
+            AppendPeriodicEffects(sb, condition.periodicEffects);
             AppendBehavioralEffects(sb, condition);
 
             if (!string.IsNullOrEmpty(condition.description))
@@ -412,12 +444,12 @@ namespace Assets.Scripts.Combat.Logging
             return $"  <color={color}>{mod.Label,-25} {sign}{mod.Value}  {attribute}</color>";
         }
 
-        private static void AppendStatusModifiers(StringBuilder sb, EntityCondition effect)
+        private static void AppendStatusModifiers(StringBuilder sb, List<EntityModifierData> modifiers)
         {
-            if (effect.modifiers == null || effect.modifiers.Count == 0) return;
+            if (modifiers == null || modifiers.Count == 0) return;
 
             sb.AppendLine("Effects:");
-            foreach (var mod in effect.modifiers)
+            foreach (var mod in modifiers)
             {
                 string color = mod.value >= 0 ? "#44FF44" : "#FF4444";
                 string valueStr = mod.type == ModifierType.Multiplier
@@ -428,11 +460,11 @@ namespace Assets.Scripts.Combat.Logging
             sb.AppendLine();
         }
 
-        private static void AppendPeriodicEffects(StringBuilder sb, EntityCondition effect)
+        private static void AppendPeriodicEffects(StringBuilder sb, List<IPeriodicEffect> periodicEffects)
         {
-            if (effect.periodicEffects == null || effect.periodicEffects.Count == 0) return;
+            if (periodicEffects == null || periodicEffects.Count == 0) return;
 
-            foreach (var periodic in effect.periodicEffects)
+            foreach (var periodic in periodicEffects)
             {
                 string effectText = periodic switch
                 {

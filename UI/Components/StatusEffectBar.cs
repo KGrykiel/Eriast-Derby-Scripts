@@ -1,8 +1,9 @@
 ﻿using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
-using Assets.Scripts.Conditions.EntityConditions;
+using Assets.Scripts.Conditions;
 using Assets.Scripts.Entities;
+using Assets.Scripts.Entities.Vehicles;
 
 namespace Assets.Scripts.UI.Components
 {
@@ -24,6 +25,7 @@ namespace Assets.Scripts.UI.Components
         public float iconSize = 32f;
         
         private Entity targetEntity;
+        private Vehicle targetVehicle;
         private List<StatusEffectIcon> activeIcons = new();
         private RectTransform rectTransform;
         private HorizontalLayoutGroup layoutGroup;
@@ -58,24 +60,32 @@ namespace Assets.Scripts.UI.Components
         public void SetEntity(Entity entity)
         {
             targetEntity = entity;
+            targetVehicle = null;
+        }
+
+        public void SetVehicle(Vehicle vehicle)
+        {
+            targetVehicle = vehicle;
+            targetEntity = null;
         }
 
         public void Refresh()
         {
             ClearIcons();
 
-            if (targetEntity == null)
+            IReadOnlyList<AppliedConditionBase> conditions = null;
+            if (targetVehicle != null)
+                conditions = targetVehicle.GetActiveVehicleConditions();
+            else if (targetEntity != null)
+                conditions = targetEntity.GetActiveConditions();
+
+            if (conditions == null || conditions.Count == 0)
                 return;
 
-            var statusEffects = targetEntity.GetActiveConditions();
-
-            if (statusEffects == null || statusEffects.Count == 0)
-                return;
-
-            int iconCount = maxIcons > 0 ? Mathf.Min(statusEffects.Count, maxIcons) : statusEffects.Count;
+            int iconCount = maxIcons > 0 ? Mathf.Min(conditions.Count, maxIcons) : conditions.Count;
 
             for (int i = 0; i < iconCount; i++)
-                CreateIcon(statusEffects[i]);
+                CreateIcon(conditions[i]);
 
             Canvas.ForceUpdateCanvases();
             LayoutRebuilder.ForceRebuildLayoutImmediate(rectTransform);
@@ -92,16 +102,17 @@ namespace Assets.Scripts.UI.Components
             }
         }
         
-        private void CreateIcon(AppliedEntityCondition statusEffect)
+        private void CreateIcon(AppliedConditionBase condition)
         {
             if (iconPrefab == null)
             {
                 Debug.LogError("[StatusEffectBar] Icon prefab not assigned!");
                 return;
             }
-            
+
             GameObject iconObj = Instantiate(iconPrefab, transform);
-            iconObj.name = $"StatusIcon_{statusEffect?.template?.effectName ?? "Unknown"}";
+            var template = condition != null ? condition.Template : null;
+            iconObj.name = "StatusIcon_" + (template != null ? template.effectName : "Unknown");
 
             var layoutElement = iconObj.GetComponent<LayoutElement>();
             if (layoutElement == null)
@@ -112,7 +123,7 @@ namespace Assets.Scripts.UI.Components
             layoutElement.preferredHeight = iconSize;
             layoutElement.flexibleWidth = 0;
             layoutElement.flexibleHeight = 0;
-            
+
             StatusEffectIcon icon = iconObj.GetComponent<StatusEffectIcon>();
             if (icon == null)
             {
@@ -120,8 +131,8 @@ namespace Assets.Scripts.UI.Components
                 Destroy(iconObj);
                 return;
             }
-            
-            icon.Initialize(statusEffect);
+
+            icon.Initialize(condition);
             activeIcons.Add(icon);
         }
         

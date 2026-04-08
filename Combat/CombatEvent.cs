@@ -4,6 +4,7 @@ using Assets.Scripts.Combat.Rolls;
 using Assets.Scripts.Conditions;
 using Assets.Scripts.Conditions.EntityConditions;
 using Assets.Scripts.Conditions.CharacterConditions;
+using Assets.Scripts.Conditions.VehicleConditions;
 using Assets.Scripts.Consumables;
 using Assets.Scripts.Entities.Vehicles;
 using Assets.Scripts.Entities;
@@ -415,5 +416,117 @@ namespace Assets.Scripts.Combat
             CausalSource = causalSource;
         }
     }
+
+    // ==================== VEHICLE CONDITION EVENTS ====================
+
+    public class VehicleConditionEvent : CombatEvent
+    {
+        public AppliedVehicleCondition Applied { get; set; }
+        public Entity Source { get; set; }
+        public Vehicle Target { get; set; }
+
+        public VehicleConditionEvent(
+            AppliedVehicleCondition applied,
+            Entity source,
+            Vehicle target,
+            string causalSource)
+        {
+            Applied = applied;
+            Source = source;
+            Target = target;
+            CausalSource = causalSource;
+        }
+    }
+
+    public class VehicleConditionExpiredEvent : CombatEvent
+    {
+        public AppliedVehicleCondition Expired { get; set; }
+        public Vehicle Target { get; set; }
+
+        public VehicleConditionExpiredEvent(AppliedVehicleCondition expired, Vehicle target)
+        {
+            Expired = expired;
+            Target = target;
+        }
+    }
+
+    public class VehicleConditionRefreshedEvent : CombatEvent
+    {
+        public AppliedVehicleCondition Refreshed { get; set; }
+        public Vehicle Target { get; set; }
+
+        public VehicleConditionRefreshedEvent(AppliedVehicleCondition refreshed, Vehicle target)
+        {
+            Refreshed = refreshed;
+            Target = target;
+        }
+    }
+
+    public class VehicleConditionIgnoredEvent : CombatEvent
+    {
+        public AppliedVehicleCondition Existing { get; set; }
+        public Vehicle Target { get; set; }
+
+        public VehicleConditionIgnoredEvent(AppliedVehicleCondition existing, Vehicle target)
+        {
+            Existing = existing;
+            Target = target;
+        }
+    }
+
+    public class VehicleConditionReplacedEvent : CombatEvent
+    {
+        public AppliedVehicleCondition NewCondition { get; set; }
+        public int OldDuration { get; set; }
+        public Vehicle Target { get; set; }
+
+        public VehicleConditionReplacedEvent(AppliedVehicleCondition newCondition, Vehicle target, int oldDuration)
+        {
+            NewCondition = newCondition;
+            Target = target;
+            OldDuration = oldDuration;
+        }
+    }
+
+    public class VehicleConditionKeptStrongerEvent : CombatEvent
+    {
+        public AppliedVehicleCondition Kept { get; set; }
+        public Vehicle Target { get; set; }
+
+        public VehicleConditionKeptStrongerEvent(AppliedVehicleCondition kept, Vehicle target)
+        {
+            Kept = kept;
+            Target = target;
+        }
+    }
+
+    public class VehicleConditionStackLimitEvent : CombatEvent
+    {
+        public VehicleCondition Template { get; set; }
+        public int MaxStacks { get; set; }
+        public Vehicle Target { get; set; }
+
+        public VehicleConditionStackLimitEvent(VehicleCondition template, Vehicle target, int maxStacks)
+        {
+            Template = template;
+            Target = target;
+            MaxStacks = maxStacks;
+        }
+    }
+
+    public class VehicleConditionRemovedByTriggerEvent : CombatEvent
+    {
+        public AppliedVehicleCondition Removed { get; set; }
+        public RemovalTrigger Trigger { get; set; }
+        public Vehicle Target { get; set; }
+
+        public VehicleConditionRemovedByTriggerEvent(AppliedVehicleCondition removed, Vehicle target, RemovalTrigger trigger)
+        {
+            Removed = removed;
+            Target = target;
+            Trigger = trigger;
+        }
+    }
 }
+
 

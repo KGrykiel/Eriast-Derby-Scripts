@@ -13,7 +13,7 @@ using Assets.Scripts.Entities.Vehicles.VehicleComponents;
 using Assets.Scripts.Skills.Helpers;
 using Assets.Scripts.Characters;
 using Assets.Scripts.Skills;
-using Assets.Scripts.Conditions.EntityConditions;
+using Assets.Scripts.Conditions.VehicleConditions;
 using Assets.Scripts.Combat.Restoration;
 
 namespace Assets.Scripts.Entities.Vehicles
@@ -57,6 +57,7 @@ namespace Assets.Scripts.Entities.Vehicles
         // Coordinators (handle distinct concerns)
         private VehicleComponentCoordinator componentCoordinator;
         private VehicleInventoryCoordinator inventoryCoordinator;
+        private VehicleConditionManager conditionManager;
 
         public VehicleStatus Status { get; private set; } = VehicleStatus.Active;
 
@@ -72,6 +73,7 @@ namespace Assets.Scripts.Entities.Vehicles
                 seat.ParentVehicle = this;
 
             inventoryCoordinator = new VehicleInventoryCoordinator(this);
+            conditionManager = new VehicleConditionManager(this);
         }
 
         void OnEnable() => VehicleRegistry.Register(this);
@@ -233,53 +235,21 @@ namespace Assets.Scripts.Entities.Vehicles
 
         // ==================== EFFECT ROUTING ====================
 
-        /// <summary>
-        /// Applies an entity condition to the correct component(s) based on the condition's modifier attributes.
-        /// A condition with [MaxSpeed, EnergyRegen] lands on both Drive and PowerCore.
-        /// Conditions with no modifiers (e.g., pure DoTs) fall back to chassis.
-        /// </summary>
-        public void ApplyCondition(EntityCondition condition, Object applier)
-        {
-            if (condition == null) return;
+        /// <summary>Applies a vehicle-wide condition tracked by VehicleConditionManager.</summary>
+        public void ApplyVehicleCondition(VehicleCondition condition, UnityEngine.Object applier)
+            => conditionManager.Apply(condition, applier);
 
-            if (condition.modifiers == null || condition.modifiers.Count == 0)
-            {
-                if (Chassis != null)
-                    Chassis.ApplyCondition(condition, applier);
-                return;
-            }
+        /// <summary>Removes vehicle-wide conditions matching a specific template.</summary>
+        public void RemoveVehicleConditionsByTemplate(VehicleCondition template)
+            => conditionManager.RemoveByTemplate(template);
 
-            var targeted = new HashSet<Entity>();
-            foreach (var modifier in condition.modifiers)
-            {
-                VehicleComponent component = VehicleComponentResolver.ResolveForAttribute(this, modifier.attribute);
-                if (component == null)
-                    component = Chassis;
-                if (component != null)
-                    targeted.Add(component);
-            }
+        /// <summary>Removes vehicle-wide conditions matching the given categories.</summary>
+        public void RemoveVehicleConditionsByCategory(ConditionCategory categories)
+            => conditionManager.RemoveByCategory(categories);
 
-            foreach (var entity in targeted)
-                entity.ApplyCondition(condition, applier);
-        }
-
-        /// <summary>
-        /// Removes conditions matching a specific template from all components on this vehicle.
-        /// </summary>
-        public void RemoveConditionsByTemplate(EntityCondition template)
-        {
-            foreach (var component in AllComponents)
-                component.RemoveConditionsByTemplate(template);
-        }
-
-        /// <summary>
-        /// Removes conditions matching the given categories from all components on this vehicle.
-        /// </summary>
-        public void RemoveConditionsByCategory(ConditionCategory categories)
-        {
-            foreach (var component in AllComponents)
-                component.RemoveConditionsByCategory(categories);
-        }
+        /// <summary>Returns all currently active vehicle-wide conditions.</summary>
+        public System.Collections.Generic.IReadOnlyList<AppliedVehicleCondition> GetActiveVehicleConditions()
+            => conditionManager.GetActive();
 
         /// <summary>
         /// Returns the default component to target for a vehicle-level resource effect
@@ -309,6 +279,8 @@ namespace Assets.Scripts.Entities.Vehicles
 
         public void UpdateStatusEffects()
         {
+            conditionManager.OnTurnStart();
+
             foreach (var component in AllComponents)
             {
                 component.UpdateConditions();
@@ -320,9 +292,11 @@ namespace Assets.Scripts.Entities.Vehicles
             }
         }
 
-        /// <summary>Broadcasts a removal trigger to all vehicle components and seats.</summary>
+        /// <summary>Broadcasts a removal trigger to the vehicle condition manager, all components, and all seats.</summary>
         public void NotifyStatusEffectTrigger(RemovalTrigger trigger)
         {
+            conditionManager.ProcessRemovalTrigger(trigger);
+
             foreach (var component in AllComponents)
             {
                 component.NotifyConditionTrigger(trigger);

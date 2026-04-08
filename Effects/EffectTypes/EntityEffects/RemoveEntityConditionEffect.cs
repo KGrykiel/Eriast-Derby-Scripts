@@ -1,20 +1,18 @@
 ﻿using Assets.Scripts.Conditions;
 using Assets.Scripts.Conditions.EntityConditions;
 using Assets.Scripts.Entities;
-using Assets.Scripts.Entities.Vehicles;
 using SerializeReferenceEditor;
 using UnityEngine;
 
 namespace Assets.Scripts.Effects.EffectTypes.EntityEffects
 {
     /// <summary>
-    /// Removes status effects from a target by category or specific template.
-    /// Dual-interface: use in EntityEffectInvocation to remove from a specific component,
-    /// or in VehicleEffectInvocation to remove from all components on a vehicle.
+    /// Removes entity conditions from a specific component target by category or specific template.
+    /// Use in EntityEffectInvocation. For vehicle-wide conditions use RemoveVehicleConditionEffect instead.
     /// </summary>
     [System.Serializable]
     [SRName("Remove Condition")]
-    public class RemoveEntityConditionEffect : IEntityEffect, IVehicleEffect
+    public class RemoveEntityConditionEffect : IEntityEffect
     {
         [Header("Removal Filter")]
         [Tooltip("Categories to remove (e.g., DoT removes all burning/bleeding). Leave None to use specific template.")]
@@ -24,19 +22,11 @@ namespace Assets.Scripts.Effects.EffectTypes.EntityEffects
         public EntityCondition specificTemplate;
 
         void IEntityEffect.Apply(Entity target, EffectContext context)
-            => RemoveConditions(target.RemoveConditionsByTemplate, target.RemoveConditionsByCategory);
-
-        void IVehicleEffect.Apply(Vehicle target, EffectContext context)
-            => RemoveConditions(target.RemoveConditionsByTemplate, target.RemoveConditionsByCategory);
-
-        private void RemoveConditions(
-            System.Action<EntityCondition> removeByTemplate,
-            System.Action<ConditionCategory> removeByCategory)
         {
             if (specificTemplate != null)
-                removeByTemplate(specificTemplate);
+                target.RemoveConditionsByTemplate(specificTemplate);
             else if (categoriesToRemove != ConditionCategory.None)
-                removeByCategory(categoriesToRemove);
+                target.RemoveConditionsByCategory(categoriesToRemove);
             else
                 Debug.LogWarning("[RemoveEntityConditionEffect] Neither specificTemplate nor categoriesToRemove set!");
         }

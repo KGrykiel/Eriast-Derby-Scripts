@@ -6,6 +6,7 @@ using Assets.Scripts.Combat.Restoration;
 using EventType = Assets.Scripts.Logging.EventType;
 using Assets.Scripts.Logging;
 using Assets.Scripts.Core;
+using Assets.Scripts.Conditions;
 using Assets.Scripts.Entities.Vehicles;
 using Assets.Scripts.Entities;
 
@@ -29,6 +30,7 @@ namespace Assets.Scripts.Combat.Logging
             LogOpposedChecks(action);
             LogDamageByTarget(action);
             LogEntityConditions(action);
+            LogVehicleConditions(action);
             LogRestorations(action);
             LogCharacterConditions(action);
             LogConsumables(action);
@@ -227,25 +229,25 @@ namespace Assets.Scripts.Combat.Logging
                 LogSingleEntityCondition(evt);
 
             foreach (var evt in action.Get<EntityConditionRefreshedEvent>())
-                LogEntityConditionRefreshed(evt);
+                LogConditionRefreshed(EntityContext(evt.Target), evt.Refreshed, CombatFormatter.FormatEntityConditionTooltip(evt.Refreshed));
 
             foreach (var evt in action.Get<EntityConditionIgnoredEvent>())
-                LogEntityConditionIgnored(evt);
+                LogConditionIgnored(EntityContext(evt.Target), evt.Existing, CombatFormatter.FormatEntityConditionTooltip(evt.Existing));
 
             foreach (var evt in action.Get<EntityConditionReplacedEvent>())
-                LogEntityConditionReplaced(evt);
+                LogConditionReplaced(EntityContext(evt.Target), evt.NewEffect, evt.OldDuration, CombatFormatter.FormatEntityConditionTooltip(evt.NewEffect));
 
             foreach (var evt in action.Get<EntityConditionKeptStrongerEvent>())
-                LogEntityConditionKeptStronger(evt);
+                LogConditionKeptStronger(EntityContext(evt.Target), evt.Kept, CombatFormatter.FormatEntityConditionTooltip(evt.Kept));
 
             foreach (var evt in action.Get<EntityConditionStackLimitEvent>())
-                LogEntityConditionStackLimit(evt);
+                LogConditionStackLimit(EntityContext(evt.Target), evt.Template.effectName, evt.MaxStacks);
 
             foreach (var evt in action.Get<EntityConditionExpiredEvent>())
-                LogEntityConditionExpired(evt);
+                LogConditionExpired(EntityContext(evt.Target), evt.Expired, CombatFormatter.FormatEntityConditionTooltip(evt.Expired));
 
             foreach (var evt in action.Get<EntityConditionRemovedByTriggerEvent>())
-                LogEntityConditionRemovedByTrigger(evt);
+                LogConditionRemovedByTrigger(EntityContext(evt.Target), evt.Removed, evt.Trigger.ToString(), CombatFormatter.FormatEntityConditionTooltip(evt.Removed));
         }
 
         private static void LogSingleEntityCondition(EntityConditionEvent evt)
@@ -298,104 +300,6 @@ namespace Assets.Scripts.Combat.Logging
                 sourceVehicle, targetVehicle);
 
             logEvt.WithMetadata("effectBreakdown", CombatFormatter.FormatEntityConditionTooltip(applied));
-        }
-
-        private static void LogEntityConditionExpired(EntityConditionExpiredEvent evt)
-        {
-            Vehicle targetVehicle = EntityHelpers.GetParentVehicle(evt.Target);
-            string targetName = CombatDisplayHelpers.FormatEntityWithVehicle(evt.Target);
-
-            var logEvt = RaceHistory.Log(
-                EventType.Condition, EventImportance.Low,
-                $"{targetName}'s {evt.Expired.template.effectName} has expired",
-                targetVehicle?.CurrentStage,
-                targetVehicle);
-
-            logEvt.WithMetadata("effectBreakdown", CombatFormatter.FormatEntityConditionTooltip(evt.Expired));
-        }
-
-        private static void LogEntityConditionRefreshed(EntityConditionRefreshedEvent evt)
-        {
-            Vehicle targetVehicle = EntityHelpers.GetParentVehicle(evt.Target);
-            string targetName = CombatDisplayHelpers.FormatEntityWithVehicle(evt.Target);
-
-            string durationText = evt.Refreshed.IsIndefinite
-                ? "indefinite"
-                : $"{evt.Refreshed.turnsRemaining} turns";
-
-            var logEvt = RaceHistory.Log(
-                EventType.Condition, EventImportance.Low,
-                $"{targetName}'s {evt.Refreshed.template.effectName} refreshed ({durationText})",
-                targetVehicle?.CurrentStage,
-                targetVehicle);
-
-            logEvt.WithMetadata("effectBreakdown", CombatFormatter.FormatEntityConditionTooltip(evt.Refreshed));
-        }
-
-        private static void LogEntityConditionIgnored(EntityConditionIgnoredEvent evt)
-        {
-            Vehicle targetVehicle = EntityHelpers.GetParentVehicle(evt.Target);
-            string targetName = CombatDisplayHelpers.FormatEntityWithVehicle(evt.Target);
-
-            var logEvt = RaceHistory.Log(
-                EventType.Condition, EventImportance.Low,
-                $"{targetName}'s {evt.Existing.template.effectName} reapplication ignored (already active)",
-                targetVehicle?.CurrentStage,
-                targetVehicle);
-
-            logEvt.WithMetadata("effectBreakdown", CombatFormatter.FormatEntityConditionTooltip(evt.Existing));
-        }
-
-        private static void LogEntityConditionReplaced(EntityConditionReplacedEvent evt)
-        {
-            Vehicle targetVehicle = EntityHelpers.GetParentVehicle(evt.Target);
-            string targetName = CombatDisplayHelpers.FormatEntityWithVehicle(evt.Target);
-
-            string newDurationText = evt.NewEffect.IsIndefinite
-                ? "indefinite"
-                : $"{evt.NewEffect.turnsRemaining} turns";
-
-            string oldDurationText = evt.OldDuration == -1
-                ? "indefinite"
-                : $"{evt.OldDuration} turns";
-
-            var logEvt = RaceHistory.Log(
-                EventType.Condition, EventImportance.Low,
-                $"{targetName}'s {evt.NewEffect.template.effectName} replaced ({oldDurationText} → {newDurationText})",
-                targetVehicle?.CurrentStage,
-                targetVehicle);
-
-            logEvt.WithMetadata("effectBreakdown", CombatFormatter.FormatEntityConditionTooltip(evt.NewEffect));
-        }
-
-        private static void LogEntityConditionKeptStronger(EntityConditionKeptStrongerEvent evt)
-        {
-            Vehicle targetVehicle = EntityHelpers.GetParentVehicle(evt.Target);
-            string targetName = CombatDisplayHelpers.FormatEntityWithVehicle(evt.Target);
-
-            string durationText = evt.Kept.IsIndefinite
-                ? "indefinite"
-                : $"{evt.Kept.turnsRemaining} turns";
-
-            var logEvt = RaceHistory.Log(
-                EventType.Condition, EventImportance.Low,
-                $"{targetName}'s {evt.Kept.template.effectName} kept stronger version ({durationText})",
-                targetVehicle?.CurrentStage,
-                targetVehicle);
-
-            logEvt.WithMetadata("effectBreakdown", CombatFormatter.FormatEntityConditionTooltip(evt.Kept));
-        }
-
-        private static void LogEntityConditionStackLimit(EntityConditionStackLimitEvent evt)
-        {
-            Vehicle targetVehicle = EntityHelpers.GetParentVehicle(evt.Target);
-            string targetName = CombatDisplayHelpers.FormatEntityWithVehicle(evt.Target);
-
-            RaceHistory.Log(
-                EventType.Condition, EventImportance.Low,
-                $"{targetName}'s {evt.Template.effectName} stack limit reached ({evt.MaxStacks})",
-                targetVehicle?.CurrentStage,
-                targetVehicle);
         }
 
         // ==================== RESTORATION LOGGING ====================
@@ -485,25 +389,25 @@ namespace Assets.Scripts.Combat.Logging
                 LogSingleCharacterCondition(evt);
 
             foreach (var evt in action.Get<CharacterConditionRefreshedEvent>())
-                LogCharacterConditionRefreshed(evt);
+                LogConditionRefreshed(CharacterContext(evt.TargetSeat), evt.Refreshed, CombatFormatter.FormatCharacterConditionTooltip(evt.Refreshed));
 
             foreach (var evt in action.Get<CharacterConditionIgnoredEvent>())
-                LogCharacterConditionIgnored(evt);
+                LogConditionIgnored(CharacterContext(evt.TargetSeat), evt.Existing, CombatFormatter.FormatCharacterConditionTooltip(evt.Existing));
 
             foreach (var evt in action.Get<CharacterConditionReplacedEvent>())
-                LogCharacterConditionReplaced(evt);
+                LogConditionReplaced(CharacterContext(evt.TargetSeat), evt.NewCondition, evt.OldDuration, CombatFormatter.FormatCharacterConditionTooltip(evt.NewCondition));
 
             foreach (var evt in action.Get<CharacterConditionKeptStrongerEvent>())
-                LogCharacterConditionKeptStronger(evt);
+                LogConditionKeptStronger(CharacterContext(evt.TargetSeat), evt.Kept, CombatFormatter.FormatCharacterConditionTooltip(evt.Kept));
 
             foreach (var evt in action.Get<CharacterConditionStackLimitEvent>())
-                LogCharacterConditionStackLimit(evt);
+                LogConditionStackLimit(CharacterContext(evt.TargetSeat), evt.Template.effectName, evt.MaxStacks);
 
             foreach (var evt in action.Get<CharacterConditionExpiredEvent>())
-                LogCharacterConditionExpired(evt);
+                LogConditionExpired(CharacterContext(evt.TargetSeat), evt.Expired, CombatFormatter.FormatCharacterConditionTooltip(evt.Expired));
 
             foreach (var evt in action.Get<CharacterConditionRemovedByTriggerEvent>())
-                LogCharacterConditionRemovedByTrigger(evt);
+                LogConditionRemovedByTrigger(CharacterContext(evt.TargetSeat), evt.Removed, evt.Trigger.ToString(), CombatFormatter.FormatCharacterConditionTooltip(evt.Removed));
         }
 
         private static void LogSingleCharacterCondition(CharacterConditionEvent evt)
@@ -536,97 +440,161 @@ namespace Assets.Scripts.Combat.Logging
             logEvt.WithMetadata("effectBreakdown", CombatFormatter.FormatCharacterConditionTooltip(applied));
         }
 
-        private static void LogCharacterConditionExpired(CharacterConditionExpiredEvent evt)
+        // ==================== VEHICLE CONDITION LOGGING ====================
+
+        private static void LogVehicleConditions(CombatAction action)
         {
-            string targetName = CombatDisplayHelpers.FormatSeatName(evt.TargetSeat);
+            foreach (var evt in action.Get<VehicleConditionEvent>().Where(e => e.Applied != null))
+                LogSingleVehicleCondition(evt);
 
-            var logEvt = RaceHistory.Log(
-                EventType.Condition, EventImportance.Low,
-                $"{targetName}'s {evt.Expired.template.effectName} has expired");
+            foreach (var evt in action.Get<VehicleConditionRefreshedEvent>())
+                LogConditionRefreshed(VehicleContext(evt.Target), evt.Refreshed, CombatFormatter.FormatVehicleConditionTooltip(evt.Refreshed));
 
-            logEvt.WithMetadata("effectBreakdown", CombatFormatter.FormatCharacterConditionTooltip(evt.Expired));
+            foreach (var evt in action.Get<VehicleConditionIgnoredEvent>())
+                LogConditionIgnored(VehicleContext(evt.Target), evt.Existing, CombatFormatter.FormatVehicleConditionTooltip(evt.Existing));
+
+            foreach (var evt in action.Get<VehicleConditionReplacedEvent>())
+                LogConditionReplaced(VehicleContext(evt.Target), evt.NewCondition, evt.OldDuration, CombatFormatter.FormatVehicleConditionTooltip(evt.NewCondition));
+
+            foreach (var evt in action.Get<VehicleConditionKeptStrongerEvent>())
+                LogConditionKeptStronger(VehicleContext(evt.Target), evt.Kept, CombatFormatter.FormatVehicleConditionTooltip(evt.Kept));
+
+            foreach (var evt in action.Get<VehicleConditionStackLimitEvent>())
+                LogConditionStackLimit(VehicleContext(evt.Target), evt.Template.effectName, evt.MaxStacks);
+
+            foreach (var evt in action.Get<VehicleConditionExpiredEvent>())
+                LogConditionExpired(VehicleContext(evt.Target), evt.Expired, CombatFormatter.FormatVehicleConditionTooltip(evt.Expired));
+
+            foreach (var evt in action.Get<VehicleConditionRemovedByTriggerEvent>())
+                LogConditionRemovedByTrigger(VehicleContext(evt.Target), evt.Removed, evt.Trigger.ToString(), CombatFormatter.FormatVehicleConditionTooltip(evt.Removed));
         }
 
-        private static void LogCharacterConditionRefreshed(CharacterConditionRefreshedEvent evt)
+        private static void LogSingleVehicleCondition(VehicleConditionEvent evt)
         {
-            string targetName = CombatDisplayHelpers.FormatSeatName(evt.TargetSeat);
-            string durationText = evt.Refreshed.IsIndefinite ? "indefinite" : $"{evt.Refreshed.turnsRemaining} turns";
+            if (evt.Applied == null) return;
+
+            var applied = evt.Applied;
+            var condition = applied.template;
+
+            Vehicle sourceVehicle = EntityHelpers.GetParentVehicle(evt.Source);
+            Vehicle targetVehicle = evt.Target;
+            string targetName = targetVehicle != null ? targetVehicle.vehicleName : "Unknown";
+            bool isBuff = CombatDisplayHelpers.DetermineIfBuff(condition);
+            string color = isBuff ? CombatFormatter.Colors.Success : CombatFormatter.Colors.Failure;
+            string durationText = applied.IsIndefinite ? "indefinite" : $"{applied.turnsRemaining} turns";
+
+            string message;
+            if (evt.Source == null)
+            {
+                message = $"{targetName} gains <color={color}>{condition.effectName}</color> from {evt.CausalSource} ({durationText})";
+            }
+            else
+            {
+                string sourceName = CombatDisplayHelpers.FormatEntityWithVehicle(evt.Source);
+                string actionVerb = isBuff ? "grants" : "inflicts";
+                message = $"{sourceName} {actionVerb} <color={color}>{condition.effectName}</color> on {targetName} ({durationText})";
+            }
+
+            bool playerInvolved = (sourceVehicle != null && sourceVehicle.controlType == ControlType.Player) ||
+                                  (targetVehicle != null && targetVehicle.controlType == ControlType.Player);
+            EventImportance importance;
+            if (playerInvolved && !isBuff)
+                importance = EventImportance.High;
+            else if (playerInvolved)
+                importance = EventImportance.Medium;
+            else
+                importance = EventImportance.Low;
 
             var logEvt = RaceHistory.Log(
-                EventType.Condition, EventImportance.Low,
-                $"{targetName}'s {evt.Refreshed.template.effectName} refreshed ({durationText})");
+                EventType.Condition, importance, message,
+                targetVehicle != null ? targetVehicle.CurrentStage : null,
+                sourceVehicle, targetVehicle);
 
-            logEvt.WithMetadata("effectBreakdown", CombatFormatter.FormatCharacterConditionTooltip(evt.Refreshed));
+            logEvt.WithMetadata("effectBreakdown", CombatFormatter.FormatVehicleConditionTooltip(applied));
         }
 
-        private static void LogCharacterConditionIgnored(CharacterConditionIgnoredEvent evt)
+        // ==================== CONDITION LOG HELPERS ====================
+
+        private readonly struct ConditionLogContext
         {
-            string targetName = CombatDisplayHelpers.FormatSeatName(evt.TargetSeat);
+            public readonly string TargetName;
+            public readonly Vehicle TargetVehicle;
 
-            var logEvt = RaceHistory.Log(
-                EventType.Condition, EventImportance.Low,
-                $"{targetName}'s {evt.Existing.template.effectName} reapplication ignored (already active)");
-
-            logEvt.WithMetadata("effectBreakdown", CombatFormatter.FormatCharacterConditionTooltip(evt.Existing));
+            public ConditionLogContext(string targetName, Vehicle targetVehicle)
+            {
+                TargetName = targetName;
+                TargetVehicle = targetVehicle;
+            }
         }
 
-        private static void LogCharacterConditionReplaced(CharacterConditionReplacedEvent evt)
+        private static ConditionLogContext EntityContext(Entity target)
         {
-            string targetName = CombatDisplayHelpers.FormatSeatName(evt.TargetSeat);
-            string newDurationText = evt.NewCondition.IsIndefinite ? "indefinite" : $"{evt.NewCondition.turnsRemaining} turns";
-            string oldDurationText = evt.OldDuration == -1 ? "indefinite" : $"{evt.OldDuration} turns";
-
-            var logEvt = RaceHistory.Log(
-                EventType.Condition, EventImportance.Low,
-                $"{targetName}'s {evt.NewCondition.template.effectName} replaced ({oldDurationText} → {newDurationText})");
-
-            logEvt.WithMetadata("effectBreakdown", CombatFormatter.FormatCharacterConditionTooltip(evt.NewCondition));
+            Vehicle vehicle = EntityHelpers.GetParentVehicle(target);
+            return new ConditionLogContext(CombatDisplayHelpers.FormatEntityWithVehicle(target), vehicle);
         }
 
-        private static void LogCharacterConditionKeptStronger(CharacterConditionKeptStrongerEvent evt)
+        private static ConditionLogContext VehicleContext(Vehicle target)
         {
-            string targetName = CombatDisplayHelpers.FormatSeatName(evt.TargetSeat);
-            string durationText = evt.Kept.IsIndefinite ? "indefinite" : $"{evt.Kept.turnsRemaining} turns";
-
-            var logEvt = RaceHistory.Log(
-                EventType.Condition, EventImportance.Low,
-                $"{targetName}'s {evt.Kept.template.effectName} kept stronger version ({durationText})");
-
-            logEvt.WithMetadata("effectBreakdown", CombatFormatter.FormatCharacterConditionTooltip(evt.Kept));
+            string name = target != null ? target.vehicleName : "Unknown";
+            return new ConditionLogContext(name, target);
         }
 
-        private static void LogCharacterConditionStackLimit(CharacterConditionStackLimitEvent evt)
-        {
-            string targetName = CombatDisplayHelpers.FormatSeatName(evt.TargetSeat);
+        private static ConditionLogContext CharacterContext(VehicleSeat seat)
+            => new(CombatDisplayHelpers.FormatSeatName(seat), null);
 
-            RaceHistory.Log(
-                EventType.Condition, EventImportance.Low,
-                $"{targetName}'s {evt.Template.effectName} stack limit reached ({evt.MaxStacks})");
+        private static string DurationText(AppliedConditionBase applied)
+            => applied.IsIndefinite ? "indefinite" : $"{applied.turnsRemaining} turns";
+
+        private static string DurationText(int turns)
+            => turns == -1 ? "indefinite" : $"{turns} turns";
+
+        private static RaceEvent LogConditionEvent(EventImportance importance, string message, ConditionLogContext ctx)
+        {
+            if (ctx.TargetVehicle != null)
+                return RaceHistory.Log(EventType.Condition, importance, message, ctx.TargetVehicle.CurrentStage, ctx.TargetVehicle);
+            return RaceHistory.Log(EventType.Condition, importance, message);
         }
 
-        private static void LogEntityConditionRemovedByTrigger(EntityConditionRemovedByTriggerEvent evt)
+        private static void LogConditionExpired(ConditionLogContext ctx, AppliedConditionBase applied, string tooltip)
         {
-            Vehicle targetVehicle = EntityHelpers.GetParentVehicle(evt.Target);
-            string targetName = CombatDisplayHelpers.FormatEntityWithVehicle(evt.Target);
-
-            var logEvt = RaceHistory.Log(
-                EventType.Condition, EventImportance.Low,
-                $"{targetName}'s {evt.Removed.template.effectName} removed by trigger ({evt.Trigger})",
-                targetVehicle?.CurrentStage,
-                targetVehicle);
-
-            logEvt.WithMetadata("effectBreakdown", CombatFormatter.FormatEntityConditionTooltip(evt.Removed));
+            var logEvt = LogConditionEvent(EventImportance.Low, $"{ctx.TargetName}'s {applied.Template.effectName} has expired", ctx);
+            logEvt.WithMetadata("effectBreakdown", tooltip);
         }
 
-        private static void LogCharacterConditionRemovedByTrigger(CharacterConditionRemovedByTriggerEvent evt)
+        private static void LogConditionRefreshed(ConditionLogContext ctx, AppliedConditionBase applied, string tooltip)
         {
-            string targetName = CombatDisplayHelpers.FormatSeatName(evt.TargetSeat);
+            var logEvt = LogConditionEvent(EventImportance.Low, $"{ctx.TargetName}'s {applied.Template.effectName} refreshed ({DurationText(applied)})", ctx);
+            logEvt.WithMetadata("effectBreakdown", tooltip);
+        }
 
-            var logEvt = RaceHistory.Log(
-                EventType.Condition, EventImportance.Low,
-                $"{targetName}'s {evt.Removed.template.effectName} removed by trigger ({evt.Trigger})");
+        private static void LogConditionIgnored(ConditionLogContext ctx, AppliedConditionBase existing, string tooltip)
+        {
+            var logEvt = LogConditionEvent(EventImportance.Low, $"{ctx.TargetName}'s {existing.Template.effectName} reapplication ignored (already active)", ctx);
+            logEvt.WithMetadata("effectBreakdown", tooltip);
+        }
 
-            logEvt.WithMetadata("effectBreakdown", CombatFormatter.FormatCharacterConditionTooltip(evt.Removed));
+        private static void LogConditionReplaced(ConditionLogContext ctx, AppliedConditionBase newCondition, int oldDuration, string tooltip)
+        {
+            string msg = $"{ctx.TargetName}'s {newCondition.Template.effectName} replaced ({DurationText(oldDuration)} → {DurationText(newCondition)})";
+            var logEvt = LogConditionEvent(EventImportance.Low, msg, ctx);
+            logEvt.WithMetadata("effectBreakdown", tooltip);
+        }
+
+        private static void LogConditionKeptStronger(ConditionLogContext ctx, AppliedConditionBase kept, string tooltip)
+        {
+            var logEvt = LogConditionEvent(EventImportance.Low, $"{ctx.TargetName}'s {kept.Template.effectName} kept stronger version ({DurationText(kept)})", ctx);
+            logEvt.WithMetadata("effectBreakdown", tooltip);
+        }
+
+        private static void LogConditionStackLimit(ConditionLogContext ctx, string effectName, int maxStacks)
+        {
+            LogConditionEvent(EventImportance.Low, $"{ctx.TargetName}'s {effectName} stack limit reached ({maxStacks})", ctx);
+        }
+
+        private static void LogConditionRemovedByTrigger(ConditionLogContext ctx, AppliedConditionBase removed, string trigger, string tooltip)
+        {
+            var logEvt = LogConditionEvent(EventImportance.Low, $"{ctx.TargetName}'s {removed.Template.effectName} removed by trigger ({trigger})", ctx);
+            logEvt.WithMetadata("effectBreakdown", tooltip);
         }
 
         // ==================== CONSUMABLE LOGGING ====================

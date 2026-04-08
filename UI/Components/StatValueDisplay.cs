@@ -47,19 +47,7 @@ namespace Assets.Scripts.UI.Components
             textComponent.text = displayText ?? finalValue.ToString();
 
             int totalModifiers = finalValue - baseValue;
-            
-            if (totalModifiers == 0)
-            {
-                textComponent.color = normalColor;
-            }
-            else if (totalModifiers > 0)
-            {
-                textComponent.color = buffedColor;
-            }
-            else
-            {
-                textComponent.color = debuffedColor;
-            }
+            ApplyModifierColor(totalModifiers);
         }
         
         public void UpdateDisplay(float value, string displayText = null)
@@ -83,21 +71,19 @@ namespace Assets.Scripts.UI.Components
             textComponent.text = displayText ?? finalValue.ToString("F1");
             
             float totalModifiers = finalValue - baseValue;
-            
-            if (Mathf.Approximately(totalModifiers, 0f))
-            {
-                textComponent.color = normalColor;
-            }
-            else if (totalModifiers > 0)
-            {
-                textComponent.color = buffedColor;
-            }
-            else
-            {
-                textComponent.color = debuffedColor;
-            }
-            
+            ApplyModifierColor(totalModifiers);
+
             tooltipEntity = null;
+        }
+
+        private void ApplyModifierColor(float delta)
+        {
+            if (Mathf.Approximately(delta, 0f))
+                textComponent.color = normalColor;
+            else if (delta > 0)
+                textComponent.color = buffedColor;
+            else
+                textComponent.color = debuffedColor;
         }
 
         public void OnPointerEnter(PointerEventData eventData)

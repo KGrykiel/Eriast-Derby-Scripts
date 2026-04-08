@@ -16,6 +16,7 @@ using Assets.Scripts.Combat.Rolls.RollTypes.SkillChecks;
 using Assets.Scripts.Combat.Rolls.RollSpecs;
 using Assets.Scripts.Combat.Rolls.RollSpecs.SpecTypes;
 using Assets.Scripts.Conditions.EntityConditions;
+using Assets.Scripts.Conditions.VehicleConditions;
 using Assets.Scripts.Combat.Damage.FormulaProviders.SpecificProviders;
 using Assets.Scripts.Effects;
 using Assets.Scripts.Effects.EffectTypes.EntityEffects;
@@ -27,6 +28,7 @@ using Assets.Scripts.Entities.Vehicles.VehicleComponents.ComponentTypes;
 using Assets.Scripts.Entities.Vehicles.VehicleComponents;
 using Assets.Scripts.Modifiers;
 using Assets.Scripts.Entities;
+using Assets.Scripts.Effects.Targeting.EntityTarget;
 using Assets.Scripts.Skills.Costs;
 
 namespace Assets.Scripts.Tests.PlayMode
@@ -156,10 +158,10 @@ namespace Assets.Scripts.Tests.PlayMode
             var reinforceSkill = TestSkillFactory.CreateNoRollSkill("Reinforce Hull",
                 new System.Collections.Generic.List<IEffectInvocation>
                 {
-                    new VehicleEffectInvocation
+                    new EntityEffectInvocation
                     {
                         effect = new ApplyEntityConditionEffect { condition = reinforceTemplate },
-                        targetResolver = new TargetVehicleResolver()
+                        targetResolver = new EntitiesViaVehiclesResolver { vehicleResolver = new TargetVehicleResolver(), componentType = ComponentType.Chassis }
                     }
                 },
                 cleanup: cleanup,
@@ -208,10 +210,10 @@ namespace Assets.Scripts.Tests.PlayMode
             var flameThrower = TestSkillFactory.CreateNoRollSkill("Flame Thrower",
                 new System.Collections.Generic.List<IEffectInvocation>
                 {
-                    new VehicleEffectInvocation
+                    new EntityEffectInvocation
                     {
                         effect = new ApplyEntityConditionEffect { condition = burningTemplate },
-                        targetResolver = new TargetVehicleResolver()
+                        targetResolver = new EntitiesViaVehiclesResolver { vehicleResolver = new TargetVehicleResolver(), componentType = ComponentType.Chassis }
                     }
                 },
                 cleanup: cleanup,
@@ -309,28 +311,25 @@ namespace Assets.Scripts.Tests.PlayMode
             playerVehicle = TestVehicleBuilder.CreateWithChassis(driver);
 
             // Create stage with a lane that has a status effect
-            var laneEffect = TestStatusEffectFactory.CreateModifierEffect("Cliff Edge", EntityAttribute.ArmorClass, -2f, cleanup: cleanup);
+            var laneEffect = TestStatusEffectFactory.CreateVehicleModifierEffect("Cliff Edge", EntityAttribute.ArmorClass, -2f, cleanup: cleanup);
             var stage = TestStageFactory.CreateStage("Rocky Stage", out stageObj);
             var cliffLane = TestStageFactory.CreateLane("Cliff Edge Lane", stage, stageObj, laneEffect);
 
             int acBefore = playerVehicle.Chassis.GetArmorClass();
 
-            // Simulate vehicle entering lane ? apply lane status effect
+            // Simulate vehicle entering lane — apply lane status effect
             cliffLane.vehiclesInLane.Add(playerVehicle);
             playerVehicle.SetCurrentLane(cliffLane);
 
-            // Apply lane effect to all vehicle components (as the system does)
-            foreach (var component in playerVehicle.AllComponents)
-            {
-                component.ApplyCondition(laneEffect, cliffLane);
-            }
+            // Apply lane effect at vehicle level (as the system does)
+            playerVehicle.ApplyVehicleCondition(laneEffect, cliffLane);
             yield return null;
 
             int acAfter = playerVehicle.Chassis.GetArmorClass();
             Assert.AreEqual(acBefore - 2, acAfter, "AC should drop by 2 from Cliff Edge lane");
 
             // Verify effect is tracked
-            var effects = playerVehicle.Chassis.GetActiveConditions();
+            var effects = playerVehicle.GetActiveVehicleConditions();
             Assert.AreEqual(1, effects.Count);
             Assert.AreEqual("Cliff Edge", effects[0].template.effectName);
         }

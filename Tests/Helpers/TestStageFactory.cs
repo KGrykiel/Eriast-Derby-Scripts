@@ -2,7 +2,7 @@
 using Assets.Scripts.Stages;
 using Assets.Scripts.Stages.Lanes;
 using Assets.Scripts.Combat.Rolls.RollSpecs;
-using Assets.Scripts.Conditions.EntityConditions;
+using Assets.Scripts.Conditions.VehicleConditions;
 using Assets.Scripts.Entities.Vehicles;
 
 namespace Assets.Scripts.Tests.Helpers
@@ -38,7 +38,7 @@ namespace Assets.Scripts.Tests.Helpers
             string name,
             Stage stage,
             GameObject stageObject,
-            EntityCondition laneStatusEffect = null)
+            VehicleCondition laneStatusEffect = null)
         {
             var laneObj = new GameObject(name);
             laneObj.transform.SetParent(stageObject.transform);

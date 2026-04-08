@@ -2,8 +2,11 @@
 using UnityEngine.UI;
 using UnityEngine.EventSystems;
 using TMPro;
+using System.Collections.Generic;
 using Assets.Scripts.Combat.Logging;
 using Assets.Scripts.Conditions.EntityConditions;
+using Assets.Scripts.Conditions;
+using Assets.Scripts.Conditions.VehicleConditions;
 
 namespace Assets.Scripts.UI.Components
 {
@@ -34,7 +37,7 @@ namespace Assets.Scripts.UI.Components
         [Tooltip("Background color for neutral effects (only used if tintIconByEffectType is true)")]
         public Color neutralColor = new(0.5f, 0.5f, 0.5f, 0.8f);
         
-        private AppliedEntityCondition appliedEffect;
+        private AppliedConditionBase activeCondition;
         private RectTransform rectTransform;
 
         void Awake()
@@ -48,25 +51,26 @@ namespace Assets.Scripts.UI.Components
                 durationText = GetComponentInChildren<TextMeshProUGUI>();
         }
         
-        public void Initialize(AppliedEntityCondition effect)
+        public void Initialize(AppliedConditionBase condition)
         {
-            appliedEffect = effect;
+            activeCondition = condition;
             UpdateDisplay();
         }
 
         public void UpdateDisplay()
         {
-            if (appliedEffect == null || appliedEffect.template == null)
+            if (activeCondition == null || activeCondition.Template == null)
             {
                 gameObject.SetActive(false);
                 return;
             }
-            
+
             gameObject.SetActive(true);
-            
+            ConditionBase template = activeCondition.Template;
+
             if (iconImage != null)
             {
-                Sprite spriteToUse = appliedEffect.template.icon != null ? appliedEffect.template.icon : defaultIcon;
+                Sprite spriteToUse = template.icon != null ? template.icon : defaultIcon;
 
                 if (spriteToUse != null)
                 {
@@ -87,38 +91,51 @@ namespace Assets.Scripts.UI.Components
 
             if (durationText != null)
             {
-                if (appliedEffect.IsIndefinite)
+                if (activeCondition.IsIndefinite)
                 {
                     durationText.text = "∞";
                 }
                 else
                 {
-                    durationText.text = appliedEffect.turnsRemaining.ToString();
+                    durationText.text = activeCondition.turnsRemaining.ToString();
                 }
             }
         }
         
         private Color GetEffectColor()
         {
-            if (appliedEffect?.template == null)
-                return neutralColor;
+            if (activeCondition == null || activeCondition.Template == null) return neutralColor;
 
-            bool isBuff = DetermineIfBuff(appliedEffect.template);
+            List<EntityModifierData> modifiers = null;
+            List<IPeriodicEffect> periodicEffects = null;
+
+            if (activeCondition.Template is EntityCondition ec)
+            {
+                modifiers = ec.modifiers;
+                periodicEffects = ec.periodicEffects;
+            }
+            else if (activeCondition.Template is VehicleCondition vc)
+            {
+                modifiers = vc.modifiers;
+                periodicEffects = vc.periodicEffects;
+            }
+
+            if (modifiers == null) return neutralColor;
+
+            bool isBuff = DetermineIfBuff(modifiers, periodicEffects ?? new(), activeCondition.Template.behavioralEffects);
             return isBuff ? buffColor : debuffColor;
         }
 
-        private bool DetermineIfBuff(EntityCondition statusEffect)
+        private bool DetermineIfBuff(List<EntityModifierData> modifiers, List<IPeriodicEffect> periodicEffects, BehavioralEffectData behavioralEffects)
         {
             float totalModifierValue = 0f;
-            foreach (var mod in statusEffect.modifiers)
-            {
+            foreach (var mod in modifiers)
                 totalModifierValue += mod.value;
-            }
-            
+
             bool hasPeriodicDamage = false;
             bool hasPeriodicRestoration = false;
 
-            foreach (var periodic in statusEffect.periodicEffects)
+            foreach (var periodic in periodicEffects)
             {
                 switch (periodic)
                 {
@@ -134,25 +151,31 @@ namespace Assets.Scripts.UI.Components
                 }
             }
 
-            bool hasBehavioralRestrictions = statusEffect.behavioralEffects != null &&
-                (statusEffect.behavioralEffects.preventsActions ||
-                 statusEffect.behavioralEffects.preventsMovement);
+            bool hasBehavioralRestrictions = behavioralEffects != null &&
+                (behavioralEffects.preventsActions ||
+                 behavioralEffects.preventsMovement);
 
             if (hasPeriodicDamage || hasBehavioralRestrictions)
                 return false;
 
             if (hasPeriodicRestoration || totalModifierValue > 0)
                 return true;
-            
+
             return totalModifierValue >= 0;
         }
         
         public void OnPointerEnter(PointerEventData eventData)
         {
-            if (appliedEffect == null || appliedEffect.template == null) return;
+            if (activeCondition == null || activeCondition.Template == null) return;
 
-            string tooltipContent = CombatFormatter.FormatEntityConditionTooltip(appliedEffect);
-            RollTooltip.ShowNow(tooltipContent, rectTransform);
+            string tooltipContent = null;
+            if (activeCondition is AppliedEntityCondition entity)
+                tooltipContent = CombatFormatter.FormatEntityConditionTooltip(entity);
+            else if (activeCondition is AppliedVehicleCondition vehicle)
+                tooltipContent = CombatFormatter.FormatVehicleConditionTooltip(vehicle);
+
+            if (tooltipContent != null)
+                RollTooltip.ShowNow(tooltipContent, rectTransform);
         }
 
         public void OnPointerExit(PointerEventData eventData)

@@ -7,6 +7,7 @@ using Assets.Scripts.Logging;
 using Assets.Scripts.Managers;
 using Assets.Scripts.Stages;
 using Assets.Scripts.Entities.Vehicles;
+using Assets.Scripts.UI;
 
 public class OverviewPanel : MonoBehaviour
 {
@@ -131,8 +132,8 @@ public class OverviewPanel : MonoBehaviour
             int health = vehicle.Chassis != null ? vehicle.Chassis.GetCurrentHealth() : 0;
             int maxHealth = vehicle.Chassis != null ? vehicle.Chassis.GetMaxHealth() : 1;
             float healthPercent = (float)health / maxHealth;
-            string healthBar = GenerateCompactBar(healthPercent, 8);
-            string healthColor = GetHealthColor(healthPercent);
+            string healthBar = UITextHelpers.GenerateBar(healthPercent, 8);
+            string healthColor = UITextHelpers.GetHealthColor(healthPercent);
             display += $"   <color={healthColor}>{healthBar}</color> <color=#AAAAAA>{health}/{maxHealth}HP</color>\n\n";
         }
 
@@ -303,24 +304,4 @@ public class OverviewPanel : MonoBehaviour
         };
     }
 
-    private string GetHealthColor(float percent)
-    {
-        if (percent > 0.6f) return "#44FF44";
-        if (percent > 0.3f) return "#FFFF44";
-        return "#FF4444";
     }
-
-    private string GenerateCompactBar(float percent, int length)
-    {
-        int filled = Mathf.RoundToInt(percent * length);
-        filled = Mathf.Clamp(filled, 0, length);
-
-        string bar = "";
-        for (int i = 0; i < length; i++)
-        {
-            bar += i < filled ? "#" : "-";
-        }
-
-        return bar;
-    }
-}
