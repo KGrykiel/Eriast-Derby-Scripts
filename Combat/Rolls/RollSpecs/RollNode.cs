@@ -33,13 +33,6 @@ namespace Assets.Scripts.Combat.Rolls.RollSpecs
         [Tooltip("Effects applied on a failed roll. Ignored if rollSpec is null.")]
         public List<IEffectInvocation> failureEffects = new();
 
-        [Header("Narrative")]
-        [Tooltip("Text shown to the DM when this node succeeds.")]
-        public string successNarrative = "";
-
-        [Tooltip("Text shown to the DM when this node fails.")]
-        public string failureNarrative = "";
-
         [Header("Chaining")]
         [SerializeReference, SR]
         [Tooltip("Node evaluated after this one succeeds. Null = stop here.")]

@@ -7,6 +7,7 @@ using TMPro;
 using Assets.Scripts.Events.EventCard.EventCardTypes;
 using Assets.Scripts.Events.EventCard;
 using Assets.Scripts.Combat.Restoration;
+using Assets.Scripts.Combat.Rolls.RollSpecs;
 using Assets.Scripts.Combat.Rolls.RollSpecs.SpecTypes;
 using Assets.Scripts.Combat.Damage.FormulaProviders.SpecificProviders;
 using Assets.Scripts.Effects.Invocations;
@@ -206,43 +207,61 @@ namespace Assets.Scripts.UI.Components
 
         private string BuildTooltip(CardChoice choice)
         {
-            var tooltip = "";
+            if (choice.rollNode == null)
+                return "<b>No check required</b>";
 
-            if (choice.rollNode?.rollSpec is SaveSpec saveSpec)
-            {
-                tooltip += $"<b>{saveSpec.DisplayName} Save DC {saveSpec.dc}</b>\n";
-            }
-            else if (choice.rollNode?.rollSpec is SkillCheckSpec checkSpec)
-            {
-                tooltip += $"<b>{checkSpec.DisplayName} Check DC {checkSpec.dc}</b>\n";
-            }
+            return BuildNodeTooltip(choice.rollNode, indent: "", depth: 0);
+        }
+
+        private string BuildNodeTooltip(RollNode node, string indent, int depth)
+        {
+            if (node == null)
+                return "";
+
+            if (depth >= 3)
+                return "<i>(\u2026)</i>";
+
+            string tooltip = "";
+
+            if (node.rollSpec is SaveSpec saveSpec)
+                tooltip += $"<b>{saveSpec.DisplayName} Save DC {saveSpec.dc}</b>";
+            else if (node.rollSpec is SkillCheckSpec checkSpec)
+                tooltip += $"<b>{checkSpec.DisplayName} Check DC {checkSpec.dc}</b>";
             else
+                tooltip += "<b>Always applies</b>";
+
+            bool hasSuccessEffects = node.successEffects != null && node.successEffects.Count > 0;
+            if (hasSuccessEffects || node.onSuccessChain != null)
             {
-                tooltip += "<b>No check required</b>\n";
+                tooltip += $"\n{indent}<color=green><b>On Success:</b></color>";
+                if (hasSuccessEffects)
+                {
+                    foreach (var effect in node.successEffects)
+                    {
+                        string desc = GetEffectDescription(effect);
+                        if (desc != null)
+                            tooltip += $"\n{indent}  \u2022 {desc}";
+                    }
+                }
+                if (node.onSuccessChain != null)
+                    tooltip += $"\n{indent}  \u2192 {BuildNodeTooltip(node.onSuccessChain, indent + "    ", depth + 1)}";
             }
 
-            var successEffects = choice.rollNode?.successEffects;
-            if (successEffects != null && successEffects.Count > 0)
+            bool hasFailureEffects = node.failureEffects != null && node.failureEffects.Count > 0;
+            if (hasFailureEffects || node.onFailureChain != null)
             {
-                tooltip += "\n<color=green><b>On Success:</b></color>";
-                foreach (var effect in successEffects)
+                tooltip += $"\n{indent}<color=red><b>On Failure:</b></color>";
+                if (hasFailureEffects)
                 {
-                    string desc = GetEffectDescription(effect);
-                    if (desc != null)
-                        tooltip += $"\n  • {desc}";
+                    foreach (var effect in node.failureEffects)
+                    {
+                        string desc = GetEffectDescription(effect);
+                        if (desc != null)
+                            tooltip += $"\n{indent}  \u2022 {desc}";
+                    }
                 }
-            }
-
-            var failureEffects = choice.rollNode?.failureEffects;
-            if (failureEffects != null && failureEffects.Count > 0)
-            {
-                tooltip += "\n<color=red><b>On Failure:</b></color>";
-                foreach (var effect in failureEffects)
-                {
-                    string desc = GetEffectDescription(effect);
-                    if (desc != null)
-                        tooltip += $"\n  • {desc}";
-                }
+                if (node.onFailureChain != null)
+                    tooltip += $"\n{indent}  \u2192 {BuildNodeTooltip(node.onFailureChain, indent + "    ", depth + 1)}";
             }
 
             return tooltip;

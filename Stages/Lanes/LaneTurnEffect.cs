@@ -19,6 +19,12 @@ namespace Assets.Scripts.Stages.Lanes
         [Tooltip("Narrative description shown when effect triggers")]
         public string description = "";
 
+        [Tooltip("Text logged when the vehicle succeeds this effect.")]
+        public string successNarrative = "";
+
+        [Tooltip("Text logged when the vehicle fails this effect.")]
+        public string failureNarrative = "";
+
         [SerializeReference, SR]
         [Tooltip("The full resolution of this effect: roll type, DC, success and failure effects, optional chain.")]
         public RollNode rollNode;

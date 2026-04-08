@@ -35,30 +35,20 @@ namespace Assets.Scripts.Events.EventCard
                 return;
             }
 
+            this.LogCardTrigger(vehicle);
+
             bool isPlayer = vehicle.controlType == ControlType.Player;
-
-            CardResolutionResult result = isPlayer 
-                ? Resolve(vehicle) 
-                : AutoResolve(vehicle);
-
-            if (result != null)
+            if (isPlayer)
             {
-                LogCardEvent(vehicle, result);
+                Resolve(vehicle);
+            }
+            else
+            {
+                CardResolutionResult result = AutoResolve(vehicle);
+                if (result != null)
+                    this.LogCardEvent(vehicle, result);
             }
         }
 
-        protected void LogCardEvent(Vehicle vehicle, CardResolutionResult result)
-        {
-            string logText = $"{vehicle.vehicleName}: {narrativeText}\n{result.narrativeOutcome}";
-
-            Logging.RaceHistory.Log(
-                Logging.EventType.EventCard,
-                dramaticWeight,
-                logText,
-                vehicle.CurrentStage,
-                vehicle
-            ).WithMetadata("cardName", cardName)
-             .WithMetadata("success", result.success);
+            }
         }
-    }
-}

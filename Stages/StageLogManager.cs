@@ -46,7 +46,7 @@ namespace Assets.Scripts.Stages
         {
             if (vehicle == null || lane == null || effect == null) return;
 
-            string narrative = success ? effect.rollNode?.successNarrative : effect.rollNode?.failureNarrative;
+            string narrative = success ? effect.successNarrative : effect.failureNarrative;
 
             if (string.IsNullOrEmpty(narrative))
                 narrative = $"{vehicle.vehicleName} {(success ? "succeeded at" : "failed")} {effect.effectName}";

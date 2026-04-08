@@ -39,7 +39,7 @@ namespace Assets.Scripts.Events.EventCard.EventCardTypes
 
                 UI.Components.EventCardUI.Instance.ShowResult(result, () =>
                 {
-                    LogCardEvent(vehicle, result);
+                    this.LogCardEvent(vehicle, result);
                 });
             });
 
@@ -65,7 +65,7 @@ namespace Assets.Scripts.Events.EventCard.EventCardTypes
             var ctx = new RollContext { Target = vehicle, CausalSource = this.name };
             bool success = RollNodeExecutor.Execute(choice.rollNode, ctx);
 
-            string narrative = success ? choice.rollNode?.successNarrative : choice.rollNode?.failureNarrative;
+            string narrative = success ? choice.successNarrative : choice.failureNarrative;
             if (string.IsNullOrEmpty(narrative))
                 narrative = choice.choiceText;
 
@@ -82,5 +82,11 @@ namespace Assets.Scripts.Events.EventCard.EventCardTypes
         [SerializeReference, SR]
         [Tooltip("The full resolution of this choice: roll type, DC, success and failure effects, optional chain.")]
         public RollNode rollNode;
+
+        [Tooltip("Text shown when this choice succeeds (or for no-roll choices).")]
+        public string successNarrative = "";
+
+        [Tooltip("Text shown when this choice fails.")]
+        public string failureNarrative = "";
     }
 }
