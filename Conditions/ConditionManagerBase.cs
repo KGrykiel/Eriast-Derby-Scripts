@@ -31,13 +31,12 @@ namespace Assets.Scripts.Conditions
                 return null;
             }
 
-            return template.stackBehaviour switch
+            return template.stackingBehaviour switch
             {
-                StackBehaviour.Refresh => ApplyWithRefresh(template, applier),
-                StackBehaviour.Stack => ApplyWithStack(template, applier),
-                StackBehaviour.Ignore => ApplyWithIgnore(template, applier),
-                StackBehaviour.Replace => ApplyWithReplace(template, applier),
-                _ => ApplyWithRefresh(template, applier)
+                StackStacking s  => ApplyWithStack(template, applier, s),
+                IgnoreStacking   => ApplyWithIgnore(template, applier),
+                ReplaceStacking  => ApplyWithReplace(template, applier),
+                _                => ApplyWithRefresh(template, applier)
             };
         }
 
@@ -136,7 +135,7 @@ namespace Assets.Scripts.Conditions
         protected virtual void OnNewlyApplied(TApplied applied, bool wasReplacement) { }
         protected virtual void OnRefreshed(TApplied applied) { }
         protected virtual void OnIgnored(TApplied applied) { }
-        protected virtual void OnStackLimitReached(TTemplate template) { }
+        protected virtual void OnStackLimitReached(TTemplate template, int maxStacks) { }
         protected virtual void OnReplaced(TApplied newApplied, int oldDuration) { }
         protected virtual void OnKeptStronger(TApplied applied) { }
         protected virtual void OnRemovedByTrigger(TApplied applied, RemovalTrigger trigger) { }
@@ -157,13 +156,13 @@ namespace Assets.Scripts.Conditions
             return CreateAndActivate(template, applier, wasReplacement: false);
         }
 
-        private TApplied ApplyWithStack(TTemplate template, Object applier)
+        private TApplied ApplyWithStack(TTemplate template, Object applier, StackStacking stacking)
         {
             int currentStackCount = activeConditions.Count(c => c.Template == template);
 
-            if (template.maxStacks > 0 && currentStackCount >= template.maxStacks)
+            if (stacking.maxStacks > 0 && currentStackCount >= stacking.maxStacks)
             {
-                OnStackLimitReached(template);
+                OnStackLimitReached(template, stacking.maxStacks);
                 return null;
             }
 

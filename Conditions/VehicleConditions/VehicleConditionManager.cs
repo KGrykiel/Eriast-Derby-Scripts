@@ -109,8 +109,8 @@ namespace Assets.Scripts.Conditions.VehicleConditions
         protected override void OnIgnored(AppliedVehicleCondition applied)
             => CombatEventBus.Emit(new VehicleConditionIgnoredEvent(applied, vehicle));
 
-        protected override void OnStackLimitReached(VehicleCondition template)
-            => CombatEventBus.Emit(new VehicleConditionStackLimitEvent(template, vehicle, template.maxStacks));
+        protected override void OnStackLimitReached(VehicleCondition template, int maxStacks)
+            => CombatEventBus.Emit(new VehicleConditionStackLimitEvent(template, vehicle, maxStacks));
 
         protected override void OnReplaced(AppliedVehicleCondition newApplied, int oldDuration)
             => CombatEventBus.Emit(new VehicleConditionReplacedEvent(newApplied, vehicle, oldDuration));

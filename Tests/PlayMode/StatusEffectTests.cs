@@ -56,7 +56,7 @@ namespace Assets.Scripts.Tests.PlayMode
         [Test]
         public void StatusEffect_Stacking_Refresh_ResetsDuration()
         {
-            var template = TestStatusEffectFactory.CreateModifierEffect("Blessed", EntityAttribute.ArmorClass, 2f, duration: 3, stackBehaviour: StackBehaviour.Refresh, cleanup: cleanup);
+            var template = TestStatusEffectFactory.CreateModifierEffect("Blessed", EntityAttribute.ArmorClass, 2f, duration: 3, stackingBehaviour: new RefreshStacking(), cleanup: cleanup);
 
             entity.ApplyCondition(template, entity);
             var activeEffects = entity.GetActiveConditions();
@@ -75,7 +75,7 @@ namespace Assets.Scripts.Tests.PlayMode
         [Test]
         public void StatusEffect_Stacking_Refresh_KeepsSingleModifier()
         {
-            var template = TestStatusEffectFactory.CreateModifierEffect("Blessed", EntityAttribute.ArmorClass, 2f, duration: 2, stackBehaviour: StackBehaviour.Refresh, cleanup: cleanup);
+            var template = TestStatusEffectFactory.CreateModifierEffect("Blessed", EntityAttribute.ArmorClass, 2f, duration: 2, stackingBehaviour: new RefreshStacking(), cleanup: cleanup);
 
             entity.ApplyCondition(template, entity);
             entity.ApplyCondition(template, entity);
@@ -94,7 +94,7 @@ namespace Assets.Scripts.Tests.PlayMode
         [Test]
         public void StatusEffect_Stacking_Stack_AllowsMultipleInstances()
         {
-            var template = TestStatusEffectFactory.CreateModifierEffect("Slowed", EntityAttribute.Mobility, -1f, duration: 3, stackBehaviour: StackBehaviour.Stack, maxStacks: 3, cleanup: cleanup);
+            var template = TestStatusEffectFactory.CreateModifierEffect("Slowed", EntityAttribute.Mobility, -1f, duration: 3, stackingBehaviour: new StackStacking { maxStacks = 3 }, cleanup: cleanup);
 
             entity.ApplyCondition(template, entity);
             entity.ApplyCondition(template, entity);
@@ -111,7 +111,7 @@ namespace Assets.Scripts.Tests.PlayMode
         [Test]
         public void StatusEffect_Stacking_Stack_RespectsMaxStacks()
         {
-            var template = TestStatusEffectFactory.CreateModifierEffect("Slowed", EntityAttribute.Mobility, -1f, duration: 3, stackBehaviour: StackBehaviour.Stack, maxStacks: 2, cleanup: cleanup);
+            var template = TestStatusEffectFactory.CreateModifierEffect("Slowed", EntityAttribute.Mobility, -1f, duration: 3, stackingBehaviour: new StackStacking { maxStacks = 2 }, cleanup: cleanup);
 
             entity.ApplyCondition(template, entity);
             entity.ApplyCondition(template, entity);
@@ -129,7 +129,7 @@ namespace Assets.Scripts.Tests.PlayMode
         [Test]
         public void StatusEffect_Stacking_Stack_UnlimitedWhenMaxStacksZero()
         {
-            var template = TestStatusEffectFactory.CreateModifierEffect("Vulnerable", EntityAttribute.ArmorClass, -1f, duration: 2, stackBehaviour: StackBehaviour.Stack, maxStacks: 0, cleanup: cleanup);
+            var template = TestStatusEffectFactory.CreateModifierEffect("Vulnerable", EntityAttribute.ArmorClass, -1f, duration: 2, stackingBehaviour: new StackStacking(), cleanup: cleanup);
 
             for (int i = 0; i < 10; i++)
             {
@@ -143,7 +143,7 @@ namespace Assets.Scripts.Tests.PlayMode
         [Test]
         public void StatusEffect_Stacking_Stack_IndependentDurations()
         {
-            var template = TestStatusEffectFactory.CreateModifierEffect("Slowed", EntityAttribute.Mobility, -1f, duration: 3, stackBehaviour: StackBehaviour.Stack, maxStacks: 0, cleanup: cleanup);
+            var template = TestStatusEffectFactory.CreateModifierEffect("Slowed", EntityAttribute.Mobility, -1f, duration: 3, stackingBehaviour: new StackStacking(), cleanup: cleanup);
 
             entity.ApplyCondition(template, entity);
             entity.UpdateConditions();
@@ -171,7 +171,7 @@ namespace Assets.Scripts.Tests.PlayMode
         [Test]
         public void StatusEffect_Stacking_Ignore_DoesNothing()
         {
-            var template = TestStatusEffectFactory.CreateModifierEffect("Stunned", EntityAttribute.ArmorClass, -2f, duration: 3, stackBehaviour: StackBehaviour.Ignore, cleanup: cleanup);
+            var template = TestStatusEffectFactory.CreateModifierEffect("Stunned", EntityAttribute.ArmorClass, -2f, duration: 3, stackingBehaviour: new IgnoreStacking(), cleanup: cleanup);
 
             entity.ApplyCondition(template, entity);
             var activeEffects = entity.GetActiveConditions();
@@ -190,7 +190,7 @@ namespace Assets.Scripts.Tests.PlayMode
         [Test]
         public void StatusEffect_Stacking_Ignore_KeepsSingleModifier()
         {
-            var template = TestStatusEffectFactory.CreateBehavioralEffect("Stunned", preventsActions: true, duration: 2, stackBehaviour: StackBehaviour.Ignore, cleanup: cleanup);
+            var template = TestStatusEffectFactory.CreateBehavioralEffect("Stunned", preventsActions: true, duration: 2, stackingBehaviour: new IgnoreStacking(), cleanup: cleanup);
 
             entity.ApplyCondition(template, entity);
             entity.ApplyCondition(template, entity);
@@ -206,7 +206,7 @@ namespace Assets.Scripts.Tests.PlayMode
         [Test]
         public void StatusEffect_Stacking_Replace_LongerDurationReplaces()
         {
-            var template = TestStatusEffectFactory.CreateModifierEffect("Fortified", EntityAttribute.ArmorClass, 3f, duration: 2, stackBehaviour: StackBehaviour.Replace, cleanup: cleanup);
+            var template = TestStatusEffectFactory.CreateModifierEffect("Fortified", EntityAttribute.ArmorClass, 3f, duration: 2, stackingBehaviour: new ReplaceStacking(), cleanup: cleanup);
 
             entity.ApplyCondition(template, entity);
             var activeEffects = entity.GetActiveConditions();
@@ -227,7 +227,7 @@ namespace Assets.Scripts.Tests.PlayMode
         [Test]
         public void StatusEffect_Stacking_Replace_ShorterDurationIgnored()
         {
-            var template = TestStatusEffectFactory.CreateModifierEffect("Fortified", EntityAttribute.ArmorClass, 3f, duration: 5, stackBehaviour: StackBehaviour.Replace, cleanup: cleanup);
+            var template = TestStatusEffectFactory.CreateModifierEffect("Fortified", EntityAttribute.ArmorClass, 3f, duration: 5, stackingBehaviour: new ReplaceStacking(), cleanup: cleanup);
 
             entity.ApplyCondition(template, entity);
             var activeEffects = entity.GetActiveConditions();
@@ -248,7 +248,7 @@ namespace Assets.Scripts.Tests.PlayMode
         [Test]
         public void StatusEffect_Stacking_Replace_IndefiniteIsStrongest()
         {
-            var template = TestStatusEffectFactory.CreateModifierEffect("Fortified", EntityAttribute.ArmorClass, 2f, duration: 99, stackBehaviour: StackBehaviour.Replace, cleanup: cleanup);
+            var template = TestStatusEffectFactory.CreateModifierEffect("Fortified", EntityAttribute.ArmorClass, 2f, duration: 99, stackingBehaviour: new ReplaceStacking(), cleanup: cleanup);
 
             entity.ApplyCondition(template, entity);
 
@@ -677,7 +677,7 @@ namespace Assets.Scripts.Tests.PlayMode
         {
             var template = TestStatusEffectFactory.CreateModifierEffect(
                 "Slowed", EntityAttribute.Mobility, -1f, duration: 3,
-                stackBehaviour: StackBehaviour.Stack, maxStacks: 5, cleanup: cleanup);
+                stackingBehaviour: new StackStacking { maxStacks = 5 }, cleanup: cleanup);
 
             entity.ApplyCondition(template, entity);
             entity.ApplyCondition(template, entity);
@@ -698,7 +698,7 @@ namespace Assets.Scripts.Tests.PlayMode
         {
             var template = TestStatusEffectFactory.CreateModifierEffect(
                 "FragileStack", EntityAttribute.ArmorClass, -1f, duration: 5,
-                stackBehaviour: StackBehaviour.Stack, maxStacks: 5,
+                stackingBehaviour: new StackStacking { maxStacks = 5 },
                 removalTriggers: RemovalTrigger.OnDamageTaken, cleanup: cleanup);
 
             entity.ApplyCondition(template, entity);

@@ -111,8 +111,8 @@ namespace Assets.Scripts.Conditions.EntityConditions
         protected override void OnIgnored(AppliedEntityCondition applied)
             => CombatEventBus.Emit(new EntityConditionIgnoredEvent(applied, entity));
 
-        protected override void OnStackLimitReached(EntityCondition template)
-            => CombatEventBus.Emit(new EntityConditionStackLimitEvent(template, entity, template.maxStacks));
+        protected override void OnStackLimitReached(EntityCondition template, int maxStacks)
+            => CombatEventBus.Emit(new EntityConditionStackLimitEvent(template, entity, maxStacks));
 
         protected override void OnReplaced(AppliedEntityCondition newApplied, int oldDuration)
             => CombatEventBus.Emit(new EntityConditionReplacedEvent(newApplied, entity, oldDuration));

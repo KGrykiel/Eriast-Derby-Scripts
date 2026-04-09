@@ -21,16 +21,14 @@ namespace Assets.Scripts.Tests.Helpers
         /// <param name="attribute">Attribute to modify</param>
         /// <param name="value">Modifier value (e.g., +2, -3)</param>
         /// <param name="duration">Duration in turns (-1 = indefinite, 0 = instant, >0 = turns)</param>
-        /// <param name="stackBehaviour">How this effect stacks when reapplied</param>
-        /// <param name="maxStacks">Maximum stacks allowed (only for Stack behaviour)</param>
+        /// <param name="stackingBehaviour">How this effect stacks when reapplied (null = Refresh)</param>
         /// <param name="cleanup">Cleanup list to track for disposal</param>
         public static EntityCondition CreateModifierEffect(
             string name,
             EntityAttribute attribute,
             float value,
             int duration = -1,
-            StackBehaviour stackBehaviour = StackBehaviour.Refresh,
-            int maxStacks = 0,
+            IStackingBehaviour stackingBehaviour = null,
             ConditionCategory categories = ConditionCategory.None,
             RemovalTrigger removalTriggers = RemovalTrigger.None,
             System.Collections.Generic.List<Object> cleanup = null)
@@ -38,8 +36,7 @@ namespace Assets.Scripts.Tests.Helpers
             var template = ScriptableObject.CreateInstance<EntityCondition>();
             template.effectName = name;
             template.baseDuration = duration;
-            template.stackBehaviour = stackBehaviour;
-            template.maxStacks = maxStacks;
+            template.stackingBehaviour = stackingBehaviour ?? new RefreshStacking();
             template.categories = categories;
             template.removalTriggers = removalTriggers;
             template.modifiers = new System.Collections.Generic.List<EntityModifierData>
@@ -61,13 +58,13 @@ namespace Assets.Scripts.Tests.Helpers
             EntityAttribute attribute,
             float value,
             int duration = -1,
-            StackBehaviour stackBehaviour = StackBehaviour.Refresh,
+            IStackingBehaviour stackingBehaviour = null,
             System.Collections.Generic.List<Object> cleanup = null)
         {
             var template = ScriptableObject.CreateInstance<VehicleCondition>();
             template.effectName = name;
             template.baseDuration = duration;
-            template.stackBehaviour = stackBehaviour;
+            template.stackingBehaviour = stackingBehaviour ?? new RefreshStacking();
             template.modifiers = new System.Collections.Generic.List<EntityModifierData>
             {
                 new() { attribute = attribute, type = ModifierType.Flat, value = value }
@@ -86,16 +83,14 @@ namespace Assets.Scripts.Tests.Helpers
         /// <param name="damage">Damage per turn</param>
         /// <param name="damageType">Type of damage</param>
         /// <param name="duration">Duration in turns</param>
-        /// <param name="stackBehaviour">How this effect stacks when reapplied</param>
-        /// <param name="maxStacks">Maximum stacks allowed (only for Stack behaviour)</param>
+        /// <param name="stackingBehaviour">How this effect stacks when reapplied (null = Refresh)</param>
         /// <param name="cleanup">Cleanup list to track for disposal</param>
         public static EntityCondition CreateDoTEffect(
             string name,
             int damage,
             DamageType damageType,
             int duration,
-            StackBehaviour stackBehaviour = StackBehaviour.Refresh,
-            int maxStacks = 0,
+            IStackingBehaviour stackingBehaviour = null,
             ConditionCategory categories = ConditionCategory.None,
             RemovalTrigger removalTriggers = RemovalTrigger.None,
             System.Collections.Generic.List<Object> cleanup = null)
@@ -103,8 +98,7 @@ namespace Assets.Scripts.Tests.Helpers
             var template = ScriptableObject.CreateInstance<EntityCondition>();
             template.effectName = name;
             template.baseDuration = duration;
-            template.stackBehaviour = stackBehaviour;
-            template.maxStacks = maxStacks;
+            template.stackingBehaviour = stackingBehaviour ?? new RefreshStacking();
             template.categories = categories;
             template.removalTriggers = removalTriggers;
             template.modifiers = new System.Collections.Generic.List<EntityModifierData>();
@@ -133,16 +127,14 @@ namespace Assets.Scripts.Tests.Helpers
         /// <param name="preventsActions">If true, prevents all actions</param>
         /// <param name="preventsMovement">If true, prevents movement</param>
         /// <param name="duration">Duration in turns</param>
-        /// <param name="stackBehaviour">How this effect stacks when reapplied</param>
-        /// <param name="maxStacks">Maximum stacks allowed (only for Stack behaviour)</param>
+        /// <param name="stackingBehaviour">How this effect stacks when reapplied (null = Refresh)</param>
         /// <param name="cleanup">Cleanup list to track for disposal</param>
         public static EntityCondition CreateBehavioralEffect(
             string name,
             bool preventsActions = false,
             bool preventsMovement = false,
             int duration = 2,
-            StackBehaviour stackBehaviour = StackBehaviour.Refresh,
-            int maxStacks = 0,
+            IStackingBehaviour stackingBehaviour = null,
             ConditionCategory categories = ConditionCategory.None,
             RemovalTrigger removalTriggers = RemovalTrigger.None,
             System.Collections.Generic.List<Object> cleanup = null)
@@ -150,8 +142,7 @@ namespace Assets.Scripts.Tests.Helpers
             var template = ScriptableObject.CreateInstance<EntityCondition>();
             template.effectName = name;
             template.baseDuration = duration;
-            template.stackBehaviour = stackBehaviour;
-            template.maxStacks = maxStacks;
+            template.stackingBehaviour = stackingBehaviour ?? new RefreshStacking();
             template.categories = categories;
             template.removalTriggers = removalTriggers;
             template.modifiers = new System.Collections.Generic.List<EntityModifierData>();

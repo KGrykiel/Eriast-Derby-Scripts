@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 using Assets.Scripts.Combat.Rolls.Advantage;
+using SerializeReferenceEditor;
 
 namespace Assets.Scripts.Conditions
 {
@@ -39,11 +40,9 @@ namespace Assets.Scripts.Conditions
         public int baseDuration = -1;
 
         [Header("Stacking Behaviour")]
-        [Tooltip("How this condition behaves when reapplied")]
-        public StackBehaviour stackBehaviour = StackBehaviour.Refresh;
-
-        [Tooltip("Maximum stacks. ONLY USED IF stackBehaviour = Stack. 0 = unlimited.")]
-        public int maxStacks = 0;
+        [SerializeReference, SR]
+        [Tooltip("How this condition behaves when reapplied. Use Stack to allow multiple concurrent instances.")]
+        public IStackingBehaviour stackingBehaviour = new RefreshStacking();
 
         [Header("Categorisation & Removal")]
         [Tooltip("Categories for classification and removal filtering")]

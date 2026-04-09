@@ -86,8 +86,8 @@ namespace Assets.Scripts.Conditions.CharacterConditions
         protected override void OnIgnored(AppliedCharacterCondition applied)
             => CombatEventBus.Emit(new CharacterConditionIgnoredEvent(applied, seat));
 
-        protected override void OnStackLimitReached(CharacterCondition template)
-            => CombatEventBus.Emit(new CharacterConditionStackLimitEvent(template, seat, template.maxStacks));
+        protected override void OnStackLimitReached(CharacterCondition template, int maxStacks)
+            => CombatEventBus.Emit(new CharacterConditionStackLimitEvent(template, seat, maxStacks));
 
         protected override void OnReplaced(AppliedCharacterCondition newApplied, int oldDuration)
             => CombatEventBus.Emit(new CharacterConditionReplacedEvent(newApplied, seat, oldDuration));
