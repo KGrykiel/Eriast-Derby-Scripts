@@ -1,63 +1,60 @@
-﻿using Assets.Scripts.Entities.Vehicles;
+﻿using System;
+using Assets.Scripts.Entities.Vehicles;
 using Assets.Scripts.Stages.Lanes;
 using SerializeReferenceEditor;
 using UnityEngine;
 
 namespace Assets.Scripts.Effects.EffectTypes.VehicleEffects
 {
-    /// <summary>Effect for vehicle changing lanes. Accepts Vehicle directly or Entity (resolves to parent vehicle).</summary>
-    [System.Serializable]
-    [SRName("Lane Change")]
-    public class LaneChangeEffect : IVehicleEffect
+    /// <summary>Moves a vehicle a number of lanes relative to its current position.</summary>
+    [Serializable]
+    [SRName("Lane Change/Relative")]
+    public class RelativeLaneChangeEffect : IVehicleEffect
     {
-        [Header("Target Lane")]
-        [Tooltip("Absolute lane index to move to (ignored if using relative offset)")]
-        public int targetLaneIndex = 0;
-
-        [Tooltip("Use relative offset instead of absolute index? (e.g., +1 = move one lane right)")]
-        public bool useRelativeOffset = false;
-
-        [Tooltip("Relative lane offset (-1 = left, +1 = right). Only used if useRelativeOffset is true")]
+        [Tooltip("Lane offset to apply (-1 = left, +1 = right).")]
         [Range(-2, 2)]
         public int relativeOffset = 1;
 
         void IVehicleEffect.Apply(Vehicle target, EffectContext context)
         {
-            StageLane targetLane = DetermineTargetLane(target);
-            if (targetLane == null)
+            var stage = target.CurrentStage;
+            int currentIndex = stage.GetLaneIndex(target.CurrentLane);
+            if (currentIndex < 0)
             {
-                Debug.LogWarning($"[LaneChangeEffect] Could not resolve a target lane for '{target.name}' — effect had no impact.");
+                Debug.LogWarning($"[RelativeLaneChangeEffect] Current lane of '{target.name}' was not found in stage '{stage.name}'.");
                 return;
             }
 
-            target.CurrentStage.AssignVehicleToLane(target, targetLane);
+            var targetLane = stage.GetLaneByIndex(currentIndex + relativeOffset);
+            if (targetLane == null)
+            {
+                Debug.LogWarning($"[RelativeLaneChangeEffect] Offset {relativeOffset} from lane {currentIndex} is out of bounds — effect had no impact.");
+                return;
+            }
+
+            stage.AssignVehicleToLane(target, targetLane);
         }
+    }
 
-        private StageLane DetermineTargetLane(Vehicle vehicle)
+    /// <summary>Moves a vehicle to a specific lane index regardless of current position.</summary>
+    [Serializable]
+    [SRName("Lane Change/Absolute")]
+    public class AbsoluteLaneChangeEffect : IVehicleEffect
+    {
+        [Tooltip("Target lane index to move to.")]
+        public int targetLaneIndex = 0;
+
+        void IVehicleEffect.Apply(Vehicle target, EffectContext context)
         {
-            var stage = vehicle.CurrentStage;
-            int targetIndex;
-
-            if (useRelativeOffset)
+            var stage = target.CurrentStage;
+            var targetLane = stage.GetLaneByIndex(targetLaneIndex);
+            if (targetLane == null)
             {
-                // Relative: Add offset to current lane index
-                int currentIndex = stage.GetLaneIndex(vehicle.CurrentLane);
-                if (currentIndex < 0)
-                {
-                    Debug.LogWarning($"[LaneChangeEffect] Current lane of '{vehicle.name}' was not found in stage '{stage.name}'.");
-                    return null;
-                }
-
-                targetIndex = currentIndex + relativeOffset;
-            }
-            else
-            {
-                // Absolute: Use specified index
-                targetIndex = targetLaneIndex;
+                Debug.LogWarning($"[AbsoluteLaneChangeEffect] Lane index {targetLaneIndex} does not exist in stage '{stage.name}' — effect had no impact.");
+                return;
             }
 
-            // GetLaneByIndex handles bounds checking
-            return stage.GetLaneByIndex(targetIndex);
+            stage.AssignVehicleToLane(target, targetLane);
         }
     }
 }
