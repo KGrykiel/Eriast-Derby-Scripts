@@ -99,8 +99,7 @@ public class FocusPanel : MonoBehaviour
         float speed = playerVehicle.Drive?.GetMaxSpeed() ?? 0f;
         int armorClass = playerVehicle.Chassis?.GetArmorClass() ?? 10;
         status += $"<b>Speed:</b> {speed:F1}\n";
-        status += $"<b>Armor Class:</b> {armorClass}\n";
-        status += $"<b>Magic Resistance:</b> 10 \n\n"; // TODO: Replace with actual MR attribute
+        status += $"<b>Armor Class:</b> {armorClass}\n\n";
 
         var allStatusEffects = new List<AppliedEntityCondition>();
         foreach (var component in playerVehicle.AllComponents)
