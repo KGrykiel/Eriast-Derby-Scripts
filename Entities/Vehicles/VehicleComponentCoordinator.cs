@@ -67,26 +67,15 @@ namespace Assets.Scripts.Entities.Vehicles
             if (target == null || target.IsDestroyed())
                 return false;
 
-            if (target.exposure == ComponentExposure.External)
-                return true;
-
-            // Protected/Shielded components - inaccessible until their shield is destroyed.
-            if ((target.exposure == ComponentExposure.Protected || target.exposure == ComponentExposure.Shielded)
-                && target.shieldedByComponent != null)
+            return target.exposure switch
             {
-                return target.shieldedByComponent.IsDestroyed();
-            }
-
-            // Internal components - inaccessible until chassis is damaged enough.
-            if (target.exposure == ComponentExposure.Internal)
-            {
-                if (Chassis == null) return true; // Fallback if no chassis
-
-                int chassisDamagePercent = 100 - (Chassis.GetCurrentHealth() * 100 / Chassis.GetMaxHealth());
-                return chassisDamagePercent >= target.internalAccessThreshold;
-            }
-
-            return true;
+                ExternalExposure => true,
+                ProtectedExposure p => p.shieldedBy == null || p.shieldedBy.IsDestroyed(),
+                ShieldedExposure s => s.shieldedBy == null || s.shieldedBy.IsDestroyed(),
+                InternalExposure i when Chassis != null =>
+                    (100 - Chassis.GetCurrentHealth() * 100 / Chassis.GetMaxHealth()) >= i.accessThreshold,
+                _ => true
+            };
         }
 
         /// <summary>Null if accessible.</summary>
@@ -98,23 +87,17 @@ namespace Assets.Scripts.Entities.Vehicles
             if (IsComponentAccessible(target))
                 return null;
 
-            if ((target.exposure == ComponentExposure.Protected || target.exposure == ComponentExposure.Shielded)
-                && target.shieldedByComponent != null)
-            {
-                if (!target.shieldedByComponent.IsDestroyed())
-                    return $"Shielded by {target.shieldedByComponent.name}";
-            }
+            if (target.exposure is ProtectedExposure pe && pe.shieldedBy != null && !pe.shieldedBy.IsDestroyed())
+                return $"Shielded by {pe.shieldedBy.name}";
 
-            if (target.exposure == ComponentExposure.Internal)
+            if (target.exposure is ShieldedExposure se && se.shieldedBy != null && !se.shieldedBy.IsDestroyed())
+                return $"Shielded by {se.shieldedBy.name}";
+
+            if (target.exposure is InternalExposure ie && Chassis != null)
             {
-                if (Chassis != null)
-                {
-                    int chassisDamagePercent = 100 - (Chassis.GetCurrentHealth() * 100 / Chassis.GetMaxHealth());
-                    if (chassisDamagePercent < target.internalAccessThreshold)
-                    {
-                        return $"Chassis must be {target.internalAccessThreshold}% damaged";
-                    }
-                }
+                int chassisDamagePercent = 100 - (Chassis.GetCurrentHealth() * 100 / Chassis.GetMaxHealth());
+                if (chassisDamagePercent < ie.accessThreshold)
+                    return $"Chassis must be {ie.accessThreshold}% damaged";
             }
 
             return "Cannot target";

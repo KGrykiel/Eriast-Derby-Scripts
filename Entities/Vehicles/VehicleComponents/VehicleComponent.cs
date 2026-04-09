@@ -7,6 +7,7 @@ using Assets.Scripts.Entities.Vehicles.VehicleComponents.ComponentTypes;
 using Assets.Scripts.Modifiers;
 using Assets.Scripts.Combat.Rolls.RollSpecs;
 using Assets.Scripts.Skills;
+using SerializeReferenceEditor;
 
 namespace Assets.Scripts.Entities.Vehicles.VehicleComponents
 {
@@ -37,15 +38,9 @@ namespace Assets.Scripts.Entities.Vehicles.VehicleComponents
         public List<ComponentModifierData> providedModifiers = new();
 
         [Header("Component Targeting")]
+        [SerializeReference, SR]
         [Tooltip("How exposed this component is for targeting")]
-        public ComponentExposure exposure = ComponentExposure.External;
-
-        [Tooltip("Component that shields this one (drag component reference here)")]
-        public VehicleComponent shieldedByComponent = null;
-
-        [Tooltip("For Internal exposure: Required chassis damage % to access (e.g., 50 = 50% damage)")]
-        [Range(0, 100)]
-        public int internalAccessThreshold = 50;
+        public IExposureConfig exposure = new ExternalExposure();
 
         [Header("Component State")]
         [Tooltip("Has the engineer manually disabled this component? (Does not draw power, cannot use skills, does not provide bonuses)")]

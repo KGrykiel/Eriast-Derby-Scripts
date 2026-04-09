@@ -1,4 +1,6 @@
 ﻿using System;
+using SerializeReferenceEditor;
+using UnityEngine;
 
 namespace Assets.Scripts.Entities.Vehicles.VehicleComponents
 {
@@ -121,30 +123,51 @@ namespace Assets.Scripts.Entities.Vehicles.VehicleComponents
         Custom
     }
 
-    public enum ComponentExposure
+    /// <summary>
+    /// Defines how exposed a component is for targeting.
+    /// Each concrete type carries only the data relevant to that exposure mode.
+    /// </summary>
+    public interface IExposureConfig { }
+
+    /// <summary>Fully exposed — can be targeted without restrictions.</summary>
+    [Serializable]
+    [SRName("External")]
+    public class ExternalExposure : IExposureConfig { }
+
+    /// <summary>
+    /// Protected by armor or shielding components.
+    /// Inaccessible until the shielding component is destroyed or using penetrating attacks (TODO).
+    /// </summary>
+    [Serializable]
+    [SRName("Protected")]
+    public class ProtectedExposure : IExposureConfig
     {
-        /// <summary>
-        /// Fully exposed, easy to target (weapons, sensors, external armor).
-        /// Can be targeted without restrictions.
-        /// </summary>
-        External,
+        [Tooltip("Component that shields this one (drag component reference here)")]
+        public VehicleComponent shieldedBy;
+    }
 
-        /// <summary>
-        /// Protected by armor or shielding components.
-        /// Can only be targeted if shielding component is destroyed or using penetrating attacks (TODO).
-        /// </summary>
-        Protected,
+    /// <summary>
+    /// Deep inside the vehicle (power core, critical systems).
+    /// Requires sufficient chassis damage to access.
+    /// </summary>
+    [Serializable]
+    [SRName("Internal")]
+    public class InternalExposure : IExposureConfig
+    {
+        [Tooltip("Required chassis damage % to access (e.g., 50 = 50% damage)")]
+        [Range(0, 100)]
+        public int accessThreshold = 50;
+    }
 
-        /// <summary>
-        /// Deep inside the vehicle (power core, critical systems).
-        /// Requires chassis damage (below e.g. 50% HP) or special abilities to access.
-        /// </summary>
-        Internal,
-
-        /// <summary>
-        /// Actively shielded by specific defensive components.
-        /// Cannot be targeted while shield component is active.
-        /// </summary>
-        Shielded
+    /// <summary>
+    /// Actively shielded by a specific defensive component.
+    /// Cannot be targeted while the shield component is active.
+    /// </summary>
+    [Serializable]
+    [SRName("Shielded")]
+    public class ShieldedExposure : IExposureConfig
+    {
+        [Tooltip("Component that actively shields this one (drag component reference here)")]
+        public VehicleComponent shieldedBy;
     }
 }

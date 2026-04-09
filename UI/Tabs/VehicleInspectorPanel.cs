@@ -931,26 +931,26 @@ public class VehicleInspectorPanel : MonoBehaviour
         };
     }
     
-    private string GetExposureString(ComponentExposure exposure)
+    private string GetExposureString(IExposureConfig exposure)
     {
         return exposure switch
         {
-            ComponentExposure.External => "External",
-            ComponentExposure.Protected => "Protected",
-            ComponentExposure.Internal => "Internal",
-            ComponentExposure.Shielded => "Shielded",
+            ExternalExposure => "External",
+            ProtectedExposure => "Protected",
+            InternalExposure => "Internal",
+            ShieldedExposure => "Shielded",
             _ => "Unknown"
         };
     }
     
-    private Color GetExposureColor(ComponentExposure exposure)
+    private Color GetExposureColor(IExposureConfig exposure)
     {
         return exposure switch
         {
-            ComponentExposure.External => new Color(0.27f, 1f, 0.27f),
-            ComponentExposure.Protected => new Color(1f, 0.67f, 0.27f),
-            ComponentExposure.Internal => new Color(1f, 0.53f, 0.27f),
-            ComponentExposure.Shielded => new Color(0.53f, 0.87f, 1f),
+            ExternalExposure => new Color(0.27f, 1f, 0.27f),
+            ProtectedExposure => new Color(1f, 0.67f, 0.27f),
+            InternalExposure => new Color(1f, 0.53f, 0.27f),
+            ShieldedExposure => new Color(0.53f, 0.87f, 1f),
             _ => Color.white
         };
     }
