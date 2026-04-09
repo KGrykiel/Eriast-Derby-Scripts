@@ -49,6 +49,5 @@ namespace Assets.Scripts.Events.EventCard
                     this.LogCardEvent(vehicle, result);
             }
         }
-
-            }
-        }
+    }
+}

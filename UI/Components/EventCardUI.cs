@@ -159,17 +159,21 @@ namespace Assets.Scripts.UI.Components
         
         private void Show()
         {
+            IsShowing = true;
             if (popupPanel != null)
             {
                 popupPanel.SetActive(true);
             }
         }
-        
+
         private void Hide()
         {
+            IsShowing = false;
             if (popupPanel != null)
                 popupPanel.SetActive(false);
         }
+
+        public bool IsShowing { get; private set; }
     }
     
     /// <summary>

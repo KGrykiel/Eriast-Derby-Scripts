@@ -11,6 +11,7 @@ using Assets.Scripts.Entities;
 using Assets.Scripts.Entities.Vehicles.VehicleComponents;
 using Assets.Scripts.Stages.Lanes;
 using Assets.Scripts.Skills;
+using Assets.Scripts.UI.Components;
 
 /// <summary>Orchestrates player input for whichever vehicle is currently taking its turn.</summary>
 public class PlayerController : MonoBehaviour
@@ -119,6 +120,7 @@ public class PlayerController : MonoBehaviour
     public void OnEndTurnClicked()
     {
         if (!isPlayerTurnActive) return;
+        if (IsBlockedByEventCard()) return;
         
         var vehicle = CurrentPlayerVehicle;
 
@@ -140,6 +142,7 @@ public class PlayerController : MonoBehaviour
     public void OnMoveForwardClicked()
     {
         if (!isPlayerTurnActive) return;
+        if (IsBlockedByEventCard()) return;
 
         var vehicle = CurrentPlayerVehicle;
         if (vehicle == null) return;
@@ -178,6 +181,7 @@ public class PlayerController : MonoBehaviour
     private void OnSkillSelected(int skillIndex)
     {
         if (currentSeat == null) return;
+        if (IsBlockedByEventCard()) return;
 
         var vehicle = CurrentPlayerVehicle;
         if (vehicle == null) return;
@@ -237,6 +241,9 @@ public class PlayerController : MonoBehaviour
     #endregion
 
     #region Skill Execution
+
+    private bool IsBlockedByEventCard()
+        => EventCardUI.Instance != null && EventCardUI.Instance.IsShowing;
 
     private void ExecuteSkill()
     {
