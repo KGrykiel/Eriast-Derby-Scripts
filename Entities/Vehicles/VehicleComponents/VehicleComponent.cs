@@ -20,10 +20,6 @@ namespace Assets.Scripts.Entities.Vehicles.VehicleComponents
     {
         public string ModifierLabel => name;
 
-        [Header("Component Identity")]
-        [Tooltip("Category of this component (locked for specific component types)")]
-        public ComponentType componentType = ComponentType.Custom;
-
         [Header("Component-Specific Stats")]
         [SerializeField]
         [Tooltip("Component Space (positive = uses space, negative = provides space) (base value before modifiers)")]
@@ -353,7 +349,7 @@ namespace Assets.Scripts.Entities.Vehicles.VehicleComponents
         {
             if (IsDestroyed()) return false;
 
-            if (disabled && (componentType == ComponentType.Chassis || componentType == ComponentType.PowerCore))
+            if (disabled && (this is ChassisComponent || this is PowerCoreComponent))
                 return false;
 
             bool oldState = isManuallyDisabled;

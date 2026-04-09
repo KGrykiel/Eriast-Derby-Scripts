@@ -43,7 +43,6 @@ namespace Assets.Scripts.Entities.Vehicles.VehicleComponents.ComponentTypes
         void Reset()
         {
             gameObject.name = "Drive";
-            componentType = ComponentType.Drive;
 
             baseMaxHealth = 60;
             health = 60;
@@ -55,7 +54,6 @@ namespace Assets.Scripts.Entities.Vehicles.VehicleComponents.ComponentTypes
 
         void Awake()
         {
-            componentType = ComponentType.Drive;
             roleType = RoleType.Driver;
             //vehicle starts stationary.
             currentSpeed = 0;

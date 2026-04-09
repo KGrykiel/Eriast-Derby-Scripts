@@ -40,13 +40,12 @@ namespace Assets.Scripts.Combat.Rolls.RollSpecs.SpecTypes
 
         public static CharacterSaveSpec ForCharacter(
             CharacterAttribute attribute,
-            ComponentType? requiredComponent = null)
+            RoleType requiredRole = RoleType.None)
         {
             return new CharacterSaveSpec
             {
                 characterAttribute = attribute,
-                requiresComponent = requiredComponent.HasValue,
-                requiredComponentType = requiredComponent ?? default
+                requiredRole = requiredRole
             };
         }
     }

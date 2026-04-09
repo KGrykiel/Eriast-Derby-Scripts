@@ -56,7 +56,7 @@ namespace Assets.Scripts.Tests.PlayMode
                 .WithWeapon(gunner2, weaponName: "Weapon2")
                 .Build();
 
-            var spec = TestSkillFactory.CharacterSkillCheck(CharacterSkill.Mechanics, requiredComponent: ComponentType.Weapon, dc: 10);
+            var spec = TestSkillFactory.CharacterSkillCheck(CharacterSkill.Mechanics, requiredRole: RoleType.Gunner, dc: 10);
 
             var result1 = SkillCheckPerformer.Execute(new SkillCheckExecutionContext { Vehicle = vehicle, Spec = spec, CausalSource = null, Routing = CheckRouter.RouteSkillCheck(vehicle, spec) });
             yield return null;
@@ -76,7 +76,7 @@ namespace Assets.Scripts.Tests.PlayMode
                 .WithUtility() // No character assigned
                 .Build();
 
-            var spec = TestSkillFactory.CharacterSkillCheck(CharacterSkill.Mechanics, requiredComponent: ComponentType.Utility, dc: 10);
+            var spec = TestSkillFactory.CharacterSkillCheck(CharacterSkill.Mechanics, requiredRole: RoleType.Technician, dc: 10);
             var result = SkillCheckPerformer.Execute(new SkillCheckExecutionContext { Vehicle = vehicle, Spec = spec, CausalSource = null, Routing = CheckRouter.RouteSkillCheck(vehicle, spec) });
             yield return null;
 

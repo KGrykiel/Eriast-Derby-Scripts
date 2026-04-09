@@ -202,10 +202,10 @@ namespace Assets.Scripts.Tests.PlayMode
             var targets = new List<IAdvantageTarget> { new CharacterCheckAdvantage() };
             var effect = CreateAdvantageStatusEffect("Inspired", RollMode.Advantage, targets);
 
-            var utility = vehicle.GetComponentOfType(ComponentType.Utility);
+            var utility = vehicle.GetComponentOfRole(RoleType.Technician);
             utility.ApplyCondition(effect, null);
 
-            var spec = TestSkillFactory.CharacterSkillCheck(CharacterSkill.Piloting, requiredComponent: ComponentType.Utility, dc: 10);
+            var spec = TestSkillFactory.CharacterSkillCheck(CharacterSkill.Piloting, requiredRole: RoleType.Technician, dc: 10);
             var result = SkillCheckPerformer.Execute(new SkillCheckExecutionContext
             {
                 Vehicle = vehicle,
@@ -232,10 +232,10 @@ namespace Assets.Scripts.Tests.PlayMode
             var targets = new List<IAdvantageTarget> { new AttackAdvantage() };
             var effect = CreateAdvantageStatusEffect("Attack Boost", RollMode.Advantage, targets);
 
-            var utility = vehicle.GetComponentOfType(ComponentType.Utility);
+            var utility = vehicle.GetComponentOfRole(RoleType.Technician);
             utility.ApplyCondition(effect, null);
 
-            var spec = TestSkillFactory.CharacterSkillCheck(CharacterSkill.Piloting, requiredComponent: ComponentType.Utility, dc: 10);
+            var spec = TestSkillFactory.CharacterSkillCheck(CharacterSkill.Piloting, requiredRole: RoleType.Technician, dc: 10);
             var result = SkillCheckPerformer.Execute(new SkillCheckExecutionContext
             {
                 Vehicle = vehicle,
@@ -265,10 +265,10 @@ namespace Assets.Scripts.Tests.PlayMode
             };
             var effect = CreateAdvantageStatusEffect("Mechanics Focus", RollMode.Advantage, targets);
 
-            var utility = vehicle.GetComponentOfType(ComponentType.Utility);
+            var utility = vehicle.GetComponentOfRole(RoleType.Technician);
             utility.ApplyCondition(effect, null);
 
-            var pilotSpec = TestSkillFactory.CharacterSkillCheck(CharacterSkill.Piloting, requiredComponent: ComponentType.Utility, dc: 10);
+            var pilotSpec = TestSkillFactory.CharacterSkillCheck(CharacterSkill.Piloting, requiredRole: RoleType.Technician, dc: 10);
             var pilotResult = SkillCheckPerformer.Execute(new SkillCheckExecutionContext
             {
                 Vehicle = vehicle,
@@ -281,7 +281,7 @@ namespace Assets.Scripts.Tests.PlayMode
             Assert.AreEqual(RollMode.Normal, pilotResult.Advantage.Mode,
                 "limitTo [Mechanics] should not apply to Piloting checks");
 
-            var mechSpec = TestSkillFactory.CharacterSkillCheck(CharacterSkill.Mechanics, requiredComponent: ComponentType.Utility, dc: 10);
+            var mechSpec = TestSkillFactory.CharacterSkillCheck(CharacterSkill.Mechanics, requiredRole: RoleType.Technician, dc: 10);
             var mechResult = SkillCheckPerformer.Execute(new SkillCheckExecutionContext
             {
                 Vehicle = vehicle,
@@ -306,7 +306,7 @@ namespace Assets.Scripts.Tests.PlayMode
                 .WithUtility(character)
                 .Build();
 
-            var utility = vehicle.GetComponentOfType(ComponentType.Utility);
+            var utility = vehicle.GetComponentOfRole(RoleType.Technician);
             utility.providedAdvantageGrants = new List<ComponentAdvantageGrantData>
             {
                 new ComponentAdvantageGrantData
@@ -321,7 +321,7 @@ namespace Assets.Scripts.Tests.PlayMode
             };
             utility.ApplyProvidedAdvantageGrants(vehicle);
 
-            var spec = TestSkillFactory.CharacterSkillCheck(CharacterSkill.Perception, requiredComponent: ComponentType.Utility, dc: 10);
+            var spec = TestSkillFactory.CharacterSkillCheck(CharacterSkill.Perception, requiredRole: RoleType.Technician, dc: 10);
             var result = SkillCheckPerformer.Execute(new SkillCheckExecutionContext
             {
                 Vehicle = vehicle,
@@ -341,10 +341,11 @@ namespace Assets.Scripts.Tests.PlayMode
             var character = TestCharacterFactory.CreateWithCleanup(cleanup: cleanup);
             vehicle = new TestVehicleBuilder()
                 .WithChassis(character)
+                .WithDrive(character)
                 .WithUtility(character)
                 .Build();
 
-            var utility = vehicle.GetComponentOfType(ComponentType.Utility);
+            var utility = vehicle.GetComponentOfRole(RoleType.Technician);
             utility.providedAdvantageGrants = new List<ComponentAdvantageGrantData>
             {
                 new ComponentAdvantageGrantData
@@ -361,7 +362,7 @@ namespace Assets.Scripts.Tests.PlayMode
 
             utility.TakeDamage(utility.GetCurrentHealth());
 
-            var spec = TestSkillFactory.CharacterSkillCheck(CharacterSkill.Perception, requiredComponent: ComponentType.Chassis, dc: 10);
+            var spec = TestSkillFactory.CharacterSkillCheck(CharacterSkill.Perception, requiredRole: RoleType.Driver, dc: 10);
             var result = SkillCheckPerformer.Execute(new SkillCheckExecutionContext
             {
                 Vehicle = vehicle,
@@ -381,9 +382,9 @@ namespace Assets.Scripts.Tests.PlayMode
         public IEnumerator SpecGrantedMode_SkillCheck_ProducesAdvantage()
         {
             var character = TestCharacterFactory.CreateWithCleanup(cleanup: cleanup);
-            vehicle = TestVehicleBuilder.CreateWithChassis(character);
+            vehicle = new TestVehicleBuilder().WithChassis().WithDrive(character).Build();
 
-            var spec = TestSkillFactory.CharacterSkillCheck(CharacterSkill.Piloting, requiredComponent: ComponentType.Chassis, dc: 10);
+            var spec = TestSkillFactory.CharacterSkillCheck(CharacterSkill.Piloting, requiredRole: RoleType.Driver, dc: 10);
             spec.grantedMode = RollMode.Advantage;
 
             var result = SkillCheckPerformer.Execute(new SkillCheckExecutionContext
@@ -404,9 +405,9 @@ namespace Assets.Scripts.Tests.PlayMode
         public IEnumerator SpecGrantedMode_Disadvantage_ProducesDisadvantage()
         {
             var character = TestCharacterFactory.CreateWithCleanup(cleanup: cleanup);
-            vehicle = TestVehicleBuilder.CreateWithChassis(character);
+            vehicle = new TestVehicleBuilder().WithChassis().WithDrive(character).Build();
 
-            var spec = TestSkillFactory.CharacterSkillCheck(CharacterSkill.Piloting, requiredComponent: ComponentType.Chassis, dc: 10);
+            var spec = TestSkillFactory.CharacterSkillCheck(CharacterSkill.Piloting, requiredRole: RoleType.Driver, dc: 10);
             spec.grantedMode = RollMode.Disadvantage;
 
             var result = SkillCheckPerformer.Execute(new SkillCheckExecutionContext
@@ -436,10 +437,10 @@ namespace Assets.Scripts.Tests.PlayMode
             var targets = new List<IAdvantageTarget> { new CharacterCheckAdvantage() };
             var effect = CreateAdvantageStatusEffect("Cursed", RollMode.Disadvantage, targets);
 
-            var utility = vehicle.GetComponentOfType(ComponentType.Utility);
+            var utility = vehicle.GetComponentOfRole(RoleType.Technician);
             utility.ApplyCondition(effect, null);
 
-            var spec = TestSkillFactory.CharacterSkillCheck(CharacterSkill.Mechanics, requiredComponent: ComponentType.Utility, dc: 10);
+            var spec = TestSkillFactory.CharacterSkillCheck(CharacterSkill.Mechanics, requiredRole: RoleType.Technician, dc: 10);
             spec.grantedMode = RollMode.Advantage;
 
             var result = SkillCheckPerformer.Execute(new SkillCheckExecutionContext

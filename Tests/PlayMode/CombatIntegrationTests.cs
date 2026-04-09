@@ -161,7 +161,7 @@ namespace Assets.Scripts.Tests.PlayMode
                     new EntityEffectInvocation
                     {
                         effect = new ApplyEntityConditionEffect { condition = reinforceTemplate },
-                        targetResolver = new EntitiesViaVehiclesResolver { vehicleResolver = new TargetVehicleResolver(), componentType = ComponentType.Chassis }
+                        targetResolver = new EntitiesViaVehiclesResolver { vehicleResolver = new TargetVehicleResolver() }
                     }
                 },
                 cleanup: cleanup,
@@ -213,7 +213,7 @@ namespace Assets.Scripts.Tests.PlayMode
                     new EntityEffectInvocation
                     {
                         effect = new ApplyEntityConditionEffect { condition = burningTemplate },
-                        targetResolver = new EntitiesViaVehiclesResolver { vehicleResolver = new TargetVehicleResolver(), componentType = ComponentType.Chassis }
+                        targetResolver = new EntitiesViaVehiclesResolver { vehicleResolver = new TargetVehicleResolver() }
                     }
                 },
                 cleanup: cleanup,
@@ -266,20 +266,22 @@ namespace Assets.Scripts.Tests.PlayMode
             TestCharacterFactory.AddProficiency(engineer, CharacterSkill.Mechanics);
 
             playerVehicle = new TestVehicleBuilder("WarRig")
-                .WithChassis(driver)
-                .WithPowerCore(engineer)
+                .WithChassis()
+                .WithDrive(driver)
+                .WithPowerCore()
+                .WithUtility(engineer)
                 .WithWeapon(gunner, attackBonus: 2)
                 .Build();
 
             // Test 1: Piloting check routes to Driver
-            var pilotSpec = SkillCheckSpec.ForCharacter(CharacterSkill.Piloting, ComponentType.Chassis);
+            var pilotSpec = SkillCheckSpec.ForCharacter(CharacterSkill.Piloting, RoleType.Driver);
             pilotSpec.dc = 12;
             var pilotResult = SkillCheckPerformer.Execute(new SkillCheckExecutionContext { Vehicle = playerVehicle, Spec = pilotSpec, CausalSource = null, Routing = CheckRouter.RouteSkillCheck(playerVehicle, pilotSpec) });
             yield return null;
             Assert.AreNotEqual(0, pilotResult.BaseRoll, "Should not auto-fail");
 
             // Test 2: Mechanics check routes to Engineer via PowerCore
-            var mechanicsSpec = SkillCheckSpec.ForCharacter(CharacterSkill.Mechanics, ComponentType.PowerCore);
+            var mechanicsSpec = SkillCheckSpec.ForCharacter(CharacterSkill.Mechanics, RoleType.Technician);
             mechanicsSpec.dc = 10;
             var mechResult = SkillCheckPerformer.Execute(new SkillCheckExecutionContext { Vehicle = playerVehicle, Spec = mechanicsSpec, CausalSource = null, Routing = CheckRouter.RouteSkillCheck(playerVehicle, mechanicsSpec) });
             yield return null;
@@ -481,7 +483,7 @@ namespace Assets.Scripts.Tests.PlayMode
             stunTemplate.behavioralEffects = new BehavioralEffectData { preventsActions = true };
             cleanup.Add(stunTemplate);
 
-            var utilityComp = playerVehicle.GetComponentOfType(ComponentType.Utility);
+            var utilityComp = playerVehicle.GetComponentOfRole(RoleType.Technician);
             utilityComp.ApplyCondition(stunTemplate, utilityComp);
             yield return null;
 
@@ -489,7 +491,7 @@ namespace Assets.Scripts.Tests.PlayMode
             Assert.IsFalse(utilityComp.IsOperational, "Stunned component should not be operational");
 
             // Skill requiring Utility should auto-fail
-            var spec = SkillCheckSpec.ForCharacter(CharacterSkill.Mechanics, ComponentType.Utility);
+            var spec = SkillCheckSpec.ForCharacter(CharacterSkill.Mechanics, RoleType.Technician);
             spec.dc = 10;
             var result = SkillCheckPerformer.Execute(new SkillCheckExecutionContext { Vehicle = playerVehicle, Spec = spec, CausalSource = null, Routing = CheckRouter.RouteSkillCheck(playerVehicle, spec) });
             yield return null;
@@ -521,8 +523,8 @@ namespace Assets.Scripts.Tests.PlayMode
                 .WithUtility(engineer)
                 .Build();
 
-            var utility = playerVehicle.GetComponentOfType(ComponentType.Utility);
-            var spec = SkillCheckSpec.ForCharacter(CharacterSkill.Mechanics, ComponentType.Utility);
+            var utility = playerVehicle.GetComponentOfRole(RoleType.Technician);
+            var spec = SkillCheckSpec.ForCharacter(CharacterSkill.Mechanics, RoleType.Technician);
             spec.dc = 10;
 
             // Phase 1: Working normally

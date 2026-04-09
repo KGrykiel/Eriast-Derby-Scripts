@@ -35,6 +35,20 @@ namespace Assets.Scripts.Tests.Helpers
             return this;
         }
 
+        public TestVehicleBuilder WithDrive(Character driver = null)
+        {
+            var drive = TestComponentFactory.CreateDrive(root);
+            vehicle.RegisterComponent(drive);
+
+            if (driver != null)
+            {
+                var seat = CreateSeat("Driver", driver);
+                seat.controlledComponents.Add(drive);
+            }
+
+            return this;
+        }
+
         public TestVehicleBuilder WithWeapon(Character gunner = null, int attackBonus = 0, string weaponName = "TestWeapon")
         {
             var weapon = TestComponentFactory.CreateWeapon(root, weaponName, attackBonus);

@@ -121,7 +121,7 @@ namespace Assets.Scripts.Tests.PlayMode
                 .WithUtility() // No character assigned
                 .Build();
 
-            var utility = vehicle.GetComponentOfType(ComponentType.Utility);
+            var utility = vehicle.GetComponentOfRole(RoleType.Technician);
             var seat = vehicle.GetSeatForComponent(utility);
             yield return null;
 

@@ -39,10 +39,10 @@ namespace Assets.Scripts.Tests.PlayMode
                 .WithUtility(character)
                 .Build();
 
-            var utility = vehicle.GetComponentOfType(ComponentType.Utility);
+            var utility = vehicle.GetComponentOfRole(RoleType.Technician);
 
             // First attempt - should work
-            var spec = TestSkillFactory.CharacterSkillCheck(CharacterSkill.Mechanics, requiredComponent: ComponentType.Utility, dc: 10);
+            var spec = TestSkillFactory.CharacterSkillCheck(CharacterSkill.Mechanics, requiredRole: RoleType.Technician, dc: 10);
             var resultBefore = SkillCheckPerformer.Execute(new SkillCheckExecutionContext { Vehicle = vehicle, Spec = spec, CausalSource = null, Routing = CheckRouter.RouteSkillCheck(vehicle, spec) });
             yield return null;
             Assert.AreNotEqual(0, resultBefore.BaseRoll, "Should succeed before destruction");
@@ -68,8 +68,8 @@ namespace Assets.Scripts.Tests.PlayMode
                 .WithUtility(character)
                 .Build();
 
-            var utility = vehicle.GetComponentOfType(ComponentType.Utility);
-            var spec = TestSkillFactory.CharacterSkillCheck(CharacterSkill.Mechanics, requiredComponent: ComponentType.Utility, dc: 10);
+            var utility = vehicle.GetComponentOfRole(RoleType.Technician);
+            var spec = TestSkillFactory.CharacterSkillCheck(CharacterSkill.Mechanics, requiredRole: RoleType.Technician, dc: 10);
 
             // Destroy
             utility.TakeDamage(utility.GetCurrentHealth());

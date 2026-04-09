@@ -1,7 +1,6 @@
 using System.Collections.Generic;
 using Assets.Scripts.Combat.Rolls.RollSpecs;
 using Assets.Scripts.Entities;
-using Assets.Scripts.Entities.Vehicles.VehicleComponents;
 using SerializeReferenceEditor;
 using UnityEngine;
 
@@ -19,8 +18,6 @@ namespace Assets.Scripts.Effects.Targeting.EntityTarget
         [SerializeReference, SR]
         public IVehicleEffectResolver vehicleResolver;
 
-        public ComponentType componentType = ComponentType.Chassis;
-
         public IReadOnlyList<Entity> Resolve(RollContext ctx)
         {
             if (vehicleResolver == null)
@@ -37,7 +34,7 @@ namespace Assets.Scripts.Effects.Targeting.EntityTarget
 
                 foreach (var component in vehicle.AllComponents)
                 {
-                    if (component != null && component.componentType == componentType)
+                    if (component != null)
                         results.Add(component);
                 }
             }

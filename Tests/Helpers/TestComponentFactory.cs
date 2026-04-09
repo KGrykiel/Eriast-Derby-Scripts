@@ -15,11 +15,22 @@ namespace Assets.Scripts.Tests.Helpers
             var obj = new GameObject("Chassis");
             obj.transform.SetParent(parent.transform);
             var chassis = obj.AddComponent<ChassisComponent>();
-            chassis.componentType = ComponentType.Chassis;
             SetBaseField(chassis, "baseMaxHealth", maxHealth);
             chassis.SetHealth(maxHealth);
             SetBaseField(chassis, "baseArmorClass", armorClass);
             return chassis;
+        }
+
+        public static DriveComponent CreateDrive(
+            GameObject parent,
+            int maxHealth = 60)
+        {
+            var obj = new GameObject("Drive");
+            obj.transform.SetParent(parent.transform);
+            var drive = obj.AddComponent<DriveComponent>();
+            SetBaseField(drive, "baseMaxHealth", maxHealth);
+            drive.SetHealth(maxHealth);
+            return drive;
         }
 
         public static WeaponComponent CreateWeapon(
@@ -31,7 +42,6 @@ namespace Assets.Scripts.Tests.Helpers
             var obj = new GameObject(weaponName);
             obj.transform.SetParent(parent.transform);
             var weapon = obj.AddComponent<WeaponComponent>();
-            weapon.componentType = ComponentType.Weapon;
             weapon.roleType = RoleType.Gunner;
             SetBaseField(weapon, "baseMaxHealth", maxHealth);
             weapon.SetHealth(maxHealth);
@@ -39,14 +49,13 @@ namespace Assets.Scripts.Tests.Helpers
             return weapon;
         }
 
-        public static CustomComponent CreateUtility(
+        public static TechnicianComponent CreateUtility(
             GameObject parent,
             int maxHealth = 50)
         {
             var obj = new GameObject("Utility");
             obj.transform.SetParent(parent.transform);
-            var utility = obj.AddComponent<CustomComponent>();
-            utility.componentType = ComponentType.Utility;
+            var utility = obj.AddComponent<TechnicianComponent>();
             SetBaseField(utility, "baseMaxHealth", maxHealth);
             utility.SetHealth(maxHealth);
             return utility;
@@ -59,7 +68,6 @@ namespace Assets.Scripts.Tests.Helpers
             var obj = new GameObject("PowerCore");
             obj.transform.SetParent(parent.transform);
             var powerCore = obj.AddComponent<PowerCoreComponent>();
-            powerCore.componentType = ComponentType.PowerCore;
             SetBaseField(powerCore, "baseMaxHealth", maxHealth);
             powerCore.SetHealth(maxHealth);
             return powerCore;

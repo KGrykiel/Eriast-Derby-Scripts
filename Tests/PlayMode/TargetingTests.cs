@@ -18,6 +18,7 @@ using Assets.Scripts.Effects.Targeting.VehicleTarget;
 using Assets.Scripts.Entities;
 using Assets.Scripts.Entities.Vehicles;
 using Assets.Scripts.Entities.Vehicles.VehicleComponents;
+using Assets.Scripts.Entities.Vehicles.VehicleComponents.ComponentTypes;
 using Assets.Scripts.Stages;
 using Assets.Scripts.Stages.Lanes;
 using Assets.Scripts.Tests.Helpers;
@@ -548,7 +549,7 @@ namespace Assets.Scripts.Tests.PlayMode
             var ctx = new RollContext { Target = vehicle, CausalSource = "Test" };
 
             int chassisHp = vehicle.Chassis.GetCurrentHealth();
-            int weaponHp = vehicle.AllComponents.First(c => c.componentType == ComponentType.Weapon).GetCurrentHealth();
+            int weaponHp = vehicle.AllComponents.First(c => c is WeaponComponent).GetCurrentHealth();
             int powerCoreHp = vehicle.PowerCore.GetCurrentHealth();
 
             RollNodeExecutor.Execute(node, ctx);
@@ -556,7 +557,7 @@ namespace Assets.Scripts.Tests.PlayMode
 
             Assert.AreEqual(chassisHp - 5, vehicle.Chassis.GetCurrentHealth(), "Chassis should take 5 damage");
             Assert.AreEqual(weaponHp - 5,
-                vehicle.AllComponents.First(c => c.componentType == ComponentType.Weapon).GetCurrentHealth(),
+                vehicle.AllComponents.First(c => c is WeaponComponent).GetCurrentHealth(),
                 "Weapon should take 5 damage");
             Assert.AreEqual(powerCoreHp - 5, vehicle.PowerCore.GetCurrentHealth(), "Power core should take 5 damage");
         }
@@ -571,7 +572,7 @@ namespace Assets.Scripts.Tests.PlayMode
                 .Build();
             gameObjects.Add(vehicle.gameObject);
 
-            VehicleComponent weapon = vehicle.AllComponents.First(c => c.componentType == ComponentType.Weapon);
+            VehicleComponent weapon = vehicle.AllComponents.First(c => c is WeaponComponent);
             var actor = new ComponentActor(weapon);
             var node = CreateEntityDamageNode(8, new SourceComponentResolver());
             var ctx = new RollContext { SourceActor = actor, Target = vehicle, CausalSource = "Test" };
@@ -800,7 +801,7 @@ namespace Assets.Scripts.Tests.PlayMode
             PlaceVehicleInLane(targetA, stage, lane);
             PlaceVehicleInLane(targetB, stage, lane);
 
-            VehicleComponent weapon = sourceVehicle.AllComponents.First(c => c.componentType == ComponentType.Weapon);
+            VehicleComponent weapon = sourceVehicle.AllComponents.First(c => c is WeaponComponent);
             var actor = new ComponentActor(weapon);
 
             var node = new RollNode

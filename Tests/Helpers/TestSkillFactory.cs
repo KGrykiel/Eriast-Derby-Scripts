@@ -24,20 +24,20 @@ namespace Assets.Scripts.Tests.Helpers
 
         public static SkillCheckSpec CharacterSkillCheck(
             CharacterSkill skill,
-            ComponentType? requiredComponent = null,
+            RoleType requiredRole = RoleType.None,
             int dc = 15)
         {
-            var spec = SkillCheckSpec.ForCharacter(skill, requiredComponent);
+            var spec = SkillCheckSpec.ForCharacter(skill, requiredRole);
             spec.dc = dc;
             return spec;
         }
 
         public static SaveSpec CharacterSave(
             CharacterAttribute attribute,
-            ComponentType? requiredComponent = null,
+            RoleType requiredRole = RoleType.None,
             int dc = 15)
         {
-            var spec = SaveSpec.ForCharacter(attribute, requiredComponent);
+            var spec = SaveSpec.ForCharacter(attribute, requiredRole);
             spec.dc = dc;
             return spec;
         }

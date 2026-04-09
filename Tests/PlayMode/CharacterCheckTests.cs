@@ -38,9 +38,9 @@ namespace Assets.Scripts.Tests.PlayMode
             var ada = TestCharacterFactory.CreateWithCleanup("Ada", level: 3, dexterity: 16, cleanup: cleanup);
             TestCharacterFactory.AddProficiency(ada, CharacterSkill.Piloting);
 
-            vehicle = TestVehicleBuilder.CreateWithChassis(ada);
+            vehicle = new TestVehicleBuilder().WithChassis().WithDrive(ada).Build();
 
-            var spec = TestSkillFactory.CharacterSkillCheck(CharacterSkill.Piloting, requiredComponent: ComponentType.Chassis, dc: 12);
+            var spec = TestSkillFactory.CharacterSkillCheck(CharacterSkill.Piloting, requiredRole: RoleType.Driver, dc: 12);
             var result = SkillCheckPerformer.Execute(new SkillCheckExecutionContext { Vehicle = vehicle, Spec = spec, CausalSource = null, Routing = CheckRouter.RouteSkillCheck(vehicle, spec) });
             yield return null;
 
@@ -62,7 +62,7 @@ namespace Assets.Scripts.Tests.PlayMode
             var character = TestCharacterFactory.CreateWithCleanup(cleanup: cleanup);
             vehicle = TestVehicleBuilder.CreateWithChassis(character);
 
-            var spec = TestSkillFactory.CharacterSkillCheck(CharacterSkill.Mechanics, requiredComponent: ComponentType.Utility, dc: 15);
+            var spec = TestSkillFactory.CharacterSkillCheck(CharacterSkill.Mechanics, requiredRole: RoleType.Technician, dc: 15);
             var result = SkillCheckPerformer.Execute(new SkillCheckExecutionContext { Vehicle = vehicle, Spec = spec, CausalSource = null, Routing = CheckRouter.RouteSkillCheck(vehicle, spec) });
             yield return null;
 
@@ -83,10 +83,10 @@ namespace Assets.Scripts.Tests.PlayMode
                 .Build();
 
             // Destroy the utility component
-            var utility = vehicle.GetComponentOfType(ComponentType.Utility);
+            var utility = vehicle.GetComponentOfRole(RoleType.Technician);
             utility.TakeDamage(utility.GetCurrentHealth());
 
-            var spec = TestSkillFactory.CharacterSkillCheck(CharacterSkill.Mechanics, requiredComponent: ComponentType.Utility, dc: 15);
+            var spec = TestSkillFactory.CharacterSkillCheck(CharacterSkill.Mechanics, requiredRole: RoleType.Technician, dc: 15);
             var result = SkillCheckPerformer.Execute(new SkillCheckExecutionContext { Vehicle = vehicle, Spec = spec, CausalSource = null, Routing = CheckRouter.RouteSkillCheck(vehicle, spec) });
             yield return null;
 

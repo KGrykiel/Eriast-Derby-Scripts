@@ -35,15 +35,15 @@ namespace Assets.Scripts.Tests.PlayMode
         public IEnumerator RouteSkillCheck_CharacterRequired_ValidComponent_ReturnsOperator()
         {
             var driver = TestCharacterFactory.CreateWithCleanup("Driver", dexterity: 16, cleanup: cleanup);
-            vehicle = TestVehicleBuilder.CreateWithChassis(driver);
+            vehicle = new TestVehicleBuilder().WithChassis().WithDrive(driver).Build();
 
-            var spec = SkillCheckSpec.ForCharacter(CharacterSkill.Piloting, ComponentType.Chassis);
+            var spec = SkillCheckSpec.ForCharacter(CharacterSkill.Piloting, RoleType.Driver);
             var result = CheckRouter.RouteSkillCheck(vehicle, spec);
             yield return null;
 
             Assert.IsTrue(result.CanAttempt, "Should be able to attempt");
             Assert.IsTrue(result.Actor.GetSeat()?.IsAssignedTo(driver) == true, "Should route to Driver");
-            Assert.IsNotNull(result.Actor.GetEntity(), "Should return chassis component");
+            Assert.IsNotNull(result.Actor.GetEntity(), "Should return drive component");
         }
 
         [UnityTest]
@@ -52,13 +52,13 @@ namespace Assets.Scripts.Tests.PlayMode
             var character = TestCharacterFactory.CreateWithCleanup(cleanup: cleanup);
             vehicle = TestVehicleBuilder.CreateWithChassis(character);
 
-            var spec = SkillCheckSpec.ForCharacter(CharacterSkill.Mechanics, ComponentType.Utility);
+            var spec = SkillCheckSpec.ForCharacter(CharacterSkill.Mechanics, RoleType.Technician);
             var result = CheckRouter.RouteSkillCheck(vehicle, spec);
             yield return null;
 
             Assert.IsFalse(result.CanAttempt, "Should fail when component missing");
             Assert.IsNotNull(result.FailureReason, "Should have failure reason");
-            Assert.IsTrue(result.FailureReason.Contains("Utility"), "Reason should mention Utility");
+            Assert.IsTrue(result.FailureReason.Contains("Technician"), "Reason should mention Technician");
         }
 
         [UnityTest]
@@ -69,7 +69,7 @@ namespace Assets.Scripts.Tests.PlayMode
                 .WithUtility() // No character assigned
                 .Build();
 
-            var spec = SkillCheckSpec.ForCharacter(CharacterSkill.Mechanics, ComponentType.Utility);
+            var spec = SkillCheckSpec.ForCharacter(CharacterSkill.Mechanics, RoleType.Technician);
             var result = CheckRouter.RouteSkillCheck(vehicle, spec);
             yield return null;
 
@@ -85,10 +85,10 @@ namespace Assets.Scripts.Tests.PlayMode
                 .WithUtility(character)
                 .Build();
 
-            var utility = vehicle.GetComponentOfType(ComponentType.Utility);
+            var utility = vehicle.GetComponentOfRole(RoleType.Technician);
             utility.TakeDamage(utility.GetCurrentHealth());
 
-            var spec = SkillCheckSpec.ForCharacter(CharacterSkill.Mechanics, ComponentType.Utility);
+            var spec = SkillCheckSpec.ForCharacter(CharacterSkill.Mechanics, RoleType.Technician);
             var result = CheckRouter.RouteSkillCheck(vehicle, spec);
             yield return null;
 

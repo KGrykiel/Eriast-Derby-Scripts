@@ -11,7 +11,6 @@
         void Reset()
         {
             gameObject.name = "Custom Component";
-            componentType = ComponentType.Custom;
 
             baseMaxHealth = 50;
             health = 50;

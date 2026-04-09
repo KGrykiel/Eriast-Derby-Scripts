@@ -49,7 +49,6 @@ namespace Assets.Scripts.Entities.Vehicles.VehicleComponents.ComponentTypes
         void Reset()
         {
             gameObject.name = "Weapon";
-            componentType = ComponentType.Weapon;
 
             baseMaxHealth = 40;
             health = 40;
@@ -64,7 +63,6 @@ namespace Assets.Scripts.Entities.Vehicles.VehicleComponents.ComponentTypes
 
         void Awake()
         {
-            componentType = ComponentType.Weapon;
             roleType = RoleType.Gunner;
         }
 

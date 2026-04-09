@@ -34,7 +34,6 @@ namespace Assets.Scripts.Entities.Vehicles.VehicleComponents.ComponentTypes
         void Reset()
         {
             gameObject.name = "Power Core";
-            componentType = ComponentType.PowerCore;
 
             baseMaxHealth = 75;
             health = 75;
@@ -50,7 +49,6 @@ namespace Assets.Scripts.Entities.Vehicles.VehicleComponents.ComponentTypes
 
         void Awake()
         {
-            componentType = ComponentType.PowerCore;
             currentEnergy = GetMaxEnergy();
             roleType = RoleType.None;
         }

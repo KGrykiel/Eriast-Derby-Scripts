@@ -41,7 +41,6 @@ namespace Assets.Scripts.Entities.Vehicles.VehicleComponents.ComponentTypes
         void Reset()
         {
             gameObject.name = "Chassis";
-            componentType = ComponentType.Chassis;
 
             baseMaxHealth = 100;
             health = 100;
@@ -57,7 +56,6 @@ namespace Assets.Scripts.Entities.Vehicles.VehicleComponents.ComponentTypes
 
         void Awake()
         {
-            componentType = ComponentType.Chassis;
             roleType = RoleType.None;
         }
 

@@ -12,13 +12,10 @@ namespace Assets.Scripts.Combat.Rolls.RollSpecs.SpecTypes
         [Tooltip("Character skill to check.")]
         public CharacterSkill characterSkill;
 
-        [Tooltip("Does this check require a specific component type?")]
-        public bool requiresComponent;
+        [Tooltip("Required crew role for this check (None = no component required).")]
+        public RoleType requiredRole = RoleType.None;
 
-        [Tooltip("Component type required (only used if requiresComponent is true).")]
-        public ComponentType requiredComponentType;
-
-        public bool RequiresComponent => requiresComponent;
+        public bool RequiresComponent => requiredRole != RoleType.None;
 
         public override string DisplayName => characterSkill.ToString();
     }

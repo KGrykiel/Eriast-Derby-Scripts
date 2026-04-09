@@ -84,7 +84,7 @@ namespace Assets.Scripts.Tests.PlayMode
             var character = TestCharacterFactory.CreateWithCleanup(cleanup: cleanup);
             vehicle = TestVehicleBuilder.CreateWithChassis(character);
 
-            var spec = TestSkillFactory.CharacterSave(CharacterAttribute.Intelligence, requiredComponent: ComponentType.PowerCore, dc: 15);
+            var spec = TestSkillFactory.CharacterSave(CharacterAttribute.Intelligence, requiredRole: RoleType.Technician, dc: 15);
             var result = SavePerformer.Execute(new SaveExecutionContext { Vehicle = vehicle, Spec = spec, CausalSource = null, Routing = CheckRouter.RouteSave(vehicle, spec) });
             yield return null;
 
@@ -100,10 +100,10 @@ namespace Assets.Scripts.Tests.PlayMode
             var engineer = TestCharacterFactory.CreateWithCleanup("Engineer", level: 4, intelligence: 14, cleanup: cleanup);
             vehicle = new TestVehicleBuilder()
                 .WithChassis()
-                .WithPowerCore(engineer)
+                .WithUtility(engineer)
                 .Build();
 
-            var spec = TestSkillFactory.CharacterSave(CharacterAttribute.Intelligence, requiredComponent: ComponentType.PowerCore);
+            var spec = TestSkillFactory.CharacterSave(CharacterAttribute.Intelligence, requiredRole: RoleType.Technician);
             var result = SavePerformer.Execute(new SaveExecutionContext { Vehicle = vehicle, Spec = spec, CausalSource = null, Routing = CheckRouter.RouteSave(vehicle, spec) });
             yield return null;
 

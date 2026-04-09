@@ -37,13 +37,12 @@ namespace Assets.Scripts.Combat.Rolls.RollSpecs.SpecTypes
             };
         }
 
-        public static CharacterSkillCheckSpec ForCharacter(CharacterSkill skill, ComponentType? requiredComponent = null)
+        public static CharacterSkillCheckSpec ForCharacter(CharacterSkill skill, RoleType requiredRole = RoleType.None)
         {
             return new CharacterSkillCheckSpec
             {
                 characterSkill = skill,
-                requiresComponent = requiredComponent.HasValue,
-                requiredComponentType = requiredComponent ?? default
+                requiredRole = requiredRole
             };
         }
     }

@@ -14,7 +14,6 @@ namespace Assets.Scripts.Entities.Vehicles.VehicleComponents.ComponentTypes
         void Reset()
         {
             gameObject.name = "Navigator";
-            componentType = ComponentType.Sensors;
 
             baseMaxHealth = 50;
             health = 50;
@@ -26,7 +25,6 @@ namespace Assets.Scripts.Entities.Vehicles.VehicleComponents.ComponentTypes
 
         void Awake()
         {
-            componentType = ComponentType.Sensors;
             roleType = RoleType.Navigator;
         }
 

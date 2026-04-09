@@ -14,7 +14,6 @@ namespace Assets.Scripts.Entities.Vehicles.VehicleComponents.ComponentTypes
         void Reset()
         {
             gameObject.name = "Technician";
-            componentType = ComponentType.Utility;
 
             baseMaxHealth = 55;
             health = 55;
@@ -26,7 +25,6 @@ namespace Assets.Scripts.Entities.Vehicles.VehicleComponents.ComponentTypes
 
         void Awake()
         {
-            componentType = ComponentType.Utility;
             roleType = RoleType.Technician;
         }
 

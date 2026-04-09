@@ -108,7 +108,7 @@ namespace Assets.Scripts.Combat
             // If check requires a specific component type, validate it and find operator
             if (spec.RequiresComponent)
             {
-                return ValidateRequiredComponent(vehicle, spec.requiredComponentType);
+                return ValidateRequiredRole(vehicle, spec.requiredRole);
             }
 
             // Priority 1: Actor hint provided (character-initiated skills)
@@ -133,7 +133,7 @@ namespace Assets.Scripts.Combat
             // If save requires a specific component type, validate it and find operator
             if (spec.RequiresComponent)
             {
-                return ValidateRequiredComponent(vehicle, spec.requiredComponentType);
+                return ValidateRequiredRole(vehicle, spec.requiredRole);
             }
 
             // No component required - route based on context
@@ -182,22 +182,22 @@ namespace Assets.Scripts.Combat
             return best;
         }
         
-        private static VehicleComponent GetComponentByType(Vehicle vehicle, ComponentType type)
+        private static VehicleComponent GetComponentByRole(Vehicle vehicle, RoleType role)
         {
             foreach (var component in vehicle.AllComponents)
             {
-                if (component != null && component.componentType == type)
+                if (component != null && (component.roleType & role) != 0)
                     return component;
             }
             return null;
         }
 
         /// <summary>Validates component exists, is operational, has a seat, and has a character.</summary>
-        private static RoutingResult ValidateRequiredComponent(Vehicle vehicle, ComponentType requiredType)
+        private static RoutingResult ValidateRequiredRole(Vehicle vehicle, RoleType requiredRole)
         {
-            VehicleComponent component = GetComponentByType(vehicle, requiredType);
+            VehicleComponent component = GetComponentByRole(vehicle, requiredRole);
             if (component == null)
-                return RoutingResult.Failure($"No {requiredType} component on vehicle");
+                return RoutingResult.Failure($"No {requiredRole} component on vehicle");
 
             if (!component.IsOperational)
                 return RoutingResult.Failure($"{component.name} is not operational");

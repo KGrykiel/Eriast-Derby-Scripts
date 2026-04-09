@@ -105,8 +105,8 @@ namespace Assets.Scripts.Entities.Vehicles
 
         public string GetInaccessibilityReason(VehicleComponent target) => componentCoordinator?.GetInaccessibilityReason(target);
 
-        public VehicleComponent GetComponentOfType(ComponentType type)
-            => AllComponents.FirstOrDefault(c => c.componentType == type);
+        public VehicleComponent GetComponentOfRole(RoleType role)
+            => AllComponents.FirstOrDefault(c => c != null && (c.roleType & role) != 0);
 
         public void ResetComponentsForNewTurn()
         {

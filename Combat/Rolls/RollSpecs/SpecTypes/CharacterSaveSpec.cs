@@ -12,13 +12,10 @@ namespace Assets.Scripts.Combat.Rolls.RollSpecs.SpecTypes
         [Tooltip("Character attribute to save against.")]
         public CharacterAttribute characterAttribute;
 
-        [Tooltip("Does this save require a specific component?")]
-        public bool requiresComponent;
+        [Tooltip("Required crew role for this save (None = no component required).")]
+        public RoleType requiredRole = RoleType.None;
 
-        [Tooltip("Component type required (only used if requiresComponent is true).")]
-        public ComponentType requiredComponentType;
-
-        public bool RequiresComponent => requiresComponent;
+        public bool RequiresComponent => requiredRole != RoleType.None;
 
         public override string DisplayName => characterAttribute.ToString();
     }
