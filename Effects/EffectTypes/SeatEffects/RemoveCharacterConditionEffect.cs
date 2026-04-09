@@ -1,4 +1,5 @@
-﻿using Assets.Scripts.Conditions;
+﻿using System;
+using Assets.Scripts.Conditions;
 using Assets.Scripts.Conditions.CharacterConditions;
 using Assets.Scripts.Entities.Vehicles;
 using SerializeReferenceEditor;
@@ -7,37 +8,52 @@ using UnityEngine;
 namespace Assets.Scripts.Effects.EffectTypes.SeatEffects
 {
     /// <summary>
-    /// Removes character conditions from the operator of the targeted component or seat.
-    /// Mirrors ApplyCharacterConditionEffect for target resolution.
+    /// Removes character conditions from the operator of the targeted seat by category.
     /// For removing entity conditions (buffs/debuffs on components), use RemoveEntityConditionEffect instead.
     /// </summary>
-    [System.Serializable]
-    [SRName("Remove Character Condition")]
-    public class RemoveCharacterConditionEffect : ISeatEffect
+    [Serializable]
+    [SRName("Remove Character Condition/By Category")]
+    public class RemoveCharacterConditionByCategoryEffect : ISeatEffect
     {
-        [Header("Removal Filter")]
-        [Tooltip("Categories to remove (e.g., DoT removes all burning/bleeding). Leave None to use specific template.")]
+        [Tooltip("Categories to remove (e.g., DoT removes all burning/bleeding).")]
         public ConditionCategory categoriesToRemove = ConditionCategory.None;
-
-        [Tooltip("Optional: remove only this specific condition template. Takes priority over categories.")]
-        public CharacterCondition specificTemplate;
 
         void ISeatEffect.Apply(VehicleSeat target, EffectContext context)
         {
             if (!target.IsAssigned) return;
 
-            if (specificTemplate != null)
+            if (categoriesToRemove == ConditionCategory.None)
             {
-                target.RemoveConditionsByTemplate(specificTemplate);
+                Debug.LogWarning("[RemoveCharacterConditionByCategoryEffect] No categories set — effect had no impact.");
+                return;
             }
-            else if (categoriesToRemove != ConditionCategory.None)
+
+            target.RemoveConditionsByCategory(categoriesToRemove);
+        }
+    }
+
+    /// <summary>
+    /// Removes a specific character condition template from the operator of the targeted seat.
+    /// For removing entity conditions (buffs/debuffs on components), use RemoveEntityConditionEffect instead.
+    /// </summary>
+    [Serializable]
+    [SRName("Remove Character Condition/By Template")]
+    public class RemoveCharacterConditionByTemplateEffect : ISeatEffect
+    {
+        [Tooltip("Specific condition template to remove.")]
+        public CharacterCondition template;
+
+        void ISeatEffect.Apply(VehicleSeat target, EffectContext context)
+        {
+            if (!target.IsAssigned) return;
+
+            if (template == null)
             {
-                target.RemoveConditionsByCategory(categoriesToRemove);
+                Debug.LogWarning("[RemoveCharacterConditionByTemplateEffect] No template assigned — effect had no impact.");
+                return;
             }
-            else
-            {
-                Debug.LogWarning("[RemoveCharacterConditionEffect] Neither specificTemplate nor categoriesToRemove set!");
-            }
+
+            target.RemoveConditionsByTemplate(template);
         }
     }
 }
