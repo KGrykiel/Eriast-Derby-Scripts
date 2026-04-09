@@ -251,7 +251,7 @@ namespace Assets.Scripts.Entities.Vehicles
         // ==================== EFFECT ROUTING ====================
 
         /// <summary>Applies a vehicle-wide condition tracked by VehicleConditionManager.</summary>
-        public void ApplyVehicleCondition(VehicleCondition condition, UnityEngine.Object applier)
+        public void ApplyVehicleCondition(VehicleCondition condition, Object applier)
             => conditionManager.Apply(condition, applier);
 
         /// <summary>Removes vehicle-wide conditions matching a specific template.</summary>
@@ -263,7 +263,7 @@ namespace Assets.Scripts.Entities.Vehicles
             => conditionManager.RemoveByCategory(categories);
 
         /// <summary>Returns all currently active vehicle-wide conditions.</summary>
-        public System.Collections.Generic.IReadOnlyList<AppliedVehicleCondition> GetActiveVehicleConditions()
+        public IReadOnlyList<AppliedVehicleCondition> GetActiveVehicleConditions()
             => conditionManager.GetActive();
 
         /// <summary>

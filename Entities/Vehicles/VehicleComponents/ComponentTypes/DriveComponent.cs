@@ -20,10 +20,6 @@ namespace Assets.Scripts.Entities.Vehicles.VehicleComponents.ComponentTypes
         [Tooltip("Maximum speed decrease per turn when braking (base value before modifiers). INTEGER: Discrete deceleration.")]
         private int baseDeceleration = 10;
 
-        [SerializeField]
-        [Tooltip("Stability - resistance to terrain effects and bumps (base value before modifiers). INTEGER.")]
-        private int baseStability = 5;
-
         [Header("Speed Management")]
         [Tooltip("Current actual speed in units/turn. INTEGER: D&D-style discrete position.")]
         private int currentSpeed = 0;
@@ -71,13 +67,11 @@ namespace Assets.Scripts.Entities.Vehicles.VehicleComponents.ComponentTypes
         public int GetBaseMaxSpeed() => baseMaxSpeed;
         public int GetBaseAcceleration() => baseAcceleration;
         public int GetBaseDeceleration() => baseDeceleration;
-        public int GetBaseStability() => baseStability;
         public int GetBaseFriction() => baseFriction;
 
         public int GetMaxSpeed() => StatCalculator.GatherAttributeValue(this, EntityAttribute.MaxSpeed);
         public int GetAcceleration() => StatCalculator.GatherAttributeValue(this, EntityAttribute.Acceleration);
         public int GetDeceleration() => StatCalculator.GatherAttributeValue(this, EntityAttribute.Deceleration);
-        public int GetStability() => StatCalculator.GatherAttributeValue(this, EntityAttribute.Stability);
         public int GetFriction() => StatCalculator.GatherAttributeValue(this, EntityAttribute.BaseFriction);
 
         public int GetCurrentSpeed() => currentSpeed;
@@ -89,7 +83,6 @@ namespace Assets.Scripts.Entities.Vehicles.VehicleComponents.ComponentTypes
                 EntityAttribute.MaxSpeed => baseMaxSpeed,
                 EntityAttribute.Acceleration => baseAcceleration,
                 EntityAttribute.Deceleration => baseDeceleration,
-                EntityAttribute.Stability => baseStability,
                 EntityAttribute.BaseFriction => baseFriction,
                 _ => base.GetBaseValue(attribute)
             };
@@ -208,13 +201,11 @@ namespace Assets.Scripts.Entities.Vehicles.VehicleComponents.ComponentTypes
             int modifiedSpeed = GetMaxSpeed();
             int modifiedAccel = GetAcceleration();
             int modifiedDecel = GetDeceleration();
-            int modifiedStab = GetStability();
             int modifiedFriction = GetFriction();
 
             stats.Add(VehicleComponentUI.DisplayStat.WithTooltip("Max Speed", "MSPD", EntityAttribute.MaxSpeed, baseMaxSpeed, modifiedSpeed));
             stats.Add(VehicleComponentUI.DisplayStat.WithTooltip("Acceleration", "ACCEL", EntityAttribute.Acceleration, baseAcceleration, modifiedAccel));
             stats.Add(VehicleComponentUI.DisplayStat.WithTooltip("Deceleration", "DECEL", EntityAttribute.Deceleration, baseDeceleration, modifiedDecel));
-            stats.Add(VehicleComponentUI.DisplayStat.WithTooltip("Stability", "STAB", EntityAttribute.Stability, baseStability, modifiedStab));
 
             int targetAbsolute = (targetSpeedPercent * modifiedSpeed) / 100;
             stats.Add(VehicleComponentUI.DisplayStat.Simple("Target Speed", "TGT", $"{targetSpeedPercent}% ({targetAbsolute})"));

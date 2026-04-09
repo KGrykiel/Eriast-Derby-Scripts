@@ -18,6 +18,10 @@ namespace Assets.Scripts.Entities.Vehicles.VehicleComponents.ComponentTypes
                  "is less able to withstand further stress (base value before modifiers).")]
         private int baseIntegrity = 1;
 
+        [SerializeField]
+        [Tooltip("Resistance to being destabilised by terrain, collisions, and impacts. Higher = harder to knock off course (base value before modifiers).")]
+        private int baseStability = 5;
+
         [Header("Chassis Size")]
         [Tooltip("Size category determines AC, mobility, and speed modifiers. Larger = easier to hit, harder to maneuver.")]
         public VehicleSizeCategory sizeCategory = VehicleSizeCategory.Medium;
@@ -43,6 +47,7 @@ namespace Assets.Scripts.Entities.Vehicles.VehicleComponents.ComponentTypes
             health = 100;
             baseArmorClass = 18;
             baseMobility = 8;
+            baseStability = 5;
             baseComponentSpace = -2000;
             sizeCategory = VehicleSizeCategory.Medium;
             basePowerDrawPerTurn = 0;
@@ -60,10 +65,12 @@ namespace Assets.Scripts.Entities.Vehicles.VehicleComponents.ComponentTypes
 
         public int GetBaseMobility() => baseMobility;
         public int GetBaseIntegrity() => baseIntegrity;
+        public int GetBaseStability() => baseStability;
         public int GetBaseDragCoefficientPercent() => baseDragCoefficientPercent;
 
         public int GetMobility() => StatCalculator.GatherAttributeValue(this, EntityAttribute.Mobility);
         public int GetIntegrity() => StatCalculator.GatherAttributeValue(this, EntityAttribute.Integrity);
+        public int GetStability() => StatCalculator.GatherAttributeValue(this, EntityAttribute.Stability);
         public int GetDragCoefficientPercent() => StatCalculator.GatherAttributeValue(this, EntityAttribute.DragCoefficient);
 
         public override int GetBaseValue(EntityAttribute attribute)
@@ -72,6 +79,7 @@ namespace Assets.Scripts.Entities.Vehicles.VehicleComponents.ComponentTypes
             {
                 EntityAttribute.Mobility => baseMobility,
                 EntityAttribute.Integrity => baseIntegrity + GetIntegrityDamagePenalty(),
+                EntityAttribute.Stability => baseStability,
                 EntityAttribute.DragCoefficient => baseDragCoefficientPercent,
                 EntityAttribute.CargoCapacity => baseCargoCapacity,
                 _ => base.GetBaseValue(attribute)
@@ -107,6 +115,12 @@ namespace Assets.Scripts.Entities.Vehicles.VehicleComponents.ComponentTypes
 
             int modifiedMobility = GetMobility();
             stats.Add(VehicleComponentUI.DisplayStat.WithTooltip("Mobility", "MBL", EntityAttribute.Mobility, baseMobility, modifiedMobility));
+
+            int modifiedStability = GetStability();
+            stats.Add(VehicleComponentUI.DisplayStat.WithTooltip("Stability", "STB", EntityAttribute.Stability, baseStability, modifiedStability));
+
+            int modifiedIntegrity = GetIntegrity();
+            stats.Add(VehicleComponentUI.DisplayStat.WithTooltip("Integrity", "INTG", EntityAttribute.Integrity, baseIntegrity, modifiedIntegrity));
 
             int modifiedDrag = GetDragCoefficientPercent();
             stats.Add(VehicleComponentUI.DisplayStat.WithTooltip("Drag", "DRAG", EntityAttribute.DragCoefficient, baseDragCoefficientPercent, modifiedDrag, "%"));

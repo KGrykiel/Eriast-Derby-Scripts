@@ -15,14 +15,14 @@ namespace Assets.Scripts.Entities.Vehicles
             {
                 EntityAttribute.MaxHealth => vehicle.Chassis,
                 EntityAttribute.ArmorClass => vehicle.Chassis,
-                EntityAttribute.MagicResistance => vehicle.Chassis,
                 EntityAttribute.Mobility => vehicle.Chassis,
+                EntityAttribute.Stability => vehicle.Chassis,
+                EntityAttribute.Integrity => vehicle.Chassis,
                 EntityAttribute.DragCoefficient => vehicle.Chassis,
                 EntityAttribute.MaxEnergy => vehicle.PowerCore,
                 EntityAttribute.EnergyRegen => vehicle.PowerCore,
                 EntityAttribute.MaxSpeed => vehicle.Drive,
                 EntityAttribute.Acceleration => vehicle.Drive,
-                EntityAttribute.Stability => vehicle.Drive,
                 EntityAttribute.BaseFriction => vehicle.Drive,
                 _ => vehicle.Chassis
             };

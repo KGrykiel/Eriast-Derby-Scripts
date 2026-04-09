@@ -94,7 +94,7 @@ namespace Assets.Scripts.Combat
 
         private static RoutingResult RouteVehicleRoll(Vehicle vehicle, VehicleCheckAttribute attr, string displayName)
         {
-            Entity component = GetComponentForVehicleAttribute(vehicle, attr);
+            Entity component = VehicleComponentResolver.ResolveForAttribute(vehicle, attr.ToAttribute());
             if (component == null)
                 return RoutingResult.Failure($"No component available for {displayName}");
 
@@ -152,19 +152,6 @@ namespace Assets.Scripts.Combat
                 return RoutingResult.Success(new CharacterActor(bestSeat));
 
             return RoutingResult.Failure("No character available for save");
-        }
-        
-        // ==================== COMPONENT ROUTING ====================
-        
-        private static Entity GetComponentForVehicleAttribute(Vehicle vehicle, VehicleCheckAttribute checkAttr)
-        {
-            EntityAttribute attribute = checkAttr.ToAttribute();
-            return attribute switch
-            {
-                EntityAttribute.Mobility  => vehicle.Chassis,
-                EntityAttribute.Integrity => vehicle.Chassis,
-                _ => null
-            };
         }
         
         // ==================== CHARACTER HELPERS ====================
