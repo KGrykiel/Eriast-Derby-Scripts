@@ -95,6 +95,7 @@ public class TurnService
             vehicle.ApplyMovement(distance);
             TurnEventBus.EmitMovementExecuted(vehicle, distance, drive.GetCurrentSpeed(), oldProgress, vehicle.Progress);
             vehicle.NotifyStatusEffectTrigger(RemovalTrigger.OnMovement);
+            TryHandleStageTransitions(vehicle);
         }
         else
         {
@@ -102,6 +103,32 @@ public class TurnService
         }
 
         return true;
+    }
+
+    /// <summary>
+    /// Checks whether the vehicle has overshot its current stage boundary and transitions it forward.
+    /// Loops to handle chained transitions when excess progress carries through multiple stages.
+    /// Called after movement and after turn-end as a safety net for non-movement progress changes.
+    /// </summary>
+    public void TryHandleStageTransitions(Vehicle vehicle)
+    {
+        if (vehicle == null || vehicle.CurrentStage == null) return;
+
+        while (vehicle.Progress >= vehicle.CurrentStage.length)
+        {
+            var currentLane = vehicle.CurrentLane;
+            Stage nextStage = null;
+
+            if (currentLane != null && currentLane.nextStage != null)
+                nextStage = currentLane.nextStage;
+            else if (vehicle.CurrentStage.nextStages != null && vehicle.CurrentStage.nextStages.Count > 0)
+                nextStage = vehicle.CurrentStage.nextStages[0];
+
+            if (nextStage != null)
+                MoveToStage(vehicle, nextStage, isPlayerChoice: false);
+            else
+                break;
+        }
     }
     
     public void MoveToStage(Vehicle vehicle, Stage stage, bool isPlayerChoice = false)

@@ -23,7 +23,8 @@ namespace Assets.Scripts.Managers.TurnPhases
                     context.TurnController.ExecuteMovement(vehicle);
                 }
 
-                HandleStageTransitions(vehicle, context);
+                // Safety net: catches any progress changes that didn't go through ExecuteMovement (e.g. ProgressModifierEffect).
+                context.TurnController.TryHandleStageTransitions(vehicle);
 
                 vehicle.NotifyStatusEffectTrigger(RemovalTrigger.OnTurnEnd);
             }
@@ -37,26 +38,5 @@ namespace Assets.Scripts.Managers.TurnPhases
             return newRound ? TurnPhase.RoundEnd : TurnPhase.TurnStart;
         }
         
-        /// <summary>Transitions vehicle when progress >= stage length. Lane determines next stage.</summary>
-        private void HandleStageTransitions(Vehicle vehicle, TurnPhaseContext context)
-        {
-            if (vehicle.CurrentStage == null) return;
-
-            while (vehicle.Progress >= vehicle.CurrentStage.length)
-            {
-                var currentLane = vehicle.CurrentLane;
-                Stages.Stage nextStage = null;
-
-                if (currentLane != null && currentLane.nextStage != null)
-                    nextStage = currentLane.nextStage;
-                else if (vehicle.CurrentStage.nextStages != null && vehicle.CurrentStage.nextStages.Count > 0)
-                    nextStage = vehicle.CurrentStage.nextStages[0];
-
-                if (nextStage != null)
-                    context.TurnController.MoveToStage(vehicle, nextStage, isPlayerChoice: false);
-                else
-                    break;
-            }
         }
-    }
 }
