@@ -30,7 +30,15 @@ namespace Assets.Scripts.Effects.EffectTypes.EntityEffects
             DamageFormula formula = formulaProvider.GetFormula(formulaContext);
 
             ResistanceLevel resistance = target.GetResistance(formula.damageType);
-            DamageResult result = DamageCalculator.Compute(formula, resistance, context.IsCriticalHit);
+
+            // Critical hits only apply to effects targeting enemies, not self-harm (recoil, backlash, etc.).
+            // A crit is a property of the attack roll against the opponent — it doesn't double the shooter's own damage.
+            Vehicle sourceVehicle = context.SourceActor?.GetVehicle();
+            Vehicle targetVehicle = EntityHelpers.GetParentVehicle(target);
+            bool isTargetingSelf = sourceVehicle != null && sourceVehicle == targetVehicle;
+            bool isCrit = context.IsCriticalHit && !isTargetingSelf;
+
+            DamageResult result = DamageCalculator.Compute(formula, resistance, isCrit);
 
             DamageApplicator.Apply(
                 result: result,
