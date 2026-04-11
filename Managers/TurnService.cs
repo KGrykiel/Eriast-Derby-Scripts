@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using Assets.Scripts.Managers;
 using Assets.Scripts.Stages;
+using Assets.Scripts.Stages.Lanes;
 using Assets.Scripts.Conditions;
 using Assets.Scripts.Entities.Vehicles;
 
@@ -119,10 +120,8 @@ public class TurnService
             var currentLane = vehicle.CurrentLane;
             Stage nextStage = null;
 
-            if (currentLane != null && currentLane.nextStage != null)
-                nextStage = currentLane.nextStage;
-            else if (vehicle.CurrentStage.nextStages != null && vehicle.CurrentStage.nextStages.Count > 0)
-                nextStage = vehicle.CurrentStage.nextStages[0];
+            if (currentLane != null && currentLane.nextLane != null)
+                nextStage = currentLane.nextLane.GetComponentInParent<Stage>();
 
             if (nextStage != null)
                 MoveToStage(vehicle, nextStage, isPlayerChoice: false);
@@ -136,13 +135,16 @@ public class TurnService
         if (vehicle == null || stage == null) return;
 
         Stage previousStage = vehicle.CurrentStage;
+        StageLane targetLane = null;
+        if (vehicle.CurrentLane != null)
+            targetLane = vehicle.CurrentLane.nextLane;
 
         if (previousStage != null)
             previousStage.TriggerLeave(vehicle);
 
         vehicle.TransitionToStage(stage);
 
-        stage.TriggerEnter(vehicle);
+        stage.TriggerEnter(vehicle, targetLane);
 
         if (stage.isFinishLine)
             TurnEventBus.EmitFinishLineCrossed(vehicle, stage);

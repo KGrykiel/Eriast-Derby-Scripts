@@ -49,7 +49,7 @@ namespace Assets.Scripts.Stages
             return Lanes[index];
         }
 
-        public StageLane GetVehicleLane(Vehicle vehicle)
+        private StageLane GetVehicleLane(Vehicle vehicle)
         {
             if (vehicle == null || Lanes == null || Lanes.Count == 0)
                 return null;
@@ -68,11 +68,15 @@ namespace Assets.Scripts.Stages
 
         // ==================== LANE ASSIGNMENT ====================
 
+        public void AssignIncomingVehicle(Vehicle vehicle, StageLane targetLane = null)
+        {
+            if (targetLane != null)
+                AssignVehicleToLane(vehicle, targetLane);
+        }
+
         public void AssignVehicleToLane(Vehicle vehicle, StageLane targetLane)
         {
-            if (vehicle == null || targetLane == null)
-                return;
-
+            if (vehicle == null || targetLane == null) return;
             if (!Lanes.Contains(targetLane))
             {
                 Debug.LogWarning($"LaneManager.AssignVehicleToLane: Lane {targetLane.laneName} does not belong to stage {stage.stageName}");
@@ -80,78 +84,35 @@ namespace Assets.Scripts.Stages
             }
 
             StageLane currentLane = GetVehicleLane(vehicle);
-
             if (currentLane != null && currentLane != targetLane)
             {
                 currentLane.vehiclesInLane.Remove(vehicle);
-                if (currentLane.laneStatusEffect != null)
-                    vehicle.RemoveVehicleConditionsByTemplate(currentLane.laneStatusEffect);
+                ExecuteRollNodes(currentLane.onExitEffects, vehicle, currentLane.name);
             }
 
             if (!targetLane.vehiclesInLane.Contains(vehicle))
                 targetLane.vehiclesInLane.Add(vehicle);
-
             vehicle.SetCurrentLane(targetLane);
-
-            if (targetLane.laneStatusEffect != null)
-                vehicle.ApplyVehicleCondition(targetLane.laneStatusEffect, targetLane);
+            ExecuteRollNodes(targetLane.onEnterEffects, vehicle, targetLane.name);
         }
 
-        public void AssignVehicleToDefaultLane(Vehicle vehicle)
+        public void HandleStageExit(Vehicle vehicle)
         {
-            if (vehicle == null || Lanes == null || Lanes.Count == 0)
-                return;
-
-            int defaultLaneIndex = Lanes.Count / 2;
-            AssignVehicleToLane(vehicle, Lanes[defaultLaneIndex]);
+            StageLane lane = GetVehicleLane(vehicle);
+            if (lane == null) return;
+            lane.vehiclesInLane.Remove(vehicle);
+            ExecuteRollNodes(lane.onExitEffects, vehicle, lane.name);
         }
 
-        public void AssignVehicleToEntryLane(Vehicle vehicle)
+        private static void ExecuteRollNodes(List<RollNode> nodes, Vehicle vehicle, string source)
         {
-            if (vehicle == null || Lanes == null || Lanes.Count == 0)
-                return;
-
-            StageLane targetLane = null;
-
-            if (vehicle.PreviousStage != null && vehicle.CurrentLane != null)
+            if (nodes == null || nodes.Count == 0) return;
+            foreach (var rollNode in nodes)
             {
-                var previousLane = vehicle.CurrentLane;
-
-                if (previousLane.targetLaneIndex >= 0 && previousLane.targetLaneIndex < Lanes.Count)
-                    targetLane = Lanes[previousLane.targetLaneIndex];
-                else
-                    targetLane = GetProportionalLane(vehicle.PreviousStage, previousLane);
+                if (rollNode == null) continue;
+                var ctx = new RollContext { Target = vehicle, CausalSource = source };
+                RollNodeExecutor.Execute(rollNode, ctx);
             }
-
-            if (targetLane == null)
-            {
-                int defaultLaneIndex = Lanes.Count / 2;
-                targetLane = Lanes[defaultLaneIndex];
-            }
-
-            AssignVehicleToLane(vehicle, targetLane);
-        }
-
-        /// <summary>Maps lane position proportionally between stages (left stays left, right stays right).</summary>
-        private StageLane GetProportionalLane(Stage previousStage, StageLane previousLane)
-        {
-            if (previousStage == null || previousLane == null)
-                return null;
-
-            int oldLaneIndex = previousStage.GetLaneIndex(previousLane);
-            int oldLaneCount = previousStage.lanes.Count;
-
-            if (oldLaneIndex < 0 || oldLaneCount <= 0)
-                return null;
-
-            float positionRatio = oldLaneCount > 1 
-                ? oldLaneIndex / (float)(oldLaneCount - 1) 
-                : 0.5f;
-
-            int newLaneIndex = Mathf.RoundToInt(positionRatio * (Lanes.Count - 1));
-            newLaneIndex = Mathf.Clamp(newLaneIndex, 0, Lanes.Count - 1);
-
-            return Lanes[newLaneIndex];
         }
 
         // ==================== LANE TURN EFFECTS ====================
@@ -164,18 +125,13 @@ namespace Assets.Scripts.Stages
             if (currentLane == null || currentLane.turnEffects == null || currentLane.turnEffects.Count == 0)
                 return;
 
-            foreach (var turnEffect in currentLane.turnEffects)
+            foreach (var rollNode in currentLane.turnEffects)
             {
-                if (turnEffect == null) continue;
-                ResolveLaneTurnEffect(vehicle, currentLane, turnEffect);
+                if (rollNode == null) continue;
+                var ctx = new RollContext { Target = vehicle, CausalSource = stage.name };
+                bool success = RollNodeExecutor.Execute(rollNode, ctx);
+                stage.LogLaneTurnEffect(vehicle, currentLane, success);
             }
-        }
-
-        private void ResolveLaneTurnEffect(Vehicle vehicle, StageLane lane, LaneTurnEffect effect)
-        {
-            var ctx = new RollContext { Target = vehicle, CausalSource = stage.name };
-            bool success = RollNodeExecutor.Execute(effect.rollNode, ctx);
-            stage.LogLaneTurnEffect(vehicle, lane, effect, success);
         }
     }
 }

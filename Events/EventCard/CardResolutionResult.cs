@@ -8,7 +8,7 @@
         public CardResolutionResult(bool success, string narrative)
         {
             this.success = success;
-            this.narrativeOutcome = narrative;
+            narrativeOutcome = narrative;
         }
     }
 }

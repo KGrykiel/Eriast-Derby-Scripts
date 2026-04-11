@@ -315,7 +315,7 @@ namespace Assets.Scripts.Tests.PlayMode
             // Create stage with a lane that has a status effect
             var laneEffect = TestStatusEffectFactory.CreateVehicleModifierEffect("Cliff Edge", EntityAttribute.ArmorClass, -2f, cleanup: cleanup);
             var stage = TestStageFactory.CreateStage("Rocky Stage", out stageObj);
-            var cliffLane = TestStageFactory.CreateLane("Cliff Edge Lane", stage, stageObj, laneEffect);
+            var cliffLane = TestStageFactory.CreateLane("Cliff Edge Lane", stage, stageObj);
 
             int acBefore = playerVehicle.Chassis.GetArmorClass();
 
@@ -352,15 +352,10 @@ namespace Assets.Scripts.Tests.PlayMode
 
             var checkSpec = SkillCheckSpec.ForCharacter(CharacterSkill.Piloting);
             checkSpec.dc = 10;
-            var turnEffect = new LaneTurnEffect
+            var turnEffect = new RollNode
             {
-                effectName = "Rocky Road Hazard",
-                description = "Navigate treacherous rocks",
-                rollNode = new RollNode
-                {
-                    targetResolver = new CurrentTargetResolver(),
-                    rollSpec = checkSpec
-                }
+                targetResolver = new CurrentTargetResolver(),
+                rollSpec = checkSpec
             };
             hazardLane.turnEffects.Add(turnEffect);
             hazardLane.vehiclesInLane.Add(playerVehicle);

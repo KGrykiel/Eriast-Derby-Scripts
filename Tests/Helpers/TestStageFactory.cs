@@ -1,8 +1,6 @@
 ﻿using UnityEngine;
 using Assets.Scripts.Stages;
 using Assets.Scripts.Stages.Lanes;
-using Assets.Scripts.Combat.Rolls.RollSpecs;
-using Assets.Scripts.Conditions.VehicleConditions;
 using Assets.Scripts.Entities.Vehicles;
 
 namespace Assets.Scripts.Tests.Helpers
@@ -34,38 +32,24 @@ namespace Assets.Scripts.Tests.Helpers
         /// <param name="stage">Parent stage</param>
         /// <param name="laneStatusEffect">Optional status effect applied to vehicles in this lane</param>
         /// <param name="stageObject">Parent GameObject (needed for hierarchy)</param>
+        /// <summary>
+        /// Create a StageLane as a child of a Stage.
+        /// </summary>
+        /// <param name="name">Lane name</param>
+        /// <param name="stage">Parent stage</param>
+        /// <param name="stageObject">The stage's GameObject</param>
         public static StageLane CreateLane(
             string name,
             Stage stage,
-            GameObject stageObject,
-            VehicleCondition laneStatusEffect = null)
+            GameObject stageObject)
         {
             var laneObj = new GameObject(name);
             laneObj.transform.SetParent(stageObject.transform);
             var lane = laneObj.AddComponent<StageLane>();
             lane.laneName = name;
             lane.vehiclesInLane = new System.Collections.Generic.List<Vehicle>();
-            lane.turnEffects = new System.Collections.Generic.List<LaneTurnEffect>();
-            lane.laneStatusEffect = laneStatusEffect;
             stage.lanes.Add(lane);
             return lane;
-        }
-
-        /// <summary>
-        /// Create a LaneTurnEffect for testing lane hazards.
-        /// </summary>
-        /// <param name="name">Effect name</param>
-        /// <param name="rollNode">Roll configuration. Null for an unconditional effect.</param>
-        public static LaneTurnEffect CreateLaneTurnEffect(
-            string name,
-            RollNode rollNode = null)
-        {
-            return new LaneTurnEffect
-            {
-                effectName = name,
-                description = $"Test hazard: {name}",
-                rollNode = rollNode
-            };
         }
     }
 }

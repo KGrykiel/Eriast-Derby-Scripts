@@ -38,18 +38,29 @@ namespace Assets.Scripts.Stages
         }
 
         public static void LogLaneTurnEffect(
-            this Stage stage, 
-            Vehicle vehicle, 
-            StageLane lane, 
-            LaneTurnEffect effect, 
+            this Stage stage,
+            Vehicle vehicle,
+            StageLane lane,
             bool success)
         {
-            if (vehicle == null || lane == null || effect == null) return;
+            if (vehicle == null || lane == null) return;
 
-            string narrative = success ? effect.successNarrative : effect.failureNarrative;
+            string narrative = $"{vehicle.vehicleName} {(success ? "survived" : "was hit by")} {lane.laneName}";
 
-            if (string.IsNullOrEmpty(narrative))
-                narrative = $"{vehicle.vehicleName} {(success ? "succeeded at" : "failed")} {effect.effectName}";
+            RaceHistory.Log(
+                EventType.StageHazard,
+                EventImportance.Medium,
+                narrative,
+                stage,
+                vehicle
+            );
+        }
+
+        public static void LogStageTurnEffect(this Stage stage, Vehicle vehicle, bool success)
+        {
+            if (vehicle == null) return;
+
+            string narrative = $"{vehicle.vehicleName} {(success ? "survived" : "was hit by")} {stage.stageName}";
 
             RaceHistory.Log(
                 EventType.StageHazard,

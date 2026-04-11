@@ -24,7 +24,7 @@ namespace Assets.Scripts.Conditions
         protected AppliedConditionBase(int baseDuration, UnityEngine.Object applier)
         {
             this.applier = applier;
-            this.turnsRemaining = baseDuration;
+            turnsRemaining = baseDuration;
         }
 
         public void DecrementDuration()

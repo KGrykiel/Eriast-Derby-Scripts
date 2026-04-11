@@ -66,26 +66,14 @@ public class GameManager : MonoBehaviour
 
     private void InitializeVehiclePositions(List<Vehicle> vehicles)
     {
+        Stage startStage = entryStage != null ? entryStage : (stages.Count > 0 ? stages[0] : null);
+        if (startStage == null) return;
+
+        RaceInitialiser.PlaceVehicles(startStage, vehicles);
+
+        Vector3 stagePos = startStage.transform.position;
         foreach (var vehicle in vehicles)
-        {
-            Stage startStage = entryStage != null ? entryStage : (stages.Count > 0 ? stages[0] : null);
-            vehicle.InitialisePosition(startStage);
-            if (startStage != null)
-            {
-                Vector3 stagePos = startStage.transform.position;
-                vehicle.transform.position = new Vector3(stagePos.x, stagePos.y, vehicle.transform.position.z);
-                
-                if (!startStage.vehiclesInStage.Contains(vehicle))
-                {
-                    startStage.vehiclesInStage.Add(vehicle);
-                }
-                
-                if (startStage.lanes != null && startStage.lanes.Count > 0)
-                {
-                    startStage.AssignVehicleToDefaultLane(vehicle);
-                }
-            }
-        }
+            vehicle.transform.position = new Vector3(stagePos.x, stagePos.y, vehicle.transform.position.z);
     }
 
     private void InitializeControllers(List<Vehicle> vehicles)

@@ -72,63 +72,26 @@ namespace Assets.Scripts.UI.Tabs.Lanes
         {
             var parts = new List<string>();
 
-            if (lane.laneStatusEffect != null)
-            {
-                if (lane.laneStatusEffect.modifiers != null)
-                {
-                    foreach (var mod in lane.laneStatusEffect.modifiers)
-                    {
-                        if (mod is not EntityModifierData entityMod) continue;
-                        string sign = entityMod.value >= 0 ? "+" : "";
-                        string attrShort = entityMod.attribute switch
-                        {
-                            EntityAttribute.ArmorClass => "AC",
-                            EntityAttribute.MaxSpeed => "Spd",
-                            EntityAttribute.MaxHealth => "HP",
-                            _ => entityMod.attribute.ToString().Substring(0, 3)
-                        };
-                        parts.Add($"{attrShort}{sign}{entityMod.value}");
-                    }
-                }
-            }
-            
             if (lane.turnEffects != null && lane.turnEffects.Count > 0)
                 parts.Add($"⚠{lane.turnEffects.Count}");
 
-            if (lane.nextStage != null)
-                parts.Add($"→{lane.nextStage.stageName}");
-            
+            if (lane.nextLane != null)
+            {
+                Stage connectedStage = lane.nextLane.GetComponentInParent<Stage>();
+                if (connectedStage != null)
+                    parts.Add($"→{connectedStage.stageName}");
+            }
+
             return parts.Count > 0 ? string.Join(" ", parts) : "-";
         }
         
         private Color GetLaneColor()
         {
-            if (lane.laneStatusEffect == null && (lane.turnEffects == null || lane.turnEffects.Count == 0))
-                return defaultColor;
-
             bool hasDanger = lane.turnEffects != null && lane.turnEffects.Count > 0;
-            bool hasSpeedBoost = false;
-            bool hasDefenseBoost = false;
-            
-            if (lane.laneStatusEffect?.modifiers != null)
-            {
-                foreach (var mod in lane.laneStatusEffect.modifiers)
-                {
-                    if (mod is not EntityModifierData entityMod) continue;
-                    if (entityMod.attribute == EntityAttribute.MaxSpeed && entityMod.value > 0)
-                        hasSpeedBoost = true;
-                    if (entityMod.attribute == EntityAttribute.ArmorClass && entityMod.value > 0)
-                        hasDefenseBoost = true;
-                }
-            }
-            
+
             if (hasDanger)
                 return hazardousColor;
-            if (hasSpeedBoost)
-                return fastColor;
-            if (hasDefenseBoost)
-                return safeColor;
-            
+
             return defaultColor;
         }
         

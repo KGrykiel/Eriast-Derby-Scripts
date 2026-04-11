@@ -2,8 +2,8 @@
 using UnityEngine;
 using Assets.Scripts.Stages.Lanes;
 using Assets.Scripts.Conditions;
+using Assets.Scripts.Combat.Rolls.RollSpecs;
 using EventCard = Assets.Scripts.Events.EventCard.EventCard;
-using Assets.Scripts.Conditions.EntityConditions;
 using Assets.Scripts.Entities.Vehicles;
 using Assets.Scripts.Managers;
 
@@ -19,15 +19,18 @@ namespace Assets.Scripts.Stages
         [Tooltip("Distance to traverse this stage (D&D-style discrete units)")]
         public int length = 100;
 
-        [Tooltip("Possible next stages after completing this one")]
-        public List<Stage> nextStages = new();
-
         [Tooltip("Is this stage a finish line?")]
         public bool isFinishLine = false;
 
         [Header("Stage Effects")]
-        [Tooltip("StatusEffect applied to all vehicle components when entering stage (e.g., sandstorm, freezing winds)")]
-        public EntityCondition stageStatusEffect;
+        [Tooltip("Effects executed when a vehicle enters this stage.")]
+        public List<RollNode> onEnterEffects = new();
+
+        [Tooltip("Effects executed when a vehicle exits this stage.")]
+        public List<RollNode> onExitEffects = new();
+
+        [Tooltip("Effects that trigger every turn for vehicles in this stage.")]
+        public List<RollNode> turnEffects = new();
 
         [Header("Event Cards")]
         [Tooltip("Random events that can occur in this stage")]
@@ -67,65 +70,40 @@ namespace Assets.Scripts.Stages
 
         private void ResolveStageLinks()
         {
-            for (int i = 0; i < nextStages.Count; i++)
-            {
-                Stage asset = nextStages[i];
-                if (asset == null) continue;
-                Stage instance = StageRegistry.FindByName(asset.stageName);
-                if (instance != null && instance != asset)
-                    nextStages[i] = instance;
-            }
-
             foreach (var lane in lanes)
             {
-                if (lane == null || lane.nextStage == null) continue;
-                Stage instance = StageRegistry.FindByName(lane.nextStage.stageName);
-                if (instance != null && instance != lane.nextStage)
-                    lane.nextStage = instance;
+                if (lane == null || lane.nextLane == null) continue;
+                Stage targetStageAsset = lane.nextLane.GetComponentInParent<Stage>();
+                if (targetStageAsset == null) continue;
+                Stage targetStageInstance = StageRegistry.FindByName(targetStageAsset.stageName);
+                if (targetStageInstance == null || targetStageInstance == targetStageAsset) continue;
+                StageLane resolved = targetStageInstance.lanes.Find(l => l != null && l.laneName == lane.nextLane.laneName);
+                if (resolved != null)
+                    lane.nextLane = resolved;
             }
         }
 
-        /// <summary>
-        /// Gizmos for visualisation. 
-        /// </summary>
-        private void OnDrawGizmos()
-        {
-            if (nextStages != null)
-            {
-                Gizmos.color = Color.cyan;
-                foreach (var nextStage in nextStages)
-                {
-                    if (nextStage != null)
-                    {
-                        Gizmos.DrawLine(transform.position, nextStage.transform.position);
-                    }
-                }
-            }
-        }
+        // ==================== TRIGGERS ====================
 
-        // ==================== STAGE ENTRY/EXIT ====================
-        /// <summary>
-        /// When a vehicle enters the stage.
-        /// </summary>
-        public void TriggerEnter(Vehicle vehicle)
+        public void TriggerEnter(Vehicle vehicle, StageLane targetLane = null)
         {
             if (vehicle == null) return;
 
             if (!vehiclesInStage.Contains(vehicle))
                 vehiclesInStage.Add(vehicle);
 
-            if (stageStatusEffect != null)
-                ApplyStageStatusEffect(vehicle);
-
-            if (lanes != null && lanes.Count > 0)
-                laneManager.AssignVehicleToEntryLane(vehicle);
+            foreach (var rollNode in onEnterEffects)
+            {
+                if (rollNode == null) continue;
+                var ctx = new RollContext { Target = vehicle, CausalSource = name };
+                RollNodeExecutor.Execute(rollNode, ctx);
+            }
 
             DrawAndTriggerEventCard(vehicle);
+
+            laneManager.AssignIncomingVehicle(vehicle, targetLane);
         }
 
-        /// <summary>
-        /// When a vehicle leaves the stage.
-        /// </summary>
         public void TriggerLeave(Vehicle vehicle)
         {
             if (vehicle == null) return;
@@ -135,37 +113,25 @@ namespace Assets.Scripts.Stages
             if (wasPresent)
             {
                 vehicle.SetPreviousStage(this);
+                laneManager.HandleStageExit(vehicle);
 
-                vehicle.NotifyStatusEffectTrigger(RemovalTrigger.OnStageExit);
-
-                StageLane currentLane = laneManager.GetVehicleLane(vehicle);
-                if (currentLane != null)
+                foreach (var rollNode in onExitEffects)
                 {
-                    currentLane.vehiclesInLane.Remove(vehicle);
+                    if (rollNode == null) continue;
+                    var ctx = new RollContext { Target = vehicle, CausalSource = name };
+                    RollNodeExecutor.Execute(rollNode, ctx);
                 }
 
+                vehicle.NotifyStatusEffectTrigger(RemovalTrigger.OnStageExit);
                 this.LogStageExit(vehicle, vehiclesInStage.Count);
             }
         }
 
-        // ==================== STAGE STATUS EFFECTS ====================
-
-        private void ApplyStageStatusEffect(Vehicle vehicle)
-        {
-            foreach (var component in vehicle.AllComponents)
-            {
-                if (component != null)
-                    component.ApplyCondition(stageStatusEffect, this);
-            }
-        }
-
-        // ==================== EVENT CARD SYSTEM ====================
-
-            /// <summary>
-            /// Logic for drawing a random card from the stage's event card list and triggering its effects on the vehicle.
-            /// Will probably want to add conditions to the cards instead of being completely random.
-            /// TODO: design work needed.
-            /// </summary>
+        /// <summary>
+        /// Logic for drawing a random card from the stage's event card list and triggering its effects on the vehicle.
+        /// Will probably want to add conditions to the cards instead of being completely random.
+        /// TODO: design work needed.
+        /// </summary>
         public void DrawAndTriggerEventCard(Vehicle vehicle)
         {
             if (eventCards == null || eventCards.Count == 0) return;
@@ -175,13 +141,37 @@ namespace Assets.Scripts.Stages
             card.Trigger(vehicle);
         }
 
+        public void ProcessStageTurnEffects(Vehicle vehicle)
+        {
+            if (vehicle == null) return;
+            foreach (var rollNode in turnEffects)
+            {
+                if (rollNode == null) continue;
+                var ctx = new RollContext { Target = vehicle, CausalSource = name };
+                bool success = RollNodeExecutor.Execute(rollNode, ctx);
+                this.LogStageTurnEffect(vehicle, success);
+            }
+        }
+
+        // ==================== STAGE GRAPH ====================
+
+        public IEnumerable<Stage> GetConnectedStages()
+        {
+            var seen = new HashSet<Stage>();
+            foreach (var lane in lanes)
+            {
+                if (lane == null || lane.nextLane == null) continue;
+                Stage next = lane.nextLane.GetComponentInParent<Stage>();
+                if (next != null && seen.Add(next))
+                    yield return next;
+            }
+        }
+
         // ==================== LANE SYSTEM (delegated to LaneManager) ====================
 
         public int GetLaneIndex(StageLane lane) => laneManager.GetLaneIndex(lane);
         public StageLane GetLaneByIndex(int index) => laneManager.GetLaneByIndex(index);
-        public StageLane GetVehicleLane(Vehicle vehicle) => laneManager.GetVehicleLane(vehicle);
         public void AssignVehicleToLane(Vehicle vehicle, StageLane targetLane) => laneManager.AssignVehicleToLane(vehicle, targetLane);
-        public void AssignVehicleToDefaultLane(Vehicle vehicle) => laneManager.AssignVehicleToDefaultLane(vehicle);
         public void ProcessLaneTurnEffects(Vehicle vehicle) => laneManager.ProcessLaneTurnEffects(vehicle);
     }
 }

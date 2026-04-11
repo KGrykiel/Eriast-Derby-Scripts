@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 using UnityEngine;
-using Assets.Scripts.Conditions.VehicleConditions;
+using Assets.Scripts.Combat.Rolls.RollSpecs;
 using Assets.Scripts.Entities;
 using Assets.Scripts.Entities.Vehicles;
 
@@ -18,30 +18,29 @@ namespace Assets.Scripts.Stages.Lanes
         [Tooltip("Display name for this lane (e.g., 'Cliff Edge', 'Main Road')")]
         public string laneName = "Lane";
 
-        // ==================== MODIFIERS ====================
-        
-        [Header("Lane Modifiers")]
-        [Tooltip("StatusEffect applied to ALL vehicle components while in this lane.\n")]
-        public VehicleCondition laneStatusEffect;
-        
+        // ==================== LANE EFFECTS ====================
+
+        [Header("Lane Effects")]
+        [Tooltip("Effects executed when a vehicle enters this lane.")]
+        public List<RollNode> onEnterEffects = new();
+
+        [Tooltip("Effects executed when a vehicle exits this lane.")]
+        public List<RollNode> onExitEffects = new();
+
         // ==================== TURN EFFECTS ====================
-        
+
         [Header("Every Turn Effects")]
         [Tooltip("Effects that trigger every turn for vehicles in this lane")]
-        public List<LaneTurnEffect> turnEffects = new();
+        public List<RollNode> turnEffects = new();
         
         // ==================== STAGE TRANSITION ====================
-        
+
         [Header("Stage Transition")]
-        [Tooltip("Which stage this lane leads to (null = use Stage.nextStages default)")]
-        public Stage nextStage;
-        
-        [Tooltip("Which lane in the target stage to enter (-1 = use proportional mapping)")]
-        [Range(-1, 10)]
-        public int targetLaneIndex = -1;
+        [Tooltip("The lane in the next stage this lane leads to.")]
+        public StageLane nextLane;
         
         // ==================== RUNTIME DATA ====================
-        
+
         [HideInInspector]
         public List<Vehicle> vehiclesInLane = new();
     }

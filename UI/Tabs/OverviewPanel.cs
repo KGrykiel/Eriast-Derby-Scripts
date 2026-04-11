@@ -210,21 +210,14 @@ public class OverviewPanel : MonoBehaviour
 
         float remainingInCurrentStage = currentStage.length - currentProgress;
 
-        if (currentStage.nextStages != null && currentStage.nextStages.Count > 0)
+        foreach (var nextStage in currentStage.GetConnectedStages())
         {
-            foreach (var nextStage in currentStage.nextStages)
-            {
-                if (nextStage != null)
-                {
-                    visited.Add(nextStage);
-                    queue.Enqueue((nextStage, remainingInCurrentStage + nextStage.length));
-                }
-            }
+            visited.Add(nextStage);
+            queue.Enqueue((nextStage, remainingInCurrentStage + nextStage.length));
         }
-        else
-        {
+
+        if (queue.Count == 0)
             return 999999f;
-        }
 
         float shortestDistance = float.MaxValue;
 
@@ -239,16 +232,13 @@ public class OverviewPanel : MonoBehaviour
                 continue;
             }
 
-            if (stage.nextStages != null)
+            foreach (var nextStage in stage.GetConnectedStages())
             {
-                foreach (var nextStage in stage.nextStages)
+                if (!visited.Contains(nextStage))
                 {
-                    if (nextStage != null && !visited.Contains(nextStage))
-                    {
-                        visited.Add(nextStage);
-                        float newDistance = distanceSoFar + nextStage.length;
-                        queue.Enqueue((nextStage, newDistance));
-                    }
+                    visited.Add(nextStage);
+                    float newDistance = distanceSoFar + nextStage.length;
+                    queue.Enqueue((nextStage, newDistance));
                 }
             }
         }
@@ -270,21 +260,18 @@ public class OverviewPanel : MonoBehaviour
         {
             var (stage, distanceSoFar) = queue.Dequeue();
 
-            if (stage.nextStages != null)
+            foreach (var nextStage in stage.GetConnectedStages())
             {
-                foreach (var nextStage in stage.nextStages)
+                if (nextStage == startFinishStage)
                 {
-                    if (nextStage == startFinishStage)
-                    {
-                        if (distanceSoFar < lapDistance)
-                            lapDistance = distanceSoFar;
-                    }
-                    else if (nextStage != null && !visited.Contains(nextStage))
-                    {
-                        visited.Add(nextStage);
-                        float newDistance = distanceSoFar + nextStage.length;
-                        queue.Enqueue((nextStage, newDistance));
-                    }
+                    if (distanceSoFar < lapDistance)
+                        lapDistance = distanceSoFar;
+                }
+                else if (!visited.Contains(nextStage))
+                {
+                    visited.Add(nextStage);
+                    float newDistance = distanceSoFar + nextStage.length;
+                    queue.Enqueue((nextStage, newDistance));
                 }
             }
         }
