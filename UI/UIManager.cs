@@ -5,25 +5,26 @@ using UnityEngine.InputSystem;
 public class UIManager : MonoBehaviour
 {
     public static UIManager Instance { get; private set; }
-    
+
     [Header("UI Canvases")]
-    [Tooltip("The main DM interface canvas (tabs, leaderboards, events)")]
+    [Tooltip("The DM interface canvas (tabs, inspector, event feed). Toggled by the hotkey and the show/hide buttons.")]
     public Canvas dmInterfaceCanvas;
 
-    [Tooltip("The game view canvas (player actions, next turn button)")]
+    [Tooltip("The player action canvas (action buttons, next turn). Always active.")]
     public Canvas gameViewCanvas;
 
     [Header("Toggle Buttons")]
-    [Tooltip("Button to show DM Interface (on Game View)")]
+    [Tooltip("Button that shows the DM interface.")]
     public Button showDMInterfaceButton;
 
-    [Tooltip("Button to return to Game View (on DM Interface)")]
+    [Tooltip("Button that hides the DM interface.")]
     public Button returnToGameButton;
 
     [Header("Settings")]
+    [Tooltip("Key that toggles the DM interface panel.")]
     public Key toggleHotkey = Key.Tab;
 
-    private bool isDMInterfaceActive = false;
+    private InputAction _toggleAction;
 
     void Awake()
     {
@@ -33,6 +34,23 @@ public class UIManager : MonoBehaviour
             return;
         }
         Instance = this;
+
+        string keyName = toggleHotkey != Key.None ? toggleHotkey.ToString().ToLower() : "tab";
+
+        _toggleAction = new InputAction("ToggleDMInterface", InputActionType.Button);
+        _toggleAction.AddBinding($"<Keyboard>/{keyName}");
+        _toggleAction.performed += OnTogglePerformed;
+        _toggleAction.Enable();
+    }
+
+    void OnDestroy()
+    {
+        if (_toggleAction != null)
+        {
+            _toggleAction.performed -= OnTogglePerformed;
+            _toggleAction.Dispose();
+            _toggleAction = null;
+        }
     }
 
     void Start()
@@ -41,45 +59,38 @@ public class UIManager : MonoBehaviour
             showDMInterfaceButton.onClick.AddListener(ShowDMInterface);
 
         if (returnToGameButton != null)
-            returnToGameButton.onClick.AddListener(ShowGameView);
+            returnToGameButton.onClick.AddListener(HideDMInterface);
 
-        ShowGameView();
+        // Player action canvas is always visible.
+        if (gameViewCanvas != null)
+            gameViewCanvas.gameObject.SetActive(true);
+
+        HideDMInterface();
     }
 
-    void Update()
-    {
-        if (Keyboard.current != null && Keyboard.current[toggleHotkey].wasPressedThisFrame)
-            ToggleView();
-    }
+    private void OnTogglePerformed(InputAction.CallbackContext ctx) => ToggleView();
 
     public void ShowDMInterface()
     {
         if (dmInterfaceCanvas != null)
             dmInterfaceCanvas.gameObject.SetActive(true);
-
-        isDMInterfaceActive = true;
-
-        Debug.Log("[UIManager] Switched to DM Interface");
     }
 
-    public void ShowGameView()
+    // Kept for backward compatibility with any inspector button bindings.
+    public void ShowGameView() => HideDMInterface();
+
+    public void HideDMInterface()
     {
         if (dmInterfaceCanvas != null)
             dmInterfaceCanvas.gameObject.SetActive(false);
-
-        if (gameViewCanvas != null)
-            gameViewCanvas.gameObject.SetActive(true);
-
-        isDMInterfaceActive = false;
-
-        Debug.Log("[UIManager] Switched to Game View");
     }
 
     public void ToggleView()
     {
-        if (isDMInterfaceActive)
-            ShowGameView();
-        else
-            ShowDMInterface();
+        if (dmInterfaceCanvas == null)
+            return;
+
+        bool isVisible = dmInterfaceCanvas.gameObject.activeSelf;
+        dmInterfaceCanvas.gameObject.SetActive(!isVisible);
     }
 }

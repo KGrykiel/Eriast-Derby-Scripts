@@ -35,6 +35,11 @@ public class TabManager : MonoBehaviour
         ShowTab(focusPanel, focusTabButton);
     }
 
+    public void ShowInspectorTab()
+    {
+        ShowTab(inspectorPanel, inspectorTabButton);
+    }
+
     private void ShowTab(GameObject panelToShow, Button buttonClicked)
     {
         focusPanel.SetActive(false);
