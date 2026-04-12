@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Assets.Scripts.Stages;
 using Assets.Scripts.Entities.Vehicles;
+using Assets.Scripts.Managers;
 
 namespace Assets.Scripts.Logging
 {
@@ -12,17 +13,16 @@ namespace Assets.Scripts.Logging
         private static RaceHistory instance;
         private static RaceHistory Instance => instance ??= new RaceHistory();
 
-        private GameManager gameManager;
+        private TurnStateMachine stateMachine;
 
         private List<RaceEvent> allEvents = new();
         public int maxStoredEvents = 10000;
 
         public static IReadOnlyList<RaceEvent> AllEvents => Instance.allEvents;
 
-        public static void Initialize(GameManager gm)
+        public static void Initialize(TurnStateMachine sm)
         {
-            instance = new RaceHistory();
-            instance.gameManager = gm;
+            Instance.stateMachine = sm;
         }
 
         public static RaceEvent Log(
@@ -50,9 +50,7 @@ namespace Assets.Scripts.Logging
 
         private static int GetCurrentRound()
         {
-            if (Instance.gameManager == null) return 0;
-            var stateMachine = Instance.gameManager.GetStateMachine();
-            return stateMachine?.CurrentRound ?? 0;
+            return Instance.stateMachine?.CurrentRound ?? 0;
         }
 
         private void LogEventInternal(RaceEvent evt)
@@ -84,7 +82,7 @@ namespace Assets.Scripts.Logging
 
         public static void ClearHistory()
         {
-            Instance.allEvents.Clear();
+            instance = new RaceHistory();
         }
     }
 }

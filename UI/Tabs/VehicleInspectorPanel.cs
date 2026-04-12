@@ -109,19 +109,14 @@ public class VehicleInspectorPanel : MonoBehaviour
 
     private void TryInitialize()
     {
-        var gameManager = FindFirstObjectByType<GameManager>();
-        if (gameManager != null)
+        var vehicles = RacePositionTracker.GetAll();
+        if (vehicles != null && vehicles.Count > 0)
         {
-            var vehicles = gameManager.GetVehicles();
-            
-            if (vehicles != null && vehicles.Count > 0)
-            {
-                allVehicles = vehicles;
-                PopulateDropdown();
-                initialized = true;
+            allVehicles = vehicles;
+            PopulateDropdown();
+            initialized = true;
 
-                lastEventCount = RaceHistory.AllEvents.Count;
-            }
+            lastEventCount = RaceHistory.AllEvents.Count;
         }
     }
     

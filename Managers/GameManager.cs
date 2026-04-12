@@ -41,7 +41,6 @@ public class GameManager : MonoBehaviour
     private TurnPhaseContext phaseContext;
     
     // Cached references
-    private List<Stage> stages;
     private bool isGameOver = false;
 
     // ==================== INITIALIZATION ====================
@@ -59,13 +58,12 @@ public class GameManager : MonoBehaviour
             Debug.LogWarning("[GameManager] No TrackDefinition assigned — stage transitions will not work.");
 
         RaceHistory.ClearHistory();
-        RaceHistory.Initialize(this);
 
-        stages = TrackDefinition.GetAll();
         List<Vehicle> vehicles = RacePositionTracker.GetAll();
 
         InitializeVehiclePositions(vehicles);
         InitializeControllers(vehicles);
+        RaceHistory.Initialize(stateMachine);
 
         phaseContext = new TurnPhaseContext(stateMachine, turnController, playerController);
         stateMachine.Run(phaseContext);
@@ -87,7 +85,7 @@ public class GameManager : MonoBehaviour
     private void InitializeControllers(List<Vehicle> vehicles)
     {
         eventLogger = new TurnEventLogger();
-        eventLogger.LogRaceInitialized(vehicles.Count, stages.Count);
+        eventLogger.LogRaceInitialized(vehicles.Count, TrackDefinition.GetAll().Count);
 
         foreach (var vehicle in vehicles)
         {
