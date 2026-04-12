@@ -87,17 +87,18 @@ public class OverviewPanel : MonoBehaviour
 
             display += $"{posIcon} {name}\n";
 
-            string stageName = vehicle.CurrentStage != null ? vehicle.CurrentStage.stageName : "Unknown";
-            float stageLength = vehicle.CurrentStage != null ? vehicle.CurrentStage.length : 0;
-            display += $"   {stageName} ({vehicle.Progress:F1}/{stageLength:F0}m)";
+            var vStage = RacePositionTracker.GetStage(vehicle);
+            string stageName = vStage != null ? vStage.stageName : "Unknown";
+            float stageLength = vStage != null ? vStage.length : 0;
+            display += $"   {stageName} ({RacePositionTracker.GetProgress(vehicle):F1}/{stageLength:F0}m)";
 
             if (showDistanceToFinish)
             {
                 float distToFinish = -CalculateTotalProgress(vehicle);
 
-                if (vehicle.CurrentStage != null && vehicle.CurrentStage.isFinishLine)
+                if (vStage != null && TrackDefinition.IsFinish(vStage))
                 {
-                    float remaining = vehicle.CurrentStage.length - vehicle.Progress;
+                    float remaining = vStage.length - RacePositionTracker.GetProgress(vehicle);
                     display += $" <color=#FFD700>[{remaining:F1}m to finish!]</color>";
                 }
                 else
@@ -188,96 +189,18 @@ public class OverviewPanel : MonoBehaviour
 
     private float CalculateTotalProgress(Vehicle vehicle)
     {
-        if (vehicle.CurrentStage == null)
+        var vStage = RacePositionTracker.GetStage(vehicle);
+        if (vStage == null)
             return float.MinValue;
 
-        if (vehicle.CurrentStage.isFinishLine)
-        {
-            return -(vehicle.CurrentStage.length - vehicle.Progress);
-        }
+        if (TrackDefinition.Active == null)
+            return -999999f;
 
-        float shortestDistanceToFinish = FindShortestDistanceToFinish(vehicle.CurrentStage, vehicle.Progress);
+        if (TrackDefinition.Active.IsFinishStage(vStage))
+            return -(vStage.length - RacePositionTracker.GetProgress(vehicle));
+
+        float shortestDistanceToFinish = TrackDefinition.Active.GetShortestDistanceToFinish(vStage, RacePositionTracker.GetProgress(vehicle));
         return -shortestDistanceToFinish;
-    }
-
-    private float FindShortestDistanceToFinish(Stage currentStage, float currentProgress)
-    {
-        if (currentStage.isFinishLine && currentProgress < 1f)
-            return CalculateFullLapDistance(currentStage);
-
-        Queue<(Stage stage, float distance)> queue = new();
-        HashSet<Stage> visited = new();
-
-        float remainingInCurrentStage = currentStage.length - currentProgress;
-
-        foreach (var nextStage in currentStage.GetConnectedStages())
-        {
-            visited.Add(nextStage);
-            queue.Enqueue((nextStage, remainingInCurrentStage + nextStage.length));
-        }
-
-        if (queue.Count == 0)
-            return 999999f;
-
-        float shortestDistance = float.MaxValue;
-
-        while (queue.Count > 0)
-        {
-            var (stage, distanceSoFar) = queue.Dequeue();
-
-            if (stage.isFinishLine)
-            {
-                if (distanceSoFar < shortestDistance)
-                    shortestDistance = distanceSoFar;
-                continue;
-            }
-
-            foreach (var nextStage in stage.GetConnectedStages())
-            {
-                if (!visited.Contains(nextStage))
-                {
-                    visited.Add(nextStage);
-                    float newDistance = distanceSoFar + nextStage.length;
-                    queue.Enqueue((nextStage, newDistance));
-                }
-            }
-        }
-
-        return shortestDistance == float.MaxValue ? 999999f : shortestDistance;
-    }
-
-    private float CalculateFullLapDistance(Stage startFinishStage)
-    {
-        Queue<(Stage stage, float distance)> queue = new();
-        HashSet<Stage> visited = new();
-
-        visited.Add(startFinishStage);
-        queue.Enqueue((startFinishStage, startFinishStage.length));
-
-        float lapDistance = float.MaxValue;
-
-        while (queue.Count > 0)
-        {
-            var (stage, distanceSoFar) = queue.Dequeue();
-
-            foreach (var nextStage in stage.GetConnectedStages())
-            {
-                if (nextStage == startFinishStage)
-                {
-                    if (distanceSoFar < lapDistance)
-                        lapDistance = distanceSoFar;
-                }
-                else if (!visited.Contains(nextStage))
-                {
-                    visited.Add(nextStage);
-                    float newDistance = distanceSoFar + nextStage.length;
-                    queue.Enqueue((nextStage, newDistance));
-                }
-            }
-        }
-
-        // If no loop found, return a large number
-        return lapDistance == float.MaxValue ? 999999f : lapDistance;
     }
 
     private string GetPositionIcon(int position)

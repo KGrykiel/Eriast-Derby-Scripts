@@ -3,10 +3,12 @@ using System.Linq;
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
+using Assets.Scripts.Managers;
 using Assets.Scripts.Stages;
 using Assets.Scripts.Stages.Lanes;
 using Assets.Scripts.Conditions.EntityConditions;
 using Assets.Scripts.Entities;
+using Assets.Scripts.Entities.Vehicles;
 
 namespace Assets.Scripts.UI.Tabs.Lanes
 {
@@ -60,7 +62,7 @@ namespace Assets.Scripts.UI.Tabs.Lanes
 
             if (vehicleCountText != null)
             {
-                int count = lane.vehiclesInLane?.Count ?? 0;
+                int count = RacePositionTracker.GetVehiclesInLane(lane).Count;
                 vehicleCountText.text = count > 0 ? $"({count})" : "";
             }
 
@@ -75,11 +77,11 @@ namespace Assets.Scripts.UI.Tabs.Lanes
             if (lane.turnEffects != null && lane.turnEffects.Count > 0)
                 parts.Add($"⚠{lane.turnEffects.Count}");
 
-            if (lane.nextLane != null)
+            if (TrackDefinition.Active != null)
             {
-                Stage connectedStage = lane.nextLane.GetComponentInParent<Stage>();
-                if (connectedStage != null)
-                    parts.Add($"→{connectedStage.stageName}");
+                Stage nextStage = TrackDefinition.Active.GetNextStage(lane);
+                if (nextStage != null)
+                    parts.Add($"→{nextStage.stageName}");
             }
 
             return parts.Count > 0 ? string.Join(" ", parts) : "-";
@@ -104,12 +106,12 @@ namespace Assets.Scripts.UI.Tabs.Lanes
             }
             spawnedCards.Clear();
 
-            if (lane.vehiclesInLane == null || vehicleCardPrefab == null || vehicleContainer == null)
+            if (vehicleCardPrefab == null || vehicleContainer == null)
                 return;
 
-            var sortedVehicles = lane.vehiclesInLane
+            var sortedVehicles = RacePositionTracker.GetVehiclesInLane(lane)
                 .Where(v => v != null)
-                .OrderByDescending(v => v.Progress)
+                .OrderByDescending(v => RacePositionTracker.GetProgress(v))
                 .ToList();
 
             foreach (var vehicle in sortedVehicles)

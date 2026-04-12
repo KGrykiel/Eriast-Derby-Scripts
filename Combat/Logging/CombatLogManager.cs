@@ -9,6 +9,7 @@ using Assets.Scripts.Core;
 using Assets.Scripts.Conditions;
 using Assets.Scripts.Entities.Vehicles;
 using Assets.Scripts.Entities;
+using Assets.Scripts.Managers;
 
 namespace Assets.Scripts.Combat.Logging
 {
@@ -60,7 +61,7 @@ namespace Assets.Scripts.Combat.Logging
 
             var logEvt = RaceHistory.Log(
                 EventType.Combat, importance, message,
-                targetVehicle?.CurrentStage,
+                RacePositionTracker.GetStage(targetVehicle),
                 attackerVehicle, targetVehicle);
 
             logEvt.WithMetadata("rollBreakdown", CombatFormatter.FormatAttackDetailed(evt.Roll));
@@ -102,7 +103,7 @@ namespace Assets.Scripts.Combat.Logging
 
             var logEvt = RaceHistory.Log(
                 EventType.Combat, importance, message,
-                targetVehicle?.CurrentStage,
+                RacePositionTracker.GetStage(targetVehicle),
                 sourceVehicle, targetVehicle);
 
             logEvt.WithMetadata("rollBreakdown", CombatFormatter.FormatSaveDetailed(evt.Roll, saveTypeName));
@@ -140,7 +141,7 @@ namespace Assets.Scripts.Combat.Logging
 
             var logEvt = RaceHistory.Log(
                 EventType.Combat, importance, message,
-                sourceVehicle?.CurrentStage,
+                RacePositionTracker.GetStage(sourceVehicle),
                 sourceVehicle);
 
             logEvt.WithMetadata("rollBreakdown", CombatFormatter.FormatSkillCheckDetailed(evt.Roll, checkTypeName));
@@ -176,7 +177,7 @@ namespace Assets.Scripts.Combat.Logging
 
             var logEvt = RaceHistory.Log(
                 EventType.Combat, EventImportance.High, message,
-                attackerVehicle?.CurrentStage,
+                RacePositionTracker.GetStage(attackerVehicle),
                 attackerVehicle, defenderVehicle);
 
             logEvt.WithMetadata("rollBreakdown", CombatFormatter.FormatOpposedCheckDetailed(evt.Roll, evt.DefenderRoll, evt.AttackerCheckName, evt.DefenderCheckName));
@@ -212,9 +213,11 @@ namespace Assets.Scripts.Combat.Logging
             else
                 message = $"{sourceName} deals {damageText} to {targetName}";
 
+            var logStage = RacePositionTracker.GetStage(targetVehicle);
+            if (logStage == null) logStage = RacePositionTracker.GetStage(attackerVehicle);
             var logEvt = RaceHistory.Log(
                 EventType.Combat, EventImportance.High, message,
-                targetVehicle?.CurrentStage ?? attackerVehicle?.CurrentStage,
+                logStage,
                 attackerVehicle, targetVehicle);
 
             var results = damages.Select(d => d.Result).ToList();
@@ -296,7 +299,7 @@ namespace Assets.Scripts.Combat.Logging
 
             var logEvt = RaceHistory.Log(
                 EventType.Condition, importance, message,
-                targetVehicle?.CurrentStage,
+                RacePositionTracker.GetStage(targetVehicle),
                 sourceVehicle, targetVehicle);
 
             logEvt.WithMetadata("effectBreakdown", CombatFormatter.FormatEntityConditionTooltip(applied));
@@ -338,7 +341,7 @@ namespace Assets.Scripts.Combat.Logging
                 EventType.Resource,
                 playerInvolved ? EventImportance.Medium : EventImportance.Low,
                 message,
-                targetVehicle?.CurrentStage,
+                RacePositionTracker.GetStage(targetVehicle),
                 sourceVehicle, targetVehicle);
 
             var results = restorations.Select(r => r.Result).ToList();
@@ -507,7 +510,7 @@ namespace Assets.Scripts.Combat.Logging
 
             var logEvt = RaceHistory.Log(
                 EventType.Condition, importance, message,
-                targetVehicle != null ? targetVehicle.CurrentStage : null,
+                RacePositionTracker.GetStage(targetVehicle),
                 sourceVehicle, targetVehicle);
 
             logEvt.WithMetadata("effectBreakdown", CombatFormatter.FormatVehicleConditionTooltip(applied));
@@ -551,7 +554,7 @@ namespace Assets.Scripts.Combat.Logging
         private static RaceEvent LogConditionEvent(EventImportance importance, string message, ConditionLogContext ctx)
         {
             if (ctx.TargetVehicle != null)
-                return RaceHistory.Log(EventType.Condition, importance, message, ctx.TargetVehicle.CurrentStage, ctx.TargetVehicle);
+                return RaceHistory.Log(EventType.Condition, importance, message, RacePositionTracker.GetStage(ctx.TargetVehicle), ctx.TargetVehicle);
             return RaceHistory.Log(EventType.Condition, importance, message);
         }
 
@@ -623,7 +626,7 @@ namespace Assets.Scripts.Combat.Logging
                 EventType.Resource,
                 isPlayer ? EventImportance.Medium : EventImportance.Low,
                 $"{vehicleName} used {evt.Template.name}{suffix}",
-                evt.Vehicle != null ? evt.Vehicle.CurrentStage : null,
+                RacePositionTracker.GetStage(evt.Vehicle),
                 evt.Vehicle);
         }
 
@@ -636,7 +639,7 @@ namespace Assets.Scripts.Combat.Logging
                 EventType.Resource,
                 isPlayer ? EventImportance.Medium : EventImportance.Low,
                 $"{vehicleName} restored {evt.Amount}x {evt.Template.name} ({evt.ChargesAfter} total)",
-                evt.Vehicle != null ? evt.Vehicle.CurrentStage : null,
+                RacePositionTracker.GetStage(evt.Vehicle),
                 evt.Vehicle);
         }
 
@@ -648,7 +651,7 @@ namespace Assets.Scripts.Combat.Logging
                 EventType.Resource,
                 EventImportance.High,
                 $"{vehicleName} tried to use {evt.Template.name} but had no charges",
-                evt.Vehicle != null ? evt.Vehicle.CurrentStage : null,
+                RacePositionTracker.GetStage(evt.Vehicle),
                 evt.Vehicle);
         }
     }

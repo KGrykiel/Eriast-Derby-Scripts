@@ -138,7 +138,7 @@ namespace Assets.Scripts.Managers.PlayerUI
             foreach (var lane in lanes)
             {
                 Button btn = UnityEngine.Object.Instantiate(ui.targetButtonPrefab, ui.targetButtonContainer);
-                int count = lane.vehiclesInLane.Count;
+                int count = RacePositionTracker.GetVehiclesInLane(lane).Count;
                 btn.GetComponentInChildren<TextMeshProUGUI>().text =
                     $"{lane.laneName} ({count} vehicle{(count == 1 ? "" : "s")})";
                 StageLane captured = lane;

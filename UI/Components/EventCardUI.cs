@@ -277,7 +277,7 @@ namespace Assets.Scripts.UI.Components
 
             object effect = invocation switch
             {
-                EntityEffectInvocation e => (object)e.effect,
+                EntityEffectInvocation e => e.effect,
                 SeatEffectInvocation s   => s.effect,
                 VehicleEffectInvocation v => v.effect,
                 _ => null

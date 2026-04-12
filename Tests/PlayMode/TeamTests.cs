@@ -4,6 +4,7 @@ using UnityEngine;
 using Assets.Scripts.Entities.Vehicles;
 using Assets.Scripts.Stages;
 using Assets.Scripts.Tests.Helpers;
+using Assets.Scripts.Managers;
 
 namespace Assets.Scripts.Tests.PlayMode
 {
@@ -37,8 +38,7 @@ namespace Assets.Scripts.Tests.PlayMode
             vehicle.team = team;
             if (stage != null)
             {
-                vehicle.SetCurrentStage(stage);
-                stage.vehiclesInStage.Add(vehicle);
+                RacePositionTracker.SetStage(vehicle, stage);
             }
             cleanup.Add(vehicle.gameObject);
             return vehicle;

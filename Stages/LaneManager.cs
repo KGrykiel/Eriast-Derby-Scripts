@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using UnityEngine;
+using Assets.Scripts.Managers;
 using Assets.Scripts.Stages.Lanes;
 using Assets.Scripts.Combat.Rolls.RollSpecs;
 using Assets.Scripts.Entities.Vehicles;
@@ -49,23 +50,6 @@ namespace Assets.Scripts.Stages
             return Lanes[index];
         }
 
-        private StageLane GetVehicleLane(Vehicle vehicle)
-        {
-            if (vehicle == null || Lanes == null || Lanes.Count == 0)
-                return null;
-
-            if (vehicle.CurrentLane != null && Lanes.Contains(vehicle.CurrentLane))
-                return vehicle.CurrentLane;
-
-            foreach (var lane in Lanes)
-            {
-                if (lane.vehiclesInLane.Contains(vehicle))
-                    return lane;
-            }
-
-            return null;
-        }
-
         // ==================== LANE ASSIGNMENT ====================
 
         public void AssignIncomingVehicle(Vehicle vehicle, StageLane targetLane = null)
@@ -83,25 +67,20 @@ namespace Assets.Scripts.Stages
                 return;
             }
 
-            StageLane currentLane = GetVehicleLane(vehicle);
+            StageLane currentLane = RacePositionTracker.GetLane(vehicle);
             if (currentLane != null && currentLane != targetLane)
-            {
-                currentLane.vehiclesInLane.Remove(vehicle);
                 ExecuteRollNodes(currentLane.onExitEffects, vehicle, currentLane.name);
-            }
 
-            if (!targetLane.vehiclesInLane.Contains(vehicle))
-                targetLane.vehiclesInLane.Add(vehicle);
-            vehicle.SetCurrentLane(targetLane);
+            RacePositionTracker.SetLane(vehicle, targetLane);
             ExecuteRollNodes(targetLane.onEnterEffects, vehicle, targetLane.name);
         }
 
         public void HandleStageExit(Vehicle vehicle)
         {
-            StageLane lane = GetVehicleLane(vehicle);
+            StageLane lane = RacePositionTracker.GetLane(vehicle);
             if (lane == null) return;
-            lane.vehiclesInLane.Remove(vehicle);
             ExecuteRollNodes(lane.onExitEffects, vehicle, lane.name);
+            RacePositionTracker.SetLane(vehicle, null);
         }
 
         private static void ExecuteRollNodes(List<RollNode> nodes, Vehicle vehicle, string source)
@@ -121,8 +100,8 @@ namespace Assets.Scripts.Stages
         {
             if (vehicle == null) return;
 
-            StageLane currentLane = GetVehicleLane(vehicle);
-            if (currentLane == null || currentLane.turnEffects == null || currentLane.turnEffects.Count == 0)
+            StageLane currentLane = RacePositionTracker.GetLane(vehicle);
+            if (currentLane == null || currentLane.turnEffects == null)
                 return;
 
             foreach (var rollNode in currentLane.turnEffects)

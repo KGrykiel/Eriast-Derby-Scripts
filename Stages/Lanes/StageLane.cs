@@ -2,7 +2,6 @@
 using UnityEngine;
 using Assets.Scripts.Combat.Rolls.RollSpecs;
 using Assets.Scripts.Entities;
-using Assets.Scripts.Entities.Vehicles;
 
 namespace Assets.Scripts.Stages.Lanes
 {
@@ -33,15 +32,5 @@ namespace Assets.Scripts.Stages.Lanes
         [Tooltip("Effects that trigger every turn for vehicles in this lane")]
         public List<RollNode> turnEffects = new();
         
-        // ==================== STAGE TRANSITION ====================
-
-        [Header("Stage Transition")]
-        [Tooltip("The lane in the next stage this lane leads to.")]
-        public StageLane nextLane;
-        
-        // ==================== RUNTIME DATA ====================
-
-        [HideInInspector]
-        public List<Vehicle> vehiclesInLane = new();
-    }
-}
+            }
+        }

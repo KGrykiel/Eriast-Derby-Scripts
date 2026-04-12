@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using Assets.Scripts.Combat.Rolls.RollSpecs;
 using Assets.Scripts.Entities;
 using Assets.Scripts.Entities.Vehicles;
+using Assets.Scripts.Managers;
 using SerializeReferenceEditor;
 
 namespace Assets.Scripts.Combat.Rolls.Targeting
@@ -32,14 +33,15 @@ namespace Assets.Scripts.Combat.Rolls.Targeting
             Vehicle vehicle = ctx.SourceActor?.GetVehicle();
             if (vehicle == null)
                 vehicle = EntityHelpers.GetVehicleFromTarget(ctx.Target);
-            if (vehicle == null || vehicle.CurrentStage == null)
+            var stage = RacePositionTracker.GetStage(vehicle);
+            if (vehicle == null || stage == null)
                 return System.Array.Empty<IRollTarget>();
 
             Vehicle self = ExcludeSelf ? vehicle : null;
             Vehicle primaryTarget = ExcludeTarget ? EntityHelpers.GetVehicleFromTarget(ctx.Target) : null;
 
             var results = new List<IRollTarget>();
-            foreach (var v in vehicle.CurrentStage.vehiclesInStage)
+            foreach (var v in RacePositionTracker.GetVehiclesInStage(stage))
             {
                 if (v != null && v != self && v != primaryTarget)
                     results.Add(v);

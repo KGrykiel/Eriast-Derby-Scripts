@@ -4,6 +4,8 @@ using UnityEngine.UI;
 using System.Collections.Generic;
 using System.Linq;
 using Assets.Scripts.Logging;
+using Assets.Scripts.Managers;
+using Assets.Scripts.Stages;
 using Assets.Scripts.UI.Components;
 using Assets.Scripts.Entities.Vehicles;
 using Assets.Scripts.Entities.Vehicles.VehicleComponents;
@@ -247,29 +249,31 @@ public class VehicleInspectorPanel : MonoBehaviour
             statusValueText.color = GetStatusColor(selectedVehicle.Status);
         }
         
+        Stage selectedStage = RacePositionTracker.GetStage(selectedVehicle);
+
         if (stageValueText != null)
         {
-            if (selectedVehicle.CurrentStage != null)
+            if (selectedStage != null)
             {
-                stageValueText.text = selectedVehicle.CurrentStage.stageName;
+                stageValueText.text = selectedStage.stageName;
             }
             else
             {
                 stageValueText.text = "N/A";
             }
         }
-        
-        if (progressBar != null && progressText != null && selectedVehicle.CurrentStage != null)
+
+        if (progressBar != null && progressText != null && selectedStage != null)
         {
-            float progress = selectedVehicle.Progress;
-            float length = selectedVehicle.CurrentStage.length;
+            float progress = RacePositionTracker.GetProgress(selectedVehicle);
+            float length = selectedStage.length;
             float percent = length > 0 ? progress / length : 0f;
-            
+
             progressBar.value = percent;
             progressText.text = $"{progress:F1}/{length:F0}m";
         }
     }
-    
+
     private void PopulateStats()
     {
         if (vehicleHPValueText != null)
@@ -570,7 +574,7 @@ public class VehicleInspectorPanel : MonoBehaviour
         {
             int maxHP = component.GetMaxHealth();
             float percent = maxHP > 0 
-                ? (float)component.GetCurrentHealth() / (float)maxHP 
+                ? component.GetCurrentHealth() / (float)maxHP 
                 : 0f;
             hpBar.minValue = 0f;
             hpBar.maxValue = 1f;

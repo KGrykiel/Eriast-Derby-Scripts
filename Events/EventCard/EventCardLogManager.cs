@@ -1,4 +1,5 @@
 ﻿using Assets.Scripts.Entities.Vehicles;
+using Assets.Scripts.Managers;
 
 namespace Assets.Scripts.Events.EventCard
 {
@@ -10,7 +11,7 @@ namespace Assets.Scripts.Events.EventCard
                 Logging.EventType.EventCard,
                 card.dramaticWeight,
                 $"{vehicle.vehicleName}: {card.narrativeText}",
-                vehicle.CurrentStage,
+                RacePositionTracker.GetStage(vehicle),
                 vehicle
             ).WithMetadata("cardName", card.cardName);
         }
@@ -21,7 +22,7 @@ namespace Assets.Scripts.Events.EventCard
                 Logging.EventType.EventCard,
                 card.dramaticWeight,
                 result.narrativeOutcome,
-                vehicle.CurrentStage,
+                RacePositionTracker.GetStage(vehicle),
                 vehicle
             ).WithMetadata("cardName", card.cardName)
              .WithMetadata("success", result.success);

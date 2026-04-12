@@ -62,9 +62,9 @@ namespace Assets.Scripts.Managers.Logging.Results
 
             var record = new RaceEliminationRecord(
                 vehicle,
-                vehicle.CurrentStage,
+                RacePositionTracker.GetStage(vehicle),
                 stateMachine.CurrentRound,
-                vehicle.Progress);
+                RacePositionTracker.GetProgress(vehicle));
 
             eliminationRecords.Add(record);
             CheckRaceOver();
@@ -88,9 +88,9 @@ namespace Assets.Scripts.Managers.Logging.Results
 
                 eliminationRecords.Add(new RaceEliminationRecord(
                     vehicle,
-                    vehicle.CurrentStage,
+                    RacePositionTracker.GetStage(vehicle),
                     roundNumber,
-                    vehicle.Progress));
+                    RacePositionTracker.GetProgress(vehicle)));
             }
 
             raceOver = true;

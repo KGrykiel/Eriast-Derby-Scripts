@@ -38,10 +38,11 @@
             vehicle.UpdateStatusEffects();
 
             // 7. Process lane and stage turn effects (hazards, environmental checks)
-            if (vehicle.CurrentStage != null)
+            var currentStage = RacePositionTracker.GetStage(vehicle);
+            if (currentStage != null)
             {
-                vehicle.CurrentStage.ProcessLaneTurnEffects(vehicle);
-                vehicle.CurrentStage.ProcessStageTurnEffects(vehicle);
+                currentStage.ProcessLaneTurnEffects(vehicle);
+                currentStage.ProcessStageTurnEffects(vehicle);
             }
 
             TurnEventBus.EmitTurnStarted(vehicle);

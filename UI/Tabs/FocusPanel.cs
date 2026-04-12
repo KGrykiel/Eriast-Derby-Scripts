@@ -3,6 +3,7 @@ using TMPro;
 using System.Collections.Generic;
 using System.Linq;
 using Assets.Scripts.Logging;
+using Assets.Scripts.Managers;
 using Assets.Scripts.Conditions.EntityConditions;
 using Assets.Scripts.Entities.Vehicles;
 using Assets.Scripts.UI;
@@ -77,10 +78,11 @@ public class FocusPanel : MonoBehaviour
         status += $"<b>Name:</b> {playerVehicle.vehicleName}\n";
         status += $"<b>Status:</b> {GetStatusColor(playerVehicle.Status)}\n\n";
 
-        if (playerVehicle.CurrentStage != null)
+        var playerStage = RacePositionTracker.GetStage(playerVehicle);
+        if (playerStage != null)
         {
-            status += $"<b>Stage:</b> {playerVehicle.CurrentStage.stageName}\n";
-            status += $"<b>Progress:</b> {playerVehicle.Progress:F1}/{playerVehicle.CurrentStage.length:F0}m\n\n";
+            status += $"<b>Stage:</b> {playerStage.stageName}\n";
+            status += $"<b>Progress:</b> {RacePositionTracker.GetProgress(playerVehicle):F1}/{playerStage.length:F0}m\n\n";
         }
         
         int health = playerVehicle.Chassis?.GetCurrentHealth() ?? 0;
@@ -126,7 +128,7 @@ public class FocusPanel : MonoBehaviour
     
     private void UpdateSameStageVehicles()
     {
-        if (sameStageVehiclesText == null || playerVehicle == null || playerVehicle.CurrentStage == null)
+        if (sameStageVehiclesText == null || playerVehicle == null || RacePositionTracker.GetStage(playerVehicle) == null)
         {
             if (sameStageVehiclesText != null)
                 sameStageVehiclesText.text = "<color=#888888>No other vehicles in this stage</color>";
@@ -146,11 +148,12 @@ public class FocusPanel : MonoBehaviour
             return;
         }
         
+        var playerStage = RacePositionTracker.GetStage(playerVehicle);
         var sameStageVehicles = turnController.AllVehicles
             .Where(v => v != null && 
                         v != playerVehicle && 
                         v.Status == VehicleStatus.Active &&
-                        v.CurrentStage == playerVehicle.CurrentStage)
+                        RacePositionTracker.GetStage(v) == playerStage)
             .ToList();
         
         if (sameStageVehicles.Count == 0)
@@ -159,7 +162,7 @@ public class FocusPanel : MonoBehaviour
             return;
         }
         
-        string display = $"<b><size=16><color=#FF8844>VEHICLES IN {playerVehicle.CurrentStage.stageName.ToUpper()}</color></size></b>\n\n";
+        string display = $"<b><size=16><color=#FF8844>VEHICLES IN {playerStage.stageName.ToUpper()}</color></size></b>\n\n";
         display += $"<color=#FFAA44> {sameStageVehicles.Count} vehicle(s) in combat range!</color>\n\n";
         
         foreach (var vehicle in sameStageVehicles)
@@ -182,7 +185,7 @@ public class FocusPanel : MonoBehaviour
             display += $"  AC: {armorClass} | ";
             display += $"Speed: {speed:F1}\n";
             
-            display += $"  Progress: {vehicle.Progress:F1}/{vehicle.CurrentStage.length:F0}m\n";
+            display += $"  Progress: {RacePositionTracker.GetProgress(vehicle):F1}/{playerStage.length:F0}m\n";
 
             display += "\n";
         }

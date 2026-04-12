@@ -5,6 +5,7 @@ using Assets.Scripts.Stages;
 using Assets.Scripts.Stages.Lanes;
 using Assets.Scripts.Conditions;
 using Assets.Scripts.Entities.Vehicles;
+using System;
 
 /// <summary>Stateless utilities for vehicle operations during turns (movement, power, targeting).</summary>
 public class TurnService
@@ -83,7 +84,7 @@ public class TurnService
                 vehicle.MarkMovementWarningLogged();
             }
 
-            vehicle.ApplyMovement(0);
+            vehicle.MarkMoved();
             return false;
         }
 
@@ -92,15 +93,18 @@ public class TurnService
 
         if (distance > 0)
         {
-            int oldProgress = vehicle.Progress;
-            vehicle.ApplyMovement(distance);
-            TurnEventBus.EmitMovementExecuted(vehicle, distance, drive.GetCurrentSpeed(), oldProgress, vehicle.Progress);
+            int oldProgress = RacePositionTracker.GetProgress(vehicle);
+            Stage currentStage = RacePositionTracker.GetStage(vehicle);
+            if (currentStage != null)
+                RacePositionTracker.SetProgress(vehicle, oldProgress + distance);
+            vehicle.MarkMoved();
+            TurnEventBus.EmitMovementExecuted(vehicle, distance, drive.GetCurrentSpeed(), oldProgress, RacePositionTracker.GetProgress(vehicle));
             vehicle.NotifyStatusEffectTrigger(RemovalTrigger.OnMovement);
             TryHandleStageTransitions(vehicle);
         }
         else
         {
-            vehicle.ApplyMovement(0);
+            vehicle.MarkMoved();
         }
 
         return true;
@@ -113,15 +117,25 @@ public class TurnService
     /// </summary>
     public void TryHandleStageTransitions(Vehicle vehicle)
     {
-        if (vehicle == null || vehicle.CurrentStage == null) return;
+        if (vehicle == null || RacePositionTracker.GetStage(vehicle) == null) return;
 
-        while (vehicle.Progress >= vehicle.CurrentStage.length)
+        Stage currentStage;
+        while ((currentStage = RacePositionTracker.GetStage(vehicle)) != null &&
+               RacePositionTracker.GetProgress(vehicle) >= currentStage.length)
         {
-            var currentLane = vehicle.CurrentLane;
+            StageLane currentLane = RacePositionTracker.GetLane(vehicle);
+            Debug.Log($"[TurnService] {vehicle.vehicleName} has reached the end of stage {currentStage.stageName} with progress {RacePositionTracker.GetProgress(vehicle)}");
             Stage nextStage = null;
 
-            if (currentLane != null && currentLane.nextLane != null)
-                nextStage = currentLane.nextLane.GetComponentInParent<Stage>();
+            TrackDefinition track = TrackDefinition.Active;
+            if (track != null)
+            {
+                nextStage = track.GetNextStage(currentLane);
+            }
+            else
+            {
+                Debug.LogWarning("[TurnService] No active TrackDefinition — stage transition cannot proceed.");
+            }
 
             if (nextStage != null)
                 MoveToStage(vehicle, nextStage, isPlayerChoice: false);
@@ -134,22 +148,26 @@ public class TurnService
     {
         if (vehicle == null || stage == null) return;
 
-        Stage previousStage = vehicle.CurrentStage;
-        StageLane targetLane = null;
-        if (vehicle.CurrentLane != null)
-            targetLane = vehicle.CurrentLane.nextLane;
+        Stage previousStage = RacePositionTracker.GetStage(vehicle);
+        StageLane currentLane = RacePositionTracker.GetLane(vehicle);
+        TrackDefinition track = TrackDefinition.Active;
+        StageLane targetLane = track != null ? track.GetTargetLane(currentLane) : null;
 
         if (previousStage != null)
             previousStage.TriggerLeave(vehicle);
 
-        vehicle.TransitionToStage(stage);
+        int carry = RacePositionTracker.GetProgress(vehicle) - (previousStage != null ? previousStage.length : 0);
+        RacePositionTracker.SetProgress(vehicle, carry);
+        RacePositionTracker.SetStage(vehicle, stage);
+        Vector3 stagePos = stage.transform.position;
+        vehicle.transform.position = new Vector3(stagePos.x, stagePos.y, vehicle.transform.position.z);
 
         stage.TriggerEnter(vehicle, targetLane);
 
-        if (stage.isFinishLine)
+        if (TrackDefinition.IsFinish(stage))
             TurnEventBus.EmitFinishLineCrossed(vehicle, stage);
 
-        TurnEventBus.EmitStageEntered(vehicle, stage, previousStage, vehicle.Progress, isPlayerChoice);
+        TurnEventBus.EmitStageEntered(vehicle, stage, previousStage, RacePositionTracker.GetProgress(vehicle), isPlayerChoice);
     }
     
     // ==================== COMBAT ====================
@@ -157,14 +175,15 @@ public class TurnService
     /// <summary>Returns all active vehicles in the same stage as <paramref name="source"/>, excluding source itself.</summary>
     public List<Vehicle> GetOtherVehiclesInStage(Vehicle source)
     {
-        if (source == null || source.CurrentStage == null)
+        Stage sourceStage = RacePositionTracker.GetStage(source);
+        if (source == null || sourceStage == null)
             return new List<Vehicle>();
 
         var others = new List<Vehicle>();
         foreach (var v in vehicles)
         {
             if (v == source) continue;
-            if (v.CurrentStage != source.CurrentStage) continue;
+            if (RacePositionTracker.GetStage(v) != sourceStage) continue;
             if (v.Status != VehicleStatus.Active) continue;
             others.Add(v);
         }
@@ -175,13 +194,14 @@ public class TurnService
     /// <summary>Returns all active vehicles in the same stage as <paramref name="source"/>, including source itself.</summary>
     public List<Vehicle> GetAllTargets(Vehicle source)
     {
-        if (source == null || source.CurrentStage == null)
+        Stage sourceStage = RacePositionTracker.GetStage(source);
+        if (source == null || sourceStage == null)
             return new List<Vehicle>();
 
         var targets = new List<Vehicle>();
         foreach (var v in vehicles)
         {
-            if (v.CurrentStage != source.CurrentStage) continue;
+            if (RacePositionTracker.GetStage(v) != sourceStage) continue;
             if (v.Status != VehicleStatus.Active) continue;
             targets.Add(v);
         }
@@ -192,7 +212,8 @@ public class TurnService
     /// <summary>Returns all active allies of <paramref name="source"/> in the same stage.</summary>
     public List<Vehicle> GetAlliedTargets(Vehicle source)
     {
-        if (source == null || source.team == null || source.CurrentStage == null)
+        Stage sourceStage = RacePositionTracker.GetStage(source);
+        if (source == null || source.team == null || sourceStage == null)
             return new List<Vehicle>();
 
         var allies = new List<Vehicle>();
@@ -200,7 +221,7 @@ public class TurnService
         {
             if (v == source) continue;
             if (v.team != source.team) continue;
-            if (v.CurrentStage != source.CurrentStage) continue;
+            if (RacePositionTracker.GetStage(v) != sourceStage) continue;
             if (v.Status != VehicleStatus.Active) continue;
             allies.Add(v);
         }

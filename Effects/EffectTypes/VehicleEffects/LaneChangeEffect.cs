@@ -1,5 +1,6 @@
 ﻿using System;
 using Assets.Scripts.Entities.Vehicles;
+using Assets.Scripts.Managers;
 using Assets.Scripts.Stages.Lanes;
 using SerializeReferenceEditor;
 using UnityEngine;
@@ -17,8 +18,8 @@ namespace Assets.Scripts.Effects.EffectTypes.VehicleEffects
 
         void IVehicleEffect.Apply(Vehicle target, EffectContext context)
         {
-            var stage = target.CurrentStage;
-            int currentIndex = stage.GetLaneIndex(target.CurrentLane);
+            var stage = RacePositionTracker.GetStage(target);
+            int currentIndex = stage.GetLaneIndex(RacePositionTracker.GetLane(target));
             if (currentIndex < 0)
             {
                 Debug.LogWarning($"[RelativeLaneChangeEffect] Current lane of '{target.name}' was not found in stage '{stage.name}'.");
@@ -46,7 +47,7 @@ namespace Assets.Scripts.Effects.EffectTypes.VehicleEffects
 
         void IVehicleEffect.Apply(Vehicle target, EffectContext context)
         {
-            var stage = target.CurrentStage;
+            var stage = RacePositionTracker.GetStage(target);
             var targetLane = stage.GetLaneByIndex(targetLaneIndex);
             if (targetLane == null)
             {

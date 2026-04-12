@@ -215,13 +215,14 @@ public class PlayerController : MonoBehaviour
                 break;
 
             case TargetingMode.Lane:
-                if (vehicle.CurrentStage != null)
+                var skillLaneStage = RacePositionTracker.GetStage(vehicle);
+                if (skillLaneStage != null)
                     uiCoordinator.TargetSelection.ShowLaneSelection(
-                        vehicle.CurrentStage.lanes, OnLaneSelected, OnTargetCancelClicked);
+                        skillLaneStage.lanes, OnLaneSelected, OnTargetCancelClicked);
                 break;
 
             case TargetingMode.OwnLane:
-                selectedTarget = vehicle.CurrentLane;
+                selectedTarget = RacePositionTracker.GetLane(vehicle);
                 selectedTargetComponent = null;
                 ExecuteSkill();
                 break;
@@ -252,7 +253,7 @@ public class PlayerController : MonoBehaviour
         var vehicle = CurrentPlayerVehicle;
         if (vehicle == null) return;
 
-        IRollTarget target = selectedTargetComponent != null ? (IRollTarget)selectedTargetComponent
+        IRollTarget target = selectedTargetComponent != null ? selectedTargetComponent
             : selectedTarget != null ? selectedTarget
             : vehicle;
 
@@ -369,13 +370,14 @@ public class PlayerController : MonoBehaviour
                 break;
 
             case TargetingMode.Lane:
-                if (vehicle.CurrentStage != null)
+                var consumableLaneStage = RacePositionTracker.GetStage(vehicle);
+                if (consumableLaneStage != null)
                     uiCoordinator.TargetSelection.ShowLaneSelection(
-                        vehicle.CurrentStage.lanes, OnConsumableLaneSelected, OnTargetCancelClicked);
+                        consumableLaneStage.lanes, OnConsumableLaneSelected, OnTargetCancelClicked);
                 break;
 
             case TargetingMode.OwnLane:
-                selectedTarget = vehicle.CurrentLane;
+                selectedTarget = RacePositionTracker.GetLane(vehicle);
                 selectedTargetComponent = null;
                 ExecuteConsumable();
                 break;
@@ -437,7 +439,7 @@ public class PlayerController : MonoBehaviour
         var vehicle = CurrentPlayerVehicle;
         if (vehicle == null) return;
 
-        IRollTarget target = selectedTargetComponent != null ? (IRollTarget)selectedTargetComponent
+        IRollTarget target = selectedTargetComponent != null ? selectedTargetComponent
             : selectedTarget != null ? selectedTarget
             : vehicle;
 

@@ -20,7 +20,6 @@ namespace Assets.Scripts.Tests.Helpers
             stageObject = new GameObject(name);
             var stage = stageObject.AddComponent<Stage>();
             stage.stageName = name;
-            stage.vehiclesInStage = new System.Collections.Generic.List<Vehicle>();
             stage.lanes = new System.Collections.Generic.List<StageLane>();
             return stage;
         }
@@ -47,7 +46,6 @@ namespace Assets.Scripts.Tests.Helpers
             laneObj.transform.SetParent(stageObject.transform);
             var lane = laneObj.AddComponent<StageLane>();
             lane.laneName = name;
-            lane.vehiclesInLane = new System.Collections.Generic.List<Vehicle>();
             stage.lanes.Add(lane);
             return lane;
         }

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using Assets.Scripts.Combat.Rolls.RollSpecs;
 using Assets.Scripts.Entities;
 using Assets.Scripts.Entities.Vehicles;
+using Assets.Scripts.Managers;
 using Assets.Scripts.Stages.Lanes;
 using SerializeReferenceEditor;
 
@@ -39,7 +40,7 @@ namespace Assets.Scripts.Combat.Rolls.Targeting
             Vehicle primaryTarget = ExcludeTarget ? EntityHelpers.GetVehicleFromTarget(ctx.Target) : null;
 
             var results = new List<IRollTarget>();
-            foreach (var v in lane.vehiclesInLane)
+            foreach (var v in RacePositionTracker.GetVehiclesInLane(lane))
             {
                 if (v != null && v != self && v != primaryTarget)
                     results.Add(v);
@@ -53,7 +54,7 @@ namespace Assets.Scripts.Combat.Rolls.Targeting
                 return lane;
 
             Vehicle vehicle = EntityHelpers.GetVehicleFromTarget(ctx.Target);
-            return vehicle != null ? vehicle.CurrentLane : null;
+            return vehicle != null ? RacePositionTracker.GetLane(vehicle) : null;
         }
     }
 }

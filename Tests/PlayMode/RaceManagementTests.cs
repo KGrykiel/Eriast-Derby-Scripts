@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using NUnit.Framework;
 using UnityEngine;
 using Assets.Scripts.Entities.Vehicles;
@@ -118,7 +118,7 @@ namespace Assets.Scripts.Tests.PlayMode
             var vehicle = CreateVehicle();
             var stage = TestStageFactory.CreateStage("Stage", out var stageObj);
             cleanup.Add(stageObj);
-            vehicle.SetCurrentStage(stage);
+            RacePositionTracker.SetStage(vehicle, stage);
             var stateMachine = new TurnStateMachine();
 
             bool skip = stateMachine.ShouldSkipTurn(vehicle);
@@ -132,7 +132,7 @@ namespace Assets.Scripts.Tests.PlayMode
             var vehicle = CreateVehicle();
             var stage = TestStageFactory.CreateStage("Stage", out var stageObj);
             cleanup.Add(stageObj);
-            vehicle.SetCurrentStage(stage);
+            RacePositionTracker.SetStage(vehicle, stage);
             vehicle.MarkAsFinished();
             var stateMachine = new TurnStateMachine();
 
@@ -147,7 +147,7 @@ namespace Assets.Scripts.Tests.PlayMode
             var vehicle = CreateVehicle();
             var stage = TestStageFactory.CreateStage("Stage", out var stageObj);
             cleanup.Add(stageObj);
-            vehicle.SetCurrentStage(stage);
+            RacePositionTracker.SetStage(vehicle, stage);
             vehicle.MarkAsDestroyed();
             var stateMachine = new TurnStateMachine();
 
@@ -245,7 +245,7 @@ namespace Assets.Scripts.Tests.PlayMode
             var vehicle = CreateVehicle();
             var stage = TestStageFactory.CreateStage("Stage1", out var stageObj);
             cleanup.Add(stageObj);
-            vehicle.SetCurrentStage(stage);
+            RacePositionTracker.SetStage(vehicle, stage);
             CreateTracker(new[] { vehicle });
             RaceResult result = null;
             TurnEventBus.OnRaceOver += r => result = r;
@@ -263,7 +263,7 @@ namespace Assets.Scripts.Tests.PlayMode
             var vehicle = CreateVehicle();
             var stage = TestStageFactory.CreateStage("Stage1", out var stageObj);
             cleanup.Add(stageObj);
-            vehicle.SetCurrentStage(stage);
+            RacePositionTracker.SetStage(vehicle, stage);
             CreateTracker(new[] { vehicle });
             RaceResult result = null;
             TurnEventBus.OnRaceOver += r => result = r;
@@ -280,7 +280,7 @@ namespace Assets.Scripts.Tests.PlayMode
             var vehicleB = CreateVehicle("VehicleB");
             var stage = TestStageFactory.CreateStage("Stage1", out var stageObj);
             cleanup.Add(stageObj);
-            vehicleB.SetCurrentStage(stage);
+            RacePositionTracker.SetStage(vehicleB, stage);
             CreateTracker(new[] { vehicleA, vehicleB });
             RaceResult result = null;
             TurnEventBus.OnRaceOver += r => result = r;
@@ -302,8 +302,8 @@ namespace Assets.Scripts.Tests.PlayMode
             var vehicleB = CreateVehicle("VehicleB");
             var stage = TestStageFactory.CreateStage("Stage1", out var stageObj);
             cleanup.Add(stageObj);
-            vehicleA.SetCurrentStage(stage);
-            vehicleB.SetCurrentStage(stage);
+            RacePositionTracker.SetStage(vehicleA, stage);
+            RacePositionTracker.SetStage(vehicleB, stage);
             CreateTracker(new[] { vehicleA, vehicleB }, maxRounds: 5);
             RaceResult result = null;
             TurnEventBus.OnRaceOver += r => result = r;
@@ -320,7 +320,7 @@ namespace Assets.Scripts.Tests.PlayMode
             var vehicle = CreateVehicle();
             var stage = TestStageFactory.CreateStage("Stage1", out var stageObj);
             cleanup.Add(stageObj);
-            vehicle.SetCurrentStage(stage);
+            RacePositionTracker.SetStage(vehicle, stage);
             CreateTracker(new[] { vehicle }, maxRounds: 5);
             bool raceOverFired = false;
             TurnEventBus.OnRaceOver += _ => raceOverFired = true;
@@ -336,7 +336,7 @@ namespace Assets.Scripts.Tests.PlayMode
             var vehicle = CreateVehicle();
             var stage = TestStageFactory.CreateStage("Stage1", out var stageObj);
             cleanup.Add(stageObj);
-            vehicle.SetCurrentStage(stage);
+            RacePositionTracker.SetStage(vehicle, stage);
             CreateTracker(new[] { vehicle }, maxRounds: 5);
             bool raceOverFired = false;
             TurnEventBus.OnRaceOver += _ => raceOverFired = true;
@@ -353,7 +353,7 @@ namespace Assets.Scripts.Tests.PlayMode
             var vehicleB = CreateVehicle("VehicleB");
             var stage = TestStageFactory.CreateStage("Stage1", out var stageObj);
             cleanup.Add(stageObj);
-            vehicleB.SetCurrentStage(stage);
+            RacePositionTracker.SetStage(vehicleB, stage);
             CreateTracker(new[] { vehicleA, vehicleB }, maxRounds: 5);
             RaceResult result = null;
             TurnEventBus.OnRaceOver += r => result = r;
@@ -393,7 +393,7 @@ namespace Assets.Scripts.Tests.PlayMode
             var vehicle = CreateVehicle();
             var stage = TestStageFactory.CreateStage("Stage1", out var stageObj);
             cleanup.Add(stageObj);
-            vehicle.SetCurrentStage(stage);
+            RacePositionTracker.SetStage(vehicle, stage);
             CreateTracker(new[] { vehicle }, maxRounds: 5);
             RaceResult result = null;
             TurnEventBus.OnRaceOver += r => result = r;
@@ -415,7 +415,7 @@ namespace Assets.Scripts.Tests.PlayMode
             };
             var stage = TestStageFactory.CreateStage("Stage1", out var stageObj);
             cleanup.Add(stageObj);
-            foreach (var v in vehicles) v.SetCurrentStage(stage);
+            foreach (var v in vehicles) RacePositionTracker.SetStage(v, stage);
             CreateTracker(vehicles, maxRounds: 5);
             RaceResult result = null;
             TurnEventBus.OnRaceOver += r => result = r;
@@ -431,7 +431,7 @@ namespace Assets.Scripts.Tests.PlayMode
             var vehicle = CreateVehicle();
             var stage = TestStageFactory.CreateStage("Stage1", out var stageObj);
             cleanup.Add(stageObj);
-            vehicle.SetCurrentStage(stage);
+            RacePositionTracker.SetStage(vehicle, stage);
             CreateTracker(new[] { vehicle }, maxRounds: 7);
             RaceResult result = null;
             TurnEventBus.OnRaceOver += r => result = r;
@@ -442,3 +442,4 @@ namespace Assets.Scripts.Tests.PlayMode
         }
     }
 }
+

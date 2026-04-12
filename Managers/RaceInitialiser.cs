@@ -32,7 +32,8 @@ namespace Assets.Scripts.Managers
             {
                 Vehicle vehicle = vehicles[i];
                 StageLane targetLane = lanes[i % lanes.Count];
-                vehicle.InitialisePosition(startStage);
+                RacePositionTracker.SetStage(vehicle, startStage);
+                RacePositionTracker.SetProgress(vehicle, 0);
                 startStage.TriggerEnter(vehicle, targetLane);
             }
         }

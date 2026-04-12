@@ -83,8 +83,8 @@ namespace Assets.Scripts.Managers.PlayerUI
             if (ui.turnStatusText != null)
             {
                 ui.turnStatusText.text = $"<b>{vehicle.vehicleName}'s Turn</b>\n" +
-                                      $"Stage: {(vehicle.CurrentStage != null ? vehicle.CurrentStage.stageName : "Unknown")}\n" +
-                                      $"Progress: {vehicle.Progress:F1}m";
+                                      $"Stage: {(RacePositionTracker.GetStage(vehicle) != null ? RacePositionTracker.GetStage(vehicle).stageName : "Unknown")}\n" +
+                                      $"Progress: {RacePositionTracker.GetProgress(vehicle):F1}m";
             }
 
             if (ui.actionsRemainingText != null)

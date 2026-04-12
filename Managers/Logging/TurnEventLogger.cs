@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using System.Linq;
 using Assets.Scripts.Entities.Vehicles;
 using Assets.Scripts.Entities.Vehicles.VehicleComponents;
@@ -82,7 +82,7 @@ namespace Assets.Scripts.Managers.Logging
             RaceHistory.Log(
                 EventType.System,
                 EventImportance.Medium,
-                $"═══════════ Round {roundNumber} Begins ═══════════"
+                $"----------- Round {roundNumber} Begins -----------"
             );
         }
         
@@ -91,7 +91,7 @@ namespace Assets.Scripts.Managers.Logging
             RaceHistory.Log(
                 EventType.System,
                 EventImportance.Low,
-                $"═══════════ Round {roundNumber} Ends ═══════════"
+                $"----------- Round {roundNumber} Ends -----------"
             );
         }
         
@@ -104,7 +104,7 @@ namespace Assets.Scripts.Managers.Logging
                 EventType.System,
                 EventImportance.Low,
                 $"{vehicle.vehicleName}'s turn begins (Turn {turnIndex + 1}/{totalVehicles})",
-                vehicle.CurrentStage,
+                RacePositionTracker.GetStage(vehicle),
                 vehicle
             );
         }
@@ -115,7 +115,7 @@ namespace Assets.Scripts.Managers.Logging
                 EventType.System,
                 EventImportance.Low,
                 $"{vehicle.vehicleName}'s turn ends",
-                vehicle.CurrentStage,
+                RacePositionTracker.GetStage(vehicle),
                 vehicle
             );
         }
@@ -135,7 +135,7 @@ namespace Assets.Scripts.Managers.Logging
             RaceHistory.Log(
                 EventType.FinishLine,
                 EventImportance.Critical,
-                $"<color=#FFD700><b>RACE COMPLETE — {winnerName} wins! ({result.TotalParticipants} starters, {result.TotalRounds} rounds)</b></color>"
+                $"<color=#FFD700><b>RACE COMPLETE � {winnerName} wins! ({result.TotalParticipants} starters, {result.TotalRounds} rounds)</b></color>"
             );
 
             foreach (var record in result.Finishers)
@@ -143,7 +143,7 @@ namespace Assets.Scripts.Managers.Logging
                 RaceHistory.Log(
                     EventType.FinishLine,
                     EventImportance.High,
-                    $"  #{record.Position} {record.Vehicle.vehicleName} — finished Round {record.Round}",
+                    $"  #{record.Position} {record.Vehicle.vehicleName} � finished Round {record.Round}",
                     null,
                     record.Vehicle
                 );
@@ -155,7 +155,7 @@ namespace Assets.Scripts.Managers.Logging
                 RaceHistory.Log(
                     EventType.FinishLine,
                     EventImportance.High,
-                    $"  DNF {record.Vehicle.vehicleName} — eliminated Round {record.Round} at {stageName} (progress {record.ProgressAtElimination})",
+                    $"  DNF {record.Vehicle.vehicleName} � eliminated Round {record.Round} at {stageName} (progress {record.ProgressAtElimination})",
                     record.EliminatedAt,
                     record.Vehicle
                 );
@@ -179,7 +179,7 @@ namespace Assets.Scripts.Managers.Logging
                 EventType.System,
                 EventImportance.High,
                 $"{vehicle.vehicleName} removed from turn order",
-                vehicle.CurrentStage,
+                RacePositionTracker.GetStage(vehicle),
                 vehicle
             );
         }
@@ -190,7 +190,7 @@ namespace Assets.Scripts.Managers.Logging
                 EventType.Destruction,
                 EventImportance.Critical,
                 $"<color=#FF6600>{vehicle.vehicleName} has been destroyed!</color>",
-                vehicle.CurrentStage,
+                RacePositionTracker.GetStage(vehicle),
                 vehicle
             );
         }
@@ -201,7 +201,7 @@ namespace Assets.Scripts.Managers.Logging
                 EventType.FinishLine,
                 EventImportance.Critical,
                 $"<color=#FFD700>{vehicle.vehicleName} has finished the race!</color>",
-                vehicle.CurrentStage,
+                RacePositionTracker.GetStage(vehicle),
                 vehicle
             );
         }
@@ -214,7 +214,7 @@ namespace Assets.Scripts.Managers.Logging
                 EventType.Movement,
                 EventImportance.Low,
                 $"{vehicle.vehicleName} automatically moved (movement not triggered manually)",
-                vehicle.CurrentStage,
+                RacePositionTracker.GetStage(vehicle),
                 vehicle
             );
         }
@@ -225,7 +225,7 @@ namespace Assets.Scripts.Managers.Logging
                 EventType.Resource,
                 EventImportance.Medium,
                 $"{vehicle.vehicleName}: {component.name} shut down (needs {required}, have {available})",
-                vehicle.CurrentStage,
+                RacePositionTracker.GetStage(vehicle),
                 vehicle
             );
         }
@@ -236,7 +236,7 @@ namespace Assets.Scripts.Managers.Logging
                 EventType.Movement,
                 EventImportance.Medium,
                 $"{vehicle.vehicleName} cannot move: {reason}",
-                vehicle.CurrentStage,
+                RacePositionTracker.GetStage(vehicle),
                 vehicle
             );
         }
@@ -247,7 +247,7 @@ namespace Assets.Scripts.Managers.Logging
                 EventType.Movement,
                 EventImportance.Low,
                 $"{vehicle.vehicleName} moved {distance} units (speed {speed})",
-                vehicle.CurrentStage,
+                RacePositionTracker.GetStage(vehicle),
                 vehicle
             );
         }
@@ -284,7 +284,7 @@ namespace Assets.Scripts.Managers.Logging
                 EventType.System,
                 EventImportance.High,
                 $"{vehicle.vehicleName} cannot act: {reason}",
-                vehicle.CurrentStage,
+                RacePositionTracker.GetStage(vehicle),
                 vehicle
             );
         }
@@ -295,7 +295,7 @@ namespace Assets.Scripts.Managers.Logging
                 EventType.System,
                 EventImportance.Medium,
                 $"{vehicle.vehicleName} can now take actions",
-                vehicle.CurrentStage,
+                RacePositionTracker.GetStage(vehicle),
                 vehicle
             );
         }
@@ -306,7 +306,7 @@ namespace Assets.Scripts.Managers.Logging
                 EventType.System,
                 EventImportance.Low,
                 $"{vehicle.vehicleName} ended turn",
-                vehicle.CurrentStage,
+                RacePositionTracker.GetStage(vehicle),
                 vehicle
             );
         }
@@ -317,7 +317,7 @@ namespace Assets.Scripts.Managers.Logging
                 EventType.Movement,
                 EventImportance.Low,
                 $"{vehicle.vehicleName} moved forward (player triggered)",
-                vehicle.CurrentStage,
+                RacePositionTracker.GetStage(vehicle),
                 vehicle
             );
         }
@@ -376,3 +376,4 @@ namespace Assets.Scripts.Managers.Logging
         }
     }
 }
+

@@ -2,6 +2,7 @@
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
+using Assets.Scripts.Managers;
 using Assets.Scripts.Stages;
 using Assets.Scripts.Logging;
 using Assets.Scripts.Entities.Vehicles;
@@ -76,12 +77,13 @@ namespace Assets.Scripts.UI.Tabs.Lanes
             if (currentStage == null) return 0;
             
             int hash = 17;
-            foreach (var vehicle in currentStage.vehiclesInStage)
+            foreach (var vehicle in RacePositionTracker.GetVehiclesInStage(currentStage))
             {
                 if (vehicle == null) continue;
                 hash = hash * 31 + vehicle.GetInstanceID();
-                hash = hash * 31 + vehicle.Progress;
-                hash = hash * 31 + (vehicle.CurrentLane?.GetInstanceID() ?? 0);
+                hash = hash * 31 + RacePositionTracker.GetProgress(vehicle);
+                var lane = RacePositionTracker.GetLane(vehicle);
+                hash = hash * 31 + (lane != null ? lane.GetInstanceID() : 0);
             }
             return hash;
         }
@@ -122,13 +124,14 @@ namespace Assets.Scripts.UI.Tabs.Lanes
                 {
                     foreach (var vehicle in vehicles)
                     {
-                        if (vehicle != null && vehicle.controlType == ControlType.Player && vehicle.CurrentStage != null)
+                        Stage vehicleStage = RacePositionTracker.GetStage(vehicle);
+                        if (vehicle != null && vehicle.controlType == ControlType.Player && vehicleStage != null)
                         {
-                            int index = stagesWithLanes.IndexOf(vehicle.CurrentStage);
+                            int index = stagesWithLanes.IndexOf(vehicleStage);
                             if (index >= 0)
                             {
                                 stageDropdown.value = index;
-                                SetCurrentStage(vehicle.CurrentStage);
+                                SetCurrentStage(vehicleStage);
                                 return;
                             }
                         }

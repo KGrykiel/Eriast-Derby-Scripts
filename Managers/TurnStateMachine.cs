@@ -209,7 +209,7 @@ namespace Assets.Scripts.Managers
         public bool ShouldSkipTurn(Vehicle vehicle)
         {
             if (vehicle == null) return true;
-            if (vehicle.CurrentStage == null) return true;
+            if (RacePositionTracker.GetStage(vehicle) == null) return true;
             if (vehicle.Status == VehicleStatus.Destroyed) return true;
             if (vehicle.Status == VehicleStatus.Finished) return true;
             return false;

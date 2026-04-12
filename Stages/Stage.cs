@@ -19,9 +19,6 @@ namespace Assets.Scripts.Stages
         [Tooltip("Distance to traverse this stage (D&D-style discrete units)")]
         public int length = 100;
 
-        [Tooltip("Is this stage a finish line?")]
-        public bool isFinishLine = false;
-
         [Header("Stage Effects")]
         [Tooltip("Effects executed when a vehicle enters this stage.")]
         public List<RollNode> onEnterEffects = new();
@@ -42,15 +39,12 @@ namespace Assets.Scripts.Stages
 
         // ==================== RUNTIME DATA ====================
 
-        [HideInInspector]
-        public List<Vehicle> vehiclesInStage = new();
-
         private LaneManager laneManager;
 
         // ==================== UNITY LIFECYCLE ====================
 
-        private void OnEnable() => StageRegistry.Register(this);
-        private void OnDisable() => StageRegistry.Unregister(this);
+        private void OnEnable() => TrackDefinition.Register(this);
+        private void OnDisable() => TrackDefinition.Unregister(this);
 
         private void Awake()
         {
@@ -59,38 +53,11 @@ namespace Assets.Scripts.Stages
             laneManager.DiscoverLanes();
         }
 
-        private void Start()
-        {
-            // WireStageLinks stores references to prefab assets, not scene instances.
-            // Re-resolve them here so nextStage/nextStages point at live objects with
-            // initialised laneManagers. All stages are registered by OnEnable, which
-            // runs before any Start, so the registry is fully populated at this point.
-            ResolveStageLinks();
-        }
-
-        private void ResolveStageLinks()
-        {
-            foreach (var lane in lanes)
-            {
-                if (lane == null || lane.nextLane == null) continue;
-                Stage targetStageAsset = lane.nextLane.GetComponentInParent<Stage>();
-                if (targetStageAsset == null) continue;
-                Stage targetStageInstance = StageRegistry.FindByName(targetStageAsset.stageName);
-                if (targetStageInstance == null || targetStageInstance == targetStageAsset) continue;
-                StageLane resolved = targetStageInstance.lanes.Find(l => l != null && l.laneName == lane.nextLane.laneName);
-                if (resolved != null)
-                    lane.nextLane = resolved;
-            }
-        }
-
         // ==================== TRIGGERS ====================
 
         public void TriggerEnter(Vehicle vehicle, StageLane targetLane = null)
         {
             if (vehicle == null) return;
-
-            if (!vehiclesInStage.Contains(vehicle))
-                vehiclesInStage.Add(vehicle);
 
             foreach (var rollNode in onEnterEffects)
             {
@@ -99,20 +66,18 @@ namespace Assets.Scripts.Stages
                 RollNodeExecutor.Execute(rollNode, ctx);
             }
 
-            DrawAndTriggerEventCard(vehicle);
-
             laneManager.AssignIncomingVehicle(vehicle, targetLane);
+            DrawAndTriggerEventCard(vehicle);
         }
 
         public void TriggerLeave(Vehicle vehicle)
         {
             if (vehicle == null) return;
 
-            bool wasPresent = vehiclesInStage.Remove(vehicle);
+            bool wasPresent = RacePositionTracker.GetStage(vehicle) == this;
 
             if (wasPresent)
             {
-                vehicle.SetPreviousStage(this);
                 laneManager.HandleStageExit(vehicle);
 
                 foreach (var rollNode in onExitEffects)
@@ -123,7 +88,7 @@ namespace Assets.Scripts.Stages
                 }
 
                 vehicle.NotifyStatusEffectTrigger(RemovalTrigger.OnStageExit);
-                this.LogStageExit(vehicle, vehiclesInStage.Count);
+                this.LogStageExit(vehicle, RacePositionTracker.GetVehiclesInStage(this).Count - 1);
             }
         }
 
@@ -155,17 +120,7 @@ namespace Assets.Scripts.Stages
 
         // ==================== STAGE GRAPH ====================
 
-        public IEnumerable<Stage> GetConnectedStages()
-        {
-            var seen = new HashSet<Stage>();
-            foreach (var lane in lanes)
-            {
-                if (lane == null || lane.nextLane == null) continue;
-                Stage next = lane.nextLane.GetComponentInParent<Stage>();
-                if (next != null && seen.Add(next))
-                    yield return next;
-            }
-        }
+        public IEnumerable<Stage> GetConnectedStages() => TrackDefinition.GetConnected(this);
 
         // ==================== LANE SYSTEM (delegated to LaneManager) ====================
 

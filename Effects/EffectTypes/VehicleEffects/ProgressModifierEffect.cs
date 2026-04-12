@@ -1,4 +1,5 @@
 using Assets.Scripts.Entities.Vehicles;
+using Assets.Scripts.Managers;
 using SerializeReferenceEditor;
 using UnityEngine;
 
@@ -27,11 +28,13 @@ namespace Assets.Scripts.Effects.EffectTypes.VehicleEffects
         {
             if (mode == ProgressModifierMode.Flat)
             {
-                target.ModifyProgress(amount);
+                int newProgress = Mathf.Max(0, RacePositionTracker.GetProgress(target) + amount);
+                RacePositionTracker.SetProgress(target, newProgress);
             }
             else
             {
-                target.SetProgress(amount);
+                int clampedProgress = Mathf.Max(0, amount);
+                RacePositionTracker.SetProgress(target, clampedProgress);
             }
         }
     }

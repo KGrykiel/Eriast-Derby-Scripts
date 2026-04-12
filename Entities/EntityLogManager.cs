@@ -1,4 +1,5 @@
 ﻿using Assets.Scripts.Logging;
+using Assets.Scripts.Managers;
 using Assets.Scripts.Entities.Vehicles.VehicleComponents.ComponentTypes;
 using EventType = Assets.Scripts.Logging.EventType;
 using Assets.Scripts.Entities.Vehicles.VehicleComponents;
@@ -27,7 +28,7 @@ namespace Assets.Scripts.Entities
                 EventType.Movement,
                 EventImportance.Low,
                 message,
-                drive.ParentVehicle.CurrentStage,
+                RacePositionTracker.GetStage(drive.ParentVehicle),
                 drive.ParentVehicle
             );
         }
@@ -40,7 +41,7 @@ namespace Assets.Scripts.Entities
                 EventType.Modifier,
                 EventImportance.Low,
                 $"{drive.ParentVehicle.vehicleName}'s speed scaled: {oldSpeed} → {newSpeed} (maxSpeed: {oldMaxSpeed} → {newMaxSpeed})",
-                drive.ParentVehicle.CurrentStage,
+                RacePositionTracker.GetStage(drive.ParentVehicle),
                 drive.ParentVehicle
             );
         }
@@ -56,7 +57,7 @@ namespace Assets.Scripts.Entities
                 EventType.Movement,
                 EventImportance.Low,
                 $"{drive.ParentVehicle.vehicleName} set target speed: {oldPercent}% → {newPercent}% ({targetAbsolute} units/turn)",
-                drive.ParentVehicle.CurrentStage,
+                RacePositionTracker.GetStage(drive.ParentVehicle),
                 drive.ParentVehicle
             );
         }
@@ -71,7 +72,7 @@ namespace Assets.Scripts.Entities
                 EventType.Combat,
                 EventImportance.Critical,
                 $"[CRITICAL] {chassis.ParentVehicle.vehicleName}'s Chassis destroyed! Vehicle structural collapse imminent!",
-                chassis.ParentVehicle.CurrentStage,
+                RacePositionTracker.GetStage(chassis.ParentVehicle),
                 chassis.ParentVehicle
             );
         }
@@ -84,7 +85,7 @@ namespace Assets.Scripts.Entities
                 EventType.Combat,
                 EventImportance.Critical,
                 $"[CRITICAL] {powerCore.ParentVehicle.vehicleName}'s Power Core destroyed! Vehicle is powerless!",
-                powerCore.ParentVehicle.CurrentStage,
+                RacePositionTracker.GetStage(powerCore.ParentVehicle),
                 powerCore.ParentVehicle
             );
         }
@@ -97,7 +98,7 @@ namespace Assets.Scripts.Entities
                 EventType.Combat,
                 EventImportance.High,
                 $"[DESTROYED] {component.ParentVehicle.vehicleName}'s {component.name} was destroyed!",
-                component.ParentVehicle.CurrentStage,
+                RacePositionTracker.GetStage(component.ParentVehicle),
                 component.ParentVehicle
             );
         }
@@ -110,7 +111,7 @@ namespace Assets.Scripts.Entities
                 EventType.Modifier,
                 EventImportance.Debug,
                 $"{component.ParentVehicle.vehicleName}'s {component.name} lost {modifier.Type} {modifier.Attribute} {modifier.Value:+0;-0} modifier",
-                component.ParentVehicle.CurrentStage,
+                RacePositionTracker.GetStage(component.ParentVehicle),
                 component.ParentVehicle
             );
         }
@@ -123,7 +124,7 @@ namespace Assets.Scripts.Entities
                 EventType.Resource,
                 EventImportance.Medium,
                 $"{component.ParentVehicle.vehicleName}: {component.name} shut down due to insufficient power",
-                component.ParentVehicle.CurrentStage,
+                RacePositionTracker.GetStage(component.ParentVehicle),
                 component.ParentVehicle
             );
         }
@@ -138,7 +139,7 @@ namespace Assets.Scripts.Entities
                 EventType.Resource,
                 EventImportance.Low,
                 $"{component.ParentVehicle.vehicleName}: {component.name} {state} by engineer",
-                component.ParentVehicle.CurrentStage,
+                RacePositionTracker.GetStage(component.ParentVehicle),
                 component.ParentVehicle
             );
         }
@@ -153,7 +154,7 @@ namespace Assets.Scripts.Entities
                 EventType.Resource,
                 EventImportance.Debug,
                 $"{powerCore.ParentVehicle.vehicleName} regenerated {regenAmount} energy ({currentEnergy}/{maxEnergy})",
-                powerCore.ParentVehicle.CurrentStage,
+                RacePositionTracker.GetStage(powerCore.ParentVehicle),
                 powerCore.ParentVehicle
             );
         }
@@ -168,7 +169,7 @@ namespace Assets.Scripts.Entities
                 EventType.Resource,
                 EventImportance.Debug,
                 $"{powerCore.ParentVehicle.vehicleName}: {requesterName} drew {amount} power ({reason})",
-                powerCore.ParentVehicle.CurrentStage,
+                RacePositionTracker.GetStage(powerCore.ParentVehicle),
                 powerCore.ParentVehicle
             );
         }

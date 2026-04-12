@@ -23,6 +23,7 @@ using Assets.Scripts.Effects.EffectTypes.EntityEffects;
 using Assets.Scripts.Effects.Invocations;
 using Assets.Scripts.Effects.Targeting;
 using Assets.Scripts.Combat.Rolls.Targeting;
+using Assets.Scripts.Managers;
 using Assets.Scripts.Entities.Vehicles;
 using Assets.Scripts.Entities.Vehicles.VehicleComponents.ComponentTypes;
 using Assets.Scripts.Entities.Vehicles.VehicleComponents;
@@ -320,8 +321,7 @@ namespace Assets.Scripts.Tests.PlayMode
             int acBefore = playerVehicle.Chassis.GetArmorClass();
 
             // Simulate vehicle entering lane — apply lane status effect
-            cliffLane.vehiclesInLane.Add(playerVehicle);
-            playerVehicle.SetCurrentLane(cliffLane);
+            RacePositionTracker.SetLane(playerVehicle, cliffLane);
 
             // Apply lane effect at vehicle level (as the system does)
             playerVehicle.ApplyVehicleCondition(laneEffect, cliffLane);
@@ -358,8 +358,7 @@ namespace Assets.Scripts.Tests.PlayMode
                 rollSpec = checkSpec
             };
             hazardLane.turnEffects.Add(turnEffect);
-            hazardLane.vehiclesInLane.Add(playerVehicle);
-            playerVehicle.SetCurrentLane(hazardLane);
+            RacePositionTracker.SetLane(playerVehicle, hazardLane);
 
             // Execute the skill check (simulating what the turn system would do)
             var checkResult = SkillCheckPerformer.Execute(new SkillCheckExecutionContext
@@ -624,12 +623,10 @@ namespace Assets.Scripts.Tests.PlayMode
             // Create stage + lane
             var stage = TestStageFactory.CreateStage("Combat Arena", out stageObj);
             var mainLane = TestStageFactory.CreateLane("Main Road", stage, stageObj);
-            stage.vehiclesInStage.Add(playerVehicle);
-            stage.vehiclesInStage.Add(enemyVehicle);
-            mainLane.vehiclesInLane.Add(playerVehicle);
-            mainLane.vehiclesInLane.Add(enemyVehicle);
-            playerVehicle.SetCurrentStage(stage);
-            enemyVehicle.SetCurrentStage(stage);
+            RacePositionTracker.SetStage(playerVehicle, stage);
+            RacePositionTracker.SetStage(enemyVehicle, stage);
+            RacePositionTracker.SetLane(playerVehicle, mainLane);
+            RacePositionTracker.SetLane(enemyVehicle, mainLane);
 
             // Skills
             var playerAttack = TestSkillFactory.CreateAttackSkill("Cannon", 2, 8, 3, DamageType.Physical, cleanup, new EnergyCost { amount = 3 });

@@ -4,8 +4,6 @@ using System.Linq;
 using Assets.Scripts.Consumables;
 using Assets.Scripts.Entities.Vehicles.VehicleComponents.ComponentTypes;
 using Assets.Scripts.Managers;
-using Assets.Scripts.Stages;
-using Assets.Scripts.Stages.Lanes;
 using Assets.Scripts.Conditions;
 using Assets.Scripts.Combat.Rolls.RollSpecs;
 using Assets.Scripts.Effects;
@@ -33,12 +31,8 @@ namespace Assets.Scripts.Entities.Vehicles
         [Tooltip("Vehicles sharing the same team asset are allies. Leave null for independent vehicles.")]
         public VehicleTeam team;
 
-        public Stage CurrentStage { get; private set; }
-        public Stage PreviousStage { get; private set; }
-        public int Progress { get; private set; }
         public bool HasMovedThisTurn { get; private set; }
         public bool HasLoggedMovementWarningThisTurn { get; private set; }
-        public StageLane CurrentLane { get; private set; }
 
         [Header("Crew & Seats")]
         [Tooltip("Physical positions where characters sit and control components. " +
@@ -76,9 +70,15 @@ namespace Assets.Scripts.Entities.Vehicles
             conditionManager = new VehicleConditionManager(this);
         }
 
-        void OnEnable() => VehicleRegistry.Register(this);
+        void OnEnable()
+        {
+            RacePositionTracker.Register(this);
+        }
 
-        void OnDisable() => VehicleRegistry.Unregister(this);
+        void OnDisable()
+        {
+            RacePositionTracker.Unregister(this);
+        }
 
         void OnValidate()
         {
@@ -120,31 +120,8 @@ namespace Assets.Scripts.Entities.Vehicles
             }
         }
 
-        /// <summary>Applies movement distance to progress and marks the vehicle as having moved.</summary>
-        public void ApplyMovement(int distance)
-        {
-            if (distance > 0 && CurrentStage != null)
-            {
-                Progress += distance;
-            }
-
-            HasMovedThisTurn = true;
-        }
-
-        /// <summary>Adjusts progress by delta (positive = forward, negative = backward). Clamped to [0, stage length].</summary>
-        public void ModifyProgress(int delta)
-        {
-            if (delta == 0) return;
-            int maxProgress = CurrentStage != null ? CurrentStage.length : int.MaxValue;
-            Progress = Mathf.Clamp(Progress + delta, 0, maxProgress);
-        }
-
-        /// <summary>Sets progress to an absolute position in the current stage. Clamped to [0, stage length].</summary>
-        public void SetProgress(int value)
-        {
-            int maxProgress = CurrentStage != null ? CurrentStage.length : int.MaxValue;
-            Progress = Mathf.Clamp(value, 0, maxProgress);
-        }
+        /// <summary>Marks the vehicle as having moved this turn.</summary>
+        public void MarkMoved() => HasMovedThisTurn = true;
 
         /// <summary>Sets the target speed percentage on the drive component. No-op with a warning if no drive is present.</summary>
         public void SetTargetSpeed(int speedPercent)
@@ -159,36 +136,8 @@ namespace Assets.Scripts.Entities.Vehicles
             drive.SetTargetSpeed(speedPercent);
         }
 
-        /// <summary>Sets the current stage without movement side effects. Use for test setup.</summary>
-        public void SetCurrentStage(Stage stage) => CurrentStage = stage;
-
-        /// <summary>Sets current stage and resets progress to zero. Called by GameManager at race start.</summary>
-        public void InitialisePosition(Stage stage)
-        {
-            CurrentStage = stage;
-            Progress = 0;
-        }
-
-        /// <summary>Sets the current lane. Called by LaneManager and lane assignment logic.</summary>
-        public void SetCurrentLane(StageLane lane) => CurrentLane = lane;
-
-        /// <summary>Records the stage the vehicle just exited. Called by Stage.TriggerLeave.</summary>
-        public void SetPreviousStage(Stage stage) => PreviousStage = stage;
-
         /// <summary>Marks that a movement-blocked warning has already been emitted this turn.</summary>
         public void MarkMovementWarningLogged() => HasLoggedMovementWarningThisTurn = true;
-
-        /// <summary>Transitions vehicle to a new stage. Carries over excess progress.</summary>
-        public void TransitionToStage(Stage newStage)
-        {
-            Stage oldStage = CurrentStage;
-
-            Progress -= oldStage != null ? oldStage.length : 0;
-            CurrentStage = newStage;
-
-            Vector3 stagePos = newStage.transform.position;
-            transform.position = new Vector3(stagePos.x, stagePos.y, transform.position.z);
-        }
 
         // ==================== SEAT ACCESS ====================
 
@@ -243,7 +192,7 @@ namespace Assets.Scripts.Entities.Vehicles
                 RuntimeState.CurrentSpeed => drive != null ? drive.GetCurrentSpeed() : 0,
                 RuntimeState.CurrentEnergy => PowerCore != null ? PowerCore.GetCurrentEnergy() : 0,
                 RuntimeState.CurrentHealth => Chassis != null ? Chassis.GetCurrentHealth() : 0,
-                RuntimeState.CurrentProgress => Progress,
+                RuntimeState.CurrentProgress => RacePositionTracker.GetProgress(this),
                 _ => 0
             };
         }

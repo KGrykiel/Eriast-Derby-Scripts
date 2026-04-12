@@ -22,6 +22,7 @@ using Assets.Scripts.Entities.Vehicles.VehicleComponents.ComponentTypes;
 using Assets.Scripts.Stages;
 using Assets.Scripts.Stages.Lanes;
 using Assets.Scripts.Tests.Helpers;
+using Assets.Scripts.Managers;
 
 namespace Assets.Scripts.Tests.PlayMode
 {
@@ -72,10 +73,8 @@ namespace Assets.Scripts.Tests.PlayMode
 
         private void PlaceVehicleInLane(Vehicle vehicle, Stage stage, StageLane lane)
         {
-            vehicle.SetCurrentStage(stage);
-            vehicle.SetCurrentLane(lane);
-            stage.vehiclesInStage.Add(vehicle);
-            lane.vehiclesInLane.Add(vehicle);
+            RacePositionTracker.SetStage(vehicle, stage);
+            RacePositionTracker.SetLane(vehicle, lane);
         }
 
         private static DamageEffect CreateFlatDamageEffect(int amount)
@@ -741,13 +740,12 @@ namespace Assets.Scripts.Tests.PlayMode
             var (stage, lane) = BuildStageWithLane();
 
             var triggerVehicle = BuildVehicle("Trigger", chassisHealth: 100);
-            triggerVehicle.SetCurrentStage(stage);
-            triggerVehicle.SetCurrentLane(lane);
-            stage.vehiclesInStage.Add(triggerVehicle);
+            RacePositionTracker.SetStage(triggerVehicle, stage);
+            RacePositionTracker.SetLane(triggerVehicle, lane);
 
             var node = new RollNode
             {
-                targetResolver = new AllVehiclesInLaneResolver(),
+                targetResolver = new AllVehiclesInLaneResolver(excludeTarget: true),
                 successEffects = new List<IEffectInvocation>
                 {
                     new VehicleEffectInvocation { effect = CreateFlatDamageEffect(99), targetResolver = new TargetVehicleResolver() }
@@ -760,7 +758,7 @@ namespace Assets.Scripts.Tests.PlayMode
 
             Assert.IsFalse(result, "Should return false when no targets resolved (anySuccess stays false)");
             Assert.AreEqual(100, triggerVehicle.Chassis.GetCurrentHealth(),
-                "Trigger vehicle should be unaffected (not in vehiclesInLane)");
+                "Trigger vehicle should be unaffected (excluded as the initiator)");
         }
 
         [UnityTest]
@@ -893,7 +891,6 @@ namespace Assets.Scripts.Tests.PlayMode
             var (stage, lane) = BuildStageWithLane();
             var vehicle = BuildVehicle("A", chassisHealth: 100);
             PlaceVehicleInLane(vehicle, stage, lane);
-            lane.vehiclesInLane.Add(null);
 
             var resolver = new AllVehiclesInLaneResolver();
             var ctx = new RollContext { Target = vehicle };
@@ -910,7 +907,6 @@ namespace Assets.Scripts.Tests.PlayMode
             var (stage, lane) = BuildStageWithLane();
             var vehicle = BuildVehicle("A", chassisHealth: 100);
             PlaceVehicleInLane(vehicle, stage, lane);
-            stage.vehiclesInStage.Add(null);
 
             var resolver = new AllVehiclesInStageResolver();
             var ctx = new RollContext { Target = vehicle };

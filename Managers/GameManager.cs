@@ -18,7 +18,9 @@ using Assets.Scripts.Managers.Logging.Results;
 /// </summary>
 public class GameManager : MonoBehaviour
 {
-    public Stage entryStage;
+    [Header("Course Layout")]
+    [Tooltip("Defines stage connections and lane routing for this course.")]
+    [SerializeField] private TrackDefinition trackDefinition;
 
     [Header("Race Settings")]
     [Tooltip("Maximum number of rounds before the race ends. Vehicles still active at this point are classified as DNF.")]
@@ -51,11 +53,16 @@ public class GameManager : MonoBehaviour
 
     private void InitializeGame()
     {
+        if (trackDefinition != null)
+            trackDefinition.SetAsActive();
+        else
+            Debug.LogWarning("[GameManager] No TrackDefinition assigned — stage transitions will not work.");
+
         RaceHistory.ClearHistory();
         RaceHistory.Initialize(this);
 
-        stages = StageRegistry.GetAll();
-        List<Vehicle> vehicles = VehicleRegistry.GetAll();
+        stages = TrackDefinition.GetAll();
+        List<Vehicle> vehicles = RacePositionTracker.GetAll();
 
         InitializeVehiclePositions(vehicles);
         InitializeControllers(vehicles);
@@ -66,7 +73,8 @@ public class GameManager : MonoBehaviour
 
     private void InitializeVehiclePositions(List<Vehicle> vehicles)
     {
-        Stage startStage = entryStage != null ? entryStage : (stages.Count > 0 ? stages[0] : null);
+        if (TrackDefinition.Active == null) return;
+        Stage startStage = TrackDefinition.Active.GetEntryStage();
         if (startStage == null) return;
 
         RaceInitialiser.PlaceVehicles(startStage, vehicles);
@@ -83,7 +91,7 @@ public class GameManager : MonoBehaviour
 
         foreach (var vehicle in vehicles)
         {
-            Stage startStage = vehicle.CurrentStage;
+            Stage startStage = RacePositionTracker.GetStage(vehicle);
             eventLogger.LogVehiclePlaced(vehicle, startStage);
             eventLogger.LogCrewComposition(vehicle, startStage);
         }

@@ -73,7 +73,7 @@ namespace Assets.Scripts.Logging
             #if UNITY_EDITOR
             if (evt.importance <= EventImportance.High)
             {
-                Debug.Log($"[RaceHistory R{evt.turnNumber}] {evt.description}");
+                //Debug.Log($"[RaceHistory R{evt.turnNumber}] {evt.description}");
             }
             #endif
         }

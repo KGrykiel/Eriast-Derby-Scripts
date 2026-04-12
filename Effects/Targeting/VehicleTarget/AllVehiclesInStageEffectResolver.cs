@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using Assets.Scripts.Combat.Rolls.RollSpecs;
 using Assets.Scripts.Entities;
 using Assets.Scripts.Entities.Vehicles;
+using Assets.Scripts.Managers;
 using SerializeReferenceEditor;
 using UnityEngine;
 
@@ -30,7 +31,8 @@ namespace Assets.Scripts.Effects.Targeting.VehicleTarget
             if (sourceVehicle == null)
                 sourceVehicle = ctx.Target as Vehicle;
 
-            if (sourceVehicle == null || sourceVehicle.CurrentStage == null)
+            var stage = RacePositionTracker.GetStage(sourceVehicle);
+            if (sourceVehicle == null || stage == null)
             {
                 Debug.LogWarning("[AllVehiclesInStageEffectResolver] No source vehicle or stage in context.");
                 return Array.Empty<Vehicle>();
@@ -40,7 +42,7 @@ namespace Assets.Scripts.Effects.Targeting.VehicleTarget
             Vehicle primaryTarget = ExcludeTarget ? EntityHelpers.GetVehicleFromTarget(ctx.Target) : null;
 
             var results = new List<Vehicle>();
-            foreach (var v in sourceVehicle.CurrentStage.vehiclesInStage)
+            foreach (var v in RacePositionTracker.GetVehiclesInStage(stage))
             {
                 if (v != null && v != self && v != primaryTarget)
                     results.Add(v);
