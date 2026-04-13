@@ -117,7 +117,7 @@ namespace Assets.Scripts.Visualisation
                 }
             }
 
-            // Pass 2: inject fallback endpoints, then initialise StageVisuals
+            // Pass 2: initialise StageVisuals
             foreach (Stage stage in stages)
             {
                 if (stage == null)
@@ -125,21 +125,6 @@ namespace Assets.Scripts.Visualisation
 
                 if (!stageVisuals.TryGetValue(stage, out StageVisual sv) || sv == null)
                     continue;
-
-                for (int i = 0; i < stage.lanes.Count; i++)
-                {
-                    StageLane lane = stage.lanes[i];
-                    if (lane == null)
-                        continue;
-
-                    LaneVisual lv = lane.GetComponent<LaneVisual>();
-                    if (lv == null)
-                        continue;
-
-                    Vector3 entry = sv.ComputeLanePosition(i);
-                    Vector3 exit = ComputeExitPosition(stage, sv, lane, i);
-                    lv.SetFallbackEndpoints(entry, exit);
-                }
 
                 sv.Initialise(routeLineMaterial);
             }
@@ -161,51 +146,5 @@ namespace Assets.Scripts.Visualisation
             }
         }
 
-        private Vector3 ComputeExitPosition(Stage fromStage, StageVisual fromStageVisual, StageLane fromLane, int laneIndex)
-        {
-            StageLane targetLane = TrackDefinition.Active.GetTargetLane(fromLane);
-            if (targetLane == null)
-            {
-                // Dead end or finish line — project along the stage's travel direction
-                return fromStageVisual.ComputeLanePosition(laneIndex) + GetTravelDirection(fromStage) * 10f;
             }
-
-            Stage targetStage = targetLane.GetComponentInParent<Stage>();
-            if (targetStage == null)
-                return fromStageVisual.ComputeLanePosition(laneIndex) + GetTravelDirection(fromStage) * 10f;
-
-            StageVisual targetSV = targetStage.GetComponent<StageVisual>();
-            if (targetSV == null)
-                return targetStage.transform.position;
-
-            int targetLaneIndex = targetStage.lanes.IndexOf(targetLane);
-            if (targetLaneIndex < 0)
-                return targetStage.transform.position;
-
-            return targetSV.ComputeLanePosition(targetLaneIndex);
         }
-
-        private static Vector3 GetTravelDirection(Stage stage)
-        {
-            if (stage == null)
-                return Vector3.forward;
-
-            var connected = TrackDefinition.GetConnected(stage);
-            Vector3 sum = Vector3.zero;
-            int count = 0;
-
-            foreach (Stage next in connected)
-            {
-                if (next == null)
-                    continue;
-                sum += (next.transform.position - stage.transform.position).normalized;
-                count++;
-            }
-
-            if (count == 0)
-                return Vector3.forward;
-
-            return sum.normalized;
-        }
-    }
-}

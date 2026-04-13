@@ -67,7 +67,7 @@ namespace Assets.Scripts.Stages
             }
 
             laneManager.AssignIncomingVehicle(vehicle, targetLane);
-            DrawAndTriggerEventCard(vehicle);
+            //DrawAndTriggerEventCard(vehicle);
         }
 
         public void TriggerLeave(Vehicle vehicle)

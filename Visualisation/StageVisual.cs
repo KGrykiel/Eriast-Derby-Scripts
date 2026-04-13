@@ -12,10 +12,6 @@ namespace Assets.Scripts.Visualisation
     /// </summary>
     public class StageVisual : MonoBehaviour
     {
-        [Header("Layout")]
-        [Tooltip("World-space distance between adjacent lane route lines.")]
-        public float laneSpacing = 2f;
-
         [Header("Route Lines")]
         [Tooltip("Number of sample points used to draw each lane's route line.")]
         public int routeSampleCount = 20;
@@ -23,11 +19,17 @@ namespace Assets.Scripts.Visualisation
         [Tooltip("Width of each route line in world units.")]
         public float lineWidth = 0.1f;
 
+        [Header("Connection Lines")]
+        [Tooltip("Width of the inter-stage connection indicator lines.")]
+        public float connectionLineWidth = 0.04f;
+
         private static readonly Color HazardousColour = new(0.9f, 0.15f, 0.15f, 1f);
         private static readonly Color DefaultColour = Color.white;
+        private static readonly Color ConnectionColour = new(0.55f, 0.55f, 0.55f, 0.6f);
 
         private Stage _stage;
         private readonly List<LineRenderer> _routeLines = new();
+        private readonly List<LineRenderer> _connectionLines = new();
         private bool _isInitialised;
 
         private void Awake()
@@ -36,22 +38,6 @@ namespace Assets.Scripts.Visualisation
         }
 
         // ==================== PUBLIC API ====================
-
-        /// <summary>
-        /// Returns the world-space position for lane index <paramref name="laneIndex"/> in this stage,
-        /// distributed perpendicularly to the stage's travel direction.
-        /// </summary>
-        public Vector3 ComputeLanePosition(int laneIndex)
-        {
-            if (_stage == null)
-                _stage = GetComponent<Stage>();
-
-            int laneCount = _stage != null ? _stage.lanes.Count : 1;
-            Vector3 travelDir = GetTravelDirection(_stage);
-            Vector3 perpendicular = Vector3.Cross(travelDir, Vector3.up).normalized;
-            float offset = (laneIndex - (laneCount - 1) / 2f) * laneSpacing;
-            return transform.position + perpendicular * offset;
-        }
 
         /// <summary>
         /// Creates the stage name label and per-lane route LineRenderers, then draws the initial lines.
@@ -68,6 +54,7 @@ namespace Assets.Scripts.Visualisation
             _isInitialised = true;
             CreateLabel();
             CreateRouteLines(lineMaterial);
+            CreateConnectionLines(lineMaterial);
             CreateClickCollider();
             Refresh();
         }
@@ -99,6 +86,8 @@ namespace Assets.Scripts.Visualisation
                     lr.SetPosition(j, lv.GetPathPosition(t));
                 }
             }
+
+            RefreshConnectionLines();
         }
 
         // ==================== PRIVATE ====================
@@ -147,27 +136,70 @@ namespace Assets.Scripts.Visualisation
             }
         }
 
-        private static Vector3 GetTravelDirection(Stage stage)
+        private void CreateConnectionLines(Material lineMaterial)
         {
-            if (stage == null)
-                return Vector3.forward;
+            if (_stage == null)
+                return;
 
-            var connected = TrackDefinition.GetConnected(stage);
-            Vector3 sum = Vector3.zero;
-            int count = 0;
+            _connectionLines.Clear();
 
-            foreach (Stage next in connected)
+            for (int i = 0; i < _stage.lanes.Count; i++)
             {
-                if (next == null)
-                    continue;
-                sum += (next.transform.position - stage.transform.position).normalized;
-                count++;
+                GameObject lineGO = new($"ConnectionLine_{i}");
+                lineGO.transform.SetParent(transform, false);
+
+                LineRenderer lr = lineGO.AddComponent<LineRenderer>();
+                lr.useWorldSpace = true;
+                lr.startWidth = connectionLineWidth;
+                lr.endWidth = connectionLineWidth;
+                lr.startColor = ConnectionColour;
+                lr.endColor = ConnectionColour;
+                lr.positionCount = 0;
+
+                if (lineMaterial != null)
+                    lr.material = lineMaterial;
+
+                _connectionLines.Add(lr);
             }
+        }
 
-            if (count == 0)
-                return Vector3.forward;
+        private void RefreshConnectionLines()
+        {
+            if (TrackDefinition.Active == null)
+                return;
 
-            return sum.normalized;
+            for (int i = 0; i < _stage.lanes.Count && i < _connectionLines.Count; i++)
+            {
+                StageLane lane = _stage.lanes[i];
+                LineRenderer lr = _connectionLines[i];
+                if (lane == null || lr == null)
+                    continue;
+
+                LaneVisual lv = lane.GetComponent<LaneVisual>();
+                if (lv == null || lv.waypoints.Length == 0)
+                {
+                    lr.positionCount = 0;
+                    continue;
+                }
+
+                StageLane targetLane = TrackDefinition.Active.GetTargetLane(lane);
+                if (targetLane == null)
+                {
+                    lr.positionCount = 0;
+                    continue;
+                }
+
+                LaneVisual targetLV = targetLane.GetComponent<LaneVisual>();
+                if (targetLV == null || targetLV.waypoints.Length == 0)
+                {
+                    lr.positionCount = 0;
+                    continue;
+                }
+
+                lr.positionCount = 2;
+                lr.SetPosition(0, lv.GetPathPosition(1f));
+                lr.SetPosition(1, targetLV.GetPathPosition(0f));
+            }
         }
 
         private void OnMouseDown()
@@ -204,15 +236,6 @@ namespace Assets.Scripts.Visualisation
 
             Gizmos.color = Color.yellow;
             Gizmos.DrawSphere(transform.position, 0.5f);
-
-            if (stage.lanes == null)
-                return;
-
-            for (int i = 0; i < stage.lanes.Count; i++)
-            {
-                Gizmos.color = Color.cyan;
-                Gizmos.DrawSphere(ComputeLanePosition(i), 0.25f);
-            }
         }
     }
 }

@@ -12,21 +12,9 @@ namespace Assets.Scripts.Visualisation
         [Tooltip("Ordered world-space waypoints. WP_0 = lane entry; last waypoint = lane exit. Populated by the Blender sync tool.")]
         public Transform[] waypoints = System.Array.Empty<Transform>();
 
-        // Bootstrap fallback endpoints. Injected by TrackVisualizationManager when no waypoints exist.
-        // Replaced entirely once Blender waypoints are set.
-        private Vector3 _entryPos;
-        private Vector3 _exitPos;
-
-        /// <summary>Injects procedural fallback endpoints used when no Blender waypoints are set.</summary>
-        public void SetFallbackEndpoints(Vector3 entry, Vector3 exit)
-        {
-            _entryPos = entry;
-            _exitPos = exit;
-        }
-
         /// <summary>
         /// Returns the world-space position along the lane path at normalised t (0 = entry, 1 = exit).
-        /// Uses Catmull-Rom spline over waypoints when populated; straight-line lerp otherwise.
+        /// Uses Catmull-Rom spline over waypoints when populated; returns transform.position if no waypoints are set.
         /// </summary>
         public Vector3 GetPathPosition(float t)
         {
@@ -35,7 +23,7 @@ namespace Assets.Scripts.Visualisation
             if (waypoints.Length >= 2)
                 return SampleCatmullRom(t);
 
-            return Vector3.Lerp(_entryPos, _exitPos, t);
+            return transform.position;
         }
 
         /// <summary>
@@ -50,8 +38,8 @@ namespace Assets.Scripts.Visualisation
             Vector3 a = GetPathPosition(tA);
             Vector3 b = GetPathPosition(tB);
             Vector3 tangent = b - a;
-            if (tangent.sqrMagnitude < 0.0001f)
-                return transform.forward;
+                if (tangent.sqrMagnitude < 1e-8f)
+                    return transform.forward;
             return tangent.normalized;
         }
 

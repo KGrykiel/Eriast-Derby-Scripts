@@ -139,7 +139,11 @@ public class TurnService
             if (nextStage != null)
                 MoveToStage(vehicle, nextStage, isPlayerChoice: false);
             else
+            {
+                if (TrackDefinition.IsFinish(currentStage))
+                    TurnEventBus.EmitFinishLineCrossed(vehicle, currentStage);
                 break;
+            }
         }
     }
     
@@ -158,13 +162,8 @@ public class TurnService
         int carry = RacePositionTracker.GetProgress(vehicle) - (previousStage != null ? previousStage.length : 0);
         RacePositionTracker.SetProgress(vehicle, carry);
         RacePositionTracker.SetStage(vehicle, stage);
-        Vector3 stagePos = stage.transform.position;
-        vehicle.transform.position = new Vector3(stagePos.x, stagePos.y, vehicle.transform.position.z);
 
         stage.TriggerEnter(vehicle, targetLane);
-
-        if (TrackDefinition.IsFinish(stage))
-            TurnEventBus.EmitFinishLineCrossed(vehicle, stage);
 
         TurnEventBus.EmitStageEntered(vehicle, stage, previousStage, RacePositionTracker.GetProgress(vehicle), isPlayerChoice);
     }

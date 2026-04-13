@@ -29,7 +29,8 @@ namespace Assets.Scripts.Visualisation
         private static readonly Vector3 MeshBaseScale     = new Vector3(0.8f, 0.4f, 1.4f);
         private static readonly Vector3 MeshTerminalScale = new Vector3(0.7f, 0.3f, 1.1f);
 
-        private const float LerpSpeed      = 10f;
+        private const float SmoothTime             = 0.1f;
+        private const float FinishSnapThresholdSq  = 0.25f;
         private const float DangerThreshold = 0.3f;
         private const float PulseSpeed      = 3f;
         private const float HpBarWidth      = 1.5f;
@@ -58,7 +59,10 @@ namespace Assets.Scripts.Visualisation
         private TextMeshPro _conditionBadge;
 
         // State
-        private bool _isInTerminalState;
+        private bool      _isInTerminalState;
+        private bool      _pendingFinish;
+        private StageLane _lastLane;
+        private Vector3   _velocity;
 
         // ==================== UNITY LIFECYCLE ====================
 
@@ -128,13 +132,34 @@ namespace Assets.Scripts.Visualisation
                 return;
 
             float t = Mathf.Clamp01((float)RacePositionTracker.GetProgress(_vehicle) / stage.length);
+            Vector3 target = _pendingFinish ? lv.GetPathPosition(1f) : lv.GetPathPosition(t);
 
-            Vector3 target = lv.GetPathPosition(t);
-            transform.position = Vector3.Lerp(transform.position, target, Time.deltaTime * LerpSpeed);
+            bool laneChanged = lane != _lastLane;
+            _lastLane = lane;
 
-            Vector3 tangent = lv.GetPathTangent(t);
-            if (tangent != Vector3.zero)
-                transform.forward = tangent;
+            if (laneChanged)
+            {
+                // Snap to the entry of the new lane; carry velocity magnitude into the new lane direction
+                transform.position = lv.GetPathPosition(0f);
+                float speed = _velocity.magnitude;
+                _velocity = lv.GetPathTangent(0f) * speed;
+            }
+            else
+            {
+                transform.position = Vector3.SmoothDamp(transform.position, target, ref _velocity, SmoothTime);
+            }
+
+            // Face the direction of travel while moving; fall back to path tangent at rest
+            Vector3 facing = _velocity.sqrMagnitude > 0.01f ? _velocity.normalized : lv.GetPathTangent(t);
+            if (facing != Vector3.zero)
+                transform.forward = facing;
+
+            // Freeze once the smooth arrival at the finish is complete
+            if (_pendingFinish && (transform.position - target).sqrMagnitude < FinishSnapThresholdSq)
+            {
+                transform.position = target;
+                SetTerminalState();
+            }
         }
 
         // ==================== OVERLAY ====================
@@ -234,7 +259,7 @@ namespace Assets.Scripts.Visualisation
             if (vehicle != _vehicle)
                 return;
 
-            SetTerminalState();
+            _pendingFinish = true;
         }
 
         private void SetTerminalState()
