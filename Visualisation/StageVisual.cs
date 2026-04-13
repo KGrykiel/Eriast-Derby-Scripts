@@ -97,7 +97,7 @@ namespace Assets.Scripts.Visualisation
             GameObject labelGO = new("Label");
             labelGO.transform.SetParent(transform, false);
             labelGO.transform.localPosition = new Vector3(0f, 2f, 0f);
-            labelGO.transform.localRotation = Quaternion.Euler(-90f, 0f, 0f);
+            labelGO.transform.localRotation = Quaternion.Euler(90f, 0f, 0f);
 
             TextMeshPro label = labelGO.AddComponent<TextMeshPro>();
             label.text = _stage != null ? _stage.stageName : name;
@@ -202,19 +202,14 @@ namespace Assets.Scripts.Visualisation
             }
         }
 
-        private void OnMouseDown()
-        {
-            TrackVisualizationManager.RaiseStageClicked(_stage);
-        }
-
         private void CreateClickCollider()
         {
             BoxCollider col = gameObject.GetComponent<BoxCollider>();
             if (col == null)
                 col = gameObject.AddComponent<BoxCollider>();
 
-            col.center = new Vector3(0f, 0.5f, 0f);
-            col.size   = new Vector3(3f, 1f, 3f);
+            col.center = new Vector3(0f, 0.05f, 0f);
+            col.size   = new Vector3(3f, 0.1f, 3f);
         }
 
         private static Color GetLaneColour(StageLane lane)

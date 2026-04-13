@@ -40,6 +40,12 @@ public class TabManager : MonoBehaviour
         ShowTab(inspectorPanel, inspectorTabButton);
     }
 
+    public void ShowLanesTab()
+    {
+        if (lanesPanel != null && lanesTabButton != null)
+            ShowTab(lanesPanel, lanesTabButton);
+    }
+
     private void ShowTab(GameObject panelToShow, Button buttonClicked)
     {
         focusPanel.SetActive(false);

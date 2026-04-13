@@ -329,11 +329,6 @@ namespace Assets.Scripts.Visualisation
                 Destroy(col);
         }
 
-        private void OnMouseDown()
-        {
-            TrackVisualizationManager.RaiseVehicleClicked(_vehicle);
-        }
-
         private void CreateClickCollider()
         {
             BoxCollider col = gameObject.GetComponent<BoxCollider>();
