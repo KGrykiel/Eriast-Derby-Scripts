@@ -172,8 +172,6 @@ namespace Assets.Scripts.Combat.Rolls.RollSpecs
             int value = sourceVehicle.GetStateValue(spec.state);
             bool success = value >= spec.minimumValue;
 
-            Debug.Log($"[StateThreshold] {sourceVehicle.vehicleName}: {spec.state} {value} vs minimum {spec.minimumValue} — {(success ? "PASS" : "FAIL")}");
-
             return success ? D20RollOutcome.AutoSuccess(0) : D20RollOutcome.AutoFail(0);
         }
 

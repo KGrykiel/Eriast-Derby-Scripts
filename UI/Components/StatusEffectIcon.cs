@@ -93,7 +93,7 @@ namespace Assets.Scripts.UI.Components
             {
                 if (activeCondition.IsIndefinite)
                 {
-                    durationText.text = "∞";
+                    durationText.text = "inf";
                 }
                 else
                 {

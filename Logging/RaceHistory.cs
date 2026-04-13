@@ -66,14 +66,6 @@ namespace Assets.Scripts.Logging
                 int toRemove = allEvents.Count - maxStoredEvents;
                 allEvents.RemoveRange(0, toRemove);
             }
-
-            // Debug log in editor
-            #if UNITY_EDITOR
-            if (evt.importance <= EventImportance.High)
-            {
-                //Debug.Log($"[RaceHistory R{evt.turnNumber}] {evt.description}");
-            }
-            #endif
         }
 
 

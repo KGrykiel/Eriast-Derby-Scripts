@@ -114,8 +114,8 @@ public class FocusPanel : MonoBehaviour
             status += $"<b>Active Status Effects ({allStatusEffects.Count}):</b>\n";
             foreach (var applied in allStatusEffects)
             {
-                string duration = applied.IsIndefinite ? "∞" : $"{applied.turnsRemaining}t";
-                status += $"  • {applied.template.effectName} ({duration})\n";
+                string duration = applied.IsIndefinite ? "inf" : $"{applied.turnsRemaining}t";
+                status += $"  - {applied.template.effectName} ({duration})\n";
             }
         }
         else

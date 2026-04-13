@@ -44,8 +44,6 @@ namespace Assets.Scripts.Entities.Vehicles
 
             // Cross-component modifiers depend on all components being discovered first
             InitializeComponentModifiers();
-
-            Debug.Log($"[Vehicle] {vehicle.vehicleName} initialized with {_components.Count} component(s)");
         }
 
         public void RegisterComponent(VehicleComponent component)

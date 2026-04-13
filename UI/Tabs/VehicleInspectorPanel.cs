@@ -809,7 +809,7 @@ public class VehicleInspectorPanel : MonoBehaviour
                             string costText = BuildCostDisplay(skill);
                             bool canAfford = CanPayAllCosts(skill, selectedVehicle);
                             string affordText = canAfford ? "" : " <color=#FF4444>(Can't afford)</color>";
-                            info += $"    • <b>{skill.name}</b> ({costText}){affordText}\n";
+                            info += $"    - <b>{skill.name}</b> ({costText}){affordText}\n";
                         }
                     }
                 }
@@ -852,7 +852,7 @@ public class VehicleInspectorPanel : MonoBehaviour
         string actionColor = actions > 0 ? "#66FF66" : "#888888";
         string bonusColor  = bonus  > 0 ? "#66FF66" : "#888888";
 
-        return $"    <color={actionColor}>Action ×{actions}</color>  <color={bonusColor}>Bonus ×{bonus}</color>\n";
+        return $"    <color={actionColor}>Action x{actions}</color>  <color={bonusColor}>Bonus x{bonus}</color>\n";
     }
 
     private string BuildSeatConditionsText(VehicleSeat seat)
@@ -870,7 +870,7 @@ public class VehicleInspectorPanel : MonoBehaviour
         {
             var condition = conditions[i];
             string name = condition.template.effectName;
-            string duration = condition.IsIndefinite ? "∞" : $"{condition.turnsRemaining}t";
+            string duration = condition.IsIndefinite ? "inf" : $"{condition.turnsRemaining}t";
 
             string flags = condition.PreventsActions ? " <color=#FF6666>[incap]</color>" : string.Empty;
 

@@ -64,12 +64,6 @@ namespace Assets.Scripts.Entities.Vehicles.VehicleComponents
         public virtual void Initialize(Vehicle vehicle)
         {
             parentVehicle = vehicle;
-
-            // Log component initialization
-            if (roleType != RoleType.None)
-            {
-                Debug.Log($"[Component] {name} initialized on {vehicle.vehicleName}, enables role: {roleType}");
-            }
         }
 
         // ==================== STAT ACCESSORS ====================

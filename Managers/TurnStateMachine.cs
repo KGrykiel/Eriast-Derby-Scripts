@@ -57,7 +57,7 @@ namespace Assets.Scripts.Managers
         public int CurrentTurnIndex => currentTurnIndex;
 
         public Vehicle CurrentVehicle => 
-            vehicles.Count > 0 && currentTurnIndex < vehicles.Count 
+            vehicles.Count > 0 && currentTurnIndex >= 0 && currentTurnIndex < vehicles.Count 
                 ? vehicles[currentTurnIndex] 
                 : null;
 
@@ -161,8 +161,6 @@ namespace Assets.Scripts.Managers
             TurnPhase oldPhase = currentPhase;
             currentPhase = newPhase;
 
-            Debug.Log($"[TurnStateMachine] {oldPhase} → {newPhase}");
-
             TurnEventBus.EmitPhaseChanged(oldPhase, newPhase);
         }
 
@@ -194,7 +192,7 @@ namespace Assets.Scripts.Managers
 
             TurnEventBus.EmitVehicleRemoved(vehicle);
 
-            if (index <= currentTurnIndex)
+            if (index < currentTurnIndex)
                 currentTurnIndex--;
 
             if (vehicles.Count == 0)

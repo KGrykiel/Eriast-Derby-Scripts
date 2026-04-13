@@ -75,13 +75,13 @@ namespace Assets.Scripts.UI.Tabs.Lanes
             var parts = new List<string>();
 
             if (lane.turnEffects != null && lane.turnEffects.Count > 0)
-                parts.Add($"⚠{lane.turnEffects.Count}");
+                parts.Add($"[!]{lane.turnEffects.Count}");
 
             if (TrackDefinition.Active != null)
             {
                 Stage nextStage = TrackDefinition.Active.GetNextStage(lane);
                 if (nextStage != null)
-                    parts.Add($"→{nextStage.stageName}");
+                    parts.Add($"->{nextStage.stageName}");
             }
 
             return parts.Count > 0 ? string.Join(" ", parts) : "-";

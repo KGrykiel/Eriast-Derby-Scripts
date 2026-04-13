@@ -124,7 +124,6 @@ public class TurnService
                RacePositionTracker.GetProgress(vehicle) >= currentStage.length)
         {
             StageLane currentLane = RacePositionTracker.GetLane(vehicle);
-            Debug.Log($"[TurnService] {vehicle.vehicleName} has reached the end of stage {currentStage.stageName} with progress {RacePositionTracker.GetProgress(vehicle)}");
             Stage nextStage = null;
 
             TrackDefinition track = TrackDefinition.Active;
