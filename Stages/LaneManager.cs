@@ -25,15 +25,12 @@ namespace Assets.Scripts.Stages
 
         public void DiscoverLanes()
         {
-            Lanes.Clear();
-
+            // Append any child StageLanes not already in the list, preserving inspector-assigned order
             foreach (Transform child in stage.transform)
             {
-                if (child.TryGetComponent<StageLane>(out var lane))
+                if (child.TryGetComponent<StageLane>(out var lane) && !Lanes.Contains(lane))
                     Lanes.Add(lane);
             }
-
-            Lanes.Sort((a, b) => a.transform.GetSiblingIndex().CompareTo(b.transform.GetSiblingIndex()));
         }
 
         // ==================== LANE QUERIES ====================
