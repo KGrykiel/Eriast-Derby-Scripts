@@ -120,7 +120,7 @@ namespace Assets.Scripts.Visualisation
                 if (pos.z > maxZ) maxZ = pos.z;
             }
 
-            Vector3 centre = new Vector3((minX + maxX) / 2f, 0f, (minZ + maxZ) / 2f);
+            Vector3 centre = new((minX + maxX) / 2f, 0f, (minZ + maxZ) / 2f);
             float extent = Mathf.Max(maxX - minX, maxZ - minZ);
             float requiredDistance = Mathf.Clamp(extent * 1.2f, minDistance, maxDistance);
 

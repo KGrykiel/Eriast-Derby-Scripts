@@ -1,4 +1,3 @@
-using System.Collections;
 using TMPro;
 using UnityEngine;
 using Assets.Scripts.Entities.Vehicles;
@@ -20,25 +19,19 @@ namespace Assets.Scripts.Visualisation
     {
         // ==================== CONSTANTS ====================
 
-        private static readonly Color PlayerColour   = new Color(0.2f, 1f,   0.2f, 1f);
-        private static readonly Color NeutralColour  = new Color(0.6f, 0.6f, 0.6f, 1f);
-        private static readonly Color TerminalColour = new Color(0.5f, 0.5f, 0.5f, 0.5f);
-        private static readonly Color DangerEmissive = new Color(0.8f, 0f,   0f,   1f);
-        private static readonly Color BadgeColour    = new Color(1f,   0.85f, 0.3f, 1f);
+        private static readonly Color PlayerColour   = new(0.2f, 1f,   0.2f, 1f);
+        private static readonly Color NeutralColour  = new(0.6f, 0.6f, 0.6f, 1f);
+        private static readonly Color TerminalColour = new(0.5f, 0.5f, 0.5f, 0.5f);
+        private static readonly Color DangerEmissive = new(0.8f, 0f,   0f,   1f);
 
-        private static readonly Vector3 MeshBaseScale     = new Vector3(0.8f, 0.4f, 1.4f);
-        private static readonly Vector3 MeshTerminalScale = new Vector3(0.7f, 0.3f, 1.1f);
-
-        private const float SmoothTime             = 0.1f;
-        private const float FinishSnapThresholdSq  = 0.25f;
+        private const float SmoothTime            = 0.1f;
+        private const float FinishSnapThresholdSq = 0.25f;
         private const float DangerThreshold = 0.3f;
         private const float PulseSpeed      = 3f;
-        private const float HpBarWidth      = 1.5f;
-        private const float HpBarHeight     = 0.12f;
-        private const float OverlayBarY     = 0.65f;
-        private const float OverlayBarFillZ = -0.01f;
 
         // ==================== PRIVATE FIELDS ====================
+
+        [SerializeField] private GameObject _vehicleUIPrefab;
 
         private Vehicle _vehicle;
 
@@ -54,6 +47,10 @@ namespace Assets.Scripts.Visualisation
         private GameObject _hpBarFill;
         private Material   _hpBarBgMaterial;
         private Material   _hpBarFillMaterial;
+        private float      _hpBarFullWidth;
+        private float      _hpBarFullHeight;
+        private float      _hpBarY;
+        private float      _hpBarFillZ;
 
         // Condition badge
         private TextMeshPro _conditionBadge;
@@ -73,7 +70,6 @@ namespace Assets.Scripts.Visualisation
 
         private void OnDestroy()
         {
-            TurnEventBus.OnTurnEnded        -= HandleTurnEnded;
             TurnEventBus.OnVehicleDestroyed -= HandleVehicleDestroyed;
             TurnEventBus.OnVehicleFinished  -= HandleVehicleFinished;
 
@@ -108,12 +104,8 @@ namespace Assets.Scripts.Visualisation
         {
             CreateMeshChild(baseMaterial);
             CreateClickCollider();
-            CreateOverlayRoot();
-            CreateLabel();
-            CreateHpBar();
-            CreateConditionBadge();
+            AttachOverlayUI();
 
-            TurnEventBus.OnTurnEnded        += HandleTurnEnded;
             TurnEventBus.OnVehicleDestroyed += HandleVehicleDestroyed;
             TurnEventBus.OnVehicleFinished  += HandleVehicleFinished;
         }
@@ -188,9 +180,9 @@ namespace Assets.Scripts.Visualisation
 
             // Left-align the fill: offset X so the left edge stays fixed as the bar shrinks
             _hpBarFill.transform.localPosition = new Vector3(
-                (hpPercent - 1f) * HpBarWidth / 2f, OverlayBarY, OverlayBarFillZ);
+                (hpPercent - 1f) * _hpBarFullWidth / 2f, _hpBarY, _hpBarFillZ);
 
-            _hpBarFill.transform.localScale = new Vector3(hpPercent * HpBarWidth, HpBarHeight * 0.8f, 1f);
+            _hpBarFill.transform.localScale = new Vector3(hpPercent * _hpBarFullWidth, _hpBarFullHeight, 1f);
 
             _hpBarFillMaterial.color = GetHpColour(hpPercent);
         }
@@ -238,14 +230,6 @@ namespace Assets.Scripts.Visualisation
 
         // ==================== EVENT HANDLERS ====================
 
-        private void HandleTurnEnded(Vehicle vehicle)
-        {
-            if (vehicle != _vehicle)
-                return;
-
-            StartCoroutine(PulseScaleCoroutine());
-        }
-
         private void HandleVehicleDestroyed(Vehicle vehicle)
         {
             if (vehicle != _vehicle)
@@ -273,60 +257,38 @@ namespace Assets.Scripts.Visualisation
                 _material.DisableKeyword("_EMISSION");
                 _material.SetColor("_EmissionColor", Color.black);
             }
-
-            if (_meshChild != null)
-                _meshChild.transform.localScale = MeshTerminalScale;
-        }
-
-        // ==================== PULSE ANIMATION ====================
-
-        private IEnumerator PulseScaleCoroutine()
-        {
-            if (_meshChild == null || _isInTerminalState)
-                yield break;
-
-            const float duration = 0.15f;
-            Vector3 expandedScale = MeshBaseScale * 1.4f;
-
-            float elapsed = 0f;
-            while (elapsed < duration)
-            {
-                if (_isInTerminalState || _meshChild == null) yield break;
-                elapsed += Time.deltaTime;
-                _meshChild.transform.localScale = Vector3.Lerp(MeshBaseScale, expandedScale, elapsed / duration);
-                yield return null;
-            }
-
-            elapsed = 0f;
-            while (elapsed < duration)
-            {
-                if (_isInTerminalState || _meshChild == null) yield break;
-                elapsed += Time.deltaTime;
-                _meshChild.transform.localScale = Vector3.Lerp(expandedScale, MeshBaseScale, elapsed / duration);
-                yield return null;
-            }
-
-            _meshChild.transform.localScale = MeshBaseScale;
         }
 
         // ==================== SETUP ====================
 
         private void CreateMeshChild(Material baseMaterial)
         {
-            _meshChild = GameObject.CreatePrimitive(PrimitiveType.Cube);
-            _meshChild.transform.SetParent(transform, false);
-            _meshChild.transform.localScale = MeshBaseScale;
-            _meshChild.name = "Mesh";
+            Transform existingMesh = transform.Find("Mesh");
+            if (existingMesh != null)
+            {
+                _meshChild = existingMesh.gameObject;
+            }
+            else
+            {
+                _meshChild = GameObject.CreatePrimitive(PrimitiveType.Cube);
+                _meshChild.transform.SetParent(transform, false);
+                _meshChild.name = "Mesh";
 
-            MeshRenderer meshRenderer = _meshChild.GetComponent<MeshRenderer>();
-            _material = baseMaterial != null ? new Material(baseMaterial) : meshRenderer.material;
-            _material.color = GetVehicleColour();
-            meshRenderer.material = _material;
+                // Click collider is Phase 4 — remove the one CreatePrimitive adds
+                Collider col = _meshChild.GetComponent<Collider>();
+                if (col != null)
+                    Destroy(col);
+            }
 
-            // Click collider is Phase 4 — remove the one CreatePrimitive adds
-            Collider col = _meshChild.GetComponent<Collider>();
-            if (col != null)
-                Destroy(col);
+            MeshRenderer[] renderers = _meshChild.GetComponentsInChildren<MeshRenderer>(true);
+            if (renderers.Length > 0)
+            {
+                Material source = baseMaterial != null ? baseMaterial : renderers[0].sharedMaterial;
+                _material = new Material(source);
+                _material.color = GetVehicleColour();
+                foreach (MeshRenderer mr in renderers)
+                    mr.material = _material;
+            }
         }
 
         private void CreateClickCollider()
@@ -336,70 +298,47 @@ namespace Assets.Scripts.Visualisation
                 col = gameObject.AddComponent<BoxCollider>();
 
             col.center = new Vector3(0f, 0.2f, 0f);
-            col.size   = MeshBaseScale;
+            col.size   = Vector3.one;
         }
 
-        private void CreateOverlayRoot()
+        private void AttachOverlayUI()
         {
-            _overlayRoot = new GameObject("Overlay");
-            _overlayRoot.transform.SetParent(transform, false);
-            _overlayRoot.transform.localPosition = Vector3.zero;
-        }
+            if (_vehicleUIPrefab == null)
+            {
+                Debug.LogWarning($"[VehicleVisual] No Vehicle UI prefab assigned on '{name}'.");
+                return;
+            }
 
-        private void CreateLabel()
-        {
-            GameObject labelGO = new GameObject("Label");
-            labelGO.transform.SetParent(_overlayRoot.transform, false);
-            labelGO.transform.localPosition = new Vector3(0f, 1f, 0f);
+            GameObject instance = Instantiate(_vehicleUIPrefab, transform);
+            instance.transform.localPosition = Vector3.zero;
+            _overlayRoot = instance;
 
-            _label = labelGO.AddComponent<TextMeshPro>();
-            _label.text = _vehicle != null ? _vehicle.vehicleName : name;
-            _label.alignment = TextAlignmentOptions.Center;
-            _label.fontSize = 2f;
-            _label.color = Color.white;
-        }
+            Transform labelT = instance.transform.Find("Label");
+            if (labelT != null)
+            {
+                _label = labelT.GetComponent<TextMeshPro>();
+                if (_label != null)
+                    _label.text = _vehicle != null ? _vehicle.vehicleName : name;
+            }
 
-        private void CreateHpBar()
-        {
-            // Background
-            GameObject bgGO = GameObject.CreatePrimitive(PrimitiveType.Quad);
-            bgGO.name = "HpBarBg";
-            bgGO.transform.SetParent(_overlayRoot.transform, false);
-            bgGO.transform.localPosition = new Vector3(0f, OverlayBarY, 0f);
-            bgGO.transform.localScale = new Vector3(HpBarWidth, HpBarHeight, 1f);
+            Transform bgT = instance.transform.Find("HpBarBg");
+            if (bgT != null)
+                _hpBarBgMaterial = bgT.GetComponent<MeshRenderer>().material;
 
-            _hpBarBgMaterial = bgGO.GetComponent<MeshRenderer>().material;
-            _hpBarBgMaterial.color = new Color(0.15f, 0.15f, 0.15f, 0.85f);
+            Transform fillT = instance.transform.Find("HpBarFill");
+            if (fillT != null)
+            {
+                _hpBarFill         = fillT.gameObject;
+                _hpBarFillMaterial = fillT.GetComponent<MeshRenderer>().material;
+                _hpBarFullWidth    = _hpBarFill.transform.localScale.x;
+                _hpBarFullHeight   = _hpBarFill.transform.localScale.y;
+                _hpBarY            = _hpBarFill.transform.localPosition.y;
+                _hpBarFillZ        = _hpBarFill.transform.localPosition.z;
+            }
 
-            Collider bgCol = bgGO.GetComponent<Collider>();
-            if (bgCol != null) Destroy(bgCol);
-
-            // Fill
-            _hpBarFill = GameObject.CreatePrimitive(PrimitiveType.Quad);
-            _hpBarFill.name = "HpBarFill";
-            _hpBarFill.transform.SetParent(_overlayRoot.transform, false);
-            _hpBarFill.transform.localPosition = new Vector3(0f, OverlayBarY, OverlayBarFillZ);
-            _hpBarFill.transform.localScale = new Vector3(HpBarWidth, HpBarHeight * 0.8f, 1f);
-
-            _hpBarFillMaterial = _hpBarFill.GetComponent<MeshRenderer>().material;
-            _hpBarFillMaterial.color = GetHpColour(1f);
-
-            Collider fillCol = _hpBarFill.GetComponent<Collider>();
-            if (fillCol != null) Destroy(fillCol);
-        }
-
-        private void CreateConditionBadge()
-        {
-            GameObject badgeGO = new GameObject("ConditionBadge");
-            badgeGO.transform.SetParent(_overlayRoot.transform, false);
-            badgeGO.transform.localPosition = new Vector3(HpBarWidth / 2f + 0.3f, OverlayBarY, 0f);
-
-            _conditionBadge = badgeGO.AddComponent<TextMeshPro>();
-            _conditionBadge.alignment = TextAlignmentOptions.Center;
-            _conditionBadge.fontSize = 2f;
-            _conditionBadge.color = BadgeColour;
-
-            badgeGO.SetActive(false);
+            Transform badgeT = instance.transform.Find("ConditionBadge");
+            if (badgeT != null)
+                _conditionBadge = badgeT.GetComponent<TextMeshPro>();
         }
 
         // ==================== HELPERS ====================

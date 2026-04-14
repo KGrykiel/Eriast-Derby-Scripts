@@ -89,8 +89,8 @@ namespace Assets.Scripts.Visualisation
         {
             GameObject labelGO = new("Label");
             labelGO.transform.SetParent(transform, false);
-            labelGO.transform.localPosition = new Vector3(0f, 2f, 0f);
-            labelGO.transform.localRotation = Quaternion.Euler(90f, 0f, 0f);
+            labelGO.transform.position = transform.position + Vector3.up * 2f;
+            labelGO.transform.rotation = Quaternion.Euler(90f, 0f, 0f);
 
             TextMeshPro label = labelGO.AddComponent<TextMeshPro>();
             label.text = _stage != null ? _stage.stageName : name;
