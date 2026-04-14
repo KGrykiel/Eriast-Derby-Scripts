@@ -13,9 +13,6 @@ namespace Assets.Scripts.Visualisation
     public class StageVisual : MonoBehaviour
     {
         [Header("Route Lines")]
-        [Tooltip("Number of sample points used to draw each lane's route line.")]
-        public int routeSampleCount = 20;
-
         [Tooltip("Width of each route line in world units.")]
         public float lineWidth = 0.1f;
 
@@ -55,7 +52,6 @@ namespace Assets.Scripts.Visualisation
             CreateLabel();
             CreateRouteLines(lineMaterial);
             CreateConnectionLines(lineMaterial);
-            CreateClickCollider();
             Refresh();
         }
 
@@ -79,12 +75,9 @@ namespace Assets.Scripts.Visualisation
                 if (lv == null)
                     continue;
 
-                lr.positionCount = routeSampleCount;
-                for (int j = 0; j < routeSampleCount; j++)
-                {
-                    float t = j / (routeSampleCount - 1f);
-                    lr.SetPosition(j, lv.GetPathPosition(t));
-                }
+                lr.positionCount = lv.waypoints.Length;
+                for (int j = 0; j < lv.waypoints.Length; j++)
+                    lr.SetPosition(j, lv.waypoints[j].position);
             }
 
             RefreshConnectionLines();
@@ -202,16 +195,6 @@ namespace Assets.Scripts.Visualisation
             }
         }
 
-        private void CreateClickCollider()
-        {
-            BoxCollider col = gameObject.GetComponent<BoxCollider>();
-            if (col == null)
-                col = gameObject.AddComponent<BoxCollider>();
-
-            col.center = new Vector3(0f, 0.05f, 0f);
-            col.size   = new Vector3(3f, 0.1f, 3f);
-        }
-
         private static Color GetLaneColour(StageLane lane)
         {
             bool isHazardous = lane.turnEffects != null && lane.turnEffects.Count > 0;
@@ -231,6 +214,72 @@ namespace Assets.Scripts.Visualisation
 
             Gizmos.color = Color.yellow;
             Gizmos.DrawSphere(transform.position, 0.5f);
+
+            foreach (StageLane lane in stage.lanes)
+            {
+                if (lane == null)
+                    continue;
+
+                LaneVisual lv = lane.GetComponent<LaneVisual>();
+                if (lv == null || lv.waypoints.Length < 2)
+                    continue;
+
+                Gizmos.color = GetLaneColour(lane);
+                for (int j = 1; j < lv.waypoints.Length; j++)
+                    Gizmos.DrawLine(lv.waypoints[j - 1].position, lv.waypoints[j].position);
+            }
+
+            TrackDefinition[] defs = Resources.FindObjectsOfTypeAll<TrackDefinition>();
+            if (defs.Length == 0)
+                return;
+
+            Stage[] sceneStages = Object.FindObjectsOfType<Stage>();
+            Gizmos.color = ConnectionColour;
+
+            foreach (LaneLink link in defs[0].transitions)
+            {
+                if (link.fromLane == null || link.toLane == null)
+                    continue;
+
+                Stage fromPrefabStage = link.fromLane.GetComponentInParent<Stage>(true);
+                if (fromPrefabStage == null || fromPrefabStage.stageName != stage.stageName)
+                    continue;
+
+                StageLane fromLane = stage.lanes.Find(l => l != null && l.laneName == link.fromLane.laneName);
+                if (fromLane == null)
+                    continue;
+
+                LaneVisual fromLV = fromLane.GetComponent<LaneVisual>();
+                if (fromLV == null || fromLV.waypoints.Length < 2)
+                    continue;
+
+                Stage toPrefabStage = link.toLane.GetComponentInParent<Stage>(true);
+                if (toPrefabStage == null)
+                    continue;
+
+                Stage toStage = null;
+                foreach (Stage s in sceneStages)
+                {
+                    if (s != null && s.stageName == toPrefabStage.stageName)
+                    {
+                        toStage = s;
+                        break;
+                    }
+                }
+
+                if (toStage == null)
+                    continue;
+
+                StageLane toLane = toStage.lanes.Find(l => l != null && l.laneName == link.toLane.laneName);
+                if (toLane == null)
+                    continue;
+
+                LaneVisual toLV = toLane.GetComponent<LaneVisual>();
+                if (toLV == null || toLV.waypoints.Length < 2)
+                    continue;
+
+                Gizmos.DrawLine(fromLV.GetPathPosition(1f), toLV.GetPathPosition(0f));
+            }
         }
     }
 }
