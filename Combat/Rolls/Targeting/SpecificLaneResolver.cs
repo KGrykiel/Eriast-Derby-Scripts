@@ -25,7 +25,7 @@ namespace Assets.Scripts.Combat.Rolls.Targeting
             if (Lane != null)
                 return new IRollTarget[] { Lane };
 
-            return System.Array.Empty<IRollTarget>();
+            return Array.Empty<IRollTarget>();
         }
     }
 }

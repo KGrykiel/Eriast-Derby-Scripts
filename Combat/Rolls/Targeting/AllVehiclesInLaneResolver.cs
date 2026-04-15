@@ -34,7 +34,7 @@ namespace Assets.Scripts.Combat.Rolls.Targeting
         {
             StageLane lane = ResolveLane(ctx);
             if (lane == null)
-                return System.Array.Empty<IRollTarget>();
+                return Array.Empty<IRollTarget>();
 
             Vehicle self = ExcludeSelf && ctx.SourceActor != null ? ctx.SourceActor.GetVehicle() : null;
             Vehicle primaryTarget = ExcludeTarget ? EntityHelpers.GetVehicleFromTarget(ctx.Target) : null;

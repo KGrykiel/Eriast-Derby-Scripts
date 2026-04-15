@@ -180,9 +180,11 @@ namespace Assets.Scripts.Visualisation
             _connectionLines.Clear();
 
             _dashTexture            = CreateDashTexture();
-            _connectionDashMaterial = new Material(Shader.Find("Sprites/Default"));
-            _connectionDashMaterial.color       = ConnectionColour;
-            _connectionDashMaterial.mainTexture = _dashTexture;
+            _connectionDashMaterial = new Material(Shader.Find("Sprites/Default"))
+            {
+                color = ConnectionColour,
+                mainTexture = _dashTexture
+            };
 
             for (int i = 0; i < _stage.lanes.Count; i++)
             {
@@ -251,9 +253,11 @@ namespace Assets.Scripts.Visualisation
             int totalPixels        = DashCount * pixelsPerUnit;
             int dashPixels         = Mathf.RoundToInt(pixelsPerUnit * DashFraction);
 
-            Texture2D tex = new Texture2D(totalPixels, 1, TextureFormat.RGBA32, false);
-            tex.filterMode = FilterMode.Point;
-            tex.wrapMode   = TextureWrapMode.Clamp;
+            Texture2D tex = new Texture2D(totalPixels, 1, TextureFormat.RGBA32, false)
+            {
+                filterMode = FilterMode.Point,
+                wrapMode = TextureWrapMode.Clamp
+            };
 
             Color[] pixels = new Color[totalPixels];
             for (int x = 0; x < totalPixels; x++)
@@ -305,7 +309,7 @@ namespace Assets.Scripts.Visualisation
             if (defs.Length == 0)
                 return;
 
-            Stage[] sceneStages = Object.FindObjectsOfType<Stage>();
+            Stage[] sceneStages = Object.FindObjectsByType<Stage>(FindObjectsSortMode.None);
             Gizmos.color = ConnectionColour;
 
             foreach (LaneLink link in defs[0].transitions)

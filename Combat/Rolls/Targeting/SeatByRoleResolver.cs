@@ -30,7 +30,7 @@ namespace Assets.Scripts.Combat.Rolls.Targeting
         {
             Vehicle vehicle = ResolveVehicle(ctx);
             if (vehicle == null)
-                return System.Array.Empty<IRollTarget>();
+                return Array.Empty<IRollTarget>();
 
             var results = new List<IRollTarget>();
             foreach (var seat in vehicle.seats)

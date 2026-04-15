@@ -35,7 +35,7 @@ namespace Assets.Scripts.Combat.Rolls.Targeting
                 vehicle = EntityHelpers.GetVehicleFromTarget(ctx.Target);
             var stage = RacePositionTracker.GetStage(vehicle);
             if (vehicle == null || stage == null)
-                return System.Array.Empty<IRollTarget>();
+                return Array.Empty<IRollTarget>();
 
             Vehicle self = ExcludeSelf ? vehicle : null;
             Vehicle primaryTarget = ExcludeTarget ? EntityHelpers.GetVehicleFromTarget(ctx.Target) : null;

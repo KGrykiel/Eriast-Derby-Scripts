@@ -19,7 +19,7 @@ namespace Assets.Scripts.Combat.Rolls.Targeting
             if (ctx.Target != null)
                 return new[] { ctx.Target };
 
-            return System.Array.Empty<IRollTarget>();
+            return Array.Empty<IRollTarget>();
         }
     }
 }
