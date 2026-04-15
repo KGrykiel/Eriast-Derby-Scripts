@@ -24,14 +24,41 @@ namespace Assets.Scripts.Visualisation
         private static readonly Color DefaultColour = Color.white;
         private static readonly Color ConnectionColour = new(0.55f, 0.55f, 0.55f, 0.6f);
 
+        private const int   DashCount    = 8;
+        private const float DashFraction = 0.4f;
+
+        [Header("Label")]
+        [SerializeField] private GameObject _stageLabelPrefab;
+
         private Stage _stage;
-        private readonly List<LineRenderer> _routeLines = new();
-        private readonly List<LineRenderer> _connectionLines = new();
+        private TextMeshPro _label;
+        private readonly List<LineRenderer>  _routeLines          = new();
+        private readonly List<LineRenderer>  _connectionLines     = new();
+        private readonly List<Material>      _routeLineMaterials  = new();
+        private Material                     _connectionDashMaterial;
+        private Texture2D                    _dashTexture;
         private bool _isInitialised;
 
         private void Awake()
         {
             _stage = GetComponent<Stage>();
+        }
+
+        private void OnDestroy()
+        {
+            foreach (Material mat in _routeLineMaterials)
+                if (mat != null) Destroy(mat);
+
+            if (_connectionDashMaterial != null)
+                Destroy(_connectionDashMaterial);
+
+            if (_dashTexture != null)
+                Destroy(_dashTexture);
+        }
+
+        private void LateUpdate()
+        {
+            UpdateLabelBillboard();
         }
 
         // ==================== PUBLIC API ====================
@@ -85,18 +112,30 @@ namespace Assets.Scripts.Visualisation
 
         // ==================== PRIVATE ====================
 
+        private void UpdateLabelBillboard()
+        {
+            if (_label == null)
+                return;
+
+            Camera cam = Camera.main;
+            if (cam != null)
+                _label.transform.rotation = cam.transform.rotation;
+        }
+
         private void CreateLabel()
         {
-            GameObject labelGO = new("Label");
-            labelGO.transform.SetParent(transform, false);
-            labelGO.transform.position = transform.position + Vector3.up * 2f;
-            labelGO.transform.rotation = Quaternion.Euler(90f, 0f, 0f);
+            if (_stageLabelPrefab == null)
+            {
+                Debug.LogWarning($"[StageVisual] No Stage Label prefab assigned on '{name}'.");
+                return;
+            }
 
-            TextMeshPro label = labelGO.AddComponent<TextMeshPro>();
-            label.text = _stage != null ? _stage.stageName : name;
-            label.alignment = TextAlignmentOptions.Center;
-            label.fontSize = 3f;
-            label.color = Color.white;
+            GameObject instance = Instantiate(_stageLabelPrefab, transform);
+            instance.transform.position = transform.position + Vector3.up * 2f;
+            _label = instance.GetComponent<TextMeshPro>();
+
+            if (_label != null)
+                _label.text = _stage != null ? _stage.stageName : name;
         }
 
         private void CreateRouteLines(Material lineMaterial)
@@ -112,18 +151,22 @@ namespace Assets.Scripts.Visualisation
                 Color laneColour = lane != null ? GetLaneColour(lane) : DefaultColour;
 
                 GameObject lineGO = new($"RouteLine_{i}");
-                lineGO.transform.SetParent(transform, false);
+                lineGO.transform.SetParent(lane != null ? lane.transform : transform, false);
 
                 LineRenderer lr = lineGO.AddComponent<LineRenderer>();
                 lr.useWorldSpace = true;
-                lr.startWidth = lineWidth;
-                lr.endWidth = lineWidth;
-                lr.startColor = laneColour;
-                lr.endColor = laneColour;
+                lr.startWidth    = lineWidth;
+                lr.endWidth      = lineWidth;
+                lr.startColor    = Color.white;
+                lr.endColor      = Color.white;
                 lr.positionCount = 0;
 
-                if (lineMaterial != null)
-                    lr.material = lineMaterial;
+                Material mat = lineMaterial != null
+                    ? new Material(lineMaterial)
+                    : new Material(Shader.Find("Sprites/Default"));
+                mat.color    = laneColour;
+                lr.material  = mat;
+                _routeLineMaterials.Add(mat);
 
                 _routeLines.Add(lr);
             }
@@ -136,21 +179,28 @@ namespace Assets.Scripts.Visualisation
 
             _connectionLines.Clear();
 
+            _dashTexture            = CreateDashTexture();
+            _connectionDashMaterial = new Material(Shader.Find("Sprites/Default"));
+            _connectionDashMaterial.color       = ConnectionColour;
+            _connectionDashMaterial.mainTexture = _dashTexture;
+
             for (int i = 0; i < _stage.lanes.Count; i++)
             {
+                StageLane lane = _stage.lanes[i];
+
                 GameObject lineGO = new($"ConnectionLine_{i}");
-                lineGO.transform.SetParent(transform, false);
+                lineGO.transform.SetParent(lane != null ? lane.transform : transform, false);
+                lineGO.SetActive(false);
 
                 LineRenderer lr = lineGO.AddComponent<LineRenderer>();
                 lr.useWorldSpace = true;
-                lr.startWidth = connectionLineWidth;
-                lr.endWidth = connectionLineWidth;
-                lr.startColor = ConnectionColour;
-                lr.endColor = ConnectionColour;
-                lr.positionCount = 0;
-
-                if (lineMaterial != null)
-                    lr.material = lineMaterial;
+                lr.startWidth    = connectionLineWidth;
+                lr.endWidth      = connectionLineWidth;
+                lr.startColor    = Color.white;
+                lr.endColor      = Color.white;
+                lr.positionCount = 2;
+                lr.textureMode   = LineTextureMode.DistributePerSegment;
+                lr.material      = _connectionDashMaterial;
 
                 _connectionLines.Add(lr);
             }
@@ -171,28 +221,50 @@ namespace Assets.Scripts.Visualisation
                 LaneVisual lv = lane.GetComponent<LaneVisual>();
                 if (lv == null || lv.waypoints.Length == 0)
                 {
-                    lr.positionCount = 0;
+                    lr.gameObject.SetActive(false);
                     continue;
                 }
 
                 StageLane targetLane = TrackDefinition.Active.GetTargetLane(lane);
                 if (targetLane == null)
                 {
-                    lr.positionCount = 0;
+                    lr.gameObject.SetActive(false);
                     continue;
                 }
 
                 LaneVisual targetLV = targetLane.GetComponent<LaneVisual>();
                 if (targetLV == null || targetLV.waypoints.Length == 0)
                 {
-                    lr.positionCount = 0;
+                    lr.gameObject.SetActive(false);
                     continue;
                 }
 
-                lr.positionCount = 2;
+                lr.gameObject.SetActive(true);
                 lr.SetPosition(0, lv.GetPathPosition(1f));
                 lr.SetPosition(1, targetLV.GetPathPosition(0f));
             }
+        }
+
+        private static Texture2D CreateDashTexture()
+        {
+            const int pixelsPerUnit = 8;
+            int totalPixels        = DashCount * pixelsPerUnit;
+            int dashPixels         = Mathf.RoundToInt(pixelsPerUnit * DashFraction);
+
+            Texture2D tex = new Texture2D(totalPixels, 1, TextureFormat.RGBA32, false);
+            tex.filterMode = FilterMode.Point;
+            tex.wrapMode   = TextureWrapMode.Clamp;
+
+            Color[] pixels = new Color[totalPixels];
+            for (int x = 0; x < totalPixels; x++)
+            {
+                int posInUnit = x % pixelsPerUnit;
+                pixels[x] = posInUnit < dashPixels ? Color.white : Color.clear;
+            }
+
+            tex.SetPixels(pixels);
+            tex.Apply();
+            return tex;
         }
 
         private static Color GetLaneColour(StageLane lane)

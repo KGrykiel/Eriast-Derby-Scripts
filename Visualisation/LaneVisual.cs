@@ -5,8 +5,7 @@ namespace Assets.Scripts.Visualisation
 {
     /// <summary>
     /// Visual-only component added to each StageLane GameObject.
-    /// Stores ordered world-space waypoints and provides path sampling via Catmull-Rom spline.
-    /// When no waypoints are set, falls back to a straight-line lerp between injected fallback endpoints.
+    /// Stores ordered world-space waypoints and provides path sampling via piecewise linear interpolation.
     /// </summary>
     public class LaneVisual : MonoBehaviour
     {
@@ -19,23 +18,23 @@ namespace Assets.Scripts.Visualisation
                 PopulateWaypoints();
         }
 
-#if UNITY_EDITOR
+        #if UNITY_EDITOR
         private void OnValidate()
         {
             PopulateWaypoints();
         }
-#endif
+        #endif
 
         /// <summary>
         /// Returns the world-space position along the lane path at normalised t (0 = entry, 1 = exit).
-        /// Uses Catmull-Rom spline over waypoints when populated; returns transform.position if no waypoints are set.
+        /// Linearly interpolates between waypoints; returns transform.position if no waypoints are set.
         /// </summary>
         public Vector3 GetPathPosition(float t)
         {
             t = Mathf.Clamp01(t);
 
             if (waypoints.Length >= 2)
-                return SampleCatmullRom(t);
+                return SampleLinear(t);
 
             return transform.position;
         }
@@ -71,7 +70,7 @@ namespace Assets.Scripts.Visualisation
                 int numStart = wpPos + 2;
                 if (numStart < child.name.Length && child.name[numStart] == '_')
                     numStart++;
-                if (int.TryParse(child.name.Substring(numStart), out int index))
+                if (int.TryParse(child.name[numStart..], out int index))
                     found[index] = child;
             }
 
@@ -79,32 +78,16 @@ namespace Assets.Scripts.Visualisation
                 waypoints = new List<Transform>(found.Values).ToArray();
         }
 
-        private Vector3 SampleCatmullRom(float t)
+        private Vector3 SampleLinear(float t)
         {
             int lastIndex = waypoints.Length - 1;
             float scaledT = t * lastIndex;
             int segmentIndex = Mathf.Min(Mathf.FloorToInt(scaledT), lastIndex - 1);
             float segmentT = scaledT - segmentIndex;
 
-            // Phantom endpoint trick: clamp indices at segment boundaries
-            Vector3 p0 = waypoints[Mathf.Max(segmentIndex - 1, 0)].position;
             Vector3 p1 = waypoints[segmentIndex].position;
-            Vector3 p2 = waypoints[Mathf.Min(segmentIndex + 1, lastIndex)].position;
-            Vector3 p3 = waypoints[Mathf.Min(segmentIndex + 2, lastIndex)].position;
-
-            return CatmullRom(p0, p1, p2, p3, segmentT);
-        }
-
-        private static Vector3 CatmullRom(Vector3 p0, Vector3 p1, Vector3 p2, Vector3 p3, float t)
-        {
-            float t2 = t * t;
-            float t3 = t2 * t;
-            return 0.5f * (
-                2f * p1
-                + (-p0 + p2) * t
-                + (2f * p0 - 5f * p1 + 4f * p2 - p3) * t2
-                + (-p0 + 3f * p1 - 3f * p2 + p3) * t3
-            );
+            Vector3 p2 = waypoints[segmentIndex + 1].position;
+            return Vector3.Lerp(p1, p2, segmentT);
         }
     }
 }

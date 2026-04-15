@@ -162,8 +162,8 @@ namespace Assets.Scripts.Visualisation
             Vector3 forward = Quaternion.Euler(0f, _azimuthCurrent, 0f) * Vector3.forward;
             float scale = panSensitivity * (_distanceCurrent / maxDistance);
 
-            _pivotTarget -= right   * delta.x * scale;
-            _pivotTarget -= forward * delta.y * scale;
+            _pivotTarget -= delta.x * scale * right;
+            _pivotTarget -= delta.y * scale * forward;
         }
 
         private void HandleScrollZoom()
@@ -196,7 +196,7 @@ namespace Assets.Scripts.Visualisation
             Vector3 right   = Quaternion.Euler(0f, _azimuthCurrent, 0f) * Vector3.right;
             Vector3 forward = Quaternion.Euler(0f, _azimuthCurrent, 0f) * Vector3.forward;
 
-            _pivotTarget += (right * h + forward * v) * panSpeed * Time.deltaTime;
+            _pivotTarget += panSpeed * Time.deltaTime * (right * h + forward * v);
         }
 
         // ==================== LERP + APPLY ====================

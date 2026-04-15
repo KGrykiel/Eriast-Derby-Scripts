@@ -42,14 +42,14 @@ namespace Assets.Scripts.Visualisation
 
         // ==================== STATIC CLICK EVENTS ====================
 
-        private static event Action<Vehicle> _vehicleClicked;
-        private static event Action<Stage>   _stageClicked;
+        private static event Action<Vehicle> VehicleClicked;
+        private static event Action<Stage>   StageClicked;
 
         /// <summary>Called by VehicleVisual.OnMouseDown to route a vehicle click to this manager.</summary>
-        internal static void RaiseVehicleClicked(Vehicle vehicle) => _vehicleClicked?.Invoke(vehicle);
+        internal static void RaiseVehicleClicked(Vehicle vehicle) => VehicleClicked?.Invoke(vehicle);
 
         /// <summary>Called by StageVisual.OnMouseDown to route a stage click to this manager.</summary>
-        internal static void RaiseStageClicked(Stage stage) => _stageClicked?.Invoke(stage);
+        internal static void RaiseStageClicked(Stage stage) => StageClicked?.Invoke(stage);
 
         private void Start()
         {
@@ -61,14 +61,14 @@ namespace Assets.Scripts.Visualisation
 
             InitialiseVisuals();
 
-            _vehicleClicked += HandleVehicleClicked;
-            _stageClicked   += HandleStageClicked;
+            VehicleClicked += HandleVehicleClicked;
+            StageClicked   += HandleStageClicked;
         }
 
         private void OnDestroy()
         {
-            _vehicleClicked -= HandleVehicleClicked;
-            _stageClicked   -= HandleStageClicked;
+            VehicleClicked -= HandleVehicleClicked;
+            StageClicked   -= HandleStageClicked;
         }
 
         private void Update()

@@ -24,10 +24,10 @@ namespace Assets.Scripts.Visualisation
         private static readonly Color TerminalColour = new(0.5f, 0.5f, 0.5f, 0.5f);
         private static readonly Color DangerEmissive = new(0.8f, 0f,   0f,   1f);
 
-        private const float SmoothTime            = 0.1f;
-        private const float FinishSnapThresholdSq = 0.25f;
-        private const float DangerThreshold = 0.3f;
-        private const float PulseSpeed      = 3f;
+        private const float SmoothTime         = 0.1f;
+        private const float FinishSnapThreshold = 0.005f;
+        private const float DangerThreshold     = 0.3f;
+        private const float PulseSpeed          = 3f;
 
         // ==================== PRIVATE FIELDS ====================
 
@@ -59,7 +59,8 @@ namespace Assets.Scripts.Visualisation
         private bool      _isInTerminalState;
         private bool      _pendingFinish;
         private StageLane _lastLane;
-        private Vector3   _velocity;
+        private float     _visualT;
+        private float     _tVelocity;
 
         // ==================== UNITY LIFECYCLE ====================
 
@@ -114,8 +115,8 @@ namespace Assets.Scripts.Visualisation
 
         private void UpdatePosition()
         {
-            Stage stage     = RacePositionTracker.GetStage(_vehicle);
-            StageLane lane  = RacePositionTracker.GetLane(_vehicle);
+            Stage stage    = RacePositionTracker.GetStage(_vehicle);
+            StageLane lane = RacePositionTracker.GetLane(_vehicle);
             if (stage == null || lane == null)
                 return;
 
@@ -123,33 +124,35 @@ namespace Assets.Scripts.Visualisation
             if (lv == null)
                 return;
 
-            float t = Mathf.Clamp01((float)RacePositionTracker.GetProgress(_vehicle) / stage.length);
-            Vector3 target = _pendingFinish ? lv.GetPathPosition(1f) : lv.GetPathPosition(t);
+            float logicalT = Mathf.Clamp01((float)RacePositionTracker.GetProgress(_vehicle) / stage.length);
+            float targetT  = _pendingFinish ? 1f : logicalT;
 
             bool laneChanged = lane != _lastLane;
             _lastLane = lane;
 
             if (laneChanged)
             {
-                // Snap to the entry of the new lane; carry velocity magnitude into the new lane direction
-                transform.position = lv.GetPathPosition(0f);
-                float speed = _velocity.magnitude;
-                _velocity = lv.GetPathTangent(0f) * speed;
+                // Snap to the entry of the new lane
+                _visualT   = 0f;
+                _tVelocity = 0f;
             }
             else
             {
-                transform.position = Vector3.SmoothDamp(transform.position, target, ref _velocity, SmoothTime);
+                _visualT = Mathf.SmoothDamp(_visualT, targetT, ref _tVelocity, SmoothTime);
             }
 
-            // Face the direction of travel while moving; fall back to path tangent at rest
-            Vector3 facing = _velocity.sqrMagnitude > 0.01f ? _velocity.normalized : lv.GetPathTangent(t);
+            transform.position = lv.GetPathPosition(_visualT);
+
+            // Face the direction of travel along the path
+            Vector3 facing = lv.GetPathTangent(_visualT);
             if (facing != Vector3.zero)
                 transform.forward = facing;
 
-            // Freeze once the smooth arrival at the finish is complete
-            if (_pendingFinish && (transform.position - target).sqrMagnitude < FinishSnapThresholdSq)
+            // Freeze once the visual has reached the end of the finish lane
+            if (_pendingFinish && _visualT >= 1f - FinishSnapThreshold)
             {
-                transform.position = target;
+                _visualT           = 1f;
+                transform.position = lv.GetPathPosition(1f);
                 SetTerminalState();
             }
         }
@@ -284,8 +287,10 @@ namespace Assets.Scripts.Visualisation
             if (renderers.Length > 0)
             {
                 Material source = baseMaterial != null ? baseMaterial : renderers[0].sharedMaterial;
-                _material = new Material(source);
-                _material.color = GetVehicleColour();
+                _material = new Material(source)
+                {
+                    color = GetVehicleColour()
+                };
                 foreach (MeshRenderer mr in renderers)
                     mr.material = _material;
             }
