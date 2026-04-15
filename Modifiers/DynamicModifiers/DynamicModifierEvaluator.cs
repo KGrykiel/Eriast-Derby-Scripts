@@ -11,7 +11,7 @@ namespace Assets.Scripts.Modifiers.DynamicModifiers
     /// </summary>
     public static class DynamicModifierEvaluator
     {
-        private const float SPEED_TO_AC_RATIO = 0.1f; // way too high, just for testing.
+        private const float SPEED_TO_AC_RATIO = 0.1f;
 
         public static List<EntityAttributeModifier> EvaluateAll(
             Entity entity, 

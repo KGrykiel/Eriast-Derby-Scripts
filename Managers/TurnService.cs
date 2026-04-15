@@ -5,7 +5,6 @@ using Assets.Scripts.Stages;
 using Assets.Scripts.Stages.Lanes;
 using Assets.Scripts.Conditions;
 using Assets.Scripts.Entities.Vehicles;
-using System;
 
 /// <summary>Stateless utilities for vehicle operations during turns (movement, power, targeting).</summary>
 public class TurnService

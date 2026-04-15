@@ -28,7 +28,7 @@ public class GameManager : MonoBehaviour
 
     [Header("Game Over UI")]
     [Tooltip("Optional - status text for game over message")]
-    public TextMeshProUGUI statusNotesText;
+    [SerializeField] private TextMeshProUGUI statusNotesText;
 
     // Controllers
     private TurnStateMachine stateMachine;

@@ -105,7 +105,6 @@ public class PlayerController : MonoBehaviour
         if (vehicle == null) return;
 
         isPlayerTurnActive = true;
-        vehicle.ResetComponentsForNewTurn();
         availableSeats = vehicle.GetActiveSeats();
 
         if (ui.moveForwardButton != null)

@@ -46,7 +46,7 @@ namespace Assets.Scripts.Conditions
                 OnDeactivate(applied);
         }
 
-        public List<TApplied> GetActive() => activeConditions;
+        public List<TApplied> GetActive() => new List<TApplied>(activeConditions);
 
         public void OnTurnStart()
         {

@@ -6,9 +6,6 @@ using TMPro;
 using Assets.Scripts.Managers;
 using Assets.Scripts.Stages;
 using Assets.Scripts.Stages.Lanes;
-using Assets.Scripts.Conditions.EntityConditions;
-using Assets.Scripts.Entities;
-using Assets.Scripts.Entities.Vehicles;
 
 namespace Assets.Scripts.UI.Tabs.Lanes
 {

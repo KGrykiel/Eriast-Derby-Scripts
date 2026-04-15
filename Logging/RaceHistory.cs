@@ -1,5 +1,4 @@
-﻿using UnityEngine;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 using Assets.Scripts.Stages;
 using Assets.Scripts.Entities.Vehicles;

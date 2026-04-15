@@ -20,7 +20,8 @@ namespace Assets.Scripts.Effects
             return new EffectContext
             {
                 IsCriticalHit = isCriticalHit,
-                SourceActor = ctx.SourceActor
+                SourceActor = ctx.SourceActor,
+                CausalSource = ctx.CausalSource
             };
         }
     }

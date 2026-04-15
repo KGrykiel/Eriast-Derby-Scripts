@@ -9,9 +9,11 @@ namespace Assets.Scripts.Combat.Damage
     public class DamageFormula
     {
         [Tooltip("Number of dice to roll")]
+        [Min(0)]
         public int baseDice = 1;
 
         [Tooltip("Size of each die (d4, d6, d8, d10, d12)")]
+        [Min(1)]
         public int dieSize = 6;
 
         [Tooltip("Flat bonus added to damage")]

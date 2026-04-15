@@ -1,7 +1,6 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
 using Assets.Scripts.Entities.Vehicles;
-using Assets.Scripts.Managers;
 using Assets.Scripts.Stages;
 
 namespace Assets.Scripts.Visualisation

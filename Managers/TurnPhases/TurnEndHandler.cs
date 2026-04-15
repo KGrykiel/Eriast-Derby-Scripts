@@ -1,5 +1,4 @@
 ﻿using Assets.Scripts.Conditions;
-using Assets.Scripts.Entities.Vehicles;
 
 namespace Assets.Scripts.Managers.TurnPhases
 {
