@@ -70,6 +70,11 @@ namespace Assets.Scripts.Characters
         [Tooltip("Character-specific abilities available regardless of component operated (e.g., Evasive Maneuver, Quick Scan). These are Skill ScriptableObject assets, not proficiency categories.")]
         public List<Skill> personalAbilities = new();
 
+        [Header("AI Simulation")]
+        [SerializeReference, SerializeReferenceEditor.SR]
+        [Tooltip("Personality profile used by the AI to weight scoring decisions. Leave null for player characters — the AI only reads this field on AI-controlled vehicles.")]
+        public Assets.Scripts.AI.Personality.PersonalityProfile personality;
+
         // ==================== ATTRIBUTE METHODS ====================
 
         public int GetAttributeScore(CharacterAttribute attribute)

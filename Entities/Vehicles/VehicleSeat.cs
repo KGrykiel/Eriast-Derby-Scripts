@@ -223,6 +223,22 @@ namespace Assets.Scripts.Entities.Vehicles
 
         public void Assign(Character character) { assignedCharacter = character; }
 
+        /// <summary>Read-only accessor for the character occupying this seat. Used by AI to read personality.</summary>
+        public Character AssignedCharacter => assignedCharacter;
+
+        /// <summary>
+        /// All skills this seat can currently use: skills from operational controlled components,
+        /// plus the occupying character's personal abilities. Mirrors the list the player UI shows.
+        /// </summary>
+        public List<Skill> GetAvailableSkills()
+        {
+            var skills = new List<Skill>();
+            foreach (var component in GetOperationalComponents())
+                skills.AddRange(component.GetAllSkills());
+            skills.AddRange(GetPersonalAbilities());
+            return skills;
+        }
+
         public bool IsAssigned => assignedCharacter != null;
 
         public bool IsAssignedTo(Character character) => assignedCharacter == character;
