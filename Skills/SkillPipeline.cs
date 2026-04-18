@@ -1,19 +1,15 @@
 using Assets.Scripts.Combat.Rolls.RollSpecs;
 using Assets.Scripts.Entities.Vehicles;
-using UnityEngine;
 
-namespace Assets.Scripts.AI.Execution
+namespace Assets.Scripts.Skills
 {
     /// <summary>
-    /// Fires the selected skill through the same pipeline the player uses.
-    /// Mirrors <c>PlayerController.ExecuteSkill()</c>: builds a <see cref="RollContext"/>
-    /// from the pre-built actor and target on the action, then delegates to
-    /// <c>Vehicle.ExecuteSkill</c>. All validation (costs, action economy,
-    /// targeting) is re-checked there — the executor itself adds nothing.
+    /// Shared execution pipeline for all skill actions, regardless of source (player or AI).
+    /// Builds the <see cref="RollContext"/> and delegates to <see cref="Vehicle.ExecuteSkill"/>.
     /// </summary>
-    public class SkillExecutor : IExecutor
+    public static class SkillPipeline
     {
-        public void Execute(AIAction action, TurnService turnService)
+        public static void Execute(SkillAction action)
         {
             if (action == null || action.skill == null || action.sourceActor == null) return;
 

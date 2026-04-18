@@ -1,10 +1,8 @@
 using System.Collections.Generic;
-using Assets.Scripts.AI.Execution;
 using Assets.Scripts.AI.Perception;
 using Assets.Scripts.AI.Personality;
 using Assets.Scripts.AI.Scoring;
 using Assets.Scripts.Characters;
-using Assets.Scripts.Combat.Rolls;
 using Assets.Scripts.Entities;
 using Assets.Scripts.Entities.Vehicles;
 using Assets.Scripts.Skills;
@@ -15,9 +13,9 @@ namespace Assets.Scripts.AI
     /// <summary>
     /// Per-seat decision maker. Runs the full four-stage pipeline:
     /// Perception (trackers) → Scoring (CommandWeights + SkillScorer) →
-    /// Selection (ArgMax over (skill, target) pairs) → Execution (SkillExecutor).
+    /// Selection (ArgMax over (skill, target) pairs) → Execution (SkillPipeline).
     ///
-    /// One <see cref="AIAction"/> is built per action the seat spends; actions
+    /// One <see cref="SkillAction"/> is built per action the seat spends; actions
     /// are chosen greedily until no positive-scoring action remains or the seat
     /// runs out of action economy. The action object never leaves this class.
     /// </summary>
@@ -25,7 +23,6 @@ namespace Assets.Scripts.AI
     {
         private readonly VehicleSeat seat;
         private readonly List<ITracker> trackers;
-        private readonly SkillExecutor skillExecutor = new();
 
         public SeatAI(VehicleSeat seat)
         {
@@ -37,7 +34,7 @@ namespace Assets.Scripts.AI
             };
         }
 
-        public void TakeTurn(VehicleAISharedContext context, TurnService turnService)
+        public void TakeTurn(VehicleAISharedContext context)
         {
             if (seat == null || !seat.CanAct()) return;
 
@@ -55,9 +52,9 @@ namespace Assets.Scripts.AI
             int safetyGuard = 8;
             while (safetyGuard-- > 0 && seat.HasAnyActionsRemaining() && seat.CanAct())
             {
-                AIAction best = SelectBestAction(context, weights);
-                if (best == null || best.score <= 0f) break;
-                skillExecutor.Execute(best, turnService);
+                SkillAction best = SelectBestAction(context, weights);
+                if (best == null) break;
+                SkillPipeline.Execute(best);
             }
         }
 
@@ -84,10 +81,11 @@ namespace Assets.Scripts.AI
             };
         }
 
-        private AIAction SelectBestAction(VehicleAISharedContext ctx, CommandWeights weights)
+        private SkillAction SelectBestAction(VehicleAISharedContext ctx, CommandWeights weights)
         {
             List<Skill> skills = seat.GetAvailableSkills();
-            AIAction best = null;
+            SkillAction best = null;
+            float bestScore = 0f;
 
             foreach (var skill in skills)
             {
@@ -99,10 +97,10 @@ namespace Assets.Scripts.AI
                     if (target == null) continue;
 
                     float score = SkillScorer.Score(skill, weights, ctx, target);
-                    if (best == null || score > best.score)
+                    if (score > bestScore)
                     {
-                        RollActor actor = BuildActor(skill);
-                        best = new AIAction(skill, target, actor, score);
+                        bestScore = score;
+                        best = new SkillAction(skill, seat.BuildActorForSkill(skill), target);
                     }
                 }
             }
@@ -141,13 +139,6 @@ namespace Assets.Scripts.AI
                     // Deferred until LaneHazardTracker exists — see AI-new.md Phase 4.
                     break;
             }
-        }
-
-        private RollActor BuildActor(Skill skill)
-        {
-            var component = seat.GetComponentForSkill(skill);
-            if (component != null) return new CharacterWithToolActor(seat, component);
-            return new CharacterActor(seat);
         }
     }
 }

@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using Assets.Scripts.Entities.Vehicles;
-using Assets.Scripts.Skills;
 
 namespace Assets.Scripts.Managers.PlayerUI
 {
@@ -21,11 +20,9 @@ namespace Assets.Scripts.Managers.PlayerUI
         // ==================== TURN UI ====================
 
         public void ShowTurnUI(
-            List<VehicleSeat> availableSeats, 
-            Vehicle vehicle,
+            List<VehicleSeat> availableSeats,
             Action<int> onSeatSelected,
-            Action<int> onSkillSelected,
-            Action<int> onConsumableSelected)
+            Action<int> onSkillSelected)
         {
             if (ui.playerTurnPanel != null)
                 ui.playerTurnPanel.SetActive(true);
@@ -36,37 +33,33 @@ namespace Assets.Scripts.Managers.PlayerUI
             seatSkillUI.ShowSeatTabs(availableSeats, onSeatSelected);
 
             if (availableSeats.Count > 0)
-                ShowSeatDetails(0, availableSeats, vehicle, onSkillSelected, onConsumableSelected);
+                ShowSeatDetails(0, availableSeats, onSkillSelected);
         }
 
         public void ShowSeatDetails(
             int seatIndex, 
             List<VehicleSeat> availableSeats, 
-            Vehicle vehicle, 
-            Action<int> onSkillSelected,
-            Action<int> onConsumableSelected)
+            Action<int> onSkillSelected)
         {
             if (seatIndex < 0 || seatIndex >= availableSeats.Count) return;
 
             VehicleSeat seat = availableSeats[seatIndex];
             seatSkillUI.UpdateCurrentSeatDisplay(seat);
-            seatSkillUI.ShowSkillSelection(seat, vehicle, onSkillSelected, onConsumableSelected);
+            seatSkillUI.ShowSkillSelection(seat, onSkillSelected);
         }
         
         public void RefreshAfterSkill(
             List<VehicleSeat> availableSeats,
             VehicleSeat currentSeat,
-            Vehicle vehicle,
             Action<int> onSeatSelected,
-            Action<int> onSkillSelected,
-            Action<int> onConsumableSelected)
+            Action<int> onSkillSelected)
         {
             seatSkillUI.ShowSeatTabs(availableSeats, onSeatSelected);
 
             if (currentSeat != null)
             {
                 seatSkillUI.UpdateCurrentSeatDisplay(currentSeat);
-                seatSkillUI.ShowSkillSelection(currentSeat, vehicle, onSkillSelected, onConsumableSelected);
+                seatSkillUI.ShowSkillSelection(currentSeat, onSkillSelected);
             }
         }
         
@@ -98,13 +91,6 @@ namespace Assets.Scripts.Managers.PlayerUI
             }
         }
         
-        // ==================== UTILITY ====================
-        
-        public List<Skill> GetAvailableSkills(VehicleSeat seat)
-        {
-            return seatSkillUI.GetAvailableSkills(seat);
-        }
-
         public TargetSelectionUIController TargetSelection => targetSelectionUI;
     }
 }

@@ -28,12 +28,6 @@ namespace Assets.Scripts.Consumables
                 return false;
             }
 
-            if (seat != null && !seat.CanSpendAction(consumable.actionCost))
-            {
-                Debug.LogWarning($"[ConsumableValidator] {seat.seatName} has no {consumable.actionCost} remaining to use {consumable.name}");
-                return false;
-            }
-
             return true;
         }
 

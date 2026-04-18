@@ -45,7 +45,7 @@ namespace Assets.Scripts.AI
             {
                 if (seatAI == null) continue;
                 VehicleAISharedContext context = BuildContext(turnService);
-                seatAI.TakeTurn(context, turnService);
+                seatAI.TakeTurn(context);
             }
 
             moveExecutor.Execute(vehicle, turnService);

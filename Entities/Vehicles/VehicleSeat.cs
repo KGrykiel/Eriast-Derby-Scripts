@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 using Assets.Scripts.Characters;
+using Assets.Scripts.Combat.Rolls;
 using Assets.Scripts.Combat.Rolls.Advantage;
 using Assets.Scripts.Conditions;
 using Assets.Scripts.Conditions.CharacterConditions;
@@ -201,6 +202,18 @@ namespace Assets.Scripts.Entities.Vehicles
         public void RemoveAdvantageGrantsFromSource(object source) => _advantageGrants.RemoveAll(g => g.Source == source);
         public IReadOnlyList<AdvantageGrant> GetAdvantageGrants() => _advantageGrants;
 
+        /// <summary>
+        /// Builds the appropriate <see cref="RollActor"/> for the seat's occupant using the given skill.
+        /// Uses <see cref="CharacterWithToolActor"/> when the skill belongs to a controlled component,
+        /// otherwise falls back to <see cref="CharacterActor"/>.
+        /// </summary>
+        public RollActor BuildActorForSkill(Skill skill)
+        {
+            var component = GetComponentForSkill(skill);
+            if (component != null) return new CharacterWithToolActor(this, component);
+            return new CharacterActor(this);
+        }
+
         /// <summary>Returns null for character personal skills (not from a component).</summary>
         public VehicleComponent GetComponentForSkill(Skill skill)
         {
@@ -228,7 +241,9 @@ namespace Assets.Scripts.Entities.Vehicles
 
         /// <summary>
         /// All skills this seat can currently use: skills from operational controlled components,
-        /// plus the occupying character's personal abilities. Mirrors the list the player UI shows.
+        /// plus the occupying character's personal abilities, plus transient skills synthesised
+        /// from action-type consumables accessible to this seat.
+        /// Mirrors the list the player UI shows.
         /// </summary>
         public List<Skill> GetAvailableSkills()
         {
@@ -236,6 +251,17 @@ namespace Assets.Scripts.Entities.Vehicles
             foreach (var component in GetOperationalComponents())
                 skills.AddRange(component.GetAllSkills());
             skills.AddRange(GetPersonalAbilities());
+
+            if (ParentVehicle != null)
+            {
+                var consumables = ParentVehicle.GetAvailableConsumables(this);
+                foreach (var stack in consumables)
+                {
+                    if (stack.template is Consumable consumable && consumable.skill != null && stack.charges > 0)
+                        skills.Add(consumable.skill);
+                }
+            }
+
             return skills;
         }
 

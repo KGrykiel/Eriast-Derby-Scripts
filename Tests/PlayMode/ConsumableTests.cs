@@ -44,7 +44,6 @@ namespace Assets.Scripts.Tests.PlayMode
             var c = ScriptableObject.CreateInstance<CombatConsumable>();
             c.name = name;
             c.bulkPerCharge = bulkPerCharge;
-            c.actionCost = ActionType.Action;
             cleanup.Add(c);
             return c;
         }
@@ -54,7 +53,6 @@ namespace Assets.Scripts.Tests.PlayMode
             var c = ScriptableObject.CreateInstance<UtilityConsumable>();
             c.name = name;
             c.bulkPerCharge = bulkPerCharge;
-            c.actionCost = ActionType.BonusAction;
             cleanup.Add(c);
             return c;
         }
@@ -76,6 +74,17 @@ namespace Assets.Scripts.Tests.PlayMode
             skill.rollNode = new RollNode();
             cleanup.Add(skill);
             return skill;
+        }
+
+        private void AttachSkill(Consumable consumable, ActionType actionCost)
+        {
+            var skill = ScriptableObject.CreateInstance<Skill>();
+            skill.name = consumable.name;
+            skill.actionCost = actionCost;
+            skill.rollNode = new RollNode();
+            skill.costs.Add(new ConsumableCost { template = consumable });
+            cleanup.Add(skill);
+            consumable.skill = skill;
         }
 
         private Vehicle BuildVehicleWithInventory(
@@ -455,7 +464,7 @@ namespace Assets.Scripts.Tests.PlayMode
             seat.ResetTurnState();
 
             var grenade = CreateCombatConsumable();
-            grenade.actionCost = ActionType.Action;
+            AttachSkill(grenade, ActionType.Action);
 
             var ctx = new RollContext
             {
@@ -483,7 +492,7 @@ namespace Assets.Scripts.Tests.PlayMode
             seat.SpendAction(ActionType.Action);
 
             var grenade = CreateCombatConsumable();
-            grenade.actionCost = ActionType.Action;
+            AttachSkill(grenade, ActionType.Action);
 
             var ctx = new RollContext
             {
@@ -510,7 +519,7 @@ namespace Assets.Scripts.Tests.PlayMode
             seat.ResetTurnState();
 
             var grenade = CreateCombatConsumable();
-            grenade.actionCost = ActionType.Action;
+            AttachSkill(grenade, ActionType.Action);
 
             var ctx = new RollContext
             {

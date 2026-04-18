@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using Assets.Scripts.Consumables;
 using Assets.Scripts.Entities.Vehicles;
 using Assets.Scripts.Skills;
 using TMPro;
@@ -14,7 +13,6 @@ namespace Assets.Scripts.Managers.PlayerUI
         private readonly PlayerUIReferences ui;
         private readonly List<Button> seatTabButtons = new();
         private readonly List<Button> skillButtons = new();
-        private readonly List<Button> consumableButtons = new();
 
         public SeatSkillUIController(PlayerUIReferences uiReferences)
         {
@@ -80,14 +78,12 @@ namespace Assets.Scripts.Managers.PlayerUI
             ui.currentRoleText.text = $"<b>{currentSeat.seatName}</b> ({characterName}) {status}";
         }
         
-        public void ShowSkillSelection(VehicleSeat currentSeat, Vehicle playerVehicle, Action<int> onSkillSelected, Action<int> onConsumableSelected)
+        public void ShowSkillSelection(VehicleSeat currentSeat, Action<int> onSkillSelected)
         {
             if (ui.skillButtonContainer == null || ui.skillButtonPrefab == null || currentSeat == null) return;
 
-            List<Skill> availableSkills = new();
-            foreach (var component in currentSeat.GetOperationalComponents())
-                availableSkills.AddRange(component.GetAllSkills());
-            availableSkills.AddRange(currentSeat.GetPersonalAbilities());
+            List<Skill> availableSkills = currentSeat.GetAvailableSkills();
+            Vehicle vehicle = currentSeat.ParentVehicle;
 
             while (skillButtons.Count < availableSkills.Count)
             {
@@ -114,7 +110,7 @@ namespace Assets.Scripts.Managers.PlayerUI
                     if (textComponent != null)
                         textComponent.text = skillText;
 
-                    bool canUse = CanPayAllCosts(skill, playerVehicle) && currentSeat.CanSpendAction(skill.actionCost);
+                    bool canUse = CanPayAllCosts(skill, vehicle) && currentSeat.CanSpendAction(skill.actionCost);
                     skillButtons[i].interactable = canUse;
 
                     int skillIndex = i;
@@ -127,42 +123,7 @@ namespace Assets.Scripts.Managers.PlayerUI
                 }
             }
 
-            var availableConsumables = playerVehicle.GetAvailableConsumables(currentSeat);
-
-            while (consumableButtons.Count < availableConsumables.Count)
-            {
-                Button btn = UnityEngine.Object.Instantiate(ui.skillButtonPrefab, ui.skillButtonContainer);
-                consumableButtons.Add(btn);
             }
-
-            for (int i = 0; i < consumableButtons.Count; i++)
-            {
-                if (i < availableConsumables.Count)
-                {
-                    ConsumableStack stack = availableConsumables[i];
-                    Consumable consumable = stack.template as Consumable;
-
-                    consumableButtons[i].gameObject.SetActive(true);
-
-                    string label = $"{stack.template.name} ({stack.charges})";
-                    var textComponent = consumableButtons[i].GetComponentInChildren<TextMeshProUGUI>();
-                    if (textComponent != null)
-                        textComponent.text = label;
-
-                    bool hasCharges = stack.charges > 0;
-                    bool canUse = hasCharges && (consumable == null || currentSeat.CanSpendAction(consumable.actionCost));
-                    consumableButtons[i].interactable = canUse;
-
-                    int consumableIndex = i;
-                    consumableButtons[i].onClick.RemoveAllListeners();
-                    consumableButtons[i].onClick.AddListener(() => onConsumableSelected?.Invoke(consumableIndex));
-                }
-                else
-                {
-                    consumableButtons[i].gameObject.SetActive(false);
-                }
-            }
-        }
         
         private static string BuildCostDisplay(Skill skill)
         {
@@ -185,20 +146,6 @@ namespace Assets.Scripts.Managers.PlayerUI
             return true;
         }
 
-        public List<Skill> GetAvailableSkills(VehicleSeat currentSeat)
-        {
-            List<Skill> availableSkills = new();
-            
-            if (currentSeat == null) return availableSkills;
-            
-            foreach (var component in currentSeat.GetOperationalComponents())
-            {
-                availableSkills.AddRange(component.GetAllSkills());
-            }
 
-            availableSkills.AddRange(currentSeat.GetPersonalAbilities());
-
-            return availableSkills;
-        }
     }
 }
