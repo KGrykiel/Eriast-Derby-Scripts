@@ -2,20 +2,23 @@ using System;
 using UnityEngine;
 using Assets.Scripts.Managers.PlayerUI;
 
-/// <summary>
-/// MonoBehaviour bridge between the Unity Inspector and PlayerInputCoordinator.
-/// Holds the serialised UI references that cannot live in a plain C# class.
-/// </summary>
-public class PlayerController : MonoBehaviour
+namespace Assets.Scripts.Managers
 {
-    [Header("UI References")]
-    [SerializeField]
-    private PlayerUIReferences ui;
-
-    public PlayerInputCoordinator InputCoordinator { get; private set; }
-
-    public void Initialize(TurnService turnController, Action onTurnComplete)
+    /// <summary>
+    /// MonoBehaviour bridge between the Unity Inspector and PlayerInputCoordinator.
+    /// Holds the serialised UI references that cannot live in a plain C# class.
+    /// </summary>
+    public class PlayerController : MonoBehaviour
     {
-        InputCoordinator = new PlayerInputCoordinator(turnController, ui, onTurnComplete);
+        [Header("UI References")]
+        [SerializeField]
+        private PlayerUIReferences ui;
+
+        public PlayerInputCoordinator InputCoordinator { get; private set; }
+
+        public void Initialize(TurnService turnController, Action onTurnComplete)
+        {
+            InputCoordinator = new PlayerInputCoordinator(turnController, ui, onTurnComplete);
+        }
     }
 }

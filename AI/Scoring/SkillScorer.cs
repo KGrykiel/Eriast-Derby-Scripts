@@ -8,6 +8,7 @@ using Assets.Scripts.Effects.EffectTypes.VehicleEffects;
 using Assets.Scripts.Effects.Invocations;
 using Assets.Scripts.Entities;
 using Assets.Scripts.Entities.Vehicles;
+using Assets.Scripts.Managers;
 using Assets.Scripts.Skills;
 using UnityEngine;
 
@@ -57,7 +58,7 @@ namespace Assets.Scripts.AI.Scoring
             if (node.successEffects != null)
             {
                 foreach (var inv in node.successEffects)
-                    AccumulateInvocation(inv, context, target, targetIsEnemy, ref utility);
+                    AccumulateInvocation(inv, context, targetIsEnemy, ref utility);
             }
 
             // Failure effects are intentionally ignored at scoring time. Expected-value
@@ -66,7 +67,7 @@ namespace Assets.Scripts.AI.Scoring
             AccumulateNode(node.onSuccessChain, context, target, targetIsEnemy, ref utility);
         }
 
-        private static void AccumulateInvocation(IEffectInvocation invocation, VehicleAISharedContext context, IRollTarget target, bool targetIsEnemy, ref CommandWeights utility)
+        private static void AccumulateInvocation(IEffectInvocation invocation, VehicleAISharedContext context, bool targetIsEnemy, ref CommandWeights utility)
         {
             switch (invocation)
             {
