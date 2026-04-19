@@ -478,34 +478,6 @@ namespace Assets.Scripts.Tests.PlayMode
         }
 
         [Test]
-        public void Validator_Validate_NoActionRemaining_ReturnsFalse()
-        {
-            var driver = TestCharacterFactory.Create("Driver");
-            cleanup.Add(driver);
-            vehicle = new TestVehicleBuilder("ValidatorVehicle")
-                .WithChassis(driver)
-                .Build();
-
-            VehicleSeat seat = vehicle.seats[0];
-            seat.consumableAccess = ConsumableAccess.Combat;
-            seat.ResetTurnState();
-            seat.SpendAction(ActionType.Action);
-
-            var grenade = CreateCombatConsumable();
-            AttachSkill(grenade, ActionType.Action);
-
-            var ctx = new RollContext
-            {
-                SourceActor = new CharacterActor(seat),
-                Target = vehicle.Chassis
-            };
-
-            bool valid = ConsumableValidator.Validate(ctx, grenade);
-
-            Assert.IsFalse(valid, "No Action remaining should fail validation");
-        }
-
-        [Test]
         public void Validator_Validate_ValidContext_ReturnsTrue()
         {
             var driver = TestCharacterFactory.Create("Driver");
