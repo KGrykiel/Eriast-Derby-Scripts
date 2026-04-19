@@ -15,7 +15,7 @@
             if (vehicle == null || !vehicle.IsOperational())
             {
                 string reason = vehicle != null ? vehicle.GetNonOperationalReason() : "No vehicle";
-                TurnEventBus.EmitPlayerCannotAct(vehicle, reason);
+                TurnEventBus.Emit(new PlayerCannotActEvent(vehicle, reason));
                 return TurnPhase.TurnEnd;
             }
 

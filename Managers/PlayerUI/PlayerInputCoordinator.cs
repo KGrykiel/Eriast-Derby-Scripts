@@ -66,7 +66,7 @@ namespace Assets.Scripts.Managers.PlayerUI
             availableSeats = vehicle.GetActiveSeats();
             isTurnActive = true;
 
-            TurnEventBus.EmitPlayerActionPhaseStarted(vehicle);
+            TurnEventBus.Emit(new PlayerActionPhaseStartedEvent(vehicle));
             ShowTurnUI();
         }
 
@@ -205,7 +205,7 @@ namespace Assets.Scripts.Managers.PlayerUI
             HideTurnUI();
 
             if (vehicle != null)
-                TurnEventBus.EmitPlayerEndedTurn(vehicle);
+                TurnEventBus.Emit(new PlayerEndedTurnEvent(vehicle));
 
             onTurnComplete?.Invoke();
         }
@@ -220,7 +220,7 @@ namespace Assets.Scripts.Managers.PlayerUI
 
             if (success)
             {
-                TurnEventBus.EmitPlayerTriggeredMovement(vehicle);
+                TurnEventBus.Emit(new PlayerTriggeredMovementEvent(vehicle));
 
                 if (ui.moveForwardButton != null)
                     ui.moveForwardButton.interactable = false;

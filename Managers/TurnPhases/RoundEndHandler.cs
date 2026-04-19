@@ -14,7 +14,7 @@ namespace Assets.Scripts.Managers.TurnPhases
             foreach (var vehicle in context.TurnController.AllVehicles)
                 vehicle.NotifyStatusEffectTrigger(RemovalTrigger.OnRoundEnd);
 
-            TurnEventBus.EmitRoundEnded(context.CurrentRound);
+            TurnEventBus.Emit(new RoundEndedEvent(context.CurrentRound));
 
             return TurnPhase.RoundStart;
         }

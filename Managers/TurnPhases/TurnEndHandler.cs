@@ -18,7 +18,7 @@ namespace Assets.Scripts.Managers.TurnPhases
                 // Movement is mandatory, if the vehicle hasn't moved within the turn, it is automatically moved now.
                 if (!vehicle.HasMovedThisTurn)
                 {
-                    TurnEventBus.EmitAutoMovement(vehicle);
+                    TurnEventBus.Emit(new AutoMovementEvent(vehicle));
                     RaceMovement.ExecuteMovement(vehicle);
                 }
 
@@ -31,7 +31,7 @@ namespace Assets.Scripts.Managers.TurnPhases
             context.ShouldRefreshUI = true;
 
             if (vehicle != null)
-                TurnEventBus.EmitTurnEnded(vehicle);
+                TurnEventBus.Emit(new TurnEndedEvent(vehicle));
 
             bool newRound = context.StateMachine.AdvanceToNextTurn();
             return newRound ? TurnPhase.RoundEnd : TurnPhase.TurnStart;

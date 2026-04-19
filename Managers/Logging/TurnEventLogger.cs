@@ -21,58 +21,38 @@ namespace Assets.Scripts.Managers.Logging
 
         public void SubscribeToTurnEventBus()
         {
-            TurnEventBus.OnRoundStarted += LogRoundStart;
-            TurnEventBus.OnRoundEnded += LogRoundEnd;
-            TurnEventBus.OnTurnStarted += LogTurnStart;
-            TurnEventBus.OnTurnEnded += LogTurnEnd;
-            TurnEventBus.OnGameOver += LogGameOver;
-            TurnEventBus.OnRaceOver += LogRaceOver;
-            TurnEventBus.OnInitiativeRolled += LogInitiativeRoll;
-            TurnEventBus.OnVehicleRemoved += LogVehicleRemoved;
-            TurnEventBus.OnVehicleDestroyed += LogVehicleDestroyed;
-            TurnEventBus.OnVehicleFinished += LogVehicleFinished;
-
-            // Operation events
-            TurnEventBus.OnAutoMovement += LogAutoMovement;
-            TurnEventBus.OnComponentPowerShutdown += LogComponentPowerShutdown;
-            TurnEventBus.OnMovementBlocked += LogMovementBlocked;
-            TurnEventBus.OnMovementExecuted += LogMovementExecuted;
-            TurnEventBus.OnStageEntered += LogStageEntered;
-            TurnEventBus.OnFinishLineCrossed += LogFinishLineCrossed;
-
-            // Player events
-            TurnEventBus.OnPlayerCannotAct += LogPlayerCannotAct;
-            TurnEventBus.OnPlayerActionPhaseStarted += LogPlayerActionPhaseStarted;
-            TurnEventBus.OnPlayerEndedTurn += LogPlayerEndedTurn;
-            TurnEventBus.OnPlayerTriggeredMovement += LogPlayerTriggeredMovement;
+            TurnEventBus.OnEvent += HandleEvent;
         }
 
         public void Unsubscribe()
         {
-            TurnEventBus.OnRoundStarted -= LogRoundStart;
-            TurnEventBus.OnRoundEnded -= LogRoundEnd;
-            TurnEventBus.OnTurnStarted -= LogTurnStart;
-            TurnEventBus.OnTurnEnded -= LogTurnEnd;
-            TurnEventBus.OnGameOver -= LogGameOver;
-            TurnEventBus.OnRaceOver -= LogRaceOver;
-            TurnEventBus.OnInitiativeRolled -= LogInitiativeRoll;
-            TurnEventBus.OnVehicleRemoved -= LogVehicleRemoved;
-            TurnEventBus.OnVehicleDestroyed -= LogVehicleDestroyed;
-            TurnEventBus.OnVehicleFinished -= LogVehicleFinished;
+            TurnEventBus.OnEvent -= HandleEvent;
+        }
 
-            // Operation events
-            TurnEventBus.OnAutoMovement -= LogAutoMovement;
-            TurnEventBus.OnComponentPowerShutdown -= LogComponentPowerShutdown;
-            TurnEventBus.OnMovementBlocked -= LogMovementBlocked;
-            TurnEventBus.OnMovementExecuted -= LogMovementExecuted;
-            TurnEventBus.OnStageEntered -= LogStageEntered;
-            TurnEventBus.OnFinishLineCrossed -= LogFinishLineCrossed;
-
-            // Player events
-            TurnEventBus.OnPlayerCannotAct -= LogPlayerCannotAct;
-            TurnEventBus.OnPlayerActionPhaseStarted -= LogPlayerActionPhaseStarted;
-            TurnEventBus.OnPlayerEndedTurn -= LogPlayerEndedTurn;
-            TurnEventBus.OnPlayerTriggeredMovement -= LogPlayerTriggeredMovement;
+        private void HandleEvent(TurnEvent evt)
+        {
+            switch (evt)
+            {
+                case RoundStartedEvent e:               LogRoundStart(e.RoundNumber); break;
+                case RoundEndedEvent e:                 LogRoundEnd(e.RoundNumber); break;
+                case TurnStartedEvent e:                LogTurnStart(e.Vehicle); break;
+                case TurnEndedEvent e:                  LogTurnEnd(e.Vehicle); break;
+                case RaceOverEvent e:                   LogRaceOver(e.Result); break;
+                case InitiativeRolledEvent e:           LogInitiativeRoll(e.Vehicle, e.Initiative); break;
+                case VehicleRemovedEvent e:             LogVehicleRemoved(e.Vehicle); break;
+                case VehicleDestroyedEvent e:           LogVehicleDestroyed(e.Vehicle); break;
+                case VehicleFinishedEvent e:            LogVehicleFinished(e.Vehicle); break;
+                case AutoMovementEvent e:               LogAutoMovement(e.Vehicle); break;
+                case ComponentPowerShutdownEvent e:     LogComponentPowerShutdown(e.Vehicle, e.Component, e.RequiredPower, e.AvailablePower); break;
+                case MovementBlockedEvent e:            LogMovementBlocked(e.Vehicle, e.Reason); break;
+                case MovementExecutedEvent e:           LogMovementExecuted(e.Vehicle, e.Distance, e.Speed, e.OldProgress, e.NewProgress); break;
+                case StageEnteredEvent e:               LogStageEntered(e.Vehicle, e.NewStage, e.PreviousStage, e.CarriedProgress, e.IsPlayerChoice); break;
+                case FinishLineCrossedEvent e:          LogFinishLineCrossed(e.Vehicle, e.FinishStage); break;
+                case PlayerCannotActEvent e:            LogPlayerCannotAct(e.Vehicle, e.Reason); break;
+                case PlayerActionPhaseStartedEvent e:   LogPlayerActionPhaseStarted(e.Vehicle); break;
+                case PlayerEndedTurnEvent e:            LogPlayerEndedTurn(e.Vehicle); break;
+                case PlayerTriggeredMovementEvent e:    LogPlayerTriggeredMovement(e.Vehicle); break;
+            }
         }
         
         // ==================== LIFECYCLE EVENT HANDLERS ====================
@@ -120,15 +100,6 @@ namespace Assets.Scripts.Managers.Logging
             );
         }
         
-        private void LogGameOver()
-        {
-            RaceHistory.Log(
-                EventType.System,
-                EventImportance.Critical,
-                "<color=#FF0000><b>GAME OVER</b></color> - All player vehicles have been destroyed!"
-            );
-        }
-
         private void LogRaceOver(RaceResult result)
         {
             string winnerName = result.Winner != null ? result.Winner.vehicleName : "nobody";

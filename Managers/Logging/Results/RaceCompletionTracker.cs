@@ -29,16 +29,19 @@ namespace Assets.Scripts.Managers.Logging.Results
 
         public void Subscribe()
         {
-            TurnEventBus.OnFinishLineCrossed += HandleFinishLineCrossed;
-            TurnEventBus.OnVehicleDestroyed += HandleVehicleDestroyed;
-            TurnEventBus.OnRoundEnded += HandleRoundEnded;
+            TurnEventBus.OnEvent += HandleEvent;
         }
 
         public void Unsubscribe()
         {
-            TurnEventBus.OnFinishLineCrossed -= HandleFinishLineCrossed;
-            TurnEventBus.OnVehicleDestroyed -= HandleVehicleDestroyed;
-            TurnEventBus.OnRoundEnded -= HandleRoundEnded;
+            TurnEventBus.OnEvent -= HandleEvent;
+        }
+
+        private void HandleEvent(TurnEvent evt)
+        {
+            if (evt is FinishLineCrossedEvent fc)   HandleFinishLineCrossed(fc.Vehicle, fc.FinishStage);
+            else if (evt is VehicleDestroyedEvent d) HandleVehicleDestroyed(d.Vehicle);
+            else if (evt is RoundEndedEvent r)       HandleRoundEnded(r.RoundNumber);
         }
 
         private void HandleFinishLineCrossed(Vehicle vehicle, Stage finishStage)
@@ -95,7 +98,7 @@ namespace Assets.Scripts.Managers.Logging.Results
 
             raceOver = true;
             var result = new RaceResult(finishers, eliminationRecords, allVehicles.Count, roundNumber);
-            TurnEventBus.EmitRaceOver(result);
+            TurnEventBus.Emit(new RaceOverEvent(result));
         }
 
         private void CheckRaceOver()
@@ -106,7 +109,7 @@ namespace Assets.Scripts.Managers.Logging.Results
             raceOver = true;
 
             var result = new RaceResult(finishers, eliminationRecords, allVehicles.Count, stateMachine.CurrentRound);
-            TurnEventBus.EmitRaceOver(result);
+            TurnEventBus.Emit(new RaceOverEvent(result));
         }
     }
 }

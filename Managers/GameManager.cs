@@ -98,7 +98,7 @@ namespace Assets.Scripts.Managers
             eventLogger.SetStateMachineReference(stateMachine);
             eventLogger.SubscribeToTurnEventBus();
 
-            TurnEventBus.OnRaceOver += HandleRaceOver;
+            TurnEventBus.OnEvent += HandleTurnEvent;
 
             raceTracker = new RaceCompletionTracker(stateMachine, vehicles, maxRounds);
             raceTracker.Subscribe();
@@ -125,6 +125,12 @@ namespace Assets.Scripts.Managers
 
         // ==================== EVENT HANDLERS ====================
 
+        private void HandleTurnEvent(TurnEvent evt)
+        {
+            if (evt is RaceOverEvent raceOver)
+                HandleRaceOver(raceOver.Result);
+        }
+
         private void HandleRaceOver(RaceResult result)
         {
             if (phaseContext != null)
@@ -141,7 +147,7 @@ namespace Assets.Scripts.Managers
 
         void OnDestroy()
         {
-            TurnEventBus.OnRaceOver -= HandleRaceOver;
+            TurnEventBus.OnEvent -= HandleTurnEvent;
             if (raceTracker != null)
                 raceTracker.Unsubscribe();
             if (eventLogger != null)

@@ -170,11 +170,11 @@ namespace Assets.Scripts.Entities.Vehicles
 
                 if (!success)
                 {
-                    TurnEventBus.EmitComponentPowerShutdown(
+                    TurnEventBus.Emit(new ComponentPowerShutdownEvent(
                         this,
                         component,
                         component.GetActualPowerDraw(),
-                        PowerCore.currentEnergy);
+                        PowerCore.currentEnergy));
                     //TODO: should probably add logic to determine which components get priority power instead of just shutting down everything that can't be powered
                     component.SetManuallyDisabled(true);
                 }
@@ -323,7 +323,7 @@ namespace Assets.Scripts.Entities.Vehicles
             Status = VehicleStatus.Destroyed;
 
             // Emit event - TurnStateMachine removes from turn order, GameManager checks game over
-            TurnEventBus.EmitVehicleDestroyed(this);
+            TurnEventBus.Emit(new VehicleDestroyedEvent(this));
         }
 
         public void MarkAsFinished()
@@ -333,7 +333,7 @@ namespace Assets.Scripts.Entities.Vehicles
             Status = VehicleStatus.Finished;
 
             // Emit event - GameManager records ranking, TurnStateMachine skips future turns
-            TurnEventBus.EmitVehicleFinished(this);
+            TurnEventBus.Emit(new VehicleFinishedEvent(this));
         }
 
         // ==================== OPERATIONAL STATUS ====================

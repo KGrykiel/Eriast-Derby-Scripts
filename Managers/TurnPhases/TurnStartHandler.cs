@@ -45,7 +45,7 @@
                 currentStage.ProcessStageTurnEffects(vehicle);
             }
 
-            TurnEventBus.EmitTurnStarted(vehicle);
+            TurnEventBus.Emit(new TurnStartedEvent(vehicle));
 
             if (context.IsPlayerTurn)
                 return TurnPhase.PlayerAction;

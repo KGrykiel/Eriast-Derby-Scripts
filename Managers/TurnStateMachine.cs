@@ -69,13 +69,13 @@ namespace Assets.Scripts.Managers
             initiativeOrder.Clear();
 
             RegisterPhaseHandlers();
-            TurnEventBus.OnVehicleDestroyed += HandleVehicleDestroyed;
+            TurnEventBus.OnEvent += HandleVehicleDestroyed;
 
             foreach (var vehicle in vehicles)
             {
                 int initiative = RollUtility.RollInitiative();
                 initiativeOrder[vehicle] = initiative;
-                TurnEventBus.EmitInitiativeRolled(vehicle, initiative);
+                TurnEventBus.Emit(new InitiativeRolledEvent(vehicle, initiative));
             }
 
             vehicles.Sort((a, b) => initiativeOrder[b].CompareTo(initiativeOrder[a]));
@@ -86,9 +86,10 @@ namespace Assets.Scripts.Managers
             TransitionTo(TurnPhase.RoundStart);
         }
 
-        private void HandleVehicleDestroyed(Vehicle vehicle)
+        private void HandleVehicleDestroyed(TurnEvent evt)
         {
-            RemoveVehicle(vehicle);
+            if (evt is VehicleDestroyedEvent e)
+                RemoveVehicle(e.Vehicle);
         }
 
         private void RegisterPhaseHandlers()
@@ -154,7 +155,7 @@ namespace Assets.Scripts.Managers
             TurnPhase oldPhase = currentPhase;
             currentPhase = newPhase;
 
-            TurnEventBus.EmitPhaseChanged(oldPhase, newPhase);
+            TurnEventBus.Emit(new PhaseChangedEvent(oldPhase, newPhase));
         }
 
         public void IncrementRound() => currentRound++;
@@ -183,7 +184,7 @@ namespace Assets.Scripts.Managers
             vehicles.RemoveAt(index);
             initiativeOrder.Remove(vehicle);
 
-            TurnEventBus.EmitVehicleRemoved(vehicle);
+            TurnEventBus.Emit(new VehicleRemovedEvent(vehicle));
 
             if (index < currentTurnIndex)
                 currentTurnIndex--;
@@ -194,7 +195,7 @@ namespace Assets.Scripts.Managers
 
         public void Cleanup()
         {
-            TurnEventBus.OnVehicleDestroyed -= HandleVehicleDestroyed;
+            TurnEventBus.OnEvent -= HandleVehicleDestroyed;
         }
 
         public bool ShouldSkipTurn(Vehicle vehicle)

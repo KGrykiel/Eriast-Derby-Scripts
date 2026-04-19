@@ -69,7 +69,7 @@ namespace Assets.Scripts.Tests.PlayMode
         {
             var vehicle = CreateVehicle();
             Vehicle received = null;
-            TurnEventBus.OnVehicleFinished += v => received = v;
+            TurnEventBus.OnEvent += evt => { if (evt is VehicleFinishedEvent e) received = e.Vehicle; };
 
             vehicle.MarkAsFinished();
 
@@ -81,7 +81,7 @@ namespace Assets.Scripts.Tests.PlayMode
         {
             var vehicle = CreateVehicle();
             int emitCount = 0;
-            TurnEventBus.OnVehicleFinished += _ => emitCount++;
+            TurnEventBus.OnEvent += evt => { if (evt is VehicleFinishedEvent) emitCount++; };
 
             vehicle.MarkAsFinished();
             vehicle.MarkAsFinished();
@@ -166,7 +166,7 @@ namespace Assets.Scripts.Tests.PlayMode
             cleanup.Add(stageObj);
             CreateTracker(new[] { vehicle });
 
-            TurnEventBus.EmitFinishLineCrossed(vehicle, finishStage);
+            TurnEventBus.Emit(new FinishLineCrossedEvent(vehicle, finishStage));
 
             Assert.AreEqual(VehicleStatus.Finished, vehicle.Status);
         }
@@ -179,7 +179,7 @@ namespace Assets.Scripts.Tests.PlayMode
             cleanup.Add(stageObj);
             var tracker = CreateTracker(new[] { vehicle });
 
-            TurnEventBus.EmitFinishLineCrossed(vehicle, finishStage);
+            TurnEventBus.Emit(new FinishLineCrossedEvent(vehicle, finishStage));
 
             Assert.AreEqual(1, tracker.Finishers.Count);
             Assert.AreEqual(vehicle, tracker.Finishers[0].Vehicle);
@@ -195,8 +195,8 @@ namespace Assets.Scripts.Tests.PlayMode
             cleanup.Add(stageObj);
             var tracker = CreateTracker(new[] { vehicleA, vehicleB });
 
-            TurnEventBus.EmitFinishLineCrossed(vehicleA, finishStage);
-            TurnEventBus.EmitFinishLineCrossed(vehicleB, finishStage);
+            TurnEventBus.Emit(new FinishLineCrossedEvent(vehicleA, finishStage));
+            TurnEventBus.Emit(new FinishLineCrossedEvent(vehicleB, finishStage));
 
             Assert.AreEqual(vehicleA, tracker.Finishers[0].Vehicle);
             Assert.AreEqual(1, tracker.Finishers[0].Position);
@@ -213,10 +213,10 @@ namespace Assets.Scripts.Tests.PlayMode
             cleanup.Add(stageObj);
             CreateTracker(new[] { vehicleA, vehicleB });
             RaceResult result = null;
-            TurnEventBus.OnRaceOver += r => result = r;
+            TurnEventBus.OnEvent += evt => { if (evt is RaceOverEvent e) result = e.Result; };
 
-            TurnEventBus.EmitFinishLineCrossed(vehicleA, finishStage);
-            TurnEventBus.EmitFinishLineCrossed(vehicleB, finishStage);
+            TurnEventBus.Emit(new FinishLineCrossedEvent(vehicleA, finishStage));
+            TurnEventBus.Emit(new FinishLineCrossedEvent(vehicleB, finishStage));
 
             Assert.IsNotNull(result);
         }
@@ -230,9 +230,9 @@ namespace Assets.Scripts.Tests.PlayMode
             cleanup.Add(stageObj);
             CreateTracker(new[] { vehicleA, vehicleB });
             bool raceOverFired = false;
-            TurnEventBus.OnRaceOver += _ => raceOverFired = true;
+            TurnEventBus.OnEvent += evt => { if (evt is RaceOverEvent) raceOverFired = true; };
 
-            TurnEventBus.EmitFinishLineCrossed(vehicleA, finishStage);
+            TurnEventBus.Emit(new FinishLineCrossedEvent(vehicleA, finishStage));
 
             Assert.IsFalse(raceOverFired);
         }
@@ -248,9 +248,9 @@ namespace Assets.Scripts.Tests.PlayMode
             RacePositionTracker.SetStage(vehicle, stage);
             CreateTracker(new[] { vehicle });
             RaceResult result = null;
-            TurnEventBus.OnRaceOver += r => result = r;
+            TurnEventBus.OnEvent += evt => { if (evt is RaceOverEvent e) result = e.Result; };
 
-            TurnEventBus.EmitVehicleDestroyed(vehicle);
+            TurnEventBus.Emit(new VehicleDestroyedEvent(vehicle));
 
             Assert.IsNotNull(result);
             Assert.AreEqual(1, result.DidNotFinish.Count);
@@ -266,9 +266,9 @@ namespace Assets.Scripts.Tests.PlayMode
             RacePositionTracker.SetStage(vehicle, stage);
             CreateTracker(new[] { vehicle });
             RaceResult result = null;
-            TurnEventBus.OnRaceOver += r => result = r;
+            TurnEventBus.OnEvent += evt => { if (evt is RaceOverEvent e) result = e.Result; };
 
-            TurnEventBus.EmitVehicleDestroyed(vehicle);
+            TurnEventBus.Emit(new VehicleDestroyedEvent(vehicle));
 
             Assert.AreEqual(stage, result.DidNotFinish[0].EliminatedAt);
         }
@@ -283,10 +283,10 @@ namespace Assets.Scripts.Tests.PlayMode
             RacePositionTracker.SetStage(vehicleB, stage);
             CreateTracker(new[] { vehicleA, vehicleB });
             RaceResult result = null;
-            TurnEventBus.OnRaceOver += r => result = r;
+            TurnEventBus.OnEvent += evt => { if (evt is RaceOverEvent e) result = e.Result; };
 
-            TurnEventBus.EmitFinishLineCrossed(vehicleA, stage);
-            TurnEventBus.EmitVehicleDestroyed(vehicleB);
+            TurnEventBus.Emit(new FinishLineCrossedEvent(vehicleA, stage));
+            TurnEventBus.Emit(new VehicleDestroyedEvent(vehicleB));
 
             Assert.IsNotNull(result);
             Assert.AreEqual(1, result.Finishers.Count);
@@ -306,9 +306,9 @@ namespace Assets.Scripts.Tests.PlayMode
             RacePositionTracker.SetStage(vehicleB, stage);
             CreateTracker(new[] { vehicleA, vehicleB }, maxRounds: 5);
             RaceResult result = null;
-            TurnEventBus.OnRaceOver += r => result = r;
+            TurnEventBus.OnEvent += evt => { if (evt is RaceOverEvent e) result = e.Result; };
 
-            TurnEventBus.EmitRoundEnded(5);
+            TurnEventBus.Emit(new RoundEndedEvent(5));
 
             Assert.IsNotNull(result);
             Assert.AreEqual(2, result.DidNotFinish.Count);
@@ -323,9 +323,9 @@ namespace Assets.Scripts.Tests.PlayMode
             RacePositionTracker.SetStage(vehicle, stage);
             CreateTracker(new[] { vehicle }, maxRounds: 5);
             bool raceOverFired = false;
-            TurnEventBus.OnRaceOver += _ => raceOverFired = true;
+            TurnEventBus.OnEvent += evt => { if (evt is RaceOverEvent) raceOverFired = true; };
 
-            TurnEventBus.EmitRoundEnded(5);
+            TurnEventBus.Emit(new RoundEndedEvent(5));
 
             Assert.IsTrue(raceOverFired);
         }
@@ -339,9 +339,9 @@ namespace Assets.Scripts.Tests.PlayMode
             RacePositionTracker.SetStage(vehicle, stage);
             CreateTracker(new[] { vehicle }, maxRounds: 5);
             bool raceOverFired = false;
-            TurnEventBus.OnRaceOver += _ => raceOverFired = true;
+            TurnEventBus.OnEvent += evt => { if (evt is RaceOverEvent) raceOverFired = true; };
 
-            TurnEventBus.EmitRoundEnded(3);
+            TurnEventBus.Emit(new RoundEndedEvent(3));
 
             Assert.IsFalse(raceOverFired);
         }
@@ -356,10 +356,10 @@ namespace Assets.Scripts.Tests.PlayMode
             RacePositionTracker.SetStage(vehicleB, stage);
             CreateTracker(new[] { vehicleA, vehicleB }, maxRounds: 5);
             RaceResult result = null;
-            TurnEventBus.OnRaceOver += r => result = r;
+            TurnEventBus.OnEvent += evt => { if (evt is RaceOverEvent e) result = e.Result; };
 
-            TurnEventBus.EmitFinishLineCrossed(vehicleA, stage);
-            TurnEventBus.EmitRoundEnded(5);
+            TurnEventBus.Emit(new FinishLineCrossedEvent(vehicleA, stage));
+            TurnEventBus.Emit(new RoundEndedEvent(5));
 
             Assert.IsNotNull(result);
             Assert.AreEqual(1, result.Finishers.Count);
@@ -379,10 +379,10 @@ namespace Assets.Scripts.Tests.PlayMode
             cleanup.Add(stageObj);
             CreateTracker(new[] { vehicleA, vehicleB });
             RaceResult result = null;
-            TurnEventBus.OnRaceOver += r => result = r;
+            TurnEventBus.OnEvent += evt => { if (evt is RaceOverEvent e) result = e.Result; };
 
-            TurnEventBus.EmitFinishLineCrossed(vehicleA, stage);
-            TurnEventBus.EmitFinishLineCrossed(vehicleB, stage);
+            TurnEventBus.Emit(new FinishLineCrossedEvent(vehicleA, stage));
+            TurnEventBus.Emit(new FinishLineCrossedEvent(vehicleB, stage));
 
             Assert.AreEqual(vehicleA, result.Winner);
         }
@@ -396,9 +396,9 @@ namespace Assets.Scripts.Tests.PlayMode
             RacePositionTracker.SetStage(vehicle, stage);
             CreateTracker(new[] { vehicle }, maxRounds: 5);
             RaceResult result = null;
-            TurnEventBus.OnRaceOver += r => result = r;
+            TurnEventBus.OnEvent += evt => { if (evt is RaceOverEvent e) result = e.Result; };
 
-            TurnEventBus.EmitRoundEnded(5);
+            TurnEventBus.Emit(new RoundEndedEvent(5));
 
             Assert.IsFalse(result.HasFinishers);
             Assert.IsNull(result.Winner);
@@ -418,9 +418,9 @@ namespace Assets.Scripts.Tests.PlayMode
             foreach (var v in vehicles) RacePositionTracker.SetStage(v, stage);
             CreateTracker(vehicles, maxRounds: 5);
             RaceResult result = null;
-            TurnEventBus.OnRaceOver += r => result = r;
+            TurnEventBus.OnEvent += evt => { if (evt is RaceOverEvent e) result = e.Result; };
 
-            TurnEventBus.EmitRoundEnded(5);
+            TurnEventBus.Emit(new RoundEndedEvent(5));
 
             Assert.AreEqual(3, result.TotalParticipants);
         }
@@ -434,9 +434,9 @@ namespace Assets.Scripts.Tests.PlayMode
             RacePositionTracker.SetStage(vehicle, stage);
             CreateTracker(new[] { vehicle }, maxRounds: 7);
             RaceResult result = null;
-            TurnEventBus.OnRaceOver += r => result = r;
+            TurnEventBus.OnEvent += evt => { if (evt is RaceOverEvent e) result = e.Result; };
 
-            TurnEventBus.EmitRoundEnded(7);
+            TurnEventBus.Emit(new RoundEndedEvent(7));
 
             Assert.AreEqual(7, result.TotalRounds);
         }

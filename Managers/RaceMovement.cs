@@ -32,7 +32,7 @@ namespace Assets.Scripts.Managers
                 if (!vehicle.HasLoggedMovementWarningThisTurn)
                 {
                     string reason = vehicle.GetCannotMoveReason();
-                    TurnEventBus.EmitMovementBlocked(vehicle, reason);
+                    TurnEventBus.Emit(new MovementBlockedEvent(vehicle, reason));
                     vehicle.MarkMovementWarningLogged();
                 }
 
@@ -50,7 +50,7 @@ namespace Assets.Scripts.Managers
                 if (currentStage != null)
                     RacePositionTracker.SetProgress(vehicle, oldProgress + distance);
                 vehicle.MarkMoved();
-                TurnEventBus.EmitMovementExecuted(vehicle, distance, drive.GetCurrentSpeed(), oldProgress, RacePositionTracker.GetProgress(vehicle));
+                TurnEventBus.Emit(new MovementExecutedEvent(vehicle, distance, drive.GetCurrentSpeed(), oldProgress, RacePositionTracker.GetProgress(vehicle)));
                 vehicle.NotifyStatusEffectTrigger(RemovalTrigger.OnMovement);
                 TryHandleStageTransitions(vehicle);
             }
@@ -93,7 +93,7 @@ namespace Assets.Scripts.Managers
                 else
                 {
                     if (TrackDefinition.IsFinish(currentStage))
-                        TurnEventBus.EmitFinishLineCrossed(vehicle, currentStage);
+                        TurnEventBus.Emit(new FinishLineCrossedEvent(vehicle, currentStage));
                     break;
                 }
             }
@@ -117,7 +117,7 @@ namespace Assets.Scripts.Managers
 
             stage.TriggerEnter(vehicle, targetLane);
 
-            TurnEventBus.EmitStageEntered(vehicle, stage, previousStage, RacePositionTracker.GetProgress(vehicle), isPlayerChoice);
+            TurnEventBus.Emit(new StageEnteredEvent(vehicle, stage, previousStage, RacePositionTracker.GetProgress(vehicle), isPlayerChoice));
         }
     }
 }

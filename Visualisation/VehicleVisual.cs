@@ -71,8 +71,7 @@ namespace Assets.Scripts.Visualisation
 
         private void OnDestroy()
         {
-            TurnEventBus.OnVehicleDestroyed -= HandleVehicleDestroyed;
-            TurnEventBus.OnVehicleFinished  -= HandleVehicleFinished;
+            TurnEventBus.OnEvent -= HandleTurnEvent;
 
             if (_material != null)          Destroy(_material);
             if (_hpBarBgMaterial != null)   Destroy(_hpBarBgMaterial);
@@ -107,8 +106,7 @@ namespace Assets.Scripts.Visualisation
             CreateClickCollider();
             AttachOverlayUI();
 
-            TurnEventBus.OnVehicleDestroyed += HandleVehicleDestroyed;
-            TurnEventBus.OnVehicleFinished  += HandleVehicleFinished;
+            TurnEventBus.OnEvent += HandleTurnEvent;
         }
 
         // ==================== POSITION + FACING ====================
@@ -233,20 +231,10 @@ namespace Assets.Scripts.Visualisation
 
         // ==================== EVENT HANDLERS ====================
 
-        private void HandleVehicleDestroyed(Vehicle vehicle)
+        private void HandleTurnEvent(TurnEvent evt)
         {
-            if (vehicle != _vehicle)
-                return;
-
-            SetTerminalState();
-        }
-
-        private void HandleVehicleFinished(Vehicle vehicle)
-        {
-            if (vehicle != _vehicle)
-                return;
-
-            _pendingFinish = true;
+            if (evt is VehicleDestroyedEvent d && d.Vehicle == _vehicle) SetTerminalState();
+            else if (evt is VehicleFinishedEvent f && f.Vehicle == _vehicle) _pendingFinish = true;
         }
 
         private void SetTerminalState()
