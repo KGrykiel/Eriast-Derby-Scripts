@@ -26,16 +26,11 @@ namespace Assets.Scripts.Effects.EffectTypes.VehicleEffects
 
         void IVehicleEffect.Apply(Vehicle target, EffectContext context)
         {
-            if (mode == ProgressModifierMode.Flat)
-            {
-                int newProgress = Mathf.Max(0, RacePositionTracker.GetProgress(target) + amount);
-                RacePositionTracker.SetProgress(target, newProgress);
-            }
-            else
-            {
-                int clampedProgress = Mathf.Max(0, amount);
-                RacePositionTracker.SetProgress(target, clampedProgress);
-            }
+            int newProgress = mode == ProgressModifierMode.Flat
+                ? RacePositionTracker.GetProgress(target) + amount
+                : amount;
+
+            RaceMovement.SetProgress(target, newProgress);
         }
     }
 }

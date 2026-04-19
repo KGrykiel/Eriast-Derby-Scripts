@@ -20,8 +20,6 @@ namespace Assets.Scripts.Managers.TurnPhases
                 var ai = vehicle.GetComponent<VehicleAIComponent>();
                 if (ai != null)
                     ai.ExecuteTurn(context.TurnController);
-                else
-                    RaceMovement.ExecuteMovement(vehicle);
             }
 
             return TurnPhase.TurnEnd;

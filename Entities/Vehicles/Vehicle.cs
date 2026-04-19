@@ -32,7 +32,6 @@ namespace Assets.Scripts.Entities.Vehicles
         public VehicleTeam team;
 
         public bool HasMovedThisTurn { get; private set; }
-        public bool HasLoggedMovementWarningThisTurn { get; private set; }
 
         [Header("Crew & Seats")]
         [Tooltip("Physical positions where characters sit and control components. " +
@@ -75,11 +74,6 @@ namespace Assets.Scripts.Entities.Vehicles
             RacePositionTracker.Register(this);
         }
 
-        void OnDisable()
-        {
-            RacePositionTracker.Unregister(this);
-        }
-
         void OnValidate()
         {
             // Validate component space usage
@@ -111,7 +105,6 @@ namespace Assets.Scripts.Entities.Vehicles
         public void ResetComponentsForNewTurn()
         {
             HasMovedThisTurn = false;
-            HasLoggedMovementWarningThisTurn = false;
 
             // Reset seat turn state (seats track action usage now)
             foreach (var seat in seats)
@@ -136,8 +129,6 @@ namespace Assets.Scripts.Entities.Vehicles
             drive.SetTargetSpeed(speedPercent);
         }
 
-        /// <summary>Marks that a movement-blocked warning has already been emitted this turn.</summary>
-        public void MarkMovementWarningLogged() => HasLoggedMovementWarningThisTurn = true;
 
         /// <summary>Adjusts the drive component's speed toward its target, or applies friction if inoperational.</summary>
         public void Accelerate()

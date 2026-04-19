@@ -22,9 +22,6 @@ namespace Assets.Scripts.Managers.TurnPhases
                     RaceMovement.ExecuteMovement(vehicle);
                 }
 
-                // Safety net: catches any progress changes that didn't go through ExecuteMovement (e.g. ProgressModifierEffect).
-                RaceMovement.TryHandleStageTransitions(vehicle);
-
                 vehicle.NotifyStatusEffectTrigger(RemovalTrigger.OnTurnEnd);
             }
 

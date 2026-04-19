@@ -183,6 +183,7 @@ namespace Assets.Scripts.Managers
 
             vehicles.RemoveAt(index);
             initiativeOrder.Remove(vehicle);
+            RacePositionTracker.Unregister(vehicle);
 
             TurnEventBus.Emit(new VehicleRemovedEvent(vehicle));
 

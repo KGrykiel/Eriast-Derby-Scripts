@@ -122,11 +122,10 @@ namespace Assets.Scripts.Managers
         public Stage NewStage { get; }
         public Stage PreviousStage { get; }
         public int CarriedProgress { get; }
-        public bool IsPlayerChoice { get; }
-        public StageEnteredEvent(Vehicle vehicle, Stage newStage, Stage previousStage, int carriedProgress, bool isPlayerChoice)
+        public StageEnteredEvent(Vehicle vehicle, Stage newStage, Stage previousStage, int carriedProgress)
         {
             Vehicle = vehicle; NewStage = newStage; PreviousStage = previousStage;
-            CarriedProgress = carriedProgress; IsPlayerChoice = isPlayerChoice;
+            CarriedProgress = carriedProgress;
         }
     }
 

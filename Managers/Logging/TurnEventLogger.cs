@@ -46,7 +46,7 @@ namespace Assets.Scripts.Managers.Logging
                 case ComponentPowerShutdownEvent e:     LogComponentPowerShutdown(e.Vehicle, e.Component, e.RequiredPower, e.AvailablePower); break;
                 case MovementBlockedEvent e:            LogMovementBlocked(e.Vehicle, e.Reason); break;
                 case MovementExecutedEvent e:           LogMovementExecuted(e.Vehicle, e.Distance, e.Speed); break;
-                case StageEnteredEvent e:               LogStageEntered(e.Vehicle, e.NewStage, e.IsPlayerChoice); break;
+                case StageEnteredEvent e:               LogStageEntered(e.Vehicle, e.NewStage); break;
                 case FinishLineCrossedEvent e:          LogFinishLineCrossed(e.Vehicle, e.FinishStage); break;
                 case PlayerCannotActEvent e:            LogPlayerCannotAct(e.Vehicle, e.Reason); break;
                 case PlayerActionPhaseStartedEvent e:   LogPlayerActionPhaseStarted(e.Vehicle); break;
@@ -223,13 +223,11 @@ namespace Assets.Scripts.Managers.Logging
             );
         }
         
-        private void LogStageEntered(Vehicle vehicle, Stage newStage, bool isPlayerChoice)
+        private void LogStageEntered(Vehicle vehicle, Stage newStage)
         {
-            EventImportance importance = isPlayerChoice ? EventImportance.Medium : EventImportance.Low;
-
             RaceHistory.Log(
                 EventType.Movement,
-                importance,
+                EventImportance.Low,
                 $"{vehicle.vehicleName} entered {newStage.stageName}",
                 newStage,
                 vehicle

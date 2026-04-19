@@ -29,13 +29,8 @@ namespace Assets.Scripts.Managers
 
             if (!vehicle.CanMove())
             {
-                if (!vehicle.HasLoggedMovementWarningThisTurn)
-                {
-                    string reason = vehicle.GetCannotMoveReason();
-                    TurnEventBus.Emit(new MovementBlockedEvent(vehicle, reason));
-                    vehicle.MarkMovementWarningLogged();
-                }
-
+                string reason = vehicle.GetCannotMoveReason();
+                TurnEventBus.Emit(new MovementBlockedEvent(vehicle, reason));
                 vehicle.MarkMoved();
                 return false;
             }
@@ -43,23 +38,25 @@ namespace Assets.Scripts.Managers
             var drive = vehicle.Drive;
             int distance = drive != null ? drive.GetCurrentSpeed() : 0;
 
+            vehicle.MarkMoved();
+
             if (distance > 0)
             {
                 int oldProgress = RacePositionTracker.GetProgress(vehicle);
-                Stage currentStage = RacePositionTracker.GetStage(vehicle);
-                if (currentStage != null)
-                    RacePositionTracker.SetProgress(vehicle, oldProgress + distance);
-                vehicle.MarkMoved();
+                SetProgress(vehicle, oldProgress + distance);
                 TurnEventBus.Emit(new MovementExecutedEvent(vehicle, distance, drive.GetCurrentSpeed(), oldProgress, RacePositionTracker.GetProgress(vehicle)));
                 vehicle.NotifyStatusEffectTrigger(RemovalTrigger.OnMovement);
-                TryHandleStageTransitions(vehicle);
-            }
-            else
-            {
-                vehicle.MarkMoved();
             }
 
             return true;
+        }
+
+        /// <summary>Sets a vehicle's progress to the given value and immediately resolves any stage transitions.</summary>
+        public static void SetProgress(Vehicle vehicle, int progress)
+        {
+            if (vehicle == null) return;
+            RacePositionTracker.SetProgress(vehicle, Mathf.Max(0, progress));
+            TryHandleStageTransitions(vehicle);
         }
 
         /// <summary>
@@ -67,7 +64,7 @@ namespace Assets.Scripts.Managers
         /// Loops to handle chained transitions when excess progress carries through multiple stages.
         /// Called after movement and after turn-end as a safety net for non-movement progress changes.
         /// </summary>
-        public static void TryHandleStageTransitions(Vehicle vehicle)
+        private static void TryHandleStageTransitions(Vehicle vehicle)
         {
             if (vehicle == null || RacePositionTracker.GetStage(vehicle) == null) return;
 
@@ -89,7 +86,7 @@ namespace Assets.Scripts.Managers
                 }
 
                 if (nextStage != null)
-                    MoveToStage(vehicle, nextStage, isPlayerChoice: false);
+                    MoveToStage(vehicle, nextStage);
                 else
                 {
                     if (TrackDefinition.IsFinish(currentStage))
@@ -99,7 +96,7 @@ namespace Assets.Scripts.Managers
             }
         }
 
-        public static void MoveToStage(Vehicle vehicle, Stage stage, bool isPlayerChoice = false)
+        private static void MoveToStage(Vehicle vehicle, Stage stage)
         {
             if (vehicle == null || stage == null) return;
 
@@ -117,7 +114,7 @@ namespace Assets.Scripts.Managers
 
             stage.TriggerEnter(vehicle, targetLane);
 
-            TurnEventBus.Emit(new StageEnteredEvent(vehicle, stage, previousStage, RacePositionTracker.GetProgress(vehicle), isPlayerChoice));
+            TurnEventBus.Emit(new StageEnteredEvent(vehicle, stage, previousStage, RacePositionTracker.GetProgress(vehicle)));
         }
     }
 }
