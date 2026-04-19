@@ -21,7 +21,7 @@ namespace Assets.Scripts.Managers.TurnPhases
                 if (ai != null)
                     ai.ExecuteTurn(context.TurnController);
                 else
-                    context.TurnController.ExecuteMovement(vehicle);
+                    RaceMovement.ExecuteMovement(vehicle);
             }
 
             return TurnPhase.TurnEnd;

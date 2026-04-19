@@ -1,9 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
 using Assets.Scripts.Entities.Vehicles;
+using Assets.Scripts.Managers.Selection;
 using Assets.Scripts.Skills;
 using TMPro;
-using UnityEngine;
 using UnityEngine.UI;
 
 namespace Assets.Scripts.Managers.PlayerUI
@@ -19,11 +19,11 @@ namespace Assets.Scripts.Managers.PlayerUI
             ui = uiReferences;
         }
 
-        public void ShowSeatTabs(List<VehicleSeat> availableSeats, Action<int> onSeatSelected)
+        public void ShowSeatTabs(List<SelectionOption<VehicleSeat>> options, Action<int> onSeatSelected)
         {
             if (ui.roleTabContainer == null || ui.roleTabPrefab == null) return;
 
-            while (seatTabButtons.Count < availableSeats.Count)
+            while (seatTabButtons.Count < options.Count)
             {
                 Button btn = UnityEngine.Object.Instantiate(ui.roleTabPrefab, ui.roleTabContainer);
                 seatTabButtons.Add(btn);
@@ -31,30 +31,11 @@ namespace Assets.Scripts.Managers.PlayerUI
 
             for (int i = 0; i < seatTabButtons.Count; i++)
             {
-                if (i < availableSeats.Count)
+                if (i < options.Count)
                 {
-                    VehicleSeat seat = availableSeats[i];
                     seatTabButtons[i].gameObject.SetActive(true);
-
-                    bool canAct = seat.CanAct();
-                    bool actionSpent = !seat.CanSpendAction(ActionType.Action);
-                    bool bonusSpent = !seat.CanSpendAction(ActionType.BonusAction);
-
-                    string statusIcon;
-                    if (!canAct)
-                        statusIcon = "[X]";
-                    else if (actionSpent && bonusSpent)
-                        statusIcon = "[v]";
-                    else if (actionSpent || bonusSpent)
-                        statusIcon = "[~]";
-                    else
-                        statusIcon = "[ ]";
-
-                    string characterName = seat.GetDisplayName() ?? "Unassigned";
-                    string tabText = $"{statusIcon} {seat.seatName} ({characterName})";
-
-                    seatTabButtons[i].GetComponentInChildren<TextMeshProUGUI>().text = tabText;
-                    seatTabButtons[i].interactable = canAct && seat.HasAnyActionsRemaining();
+                    seatTabButtons[i].GetComponentInChildren<TextMeshProUGUI>().text = options[i].Label;
+                    seatTabButtons[i].interactable = options[i].Interactable;
 
                     int seatIndex = i;
                     seatTabButtons[i].onClick.RemoveAllListeners();
@@ -66,26 +47,19 @@ namespace Assets.Scripts.Managers.PlayerUI
                 }
             }
         }
-        
+
         public void UpdateCurrentSeatDisplay(VehicleSeat currentSeat)
         {
             if (ui.currentRoleText == null || currentSeat == null) return;
-            
-            string characterName = currentSeat.GetDisplayName() ?? "Unassigned";
-            bool actionSpent = !currentSeat.CanSpendAction(ActionType.Action);
-            bool bonusSpent = !currentSeat.CanSpendAction(ActionType.BonusAction);
-            string status = (actionSpent && bonusSpent) ? "- Done" : (actionSpent || bonusSpent) ? "- Partial" : "- Ready";
-            ui.currentRoleText.text = $"<b>{currentSeat.seatName}</b> ({characterName}) {status}";
+
+            ui.currentRoleText.text = SeatOptionBuilder.SeatStatusLine(currentSeat);
         }
-        
-        public void ShowSkillSelection(VehicleSeat currentSeat, Action<int> onSkillSelected)
+
+        public void ShowSkillSelection(List<SelectionOption<Skill>> options, Action<int> onSkillSelected)
         {
-            if (ui.skillButtonContainer == null || ui.skillButtonPrefab == null || currentSeat == null) return;
+            if (ui.skillButtonContainer == null || ui.skillButtonPrefab == null) return;
 
-            List<Skill> availableSkills = currentSeat.GetAvailableSkills();
-            Vehicle vehicle = currentSeat.ParentVehicle;
-
-            while (skillButtons.Count < availableSkills.Count)
+            while (skillButtons.Count < options.Count)
             {
                 Button btn = UnityEngine.Object.Instantiate(ui.skillButtonPrefab, ui.skillButtonContainer);
                 skillButtons.Add(btn);
@@ -93,25 +67,15 @@ namespace Assets.Scripts.Managers.PlayerUI
 
             for (int i = 0; i < skillButtons.Count; i++)
             {
-                if (i < availableSkills.Count)
+                if (i < options.Count)
                 {
-                    Skill skill = availableSkills[i];
-                    if (skill == null)
-                    {
-                        Debug.LogWarning($"[SeatSkillUIController] Null skill at index {i} for seat {currentSeat.seatName}");
-                        skillButtons[i].gameObject.SetActive(false);
-                        continue;
-                    }
-
                     skillButtons[i].gameObject.SetActive(true);
 
-                    string skillText = $"{skill.name} ({BuildCostDisplay(skill)})";
                     var textComponent = skillButtons[i].GetComponentInChildren<TextMeshProUGUI>();
                     if (textComponent != null)
-                        textComponent.text = skillText;
+                        textComponent.text = options[i].Label;
 
-                    bool canUse = CanPayAllCosts(skill, vehicle) && currentSeat.CanSpendAction(skill.actionCost);
-                    skillButtons[i].interactable = canUse;
+                    skillButtons[i].interactable = options[i].Interactable;
 
                     int skillIndex = i;
                     skillButtons[i].onClick.RemoveAllListeners();
@@ -122,30 +86,6 @@ namespace Assets.Scripts.Managers.PlayerUI
                     skillButtons[i].gameObject.SetActive(false);
                 }
             }
-
-            }
-        
-        private static string BuildCostDisplay(Skill skill)
-        {
-            if (skill.costs.Count == 0)
-                return "Free";
-
-            var parts = new List<string>();
-            foreach (var cost in skill.costs)
-                parts.Add(cost.GetDescription());
-            return string.Join(", ", parts);
         }
-
-        private static bool CanPayAllCosts(Skill skill, Vehicle vehicle)
-        {
-            foreach (var cost in skill.costs)
-            {
-                if (!cost.CanPay(vehicle))
-                    return false;
-            }
-            return true;
-        }
-
-
     }
 }

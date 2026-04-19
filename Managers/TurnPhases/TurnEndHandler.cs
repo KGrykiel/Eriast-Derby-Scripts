@@ -19,11 +19,11 @@ namespace Assets.Scripts.Managers.TurnPhases
                 if (!vehicle.HasMovedThisTurn)
                 {
                     TurnEventBus.EmitAutoMovement(vehicle);
-                    context.TurnController.ExecuteMovement(vehicle);
+                    RaceMovement.ExecuteMovement(vehicle);
                 }
 
                 // Safety net: catches any progress changes that didn't go through ExecuteMovement (e.g. ProgressModifierEffect).
-                context.TurnController.TryHandleStageTransitions(vehicle);
+                RaceMovement.TryHandleStageTransitions(vehicle);
 
                 vehicle.NotifyStatusEffectTrigger(RemovalTrigger.OnTurnEnd);
             }

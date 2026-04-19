@@ -139,6 +139,48 @@ namespace Assets.Scripts.Entities.Vehicles
         /// <summary>Marks that a movement-blocked warning has already been emitted this turn.</summary>
         public void MarkMovementWarningLogged() => HasLoggedMovementWarningThisTurn = true;
 
+        /// <summary>Adjusts the drive component's speed toward its target, or applies friction if inoperational.</summary>
+        public void Accelerate()
+        {
+            var drive = Drive;
+            if (drive == null) return;
+
+            if (!drive.IsOperational)
+            {
+                drive.ApplyFriction();
+                return;
+            }
+
+            drive.AdjustSpeedTowardTarget();
+        }
+
+        /// <summary>
+        /// Draws continuous turn power for all components.
+        /// Components that cannot be powered are shut down and an event is emitted.
+        /// </summary>
+        public void DrawTurnPower()
+        {
+            if (PowerCore == null) return;
+
+            foreach (var component in AllComponents)
+            {
+                if (component == null) continue;
+
+                bool success = component.DrawTurnPower();
+
+                if (!success)
+                {
+                    TurnEventBus.EmitComponentPowerShutdown(
+                        this,
+                        component,
+                        component.GetActualPowerDraw(),
+                        PowerCore.currentEnergy);
+                    //TODO: should probably add logic to determine which components get priority power instead of just shutting down everything that can't be powered
+                    component.SetManuallyDisabled(true);
+                }
+            }
+        }
+
         // ==================== SEAT ACCESS ====================
 
         public VehicleSeat GetSeatForComponent(VehicleComponent component)

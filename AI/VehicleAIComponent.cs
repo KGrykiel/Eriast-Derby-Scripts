@@ -1,5 +1,4 @@
 using System.Collections.Generic;
-using Assets.Scripts.AI.Execution;
 using Assets.Scripts.Entities.Vehicles;
 using Assets.Scripts.Managers;
 using UnityEngine;
@@ -20,7 +19,6 @@ namespace Assets.Scripts.AI
     {
         private Vehicle vehicle;
         private readonly List<SeatAI> seatAIs = new();
-        private readonly MoveExecutor moveExecutor = new();
 
         private void Awake()
         {
@@ -47,8 +45,6 @@ namespace Assets.Scripts.AI
                 VehicleAISharedContext context = BuildContext(turnService);
                 seatAI.TakeTurn(context);
             }
-
-            moveExecutor.Execute(vehicle, turnService);
         }
 
         // ==================== SEAT MANAGEMENT ====================

@@ -40,9 +40,6 @@ public class GameManager : MonoBehaviour
     // Phase context (passed to handlers)
     private TurnPhaseContext phaseContext;
     
-    // Cached references
-    private bool isGameOver = false;
-
     // ==================== INITIALIZATION ====================
 
     void Start()
@@ -100,8 +97,6 @@ public class GameManager : MonoBehaviour
         eventLogger.SetStateMachineReference(stateMachine);
         eventLogger.SubscribeToTurnEventBus();
 
-        TurnEventBus.OnGameOver += HandleGameOver;
-        TurnEventBus.OnVehicleDestroyed += CheckGameOverCondition;
         TurnEventBus.OnRaceOver += HandleRaceOver;
 
         raceTracker = new RaceCompletionTracker(stateMachine, vehicles, maxRounds);
@@ -117,7 +112,7 @@ public class GameManager : MonoBehaviour
             Debug.LogError("PlayerController component not found!");
             return;
         }
-        playerController.Initialize(turnController, stateMachine, OnPlayerTurnComplete);
+        playerController.Initialize(turnController, OnPlayerTurnComplete);
     }
 
     // ==================== PLAYER TURN CALLBACK ====================
@@ -128,31 +123,6 @@ public class GameManager : MonoBehaviour
     }
 
     // ==================== EVENT HANDLERS ====================
-
-    /// <summary>Triggers game over when all player vehicles are destroyed.</summary>
-    private void CheckGameOverCondition(Vehicle destroyedVehicle)
-    {
-        if (destroyedVehicle == null || isGameOver) return;
-        if (destroyedVehicle.controlType != ControlType.Player) return;
-
-        bool anyPlayerVehiclesRemain = stateMachine.AllVehicles
-            .Any(v => v.controlType == ControlType.Player && v.Status != VehicleStatus.Destroyed);
-
-        if (!anyPlayerVehiclesRemain)
-        {
-            isGameOver = true;
-            if (phaseContext != null)
-                phaseContext.IsGameOver = true;
-
-            stateMachine.TransitionTo(TurnPhase.GameOver);
-        }
-    }
-
-    private void HandleGameOver()
-    {
-        if (statusNotesText != null)
-            statusNotesText.text = "<color=#FF0000><b>GAME OVER</b></color>\nAll player vehicles have been destroyed!";
-    }
 
     private void HandleRaceOver(RaceResult result)
     {
@@ -170,8 +140,6 @@ public class GameManager : MonoBehaviour
 
     void OnDestroy()
     {
-        TurnEventBus.OnGameOver -= HandleGameOver;
-        TurnEventBus.OnVehicleDestroyed -= CheckGameOverCondition;
         TurnEventBus.OnRaceOver -= HandleRaceOver;
         if (raceTracker != null)
             raceTracker.Unsubscribe();

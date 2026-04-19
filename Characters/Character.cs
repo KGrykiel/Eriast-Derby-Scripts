@@ -73,7 +73,7 @@ namespace Assets.Scripts.Characters
         [Header("AI Simulation")]
         [SerializeReference, SerializeReferenceEditor.SR]
         [Tooltip("Personality profile used by the AI to weight scoring decisions. Leave null for player characters — the AI only reads this field on AI-controlled vehicles.")]
-        public Assets.Scripts.AI.Personality.PersonalityProfile personality;
+        public AI.Personality.PersonalityProfile personality;
 
         // ==================== ATTRIBUTE METHODS ====================
 

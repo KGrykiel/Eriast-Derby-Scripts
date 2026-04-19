@@ -28,10 +28,7 @@ namespace Assets.Scripts.Managers
         TurnEnd,
         
         /// <summary>End of round - apply round-end effects</summary>
-        RoundEnd,
-        
-        /// <summary>Race/combat is over</summary>
-        GameOver
+        RoundEnd
     }
 
     /// <summary>
@@ -62,10 +59,7 @@ namespace Assets.Scripts.Managers
                 : null;
 
         public IReadOnlyList<Vehicle> AllVehicles => vehicles;
-        public int TurnsRemainingInRound => vehicles.Count - currentTurnIndex;
-        public bool IsLastTurnInRound => currentTurnIndex >= vehicles.Count - 1;
-        public bool IsActive => currentPhase != TurnPhase.Inactive && currentPhase != TurnPhase.GameOver;
-        public bool IsWaitingForPlayer => currentPhase == TurnPhase.PlayerAction;
+        public bool IsActive => currentPhase != TurnPhase.Inactive;
         
         // ==================== INITIALIZATION ====================
         
@@ -108,8 +102,7 @@ namespace Assets.Scripts.Managers
                 new PlayerActionHandler(),
                 new AIActionHandler(),
                 new TurnEndHandler(),
-                new RoundEndHandler(),
-                new GameOverHandler()
+                new RoundEndHandler()
             };
             
             foreach (var handler in handlers)
@@ -135,14 +128,14 @@ namespace Assets.Scripts.Managers
         /// <summary>Runs until a pause point (player input, game over, or race complete).</summary>
         public void Run(TurnPhaseContext context)
         {
-            while (IsActive && !IsWaitingForPlayer && !context.IsGameOver && !context.IsRaceOver)
+            while (IsActive && !context.IsGameOver && !context.IsRaceOver)
             {
                 TurnPhase? nextPhase = ProcessCurrentPhase(context);
 
-                if (nextPhase.HasValue)
-                    TransitionTo(nextPhase.Value);
-                else
+                if (!nextPhase.HasValue)
                     break;
+
+                TransitionTo(nextPhase.Value);
             }
         }
 
@@ -196,7 +189,7 @@ namespace Assets.Scripts.Managers
                 currentTurnIndex--;
 
             if (vehicles.Count == 0)
-                TransitionTo(TurnPhase.GameOver);
+                TransitionTo(TurnPhase.Inactive);
         }
 
         public void Cleanup()

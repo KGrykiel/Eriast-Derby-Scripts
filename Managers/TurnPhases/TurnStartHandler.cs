@@ -26,10 +26,10 @@
                 vehicle.PowerCore.ResetTurnPowerTracking();
 
             // 3. Accelerate toward target speed
-            context.TurnController.AccelerateVehicle(vehicle);
-            
+            vehicle.Accelerate();
+
             // 4. Draw continuous power for all components (emits shutdown events via TurnEventBus)
-            context.TurnController.DrawContinuousPowerForAllComponents(vehicle);
+            vehicle.DrawTurnPower();
 
             // 5. Reset movement and seat turn states
             vehicle.ResetComponentsForNewTurn();
@@ -48,10 +48,7 @@
             TurnEventBus.EmitTurnStarted(vehicle);
 
             if (context.IsPlayerTurn)
-            {
-                context.PlayerController.ProcessPlayerMovement();
                 return TurnPhase.PlayerAction;
-            }
 
             return TurnPhase.AIAction;
         }
