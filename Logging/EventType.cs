@@ -72,6 +72,12 @@ namespace Assets.Scripts.Logging
         /// <summary>
         /// Event card triggers and skill checks.
         /// </summary>
-        EventCard
+        EventCard,
+
+        /// <summary>
+        /// AI pipeline events: perception, command weights, skill selection, idle turns.
+        /// Always logged at Debug importance — hidden by default.
+        /// </summary>
+        AI
     }
 }

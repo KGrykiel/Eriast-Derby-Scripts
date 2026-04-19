@@ -34,28 +34,37 @@ namespace Assets.Scripts.AI
             };
         }
 
-        public void TakeTurn(VehicleAISharedContext context)
+        public bool TryAct(VehicleAISharedContext context)
         {
-            if (seat == null || !seat.CanAct()) return;
+            if (seat == null || !seat.CanAct())
+            {
+                AILogManager.LogSeatSkipped(seat, context, seat != null ? "CanAct() returned false" : "seat is null");
+                return false;
+            }
 
             // ---- Perception ----
-            float threat = trackers[0].Evaluate(context);
-            float opportunity = trackers[1].Evaluate(context);
+            PerceptionReadings perception = RunTrackers(context);
 
             // ---- Scoring: build the command weight vector ----
             PersonalityProfile personality = ResolvePersonality();
-            CommandWeights weights = BuildCommandWeights(threat, opportunity, context, personality);
+            CommandWeights weights = BuildCommandWeights(perception, context, personality);
 
-            // ---- Selection + Execution loop ----
-            // Greedy: each iteration picks the single best action the seat can still afford.
-            // Exits when no positive-scoring action remains or action economy is exhausted.
-            int safetyGuard = 8;
-            while (safetyGuard-- > 0 && seat.HasAnyActionsRemaining() && seat.CanAct())
-            {
-                SkillAction best = SelectBestAction(context, weights);
-                if (best == null) break;
+            // ---- Selection ----
+            var candidates = new List<(Skill skill, IRollTarget target, float score)>();
+            SkillAction best = SelectBestAction(context, weights, candidates);
+
+            // ---- Log before execution ----
+            // The AI decision entry always precedes the combat entries it causes.
+            AILogManager.TakenAction? takenAction = best != null
+                ? new AILogManager.TakenAction(best.skill, best.target, candidates)
+                : null;
+            AILogManager.LogSeatAction(seat, context, perception, weights, takenAction);
+
+            // ---- Execution ----
+            if (best != null)
                 SkillPipeline.Execute(best);
-            }
+
+            return best != null;
         }
 
         // ==================== PIPELINE STAGES ====================
@@ -68,8 +77,18 @@ namespace Assets.Scripts.AI
             return new PersonalityProfile();
         }
 
-        private static CommandWeights BuildCommandWeights(float threat, float opportunity, VehicleAISharedContext ctx, PersonalityProfile p)
+        private PerceptionReadings RunTrackers(VehicleAISharedContext context)
         {
+            var readings = new PerceptionReadings();
+            foreach (var tracker in trackers)
+                readings.Set(tracker.GetType(), tracker.Evaluate(context));
+            return readings;
+        }
+
+        private static CommandWeights BuildCommandWeights(PerceptionReadings perception, VehicleAISharedContext ctx, PersonalityProfile p)
+        {
+            float threat      = perception.Get<ThreatTracker>();
+            float opportunity = perception.Get<OpportunityTracker>();
             float lowHealthDrive = 1f - Mathf.Clamp01(ctx.ChassisHealthPercent);
 
             return new CommandWeights
@@ -81,7 +100,7 @@ namespace Assets.Scripts.AI
             };
         }
 
-        private SkillAction SelectBestAction(VehicleAISharedContext ctx, CommandWeights weights)
+        private SkillAction SelectBestAction(VehicleAISharedContext ctx, CommandWeights weights, List<(Skill skill, IRollTarget target, float score)> candidates)
         {
             List<Skill> skills = seat.GetAvailableSkills();
             SkillAction best = null;
@@ -97,6 +116,8 @@ namespace Assets.Scripts.AI
                     if (target == null) continue;
 
                     float score = SkillScorer.Score(skill, weights, ctx, target);
+                    if (score > 0f)
+                        candidates.Add((skill, target, score));
                     if (score > bestScore)
                     {
                         bestScore = score;

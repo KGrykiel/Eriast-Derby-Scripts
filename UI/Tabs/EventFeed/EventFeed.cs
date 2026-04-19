@@ -187,6 +187,7 @@ public class EventFeed : MonoBehaviour
                evt.metadata.ContainsKey("restorationBreakdown") ||
                evt.metadata.ContainsKey("effectBreakdown") ||
                evt.metadata.ContainsKey("dcBreakdown") ||
-               evt.metadata.ContainsKey("defenseBreakdown");
+               evt.metadata.ContainsKey("defenseBreakdown") ||
+               evt.metadata.ContainsKey("aiDecision");
     }
 }

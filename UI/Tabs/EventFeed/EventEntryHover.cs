@@ -79,6 +79,12 @@ public class EventEntryHover : MonoBehaviour, IPointerEnterHandler, IPointerExit
             sb.AppendLine(dcBreakdown);
         }
 
+        if (evt.metadata.ContainsKey("aiDecision") && evt.metadata["aiDecision"] is string aiDecision)
+        {
+            if (sb.Length > 0) sb.AppendLine();
+            sb.AppendLine(aiDecision);
+        }
+
         string content = sb.ToString().Trim();
         return string.IsNullOrEmpty(content) ? null : content;
     }

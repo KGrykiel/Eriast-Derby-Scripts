@@ -29,8 +29,10 @@ namespace Assets.Scripts.AI
 
         /// <summary>
         /// Runs the full AI turn for this vehicle: each seat, in Inspector order,
-        /// receives a freshly-built context and takes its decisions. After all
-        /// seats act the vehicle moves (Phase 1 simplification — see AI-new.md).
+        /// acts repeatedly until it has nothing left to do. The shared context is
+        /// rebuilt before every action so each decision reflects current game state.
+        /// Loop termination is the seat's responsibility — a skill with no remaining
+        /// targets or economy will cause <see cref="SeatAI.TryAct"/> to return false.
         /// </summary>
         public void ExecuteTurn(TurnService turnService)
         {
@@ -42,8 +44,7 @@ namespace Assets.Scripts.AI
             foreach (var seatAI in seatAIs)
             {
                 if (seatAI == null) continue;
-                VehicleAISharedContext context = BuildContext(turnService);
-                seatAI.TakeTurn(context);
+                while (seatAI.TryAct(BuildContext(turnService))) { }
             }
         }
 

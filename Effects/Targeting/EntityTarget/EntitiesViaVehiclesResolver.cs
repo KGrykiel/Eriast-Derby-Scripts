@@ -8,8 +8,6 @@ namespace Assets.Scripts.Effects.Targeting.EntityTarget
 {
     /// <summary>
     /// Wraps an <see cref="IVehicleEffectResolver"/> and maps each resolved vehicle to its components
-    /// of the specified type. Defaults to <see cref="ComponentType.Chassis"/>.
-    /// Use a different type to target specific components across vehicles (e.g., all Drives in the lane).
     /// </summary>
     [System.Serializable]
     [SRName("Via Vehicles")]

@@ -90,6 +90,7 @@ namespace Assets.Scripts.Logging
                 EventType.System => "[SYS]",
                 EventType.Resource => "[RES]",
                 EventType.EventCard => "[EVENT]",
+                EventType.AI => "[AI]",
                 _ => "[-]"
             };
         }
