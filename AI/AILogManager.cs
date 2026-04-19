@@ -83,6 +83,8 @@ namespace Assets.Scripts.AI
                 ctx.Self);
 
             logEvt.WithMetadata("aiDecision", BuildTooltip(ctx, perception, weights, action));
+            logEvt.WithMetadata("seatName", seat.seatName);
+            logEvt.WithMetadata("actionTaken", action.HasValue);
         }
 
         // ==================== SUMMARY LINE ====================
@@ -146,20 +148,27 @@ namespace Assets.Scripts.AI
                 return;
             }
 
-            candidates.Sort((a, b) => b.score.CompareTo(a.score));
-            int displayed = System.Math.Min(candidates.Count, 10);
-
-            for (int i = 0; i < displayed; i++)
+            // Collapse to one row per skill — best-scoring target for each.
+            var bestPerSkill = new Dictionary<Skill, (IRollTarget target, float score)>();
+            foreach (var (skill, tgt, score) in candidates)
             {
-                var (skill, tgt, score) = candidates[i];
-                bool isSelected = skill == selected && tgt == selectedTarget;
-                string prefix    = isSelected ? "  > " : "    ";
-                string skillName = skill != null ? skill.name : "?";
-                sb.AppendLine($"{prefix}{skillName} -> {FormatTarget(tgt)}  {score:F3}");
+                if (skill == null) continue;
+                if (!bestPerSkill.TryGetValue(skill, out var current) || score > current.score)
+                    bestPerSkill[skill] = (tgt, score);
             }
 
-            if (candidates.Count > displayed)
-                sb.AppendLine($"    … and {candidates.Count - displayed} more");
+            var rows = new List<(Skill skill, IRollTarget target, float score)>();
+            foreach (var kvp in bestPerSkill)
+                rows.Add((kvp.Key, kvp.Value.target, kvp.Value.score));
+
+            rows.Sort((a, b) => b.score.CompareTo(a.score));
+
+            foreach (var (skill, tgt, score) in rows)
+            {
+                bool isSelected = skill == selected && tgt == selectedTarget;
+                string prefix    = isSelected ? "  > " : "    ";
+                sb.AppendLine($"{prefix}{skill.name} -> {FormatTarget(tgt)}  {score:F3}");
+            }
         }
 
         // ==================== FORMATTING HELPERS ====================

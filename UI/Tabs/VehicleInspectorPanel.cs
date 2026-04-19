@@ -817,6 +817,10 @@ public class VehicleInspectorPanel : MonoBehaviour
                 {
                     info += $"    <color=#888888>No skills available</color>\n";
                 }
+
+                string aiDecision = GetLastSeatAIDecision(seat);
+                if (!string.IsNullOrEmpty(aiDecision))
+                    info += $"    <color=#8888FF>Last decision:</color>\n{aiDecision}\n";
             }
         }
         
@@ -885,10 +889,10 @@ public class VehicleInspectorPanel : MonoBehaviour
     private void PopulateEventHistory()
     {
         if (eventHistorySectionText == null) return;
-        
+
         var vehicleEvents = RaceHistory.GetVehicleEvents(selectedVehicle);
         string info = $"<b>EVENT HISTORY ({vehicleEvents.Count} events):</b>\n";
-        
+
         if (vehicleEvents.Count == 0)
         {
             info += "  <color=#888888>No events recorded</color>\n";
@@ -900,14 +904,67 @@ public class VehicleInspectorPanel : MonoBehaviour
             {
                 info += $"  {evt.GetFormattedText(includeTimestamp: true, includeLocation: false)}\n";
             }
-            
+
             if (vehicleEvents.Count > 10)
             {
                 info += $"  <color=#888888>... and {vehicleEvents.Count - 10} more</color>\n";
             }
         }
-        
+
         eventHistorySectionText.text = info;
+    }
+
+    private string GetLastSeatAIDecision(VehicleSeat seat)
+    {
+        var seatEvents = RaceHistory.GetVehicleEvents(selectedVehicle)
+            .Where(e => e.type == Assets.Scripts.Logging.EventType.AI
+                     && e.metadata != null
+                     && e.metadata.TryGetValue("seatName", out object n)
+                     && n?.ToString() == seat.seatName)
+            .ToList();
+
+        if (seatEvents.Count == 0) return null;
+
+        int latestTurn = seatEvents.Max(e => e.turnNumber);
+        var thisTurnEvents = seatEvents.Where(e => e.turnNumber == latestTurn).ToList();
+
+        var actionEvents = thisTurnEvents
+            .Where(e => e.metadata.TryGetValue("actionTaken", out object taken) && taken is true)
+            .ToList();
+
+        var sb = new System.Text.StringBuilder();
+        sb.AppendLine("<color=#5599FF>> AI DECISION LOG</color>");
+        sb.AppendLine($"<color=#888888>  Round {latestTurn}</color>");
+        sb.AppendLine("<color=#334466>  -------------------------</color>");
+
+        if (actionEvents.Count == 0)
+        {
+            sb.AppendLine("  <color=#FF8888>No action taken this turn</color>");
+            var terminalEvent = thisTurnEvents.Last();
+            if (terminalEvent.metadata.TryGetValue("aiDecision", out object raw))
+                sb.Append(IndentBlock(raw?.ToString(), "    "));
+        }
+        else
+        {
+            for (int i = 0; i < actionEvents.Count; i++)
+            {
+                if (actionEvents.Count > 1)
+                    sb.AppendLine($"  <b>Action {i + 1}</b>");
+                if (actionEvents[i].metadata.TryGetValue("aiDecision", out object raw))
+                    sb.Append(IndentBlock(raw?.ToString(), "    "));
+                if (i < actionEvents.Count - 1)
+                    sb.AppendLine();
+            }
+        }
+
+        return sb.ToString().TrimEnd();
+    }
+
+    private static string IndentBlock(string text, string indent)
+    {
+        if (string.IsNullOrEmpty(text)) return string.Empty;
+        var lines = text.Split('\n');
+        return string.Join("\n", System.Array.ConvertAll(lines, l => indent + l)) + "\n";
     }
     
     private string GetStatusString(VehicleStatus status)
