@@ -18,14 +18,6 @@ namespace Assets.Scripts.AI.Scoring
     /// Pure scoring helper. Inspects the concrete typed effects on a skill's
     /// roll node and returns a single utility float via dot product against the
     /// command weight vector.
-    ///
-    /// No Unity side effects, no game state mutation. Unknown effect types
-    /// contribute 0 — the system degrades gracefully rather than erroring.
-    ///
-    /// Phase 1 scope: damage, resource restoration, entity modifiers, progress
-    /// modifiers, speed, consumable restoration, and flat condition polarity.
-    /// Full condition scoring (walking periodic effects and behavioural data)
-    /// and lane-hazard weighting are deferred until their tracker modules exist.
     /// </summary>
     public static class SkillScorer
     {

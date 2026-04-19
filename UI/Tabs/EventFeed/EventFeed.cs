@@ -3,7 +3,9 @@ using TMPro;
 using UnityEngine.UI;
 using System.Collections.Generic;
 using System.Linq;
+using Assets.Scripts.Entities.Vehicles;
 using Assets.Scripts.Logging;
+using Assets.Scripts.Managers;
 
 public class EventFeed : MonoBehaviour
 {
@@ -18,6 +20,10 @@ public class EventFeed : MonoBehaviour
     public Toggle lowToggle;
     public Toggle debugToggle;
 
+    [Header("Vehicle Filter")]
+    [Tooltip("Optional — filters events to a single vehicle. First option is always 'All Vehicles'.")]
+    public TMP_Dropdown vehicleFilterDropdown;
+
     [Header("Settings")]
     public int maxDisplayedEvents = 100; // Limit to prevent performance issues
     public bool autoScrollToBottom = true;
@@ -29,6 +35,7 @@ public class EventFeed : MonoBehaviour
     private ScrollRect scrollRect;
     private int lastProcessedEventCount = 0;
     private readonly List<RaceEvent> currentlyDisplayedEvents = new();
+    private Vehicle filteredVehicle;
 
     void Start()
     {
@@ -39,6 +46,9 @@ public class EventFeed : MonoBehaviour
         mediumToggle?.onValueChanged.AddListener(_ => FullRefreshFeed());
         lowToggle?.onValueChanged.AddListener(_ => FullRefreshFeed());
         debugToggle?.onValueChanged.AddListener(_ => FullRefreshFeed());
+
+        vehicleFilterDropdown.onValueChanged.AddListener(_ => OnVehicleFilterChanged());
+        PopulateVehicleFilter();
 
         FullRefreshFeed();
     }
@@ -119,7 +129,7 @@ public class EventFeed : MonoBehaviour
 
     private bool IsEventVisible(RaceEvent evt)
     {
-        return evt.importance switch
+        bool importanceVisible = evt.importance switch
         {
             EventImportance.Critical => criticalToggle == null || criticalToggle.isOn,
             EventImportance.High => highToggle == null || highToggle.isOn,
@@ -128,11 +138,52 @@ public class EventFeed : MonoBehaviour
             EventImportance.Debug => debugToggle != null && debugToggle.isOn,
             _ => false
         };
+
+        if (!importanceVisible) return false;
+
+        if (filteredVehicle != null)
+            return evt.involvedVehicles != null && evt.involvedVehicles.Contains(filteredVehicle);
+
+        return true;
     }
 
     private List<RaceEvent> GetFilteredEvents()
     {
         return RaceHistory.AllEvents.Where(IsEventVisible).ToList();
+    }
+
+    // ==================== VEHICLE FILTER ====================
+
+    private readonly List<Vehicle> vehicleFilterList = new();
+
+    private void PopulateVehicleFilter()
+    {
+        vehicleFilterDropdown.ClearOptions();
+        vehicleFilterList.Clear();
+
+        var vehicles = RacePositionTracker.GetAll();
+        var options = new List<string> { "All Vehicles" };
+        foreach (var vehicle in vehicles)
+        {
+            if (vehicle == null) continue;
+            vehicleFilterList.Add(vehicle);
+            options.Add(vehicle.vehicleName);
+        }
+
+        vehicleFilterDropdown.AddOptions(options);
+        vehicleFilterDropdown.SetValueWithoutNotify(0);
+        filteredVehicle = null;
+    }
+
+    private void OnVehicleFilterChanged()
+    {
+        int index = vehicleFilterDropdown.value;
+        if (index <= 0 || index > vehicleFilterList.Count)
+            filteredVehicle = null;
+        else
+            filteredVehicle = vehicleFilterList[index - 1];
+
+        FullRefreshFeed();
     }
 
     private void CreateEventEntry(RaceEvent evt)

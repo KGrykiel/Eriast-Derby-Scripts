@@ -6,7 +6,6 @@ using Assets.Scripts.Entities;
 using Assets.Scripts.Entities.Vehicles;
 using Assets.Scripts.Logging;
 using Assets.Scripts.Skills;
-using UnityEngine;
 using EventType = Assets.Scripts.Logging.EventType;
 
 namespace Assets.Scripts.AI
