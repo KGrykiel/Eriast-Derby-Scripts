@@ -1,9 +1,9 @@
 using UnityEngine;
 
-namespace Assets.Scripts.Consumables
+namespace Assets.Scripts.Items
 {
     /// <summary>Abstract base for all consumable item types. Holds only fields shared by both standalone consumables and ammunition.</summary>
-    public abstract class ConsumableBase : ScriptableObject
+    public abstract class ItemBase : ScriptableObject
     {
         [Header("Basic Properties")]
         public string description;

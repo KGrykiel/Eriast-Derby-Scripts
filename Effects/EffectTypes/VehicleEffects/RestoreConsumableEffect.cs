@@ -1,4 +1,4 @@
-using Assets.Scripts.Consumables;
+using Assets.Scripts.Items;
 using Assets.Scripts.Entities.Vehicles;
 using SerializeReferenceEditor;
 using UnityEngine;
@@ -11,7 +11,7 @@ namespace Assets.Scripts.Effects.EffectTypes.VehicleEffects
     {
         [Header("Restore Configuration")]
         [Tooltip("Which consumable type to restore charges for.")]
-        public ConsumableBase targetConsumable;
+        public ItemBase targetConsumable;
 
         [Tooltip("Number of charges to restore.")]
         public int amount = 1;

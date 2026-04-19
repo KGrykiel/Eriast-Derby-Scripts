@@ -39,12 +39,12 @@ namespace Assets.Scripts.Managers.Logging.Results
 
         private void HandleEvent(TurnEvent evt)
         {
-            if (evt is FinishLineCrossedEvent fc)   HandleFinishLineCrossed(fc.Vehicle, fc.FinishStage);
+            if (evt is FinishLineCrossedEvent fc)   HandleFinishLineCrossed(fc.Vehicle);
             else if (evt is VehicleDestroyedEvent d) HandleVehicleDestroyed(d.Vehicle);
             else if (evt is RoundEndedEvent r)       HandleRoundEnded(r.RoundNumber);
         }
 
-        private void HandleFinishLineCrossed(Vehicle vehicle, Stage finishStage)
+        private void HandleFinishLineCrossed(Vehicle vehicle)
         {
             if (raceOver) return;
             if (vehicle == null) return;

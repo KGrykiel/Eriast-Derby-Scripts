@@ -1,6 +1,6 @@
 ﻿using System;
 using Assets.Scripts.Combat.Rolls.RollSpecs;
-using Assets.Scripts.Consumables;
+using Assets.Scripts.Items;
 using Assets.Scripts.Entities.Vehicles;
 
 namespace Assets.Scripts.Skills.Costs
@@ -8,7 +8,7 @@ namespace Assets.Scripts.Skills.Costs
     [Serializable]
     public class ConsumableCost : ISkillCost
     {
-        public ConsumableBase template;
+        public ItemBase template;
 
         public bool CanPay(Vehicle vehicle)
         {

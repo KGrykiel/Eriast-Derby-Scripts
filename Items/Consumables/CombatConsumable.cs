@@ -1,4 +1,4 @@
-namespace Assets.Scripts.Consumables
+namespace Assets.Scripts.Items.Consumables
 {
     /// <summary>Consumable requiring exterior access (grenades, rockets, explosives). Requires ConsumableAccess.Combat on the seat.</summary>
     public class CombatConsumable : Consumable

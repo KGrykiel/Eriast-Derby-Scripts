@@ -2,7 +2,7 @@ using Assets.Scripts.Combat.Rolls.RollSpecs;
 using Assets.Scripts.Entities.Vehicles;
 using UnityEngine;
 
-namespace Assets.Scripts.Consumables
+namespace Assets.Scripts.Items.Consumables
 {
     /// <summary>
     /// Validates consumable use for any call site (player, AI, tests).

@@ -1,7 +1,8 @@
 ﻿using System.Collections.Generic;
 using Assets.Scripts.Combat;
-using Assets.Scripts.Consumables;
+using Assets.Scripts.Items;
 using Assets.Scripts.Entities.Vehicles.VehicleComponents.ComponentTypes;
+using Assets.Scripts.Items.Consumables;
 using UnityEngine;
 
 namespace Assets.Scripts.Entities.Vehicles
@@ -16,11 +17,11 @@ namespace Assets.Scripts.Entities.Vehicles
             this.vehicle = vehicle;
         }
 
-        public IReadOnlyList<ConsumableStack> GetConsumables() => vehicle.inventory;
+        public IReadOnlyList<ItemStack> GetConsumables() => vehicle.inventory;
 
-        public IReadOnlyList<ConsumableStack> GetAvailableConsumables(VehicleSeat seat)
+        public IReadOnlyList<ItemStack> GetAvailableConsumables(VehicleSeat seat)
         {
-            var result = new List<ConsumableStack>();
+            var result = new List<ItemStack>();
             foreach (var stack in vehicle.inventory)
             {
                 if (stack.template == null) continue;
@@ -32,7 +33,7 @@ namespace Assets.Scripts.Entities.Vehicles
             return result;
         }
 
-        public bool HasChargesFor(ConsumableBase template)
+        public bool HasChargesFor(ItemBase template)
         {
             foreach (var stack in vehicle.inventory)
             {
@@ -42,12 +43,12 @@ namespace Assets.Scripts.Entities.Vehicles
             return false;
         }
 
-        public bool TrySpendConsumable(ConsumableBase template, string causalSource = "")
+        public bool TrySpendConsumable(ItemBase template, string causalSource = "")
         {
             if (template == null) return false;
             for (int i = 0; i < vehicle.inventory.Count; i++)
             {
-                ConsumableStack stack = vehicle.inventory[i];
+                ItemStack stack = vehicle.inventory[i];
                 if (stack.template == template && stack.charges > 0)
                 {
                     stack.charges--;
@@ -62,7 +63,7 @@ namespace Assets.Scripts.Entities.Vehicles
             return false;
         }
 
-        public void RestoreConsumable(ConsumableBase template, int amount, string causalSource = "")
+        public void RestoreConsumable(ItemBase template, int amount, string causalSource = "")
         {
             if (template == null || amount <= 0) return;
 
@@ -82,19 +83,19 @@ namespace Assets.Scripts.Entities.Vehicles
                 return;
             }
 
-            vehicle.inventory.Add(new ConsumableStack { template = template, charges = amount });
+            vehicle.inventory.Add(new ItemStack { template = template, charges = amount });
             CombatEventBus.Emit(new ConsumableRestoredEvent(template, vehicle, causalSource, amount, amount));
         }
 
         public void TrimInventoryToCapacity()
         {
-            List<ConsumableStack> inventory = vehicle.inventory;
+            List<ItemStack> inventory = vehicle.inventory;
             int usedBulk = GetCargoFill();
             int capacity = GetCargoCapacity();
 
             while (usedBulk > capacity && inventory.Count > 0)
             {
-                ConsumableStack last = inventory[^1];
+                ItemStack last = inventory[^1];
                 if (last.template != null)
                     usedBulk -= last.charges * last.template.bulkPerCharge;
                 inventory.RemoveAt(inventory.Count - 1);

@@ -1,6 +1,6 @@
 using System;
 
-namespace Assets.Scripts.Consumables
+namespace Assets.Scripts.Items.Consumables
 {
     [Flags]
     public enum ConsumableAccess

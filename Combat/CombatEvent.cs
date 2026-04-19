@@ -5,7 +5,7 @@ using Assets.Scripts.Conditions;
 using Assets.Scripts.Conditions.EntityConditions;
 using Assets.Scripts.Conditions.CharacterConditions;
 using Assets.Scripts.Conditions.VehicleConditions;
-using Assets.Scripts.Consumables;
+using Assets.Scripts.Items;
 using Assets.Scripts.Entities.Vehicles;
 using Assets.Scripts.Entities;
 
@@ -374,11 +374,11 @@ namespace Assets.Scripts.Combat
 
     public class ConsumableSpentEvent : CombatEvent
     {
-        public ConsumableBase Template { get; set; }
+        public ItemBase Template { get; set; }
         public Vehicle Vehicle { get; set; }
         public int ChargesRemaining { get; set; }
 
-        public ConsumableSpentEvent(ConsumableBase template, Vehicle vehicle, string causalSource, int chargesRemaining)
+        public ConsumableSpentEvent(ItemBase template, Vehicle vehicle, string causalSource, int chargesRemaining)
         {
             Template = template;
             Vehicle = vehicle;
@@ -389,12 +389,12 @@ namespace Assets.Scripts.Combat
 
     public class ConsumableRestoredEvent : CombatEvent
     {
-        public ConsumableBase Template { get; set; }
+        public ItemBase Template { get; set; }
         public Vehicle Vehicle { get; set; }
         public int Amount { get; set; }
         public int ChargesAfter { get; set; }
 
-        public ConsumableRestoredEvent(ConsumableBase template, Vehicle vehicle, string causalSource, int amount, int chargesAfter)
+        public ConsumableRestoredEvent(ItemBase template, Vehicle vehicle, string causalSource, int amount, int chargesAfter)
         {
             Template = template;
             Vehicle = vehicle;
@@ -406,10 +406,10 @@ namespace Assets.Scripts.Combat
 
     public class ConsumableUnavailableEvent : CombatEvent
     {
-        public ConsumableBase Template { get; set; }
+        public ItemBase Template { get; set; }
         public Vehicle Vehicle { get; set; }
 
-        public ConsumableUnavailableEvent(ConsumableBase template, Vehicle vehicle, string causalSource)
+        public ConsumableUnavailableEvent(ItemBase template, Vehicle vehicle, string causalSource)
         {
             Template = template;
             Vehicle = vehicle;

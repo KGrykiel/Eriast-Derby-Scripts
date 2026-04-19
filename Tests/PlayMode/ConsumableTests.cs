@@ -3,7 +3,7 @@ using System.Linq;
 using NUnit.Framework;
 using UnityEngine;
 using Assets.Scripts.Combat;
-using Assets.Scripts.Consumables;
+using Assets.Scripts.Items;
 using Assets.Scripts.Entities.Vehicles;
 using Assets.Scripts.Entities.Vehicles.VehicleComponents.ComponentTypes;
 using Assets.Scripts.Effects;
@@ -14,6 +14,7 @@ using Assets.Scripts.Tests.Helpers;
 using Assets.Scripts.Combat.Rolls;
 using Assets.Scripts.Combat.Rolls.RollSpecs;
 using Assets.Scripts.Effects.EffectTypes.VehicleEffects;
+using Assets.Scripts.Items.Consumables;
 
 namespace Assets.Scripts.Tests.PlayMode
 {
@@ -66,7 +67,7 @@ namespace Assets.Scripts.Tests.PlayMode
             return a;
         }
 
-        private Skill CreateConsumableGatedSkill(ConsumableBase required)
+        private Skill CreateConsumableGatedSkill(ItemBase required)
         {
             var skill = ScriptableObject.CreateInstance<Skill>();
             skill.name = "GatedSkill";
@@ -89,7 +90,7 @@ namespace Assets.Scripts.Tests.PlayMode
 
         private Vehicle BuildVehicleWithInventory(
             int cargoCapacity = 100,
-            params ConsumableStack[] stacks)
+            params ItemStack[] stacks)
         {
             var driver = TestCharacterFactory.Create("Driver");
             cleanup.Add(driver);
@@ -112,7 +113,7 @@ namespace Assets.Scripts.Tests.PlayMode
         public void HasChargesFor_MatchingTemplateWithCharges_ReturnsTrue()
         {
             var grenade = CreateCombatConsumable();
-            BuildVehicleWithInventory(100, new ConsumableStack { template = grenade, charges = 3 });
+            BuildVehicleWithInventory(100, new ItemStack { template = grenade, charges = 3 });
 
             bool result = vehicle.HasChargesFor(grenade);
 
@@ -124,7 +125,7 @@ namespace Assets.Scripts.Tests.PlayMode
         {
             var grenade = CreateCombatConsumable("Grenade");
             var potion = CreateUtilityConsumable("Potion");
-            BuildVehicleWithInventory(100, new ConsumableStack { template = grenade, charges = 2 });
+            BuildVehicleWithInventory(100, new ItemStack { template = grenade, charges = 2 });
 
             bool result = vehicle.HasChargesFor(potion);
 
@@ -148,7 +149,7 @@ namespace Assets.Scripts.Tests.PlayMode
         public void TrySpend_DecreasesChargesByOne()
         {
             var grenade = CreateCombatConsumable();
-            BuildVehicleWithInventory(100, new ConsumableStack { template = grenade, charges = 3 });
+            BuildVehicleWithInventory(100, new ItemStack { template = grenade, charges = 3 });
 
             bool spent = vehicle.TrySpendConsumable(grenade);
 
@@ -160,7 +161,7 @@ namespace Assets.Scripts.Tests.PlayMode
         public void TrySpend_LastCharge_RemovesStackFromInventory()
         {
             var grenade = CreateCombatConsumable();
-            BuildVehicleWithInventory(100, new ConsumableStack { template = grenade, charges = 1 });
+            BuildVehicleWithInventory(100, new ItemStack { template = grenade, charges = 1 });
 
             bool spent = vehicle.TrySpendConsumable(grenade);
 
@@ -173,7 +174,7 @@ namespace Assets.Scripts.Tests.PlayMode
         {
             var grenade = CreateCombatConsumable("Grenade");
             var potion = CreateUtilityConsumable("Potion");
-            BuildVehicleWithInventory(100, new ConsumableStack { template = grenade, charges = 5 });
+            BuildVehicleWithInventory(100, new ItemStack { template = grenade, charges = 5 });
 
             bool spent = vehicle.TrySpendConsumable(potion);
 
@@ -195,8 +196,8 @@ namespace Assets.Scripts.Tests.PlayMode
         {
             var grenade = CreateCombatConsumable();
             BuildVehicleWithInventory(100,
-                new ConsumableStack { template = grenade, charges = 1 },
-                new ConsumableStack { template = grenade, charges = 3 });
+                new ItemStack { template = grenade, charges = 1 },
+                new ItemStack { template = grenade, charges = 3 });
 
             vehicle.TrySpendConsumable(grenade);
 
@@ -210,7 +211,7 @@ namespace Assets.Scripts.Tests.PlayMode
         public void Restore_ExistingStack_IncreasesCharges()
         {
             var grenade = CreateCombatConsumable();
-            BuildVehicleWithInventory(100, new ConsumableStack { template = grenade, charges = 2 });
+            BuildVehicleWithInventory(100, new ItemStack { template = grenade, charges = 2 });
 
             vehicle.RestoreConsumable(grenade, 3);
 
@@ -244,7 +245,7 @@ namespace Assets.Scripts.Tests.PlayMode
         public void Restore_ZeroAmount_DoesNothing()
         {
             var grenade = CreateCombatConsumable();
-            BuildVehicleWithInventory(100, new ConsumableStack { template = grenade, charges = 2 });
+            BuildVehicleWithInventory(100, new ItemStack { template = grenade, charges = 2 });
 
             vehicle.RestoreConsumable(grenade, 0);
 
@@ -255,7 +256,7 @@ namespace Assets.Scripts.Tests.PlayMode
         public void Restore_NegativeAmount_DoesNothing()
         {
             var grenade = CreateCombatConsumable();
-            BuildVehicleWithInventory(100, new ConsumableStack { template = grenade, charges = 2 });
+            BuildVehicleWithInventory(100, new ItemStack { template = grenade, charges = 2 });
 
             vehicle.RestoreConsumable(grenade, -3);
 
@@ -268,7 +269,7 @@ namespace Assets.Scripts.Tests.PlayMode
         public void Restore_CappedByAvailableCapacity()
         {
             var grenade = CreateCombatConsumable(bulkPerCharge: 2);
-            BuildVehicleWithInventory(10, new ConsumableStack { template = grenade, charges = 3 });
+            BuildVehicleWithInventory(10, new ItemStack { template = grenade, charges = 3 });
             // Used: 3*2 = 6, Free: 10-6 = 4, Can add: 4/2 = 2
 
             vehicle.RestoreConsumable(grenade, 5);
@@ -280,7 +281,7 @@ namespace Assets.Scripts.Tests.PlayMode
         public void Restore_NoFreeCapacity_DoesNothing()
         {
             var grenade = CreateCombatConsumable(bulkPerCharge: 5);
-            BuildVehicleWithInventory(10, new ConsumableStack { template = grenade, charges = 2 });
+            BuildVehicleWithInventory(10, new ItemStack { template = grenade, charges = 2 });
             // Used: 2*5 = 10, Free: 0
 
             vehicle.RestoreConsumable(grenade, 3);
@@ -320,8 +321,8 @@ namespace Assets.Scripts.Tests.PlayMode
             var grenade = CreateCombatConsumable(bulkPerCharge: 5);
             var potion = CreateUtilityConsumable(bulkPerCharge: 3);
             BuildVehicleWithInventory(10,
-                new ConsumableStack { template = grenade, charges = 2 },
-                new ConsumableStack { template = potion, charges = 4 });
+                new ItemStack { template = grenade, charges = 2 },
+                new ItemStack { template = potion, charges = 4 });
             // Total: 2*5 + 4*3 = 22, Cap: 10
 
             vehicle.TrimInventoryToCapacity();
@@ -335,7 +336,7 @@ namespace Assets.Scripts.Tests.PlayMode
         public void TrimInventory_UnderCapacity_DoesNothing()
         {
             var grenade = CreateCombatConsumable(bulkPerCharge: 1);
-            BuildVehicleWithInventory(100, new ConsumableStack { template = grenade, charges = 3 });
+            BuildVehicleWithInventory(100, new ItemStack { template = grenade, charges = 3 });
 
             int countBefore = vehicle.inventory.Count;
 
@@ -359,7 +360,7 @@ namespace Assets.Scripts.Tests.PlayMode
 
             VehicleSeat seat = vehicle.seats[0];
             seat.consumableAccess = ConsumableAccess.Combat;
-            vehicle.inventory.Add(new ConsumableStack { template = grenade, charges = 1 });
+            vehicle.inventory.Add(new ItemStack { template = grenade, charges = 1 });
 
             var available = vehicle.GetAvailableConsumables(seat);
 
@@ -379,7 +380,7 @@ namespace Assets.Scripts.Tests.PlayMode
 
             VehicleSeat seat = vehicle.seats[0];
             seat.consumableAccess = ConsumableAccess.Combat;
-            vehicle.inventory.Add(new ConsumableStack { template = potion, charges = 1 });
+            vehicle.inventory.Add(new ItemStack { template = potion, charges = 1 });
 
             var available = vehicle.GetAvailableConsumables(seat);
 
@@ -399,7 +400,7 @@ namespace Assets.Scripts.Tests.PlayMode
 
             VehicleSeat seat = vehicle.seats[0];
             seat.consumableAccess = ConsumableAccess.Utility;
-            vehicle.inventory.Add(new ConsumableStack { template = potion, charges = 1 });
+            vehicle.inventory.Add(new ItemStack { template = potion, charges = 1 });
 
             var available = vehicle.GetAvailableConsumables(seat);
 
@@ -420,8 +421,8 @@ namespace Assets.Scripts.Tests.PlayMode
 
             VehicleSeat seat = vehicle.seats[0];
             seat.consumableAccess = ConsumableAccess.Combat | ConsumableAccess.Utility;
-            vehicle.inventory.Add(new ConsumableStack { template = grenade, charges = 1 });
-            vehicle.inventory.Add(new ConsumableStack { template = potion, charges = 1 });
+            vehicle.inventory.Add(new ItemStack { template = grenade, charges = 1 });
+            vehicle.inventory.Add(new ItemStack { template = potion, charges = 1 });
 
             var available = vehicle.GetAvailableConsumables(seat);
 
@@ -442,8 +443,8 @@ namespace Assets.Scripts.Tests.PlayMode
 
             VehicleSeat seat = vehicle.seats[0];
             seat.consumableAccess = ConsumableAccess.None;
-            vehicle.inventory.Add(new ConsumableStack { template = grenade, charges = 1 });
-            vehicle.inventory.Add(new ConsumableStack { template = potion, charges = 1 });
+            vehicle.inventory.Add(new ItemStack { template = grenade, charges = 1 });
+            vehicle.inventory.Add(new ItemStack { template = potion, charges = 1 });
 
             var available = vehicle.GetAvailableConsumables(seat);
 
@@ -521,8 +522,8 @@ namespace Assets.Scripts.Tests.PlayMode
             VehicleSeat seat = vehicle.seats[0];
             seat.consumableAccess = ConsumableAccess.Combat;
 
-            vehicle.inventory.Add(new ConsumableStack { template = grenade, charges = 2 });
-            vehicle.inventory.Add(new ConsumableStack { template = potion, charges = 3 });
+            vehicle.inventory.Add(new ItemStack { template = grenade, charges = 2 });
+            vehicle.inventory.Add(new ItemStack { template = potion, charges = 3 });
 
             var available = vehicle.GetAvailableConsumables(seat);
 
@@ -545,8 +546,8 @@ namespace Assets.Scripts.Tests.PlayMode
             VehicleSeat seat = vehicle.seats[0];
             seat.consumableAccess = ConsumableAccess.Combat | ConsumableAccess.Utility;
 
-            vehicle.inventory.Add(new ConsumableStack { template = grenade, charges = 1 });
-            vehicle.inventory.Add(new ConsumableStack { template = potion, charges = 1 });
+            vehicle.inventory.Add(new ItemStack { template = grenade, charges = 1 });
+            vehicle.inventory.Add(new ItemStack { template = potion, charges = 1 });
 
             var available = vehicle.GetAvailableConsumables(seat);
 
@@ -567,7 +568,7 @@ namespace Assets.Scripts.Tests.PlayMode
             VehicleSeat seat = vehicle.seats[0];
             seat.consumableAccess = ConsumableAccess.Combat | ConsumableAccess.Utility;
 
-            vehicle.inventory.Add(new ConsumableStack { template = ammo, charges = 5 });
+            vehicle.inventory.Add(new ItemStack { template = ammo, charges = 5 });
 
             var available = vehicle.GetAvailableConsumables(seat);
 
@@ -587,7 +588,7 @@ namespace Assets.Scripts.Tests.PlayMode
             VehicleSeat seat = vehicle.seats[0];
             seat.consumableAccess = ConsumableAccess.Combat;
 
-            vehicle.inventory.Add(new ConsumableStack { template = null, charges = 1 });
+            vehicle.inventory.Add(new ItemStack { template = null, charges = 1 });
 
             var available = vehicle.GetAvailableConsumables(seat);
 
@@ -611,7 +612,7 @@ namespace Assets.Scripts.Tests.PlayMode
         public void ConsumableGatedSkill_VehicleHasCharges_SpendSucceeds()
         {
             var ammo = CreateAmmo("SpecialAmmo");
-            BuildVehicleWithInventory(100, new ConsumableStack { template = ammo, charges = 2 });
+            BuildVehicleWithInventory(100, new ItemStack { template = ammo, charges = 2 });
 
             bool hasCharges = vehicle.HasChargesFor(ammo);
             bool spent = vehicle.TrySpendConsumable(ammo);
@@ -640,7 +641,7 @@ namespace Assets.Scripts.Tests.PlayMode
         public void TrySpend_Success_EmitsConsumableSpentEvent()
         {
             var grenade = CreateCombatConsumable();
-            BuildVehicleWithInventory(100, new ConsumableStack { template = grenade, charges = 3 });
+            BuildVehicleWithInventory(100, new ItemStack { template = grenade, charges = 3 });
 
             var scope = CombatEventBus.BeginAction();
             vehicle.TrySpendConsumable(grenade, "TestSource");
@@ -658,7 +659,7 @@ namespace Assets.Scripts.Tests.PlayMode
         public void TrySpend_LastCharge_EmitsSpentEventWithZeroRemaining()
         {
             var grenade = CreateCombatConsumable();
-            BuildVehicleWithInventory(100, new ConsumableStack { template = grenade, charges = 1 });
+            BuildVehicleWithInventory(100, new ItemStack { template = grenade, charges = 1 });
 
             var scope = CombatEventBus.BeginAction();
             vehicle.TrySpendConsumable(grenade, "TestSource");
@@ -689,7 +690,7 @@ namespace Assets.Scripts.Tests.PlayMode
         public void Restore_EmitsConsumableRestoredEvent()
         {
             var grenade = CreateCombatConsumable();
-            BuildVehicleWithInventory(100, new ConsumableStack { template = grenade, charges = 2 });
+            BuildVehicleWithInventory(100, new ItemStack { template = grenade, charges = 2 });
 
             var scope = CombatEventBus.BeginAction();
             vehicle.RestoreConsumable(grenade, 3, "HealSource");
@@ -723,7 +724,7 @@ namespace Assets.Scripts.Tests.PlayMode
         public void Restore_ZeroAmount_NoEventEmitted()
         {
             var grenade = CreateCombatConsumable();
-            BuildVehicleWithInventory(100, new ConsumableStack { template = grenade, charges = 2 });
+            BuildVehicleWithInventory(100, new ItemStack { template = grenade, charges = 2 });
 
             var scope = CombatEventBus.BeginAction();
             vehicle.RestoreConsumable(grenade, 0);
@@ -751,7 +752,7 @@ namespace Assets.Scripts.Tests.PlayMode
         public void RestoreEffect_RestoresChargesToVehicle()
         {
             var grenade = CreateCombatConsumable();
-            BuildVehicleWithInventory(100, new ConsumableStack { template = grenade, charges = 1 });
+            BuildVehicleWithInventory(100, new ItemStack { template = grenade, charges = 1 });
 
             var effect = new RestoreConsumableEffect();
             SetPrivateField(effect, "targetConsumable", grenade);
@@ -769,7 +770,7 @@ namespace Assets.Scripts.Tests.PlayMode
         public void SpendAndRestore_FullCycle_ChargesCorrect()
         {
             var grenade = CreateCombatConsumable();
-            BuildVehicleWithInventory(100, new ConsumableStack { template = grenade, charges = 5 });
+            BuildVehicleWithInventory(100, new ItemStack { template = grenade, charges = 5 });
 
             vehicle.TrySpendConsumable(grenade);
             vehicle.TrySpendConsumable(grenade);
@@ -785,7 +786,7 @@ namespace Assets.Scripts.Tests.PlayMode
         public void SpendAllThenRestore_RecreatesStack()
         {
             var grenade = CreateCombatConsumable();
-            BuildVehicleWithInventory(100, new ConsumableStack { template = grenade, charges = 1 });
+            BuildVehicleWithInventory(100, new ItemStack { template = grenade, charges = 1 });
 
             vehicle.TrySpendConsumable(grenade);
             Assert.AreEqual(0, vehicle.inventory.Count, "Stack removed after last charge");
@@ -801,8 +802,8 @@ namespace Assets.Scripts.Tests.PlayMode
             var grenade = CreateCombatConsumable("Grenade");
             var potion = CreateUtilityConsumable("Potion");
             BuildVehicleWithInventory(100,
-                new ConsumableStack { template = grenade, charges = 3 },
-                new ConsumableStack { template = potion, charges = 2 });
+                new ItemStack { template = grenade, charges = 3 },
+                new ItemStack { template = potion, charges = 2 });
 
             vehicle.TrySpendConsumable(potion);
 
@@ -814,7 +815,7 @@ namespace Assets.Scripts.Tests.PlayMode
         public void Ammo_SpendAndCheck_WorksIdenticallyToConsumable()
         {
             var ammo = CreateAmmo("Bullets");
-            BuildVehicleWithInventory(100, new ConsumableStack { template = ammo, charges = 4 });
+            BuildVehicleWithInventory(100, new ItemStack { template = ammo, charges = 4 });
 
             Assert.IsTrue(vehicle.HasChargesFor(ammo));
             vehicle.TrySpendConsumable(ammo);
@@ -845,8 +846,8 @@ namespace Assets.Scripts.Tests.PlayMode
             driverSeat.consumableAccess = ConsumableAccess.Combat;
             medicSeat.consumableAccess = ConsumableAccess.Utility;
 
-            vehicle.inventory.Add(new ConsumableStack { template = grenade, charges = 2 });
-            vehicle.inventory.Add(new ConsumableStack { template = potion, charges = 3 });
+            vehicle.inventory.Add(new ItemStack { template = grenade, charges = 2 });
+            vehicle.inventory.Add(new ItemStack { template = potion, charges = 3 });
 
             var driverAvailable = vehicle.GetAvailableConsumables(driverSeat);
             var medicAvailable = vehicle.GetAvailableConsumables(medicSeat);
@@ -863,7 +864,7 @@ namespace Assets.Scripts.Tests.PlayMode
         public void SpendSameConsumableMultipleTimes_DrainsFully()
         {
             var grenade = CreateCombatConsumable();
-            BuildVehicleWithInventory(100, new ConsumableStack { template = grenade, charges = 3 });
+            BuildVehicleWithInventory(100, new ItemStack { template = grenade, charges = 3 });
 
             vehicle.TrySpendConsumable(grenade);
             vehicle.TrySpendConsumable(grenade);
@@ -878,7 +879,7 @@ namespace Assets.Scripts.Tests.PlayMode
         public void Restore_CapacityExactlyFilled_NoExtraCharges()
         {
             var grenade = CreateCombatConsumable(bulkPerCharge: 5);
-            BuildVehicleWithInventory(10, new ConsumableStack { template = grenade, charges = 1 });
+            BuildVehicleWithInventory(10, new ItemStack { template = grenade, charges = 1 });
             // Used: 5, Free: 5, Can add: 5/5 = 1
 
             vehicle.RestoreConsumable(grenade, 100);
@@ -890,7 +891,7 @@ namespace Assets.Scripts.Tests.PlayMode
         public void HasChargesFor_ZeroCharges_ReturnsFalse()
         {
             var grenade = CreateCombatConsumable();
-            BuildVehicleWithInventory(100, new ConsumableStack { template = grenade, charges = 0 });
+            BuildVehicleWithInventory(100, new ItemStack { template = grenade, charges = 0 });
 
             bool result = vehicle.HasChargesFor(grenade);
 
@@ -901,7 +902,7 @@ namespace Assets.Scripts.Tests.PlayMode
         public void SpendFromZeroChargeStack_ReturnsFalse()
         {
             var grenade = CreateCombatConsumable();
-            BuildVehicleWithInventory(100, new ConsumableStack { template = grenade, charges = 0 });
+            BuildVehicleWithInventory(100, new ItemStack { template = grenade, charges = 0 });
 
             bool spent = vehicle.TrySpendConsumable(grenade);
 
@@ -914,8 +915,8 @@ namespace Assets.Scripts.Tests.PlayMode
             var grenade = CreateCombatConsumable("Grenade", bulkPerCharge: 3);
             var potion = CreateUtilityConsumable("Potion", bulkPerCharge: 2);
             BuildVehicleWithInventory(15,
-                new ConsumableStack { template = grenade, charges = 2 },
-                new ConsumableStack { template = potion, charges = 2 });
+                new ItemStack { template = grenade, charges = 2 },
+                new ItemStack { template = potion, charges = 2 });
             // Used: 2*3 + 2*2 = 10, Free: 15-10 = 5, Can add potion: 5/2 = 2
 
             vehicle.RestoreConsumable(potion, 10);

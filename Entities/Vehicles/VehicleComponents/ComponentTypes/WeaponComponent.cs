@@ -1,10 +1,10 @@
-﻿using Assets.Scripts.Consumables;
-using Assets.Scripts.Core;
+﻿using Assets.Scripts.Core;
 using Assets.Scripts.Combat.Damage;
 using Assets.Scripts.Combat.Rolls.RollSpecs;
 using Assets.Scripts.Skills;
 using System.Collections.Generic;
 using UnityEngine;
+using Assets.Scripts.Items;
 
 namespace Assets.Scripts.Entities.Vehicles.VehicleComponents.ComponentTypes
 {

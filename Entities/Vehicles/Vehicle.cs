@@ -1,7 +1,7 @@
 using UnityEngine;
 using System.Collections.Generic;
 using System.Linq;
-using Assets.Scripts.Consumables;
+using Assets.Scripts.Items;
 using Assets.Scripts.Entities.Vehicles.VehicleComponents.ComponentTypes;
 using Assets.Scripts.Managers;
 using Assets.Scripts.Conditions;
@@ -41,7 +41,7 @@ namespace Assets.Scripts.Entities.Vehicles
 
         [Header("Inventory")]
         [Tooltip("Consumable stacks the vehicle starts with. Total bulk must not exceed the chassis cargo capacity.")]
-        public List<ConsumableStack> inventory = new();
+        public List<ItemStack> inventory = new();
 
         [Header("Vehicle Components")]
         public ChassisComponent Chassis => componentCoordinator?.Chassis;
@@ -202,15 +202,15 @@ namespace Assets.Scripts.Entities.Vehicles
 
         // ==================== CONSUMABLE INVENTORY ====================
 
-        public IReadOnlyList<ConsumableStack> GetConsumables() => inventoryCoordinator.GetConsumables();
+        public IReadOnlyList<ItemStack> GetConsumables() => inventoryCoordinator.GetConsumables();
 
-        public IReadOnlyList<ConsumableStack> GetAvailableConsumables(VehicleSeat seat) => inventoryCoordinator.GetAvailableConsumables(seat);
+        public IReadOnlyList<ItemStack> GetAvailableConsumables(VehicleSeat seat) => inventoryCoordinator.GetAvailableConsumables(seat);
 
-        public bool HasChargesFor(ConsumableBase template) => inventoryCoordinator.HasChargesFor(template);
+        public bool HasChargesFor(ItemBase template) => inventoryCoordinator.HasChargesFor(template);
 
-        public bool TrySpendConsumable(ConsumableBase template, string causalSource = "") => inventoryCoordinator.TrySpendConsumable(template, causalSource);
+        public bool TrySpendConsumable(ItemBase template, string causalSource = "") => inventoryCoordinator.TrySpendConsumable(template, causalSource);
 
-        public void RestoreConsumable(ConsumableBase template, int amount, string causalSource = "") => inventoryCoordinator.RestoreConsumable(template, amount, causalSource);
+        public void RestoreConsumable(ItemBase template, int amount, string causalSource = "") => inventoryCoordinator.RestoreConsumable(template, amount, causalSource);
 
         public void TrimInventoryToCapacity() => inventoryCoordinator.TrimInventoryToCapacity();
 

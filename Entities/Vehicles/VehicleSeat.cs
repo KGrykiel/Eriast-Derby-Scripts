@@ -7,11 +7,11 @@ using Assets.Scripts.Combat.Rolls;
 using Assets.Scripts.Combat.Rolls.Advantage;
 using Assets.Scripts.Conditions;
 using Assets.Scripts.Conditions.CharacterConditions;
-using Assets.Scripts.Consumables;
 using Assets.Scripts.Effects;
 using Assets.Scripts.Entities.Vehicles.VehicleComponents;
 using Assets.Scripts.Modifiers;
 using Assets.Scripts.Skills;
+using Assets.Scripts.Items.Consumables;
 
 namespace Assets.Scripts.Entities.Vehicles
 {
@@ -169,8 +169,7 @@ namespace Assets.Scripts.Entities.Vehicles
         {
             get
             {
-                if (_conditionManager == null)
-                    _conditionManager = new CharacterConditionManager(this);
+                _conditionManager ??= new CharacterConditionManager(this);
                 return _conditionManager;
             }
         }

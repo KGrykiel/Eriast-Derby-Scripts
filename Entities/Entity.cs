@@ -184,8 +184,8 @@ namespace Assets.Scripts.Entities
         // ==================== STATUS EFFECT SYSTEM ====================
     
         public event Action<int> OnDamaged;
-        public event Action OnAttackMade;
-        public event Action OnSkillUsed;
+        //public event Action OnAttackMade;
+        //public event Action OnSkillUsed;
     
         /// <summary>Handles stacking rules and emits events. Returns null if feature requirements not met.</summary>
         public virtual AppliedEntityCondition ApplyCondition(EntityCondition effect, UnityEngine.Object applier)

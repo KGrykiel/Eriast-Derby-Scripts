@@ -148,12 +148,9 @@ namespace Assets.Scripts.Managers
         void OnDestroy()
         {
             TurnEventBus.OnEvent -= HandleTurnEvent;
-            if (raceTracker != null)
-                raceTracker.Unsubscribe();
-            if (eventLogger != null)
-                eventLogger.Unsubscribe();
-            if (stateMachine != null)
-                stateMachine.Cleanup();
+            raceTracker?.Unsubscribe();
+            eventLogger?.Unsubscribe();
+            stateMachine?.Cleanup();
         }
 
         // ==================== PUBLIC API ====================

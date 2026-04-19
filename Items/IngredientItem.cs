@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace Assets.Scripts.Consumables
+namespace Assets.Scripts.Items
 {
     /// <summary>
     /// A purely passive resource item — has no action, no targeting, no roll node.
@@ -9,7 +9,7 @@ namespace Assets.Scripts.Consumables
     /// Owning an IngredientItem grants no action on its own.
     /// </summary>
     [CreateAssetMenu(fileName = "New Ingredient", menuName = "Eriast Derby/Consumables/Ingredient Item")]
-    public class IngredientItem : ConsumableBase
+    public class IngredientItem : ItemBase
     {
     }
 }
