@@ -218,7 +218,6 @@ public class EventFeed : MonoBehaviour
         var layoutElement = entryObj.GetComponent<LayoutElement>();
         if (layoutElement == null)
             layoutElement = entryObj.AddComponent<LayoutElement>();
-        layoutElement.preferredHeight = 25;
         layoutElement.flexibleWidth = 1;
 
         if (enableTooltips && HasBreakdownData(evt))
