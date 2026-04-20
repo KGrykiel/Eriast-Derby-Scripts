@@ -17,11 +17,11 @@ namespace Assets.Scripts.Entities
             
             string message = reason switch
             {
-                "friction"     => $"{LogColors.Vehicle(drive.ParentVehicle.vehicleName)} slowed by friction: <color={LogColors.Number}>{oldSpeed} -> {newSpeed}</color>",
-                "acceleration" => $"{LogColors.Vehicle(drive.ParentVehicle.vehicleName)} accelerated: <color={LogColors.Number}>{oldSpeed} -> {newSpeed}</color>",
-                "deceleration" => $"{LogColors.Vehicle(drive.ParentVehicle.vehicleName)} decelerated: <color={LogColors.Number}>{oldSpeed} -> {newSpeed}</color>",
-                "scaling"      => $"{LogColors.Vehicle(drive.ParentVehicle.vehicleName)}'s speed scaled: <color={LogColors.Number}>{oldSpeed} -> {newSpeed}</color>",
-                _              => $"{LogColors.Vehicle(drive.ParentVehicle.vehicleName)} speed changed: <color={LogColors.Number}>{oldSpeed} -> {newSpeed}</color> ({reason})"
+                "friction"     => $"{LogColors.Vehicle(drive.ParentVehicle.vehicleName)} slowed by friction: {LogColors.Number($"{oldSpeed} -> {newSpeed}")}",
+                "acceleration" => $"{LogColors.Vehicle(drive.ParentVehicle.vehicleName)} accelerated: {LogColors.Number($"{oldSpeed} -> {newSpeed}")}",
+                "deceleration" => $"{LogColors.Vehicle(drive.ParentVehicle.vehicleName)} decelerated: {LogColors.Number($"{oldSpeed} -> {newSpeed}")}",
+                "scaling"      => $"{LogColors.Vehicle(drive.ParentVehicle.vehicleName)}'s speed scaled: {LogColors.Number($"{oldSpeed} -> {newSpeed}")}",
+                _              => $"{LogColors.Vehicle(drive.ParentVehicle.vehicleName)} speed changed: {LogColors.Number($"{oldSpeed} -> {newSpeed}")} ({reason})"
             };
             
             RaceHistory.Log(
@@ -40,7 +40,7 @@ namespace Assets.Scripts.Entities
             RaceHistory.Log(
                 EventType.Modifier,
                 EventImportance.Low,
-                $"{LogColors.Vehicle(drive.ParentVehicle.vehicleName)}'s speed scaled: <color={LogColors.Number}>{oldSpeed} -> {newSpeed}</color> (maxSpeed: <color={LogColors.Number}>{oldMaxSpeed} -> {newMaxSpeed}</color>)",
+                $"{LogColors.Vehicle(drive.ParentVehicle.vehicleName)}'s speed scaled: {LogColors.Number($"{oldSpeed} -> {newSpeed}")} (maxSpeed: {LogColors.Number($"{oldMaxSpeed} -> {newMaxSpeed}")})",
                 RacePositionTracker.GetStage(drive.ParentVehicle),
                 drive.ParentVehicle
             );
@@ -56,7 +56,7 @@ namespace Assets.Scripts.Entities
             RaceHistory.Log(
                 EventType.Movement,
                 EventImportance.Low,
-                $"{LogColors.Vehicle(drive.ParentVehicle.vehicleName)} set target speed: <color={LogColors.Number}>{oldPercent}%</color> -> <color={LogColors.Number}>{newPercent}%</color> (<color={LogColors.Number}>{targetAbsolute} units/turn</color>)",
+                $"{LogColors.Vehicle(drive.ParentVehicle.vehicleName)} set target speed: {LogColors.Number($"{oldPercent}%")} -> {LogColors.Number($"{newPercent}%")} ({LogColors.Number($"{targetAbsolute} units/turn")})",
                 RacePositionTracker.GetStage(drive.ParentVehicle),
                 drive.ParentVehicle
             );
@@ -110,7 +110,7 @@ namespace Assets.Scripts.Entities
             RaceHistory.Log(
                 EventType.Modifier,
                 EventImportance.Debug,
-                $"{LogColors.Vehicle(component.ParentVehicle.vehicleName)}'s {LogColors.Component(component.name)} lost {modifier.Type} {modifier.Attribute} <color={LogColors.Number}>{modifier.Value:+0;-0}</color> modifier",
+                $"{LogColors.Vehicle(component.ParentVehicle.vehicleName)}'s {LogColors.Component(component.name)} lost {modifier.Type} {modifier.Attribute} {LogColors.Number($"{modifier.Value:+0;-0}")} modifier",
                 RacePositionTracker.GetStage(component.ParentVehicle),
                 component.ParentVehicle
             );
@@ -153,7 +153,7 @@ namespace Assets.Scripts.Entities
             RaceHistory.Log(
                 EventType.Resource,
                 EventImportance.Debug,
-                $"{LogColors.Vehicle(powerCore.ParentVehicle.vehicleName)} regenerated <color={LogColors.Energy}>{regenAmount} energy</color> (<color={LogColors.Number}>{currentEnergy}/{maxEnergy}</color>)",
+                $"{LogColors.Vehicle(powerCore.ParentVehicle.vehicleName)} regenerated {LogColors.Energy($"{regenAmount} energy")} ({LogColors.Number($"{currentEnergy}/{maxEnergy}")})",
                 RacePositionTracker.GetStage(powerCore.ParentVehicle),
                 powerCore.ParentVehicle
             );
@@ -168,7 +168,7 @@ namespace Assets.Scripts.Entities
             RaceHistory.Log(
                 EventType.Resource,
                 EventImportance.Debug,
-                $"{LogColors.Vehicle(powerCore.ParentVehicle.vehicleName)}: {requesterName} drew <color={LogColors.Energy}>{amount} energy</color> ({reason})",
+                $"{LogColors.Vehicle(powerCore.ParentVehicle.vehicleName)}: {requesterName} drew {LogColors.Energy($"{amount} energy")} ({reason})",
                 RacePositionTracker.GetStage(powerCore.ParentVehicle),
                 powerCore.ParentVehicle
             );

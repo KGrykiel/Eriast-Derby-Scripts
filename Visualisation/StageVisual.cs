@@ -309,7 +309,7 @@ namespace Assets.Scripts.Visualisation
             if (defs.Length == 0)
                 return;
 
-            Stage[] sceneStages = Object.FindObjectsByType<Stage>(FindObjectsSortMode.None);
+            Stage[] sceneStages = FindObjectsByType<Stage>(FindObjectsSortMode.None);
             Gizmos.color = ConnectionColour;
 
             foreach (LaneLink link in defs[0].transitions)

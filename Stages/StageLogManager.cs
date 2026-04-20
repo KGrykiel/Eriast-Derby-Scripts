@@ -46,8 +46,8 @@ namespace Assets.Scripts.Stages
             if (vehicle == null || lane == null) return;
 
             string outcome = success
-                ? $"<color={LogColors.Success}>survived</color>"
-                : $"<color={LogColors.Failure}>was hit by</color>";
+                ? LogColors.Success("survived")
+                : LogColors.Failure("was hit by");
             string narrative = $"{LogColors.Vehicle(vehicle.vehicleName)} {outcome} {lane.laneName}";
 
             RaceHistory.Log(
@@ -64,8 +64,8 @@ namespace Assets.Scripts.Stages
             if (vehicle == null) return;
 
             string outcome = success
-                ? $"<color={LogColors.Success}>survived</color>"
-                : $"<color={LogColors.Failure}>was hit by</color>";
+                ? LogColors.Success("survived")
+                : LogColors.Failure("was hit by");
             string narrative = $"{LogColors.Vehicle(vehicle.vehicleName)} {outcome} {stage.stageName}";
 
             RaceHistory.Log(

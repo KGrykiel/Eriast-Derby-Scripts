@@ -53,10 +53,10 @@ namespace Assets.Scripts.Combat.Logging
             string sourceName = CombatDisplayHelpers.FormatRollActor(evt.Actor);
             string targetName = CombatDisplayHelpers.FormatEntityWithVehicle(evt.Target);
             string resultText = evt.Roll.Success
-                ? $"<color={LogColors.Success}>Hit</color>"
-                : $"<color={LogColors.Failure}>Miss</color>";
+                ? LogColors.Success("Hit")
+                : LogColors.Failure("Miss");
 
-            string message = $"{sourceName} attacks {targetName} with <color={LogColors.Skill}>{evt.CausalSource}</color>. {resultText}";
+            string message = $"{sourceName} attacks {targetName} with {LogColors.Ability(evt.CausalSource)}. {resultText}";
             var importance = evt.Roll.Success ? EventImportance.High : EventImportance.Medium;
 
             var logEvt = RaceHistory.Log(
@@ -92,13 +92,13 @@ namespace Assets.Scripts.Combat.Logging
 
             string resultText;
             if (evt.Roll.Success)
-                resultText = $"<color={LogColors.Success}>Saved</color>";
+                resultText = LogColors.Success("Saved");
             else if (evt.Roll.IsAutoFail)
-                resultText = $"<color={LogColors.Failure}>Auto-Failed</color>";
+                resultText = LogColors.Failure("Auto-Failed");
             else
-                resultText = $"<color={LogColors.Failure}>Failed</color>";
+                resultText = LogColors.Failure("Failed");
 
-            string message = $"{targetName} attempts <color={LogColors.Skill}>{saveTypeName}</color> save vs <color={LogColors.Skill}>{skillName}</color>. {resultText}";
+            string message = $"{targetName} attempts {LogColors.Skill(saveTypeName)} save vs {LogColors.Ability(skillName)}. {resultText}";
             var importance = evt.Roll.Success ? EventImportance.Medium : EventImportance.High;
 
             var logEvt = RaceHistory.Log(
@@ -130,13 +130,13 @@ namespace Assets.Scripts.Combat.Logging
 
             string resultText;
             if (evt.Roll.Success)
-                resultText = $"<color={LogColors.Success}>Success</color>";
+                resultText = LogColors.Success("Success");
             else if (evt.Roll.IsAutoFail)
-                resultText = $"<color={LogColors.Failure}>Auto-Failed</color>";
+                resultText = LogColors.Failure("Auto-Failed");
             else
-                resultText = $"<color={LogColors.Failure}>Failure</color>";
+                resultText = LogColors.Failure("Failure");
 
-            string message = $"{sourceName} attempts <color={LogColors.Skill}>{checkTypeName}</color> check for <color={LogColors.Skill}>{skillName}</color>. {resultText}";
+            string message = $"{sourceName} attempts {LogColors.Skill(checkTypeName)} check for {LogColors.Ability(skillName)}. {resultText}";
             var importance = evt.Roll.Success ? EventImportance.Medium : EventImportance.High;
 
             var logEvt = RaceHistory.Log(
@@ -173,7 +173,7 @@ namespace Assets.Scripts.Combat.Logging
             int attackerTotal = evt.Roll.Total;
             int defenderTotal = evt.Roll.TargetValue;
 
-            string message = $"{winnerName} wins <color={LogColors.Skill}>{skillName}</color> against {loserName} (<color={LogColors.Number}>{attackerTotal}</color> vs <color={LogColors.Number}>{defenderTotal}</color>).";
+            string message = $"{winnerName} wins {LogColors.Ability(skillName)} against {loserName} ({LogColors.Number(attackerTotal.ToString())} vs {LogColors.Number(defenderTotal.ToString())}).";
 
             var logEvt = RaceHistory.Log(
                 EventType.Combat, EventImportance.High, message,
@@ -266,7 +266,6 @@ namespace Assets.Scripts.Combat.Logging
             string targetName = CombatDisplayHelpers.FormatEntityWithVehicle(evt.Target);
 
             bool isBuff = CombatDisplayHelpers.DetermineIfBuff(effect);
-            string color = isBuff ? LogColors.Success : LogColors.Failure;
             string durationText = applied.IsIndefinite ? "indefinite" : $"{applied.turnsRemaining} turns";
 
             bool isSelf = CombatDisplayHelpers.IsSelfTarget(evt.Source, evt.Target, sourceVehicle, targetVehicle);
@@ -274,17 +273,17 @@ namespace Assets.Scripts.Combat.Logging
 
             if (evt.Source == null)
             {
-                message = $"{targetName} gains <color={color}>{effect.effectName}</color> from {evt.CausalSource} (<color={LogColors.Duration}>{durationText}</color>)";
+                message = $"{targetName} gains {LogColors.Condition(effect.effectName, isBuff)} from {evt.CausalSource} ({LogColors.Duration(durationText)})";
             }
             else if (isSelf)
             {
-                message = $"{targetName} gains <color={color}>{effect.effectName}</color> (<color={LogColors.Duration}>{durationText}</color>)";
+                message = $"{targetName} gains {LogColors.Condition(effect.effectName, isBuff)} ({LogColors.Duration(durationText)})";
             }
             else
             {
                 string sourceName = CombatDisplayHelpers.FormatEntityWithVehicle(evt.Source);
                 string actionVerb = isBuff ? "grants" : "inflicts";
-                message = $"{sourceName} {actionVerb} <color={color}>{effect.effectName}</color> on {targetName} (<color={LogColors.Duration}>{durationText}</color>)";
+                message = $"{sourceName} {actionVerb} {LogColors.Condition(effect.effectName, isBuff)} on {targetName} ({LogColors.Duration(durationText)})";
             }
 
             bool playerInvolved = (sourceVehicle != null && sourceVehicle.controlType == ControlType.Player) ||
@@ -323,7 +322,7 @@ namespace Assets.Scripts.Combat.Logging
             bool isSelf = CombatDisplayHelpers.IsSelfTarget(sourceActor?.GetEntity(), target, sourceVehicle, targetVehicle);
 
             var parts = new List<string>();
-            BuildRestorationPart(parts, restorations, ResourceType.Health, "HP", LogColors.Health);
+            BuildRestorationPart(parts, restorations, ResourceType.Health, "HP",     LogColors.Health);
             BuildRestorationPart(parts, restorations, ResourceType.Energy, "energy", LogColors.Energy);
 
             if (parts.Count == 0) return;
@@ -357,18 +356,15 @@ namespace Assets.Scripts.Combat.Logging
             if (damages.Count == 1)
             {
                 var d = damages[0].Result;
-                string c = LogColors.GetDamageTypeColor(d.DamageType);
-                return $"<color={c}>{d.FinalDamage} {d.DamageType} damage</color>";
+                return LogColors.DamageType(d.DamageType, $"{d.FinalDamage} {d.DamageType} damage");
             }
 
             var parts = damages.Select(d =>
-            {
-                string c = LogColors.GetDamageTypeColor(d.Result.DamageType);
-                return $"<color={c}>{d.Result.FinalDamage} {d.Result.DamageType}</color>";
-            });
+                LogColors.DamageType(d.Result.DamageType, $"{d.Result.FinalDamage} {d.Result.DamageType}")
+            );
             int total = damages.Sum(d => d.Result.FinalDamage);
 
-            return $"{string.Join(" + ", parts)} (<color={LogColors.Damage}>{total} total</color>) damage";
+            return $"{string.Join(" + ", parts)} ({LogColors.Damage($"{total} total")}) damage";
         }
 
         private static void BuildRestorationPart(
@@ -376,7 +372,7 @@ namespace Assets.Scripts.Combat.Logging
             List<RestorationEvent> restorations,
             ResourceType resourceType,
             string resourceName,
-            string color)
+            Func<string, string> format)
         {
             var filtered = restorations.Where(r => r.Result.ResourceType == resourceType).ToList();
             if (filtered.Count == 0) return;
@@ -385,7 +381,7 @@ namespace Assets.Scripts.Combat.Logging
             if (total == 0) return;
 
             string verb = total > 0 ? "restores" : "drains";
-            parts.Add($"{verb} <color={color}>{Math.Abs(total)} {resourceName}</color>");
+            parts.Add($"{verb} {format($"{Math.Abs(total)} {resourceName}")}");
         }
 
         // ==================== CHARACTER CONDITION LOGGING ====================
@@ -426,19 +422,18 @@ namespace Assets.Scripts.Combat.Logging
 
             string targetName = CombatDisplayHelpers.FormatSeatName(evt.TargetSeat);
             bool isBuff = CombatDisplayHelpers.DetermineIfBuff(condition);
-            string color = isBuff ? LogColors.Success : LogColors.Failure;
             string durationText = applied.IsIndefinite ? "indefinite" : $"{applied.turnsRemaining} turns";
 
             string message;
             if (evt.Source == null)
             {
-                message = $"{targetName} gains <color={color}>{condition.effectName}</color> from {evt.CausalSource} (<color={LogColors.Duration}>{durationText}</color>)";
+                message = $"{targetName} gains {LogColors.Condition(condition.effectName, isBuff)} from {evt.CausalSource} ({LogColors.Duration(durationText)})";
             }
             else
             {
                 string sourceName = CombatDisplayHelpers.FormatEntityWithVehicle(evt.Source);
                 string actionVerb = isBuff ? "grants" : "inflicts";
-                message = $"{sourceName} {actionVerb} <color={color}>{condition.effectName}</color> on {targetName} (<color={LogColors.Duration}>{durationText}</color>)";
+                message = $"{sourceName} {actionVerb} {LogColors.Condition(condition.effectName, isBuff)} on {targetName} ({LogColors.Duration(durationText)})";
             }
 
             var logEvt = RaceHistory.Log(
@@ -487,19 +482,18 @@ namespace Assets.Scripts.Combat.Logging
             Vehicle targetVehicle = evt.Target;
             string targetName = targetVehicle != null ? CombatDisplayHelpers.FormatVehicleName(targetVehicle.vehicleName) : "Unknown";
             bool isBuff = CombatDisplayHelpers.DetermineIfBuff(condition);
-            string color = isBuff ? LogColors.Success : LogColors.Failure;
             string durationText = applied.IsIndefinite ? "indefinite" : $"{applied.turnsRemaining} turns";
 
             string message;
             if (evt.Source == null)
             {
-                message = $"{targetName} gains <color={color}>{condition.effectName}</color> from {evt.CausalSource} (<color={LogColors.Duration}>{durationText}</color>)";
+                message = $"{targetName} gains {LogColors.Condition(condition.effectName, isBuff)} from {evt.CausalSource} ({LogColors.Duration(durationText)})";
             }
             else
             {
                 string sourceName = CombatDisplayHelpers.FormatEntityWithVehicle(evt.Source);
                 string actionVerb = isBuff ? "grants" : "inflicts";
-                message = $"{sourceName} {actionVerb} <color={color}>{condition.effectName}</color> on {targetName} (<color={LogColors.Duration}>{durationText}</color>)";
+                message = $"{sourceName} {actionVerb} {LogColors.Condition(condition.effectName, isBuff)} on {targetName} ({LogColors.Duration(durationText)})";
             }
 
             bool playerInvolved = (sourceVehicle != null && sourceVehicle.controlType == ControlType.Player) ||
@@ -570,7 +564,7 @@ namespace Assets.Scripts.Combat.Logging
 
         private static void LogConditionRefreshed(ConditionLogContext ctx, AppliedConditionBase applied, string tooltip)
         {
-            var logEvt = LogConditionEvent(EventImportance.Low, $"{ctx.TargetName}'s {applied.Template.effectName} refreshed (<color={LogColors.Duration}>{DurationText(applied)}</color>)", ctx);
+            var logEvt = LogConditionEvent(EventImportance.Low, $"{ctx.TargetName}'s {applied.Template.effectName} refreshed ({LogColors.Duration(DurationText(applied))})", ctx);
             logEvt.WithMetadata("effectBreakdown", tooltip);
         }
 
@@ -582,20 +576,20 @@ namespace Assets.Scripts.Combat.Logging
 
         private static void LogConditionReplaced(ConditionLogContext ctx, AppliedConditionBase newCondition, int oldDuration, string tooltip)
         {
-            string msg = $"{ctx.TargetName}'s {newCondition.Template.effectName} replaced (<color={LogColors.Duration}>{DurationText(oldDuration)}</color> -> <color={LogColors.Duration}>{DurationText(newCondition)}</color>)";
+            string msg = $"{ctx.TargetName}'s {newCondition.Template.effectName} replaced ({LogColors.Duration(DurationText(oldDuration))} -> {LogColors.Duration(DurationText(newCondition))})";
             var logEvt = LogConditionEvent(EventImportance.Low, msg, ctx);
             logEvt.WithMetadata("effectBreakdown", tooltip);
         }
 
         private static void LogConditionKeptStronger(ConditionLogContext ctx, AppliedConditionBase kept, string tooltip)
         {
-            var logEvt = LogConditionEvent(EventImportance.Low, $"{ctx.TargetName}'s {kept.Template.effectName} kept stronger version (<color={LogColors.Duration}>{DurationText(kept)}</color>)", ctx);
+            var logEvt = LogConditionEvent(EventImportance.Low, $"{ctx.TargetName}'s {kept.Template.effectName} kept stronger version ({LogColors.Duration(DurationText(kept))})", ctx);
             logEvt.WithMetadata("effectBreakdown", tooltip);
         }
 
         private static void LogConditionStackLimit(ConditionLogContext ctx, string effectName, int maxStacks)
         {
-            LogConditionEvent(EventImportance.Low, $"{ctx.TargetName}'s {effectName} stack limit reached (<color={LogColors.Number}>{maxStacks}</color>)", ctx);
+            LogConditionEvent(EventImportance.Low, $"{ctx.TargetName}'s {effectName} stack limit reached ({LogColors.Number(maxStacks.ToString())})", ctx);
         }
 
         private static void LogConditionRemovedByTrigger(ConditionLogContext ctx, AppliedConditionBase removed, string trigger, string tooltip)
@@ -624,7 +618,7 @@ namespace Assets.Scripts.Combat.Logging
             string vehicleName = evt.Vehicle != null ? CombatDisplayHelpers.FormatVehicleName(evt.Vehicle.vehicleName) : "Unknown";
             string suffix = evt.ChargesRemaining == 0
                 ? " (last charge)"
-                : $" (<color={LogColors.Number}>{evt.ChargesRemaining} remaining</color>)";
+                : $" ({LogColors.Number($"{evt.ChargesRemaining} remaining")})";
 
             RaceHistory.Log(
                 EventType.Resource,
@@ -642,7 +636,7 @@ namespace Assets.Scripts.Combat.Logging
             RaceHistory.Log(
                 EventType.Resource,
                 isPlayer ? EventImportance.Medium : EventImportance.Low,
-                $"{vehicleName} restored <color={LogColors.Number}>{evt.Amount}x</color> {evt.Template.name} (<color={LogColors.Number}>{evt.ChargesAfter} total</color>)",
+                $"{vehicleName} restored {LogColors.Number($"{evt.Amount}x")} {evt.Template.name} ({LogColors.Number($"{evt.ChargesAfter} total")})",
                 RacePositionTracker.GetStage(evt.Vehicle),
                 evt.Vehicle);
         }

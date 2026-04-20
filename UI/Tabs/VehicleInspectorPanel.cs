@@ -808,8 +808,8 @@ public class VehicleInspectorPanel : MonoBehaviour
                         {
                             string costText = BuildCostDisplay(skill);
                             bool canAfford = CanPayAllCosts(skill, selectedVehicle);
-                            string affordText = canAfford ? "" : $" <color={LogColors.Failure}>(Can't afford)</color>";
-                            info += $"    - <b>{skill.name}</b> ({costText}){affordText}\n";
+                            string cantAfford = LogColors.Failure("(Can't afford)");
+                            string affordText = canAfford ? "" : $" {cantAfford}";                            info += $"    - <b>{skill.name}</b> ({costText}){affordText}\n";
                         }
                     }
                 }
