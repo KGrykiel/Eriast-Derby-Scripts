@@ -21,7 +21,7 @@ namespace Assets.Scripts.Effects.EffectTypes.VehicleEffects
         {
             if (condition == null)
             {
-                Debug.LogWarning("[ApplyVehicleConditionEffect] No condition assigned!");
+                Debug.LogWarning($"[ApplyVehicleConditionEffect] No condition assigned! Causal source: {context.CausalSource ?? "unknown"}");
                 return;
             }
 

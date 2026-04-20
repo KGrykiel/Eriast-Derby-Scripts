@@ -5,6 +5,7 @@ using Assets.Scripts.AI.Scoring;
 using Assets.Scripts.Characters;
 using Assets.Scripts.Entities;
 using Assets.Scripts.Entities.Vehicles;
+using Assets.Scripts.Entities.Vehicles.VehicleComponents;
 using Assets.Scripts.Skills;
 using UnityEngine;
 
@@ -87,16 +88,16 @@ namespace Assets.Scripts.AI
 
         private static CommandWeights BuildCommandWeights(PerceptionReadings perception, VehicleAISharedContext ctx, PersonalityProfile p)
         {
-            float threat      = perception.Get<ThreatTracker>();
+            float threat = perception.Get<ThreatTracker>();
             float opportunity = perception.Get<OpportunityTracker>();
             float lowHealthDrive = 1f - Mathf.Clamp01(ctx.ChassisHealthPercent);
 
             return new CommandWeights
             {
-                attack  = opportunity * p.aggression,
-                heal    = lowHealthDrive * p.defensiveness,
+                attack = opportunity * p.aggression,
+                heal = lowHealthDrive * p.defensiveness,
                 disrupt = opportunity * 0.5f * p.aggression,
-                flee    = threat * lowHealthDrive * p.caution
+                flee = threat * lowHealthDrive * p.caution
             };
         }
 
@@ -136,29 +137,84 @@ namespace Assets.Scripts.AI
             switch (skill.targetingMode)
             {
                 case TargetingMode.Self:
-                case TargetingMode.SourceComponent:
                     yield return ctx.Self;
                     break;
+
+                case TargetingMode.SourceComponent:
+                {
+                    bool anyTargetable = false;
+                    foreach (var component in EnumerateTargetableComponents(ctx.Self, skill))
+                    {
+                        anyTargetable = true;
+                        yield return component;
+                    }
+                    if (!anyTargetable)
+                        Debug.LogWarning($"[SeatAI] Skill '{skill.name}' has TargetingMode.SourceComponent but no targetable components were found on '{ctx.Self.vehicleName}'.");
+                    break;
+                }
 
                 case TargetingMode.OwnLane:
                     yield return ctx.CurrentLane;
                     break;
 
                 case TargetingMode.Enemy:
-                case TargetingMode.EnemyComponent:
                     foreach (var enemy in ctx.EnemiesInStage) yield return enemy;
                     break;
 
+                case TargetingMode.EnemyComponent:
+                    foreach (var enemy in ctx.EnemiesInStage)
+                    {
+                        bool anyTargetable = false;
+                        foreach (var component in EnumerateTargetableComponents(enemy, skill))
+                        {
+                            anyTargetable = true;
+                            yield return component;
+                        }
+                        if (!anyTargetable)
+                            Debug.LogWarning($"[SeatAI] Skill '{skill.name}' has TargetingMode.EnemyComponent but no targetable components were found on '{enemy.vehicleName}'.");
+                    }
+                    break;
+
                 case TargetingMode.Any:
-                case TargetingMode.AnyComponent:
                     yield return ctx.Self;
                     foreach (var ally in ctx.AlliesInStage) yield return ally;
                     foreach (var enemy in ctx.EnemiesInStage) yield return enemy;
                     break;
 
+                case TargetingMode.AnyComponent:
+                    foreach (var vehicle in AnyVehicles(ctx))
+                    {
+                        bool anyTargetable = false;
+                        foreach (var component in EnumerateTargetableComponents(vehicle, skill))
+                        {
+                            anyTargetable = true;
+                            yield return component;
+                        }
+                        if (!anyTargetable)
+                            Debug.LogWarning($"[SeatAI] Skill '{skill.name}' has TargetingMode.AnyComponent but no targetable components were found on '{vehicle.vehicleName}'.");
+                    }
+                    break;
+
                 case TargetingMode.Lane:
                     // Deferred until LaneHazardTracker exists — see AI-new.md Phase 4.
                     break;
+            }
+        }
+
+        private IEnumerable<Vehicle> AnyVehicles(VehicleAISharedContext ctx)
+        {
+            yield return ctx.Self;
+            foreach (var ally in ctx.AlliesInStage) yield return ally;
+            foreach (var enemy in ctx.EnemiesInStage) yield return enemy;
+        }
+
+        private static IEnumerable<VehicleComponent> EnumerateTargetableComponents(Vehicle vehicle, Skill skill)
+        {
+            if (vehicle == null) yield break;
+            foreach (var component in vehicle.AllComponents)
+            {
+                if (component != null && component.CanBeTargeted())
+                    yield return component;
             }
         }
     }

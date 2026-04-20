@@ -21,7 +21,7 @@ namespace Assets.Scripts.Effects.Targeting.EntityTarget
             VehicleComponent component = ctx.SourceActor != null ? ctx.SourceActor.GetEntity() as VehicleComponent : null;
             if (component != null)
                 return new Entity[] { component };
-            Debug.LogWarning("[SourceComponentResolver] No source component in context.");
+            Debug.LogWarning($"[SourceComponentResolver] No source component in context. Causal source: {ctx.CausalSource ?? "unknown"}");
             return Array.Empty<Entity>();
         }
     }

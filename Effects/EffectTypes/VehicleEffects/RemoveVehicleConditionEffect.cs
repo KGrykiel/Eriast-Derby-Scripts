@@ -22,7 +22,7 @@ namespace Assets.Scripts.Effects.EffectTypes.VehicleEffects
         {
             if (categoriesToRemove == ConditionCategory.None)
             {
-                Debug.LogWarning("[RemoveVehicleConditionByCategoryEffect] No categories set — effect had no impact.");
+                Debug.LogWarning($"[RemoveVehicleConditionByCategoryEffect] No categories set — effect had no impact. Causal source: {context.CausalSource ?? "unknown"}");
                 return;
             }
 
@@ -45,7 +45,7 @@ namespace Assets.Scripts.Effects.EffectTypes.VehicleEffects
         {
             if (template == null)
             {
-                Debug.LogWarning("[RemoveVehicleConditionByTemplateEffect] No template assigned — effect had no impact.");
+                Debug.LogWarning($"[RemoveVehicleConditionByTemplateEffect] No template assigned — effect had no impact. Causal source: {context.CausalSource ?? "unknown"}");
                 return;
             }
 

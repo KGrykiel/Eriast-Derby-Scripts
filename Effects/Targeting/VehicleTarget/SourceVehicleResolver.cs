@@ -21,7 +21,7 @@ namespace Assets.Scripts.Effects.Targeting.VehicleTarget
             if (vehicle != null)
                 return new Vehicle[] { vehicle };
 
-            Debug.LogWarning("[SourceVehicleResolver] No source vehicle in context.");
+            Debug.LogWarning($"[SourceVehicleResolver] No source vehicle in context. Causal source: {ctx.CausalSource ?? "unknown"}");
             return Array.Empty<Vehicle>();
         }
     }

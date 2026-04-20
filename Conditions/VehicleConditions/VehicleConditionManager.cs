@@ -72,21 +72,30 @@ namespace Assets.Scripts.Conditions.VehicleConditions
         {
             foreach (var periodic in applied.template.periodicEffects)
             {
-                foreach (var component in vehicle.AllComponents)
+                switch (periodic)
                 {
-                    switch (periodic)
-                    {
-                        case PeriodicDamageEffect dot:
+                    case PeriodicDamageEffect dot:
+                        foreach (var component in vehicle.AllComponents)
+                        {
                             var resistance = component.GetResistance(dot.damageFormula.damageType);
                             var dmgResult = DamageCalculator.Compute(dot.damageFormula, resistance);
                             DamageApplicator.Apply(dmgResult, component, causalSource: applied.template.effectName);
-                            break;
+                        }
+                        break;
 
-                        case PeriodicRestorationEffect hot:
-                            int amount = RestorationCalculator.Compute(hot.formula);
-                            RestorationApplicator.Apply(hot.formula, amount, component, causalSource: applied.template.effectName);
-                            break;
-                    }
+                    case PeriodicRestorationEffect hot:
+                        int amount = RestorationCalculator.Compute(hot.formula);
+                        if (hot.formula.resourceType == ResourceType.Energy)
+                        {
+                            if (vehicle.PowerCore != null)
+                                RestorationApplicator.Apply(hot.formula, amount, vehicle.PowerCore, causalSource: applied.template.effectName);
+                        }
+                        else
+                        {
+                            foreach (var component in vehicle.AllComponents)
+                                RestorationApplicator.Apply(hot.formula, amount, component, causalSource: applied.template.effectName);
+                        }
+                        break;
                 }
             }
         }

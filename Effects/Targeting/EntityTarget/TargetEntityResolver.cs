@@ -20,7 +20,7 @@ namespace Assets.Scripts.Effects.Targeting.EntityTarget
         {
             if (ctx.Target is not Entity entity)
             {
-                Debug.LogWarning("[TargetEntityResolver] No entity target in context.");
+                Debug.LogWarning($"[TargetEntityResolver] No entity target in context. Causal source: {ctx.CausalSource ?? "unknown"}");
                 return Array.Empty<Entity>();
             }
 
