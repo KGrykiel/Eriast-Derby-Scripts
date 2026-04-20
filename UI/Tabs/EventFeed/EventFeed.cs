@@ -207,7 +207,7 @@ public class EventFeed : MonoBehaviour
             string displayText = evt.GetFormattedText(includeTimestamp: true, includeLocation: true);
 
             if (enableTooltips && HasBreakdownData(evt))
-                displayText += " <color=#6688FF>[?]</color>";
+                displayText += $" <color={LogColors.IconUnknown}>[?]</color>";
 
             text.text = displayText;
             text.fontSize = 12;

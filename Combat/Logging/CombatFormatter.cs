@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using Assets.Scripts.Combat.Damage;
@@ -10,6 +10,7 @@ using Assets.Scripts.Conditions.CharacterConditions;
 using Assets.Scripts.Conditions.VehicleConditions;
 using Assets.Scripts.Modifiers;
 using Assets.Scripts.Entities;
+using Assets.Scripts.Logging;
 
 namespace Assets.Scripts.Combat.Logging
 {
@@ -19,17 +20,6 @@ namespace Assets.Scripts.Combat.Logging
     /// </summary>
     public static class CombatFormatter
     {
-        // ==================== COLORS ====================
-
-        public static class Colors
-        {
-            public const string Success = "#44FF44";
-            public const string Failure = "#FF4444";
-            public const string Damage = "#FFA500";
-            public const string Energy = "#88DDFF";
-            public const string Health = "#44FF44";
-        }
-
         // ==================== D20 ROLL FORMATTING ====================
         /// <summary>
         /// Format any d20 roll result with full breakdown for tooltips.
@@ -64,16 +54,17 @@ namespace Assets.Scripts.Combat.Logging
                 sb.AppendLine($"  {bonus.Label}: {sign}{bonus.Value}");
             }
 
-            sb.AppendLine("  ─────────────");
-            sb.AppendLine($"  Total: {roll.Total}");
+            sb.AppendLine("  -------------");
+            sb.AppendLine($"  Total: <color={LogColors.Number}>{roll.Total}</color>");
 
             if (roll.TargetValue > 0)
             {
-                sb.AppendLine($"  vs {targetLabel}: {roll.TargetValue}");
+                sb.AppendLine($"  vs {targetLabel}: <color={LogColors.DC}>{roll.TargetValue}</color>");
                 if (showResult)
                 {
-                    string resultText = roll.Success ? successText : failText;
-                    sb.AppendLine($"  Result: {resultText}");
+                    string resultColor = roll.Success ? LogColors.Success : LogColors.Failure;
+                    string resultText  = roll.Success ? successText : failText;
+                    sb.AppendLine($"  Result: <color={resultColor}>{resultText}</color>");
                 }
             }
 
@@ -99,10 +90,10 @@ namespace Assets.Scripts.Combat.Logging
         public static string FormatOpposedCheckDetailed(D20RollOutcome roll, D20RollOutcome? defenderRoll, string attackerCheckName, string defenderCheckName)
         {
             string winner = roll.Success ? "Attacker wins" : "Defender wins";
-            string winnerColor = roll.Success ? Colors.Success : Colors.Failure;
+            string winnerColor = roll.Success ? LogColors.Success : LogColors.Failure;
 
             var sb = new StringBuilder();
-            sb.AppendLine($"<color={winnerColor}>{winner}</color> — {roll.Total} vs {roll.TargetValue}");
+            sb.AppendLine($"<color={winnerColor}>{winner}</color> - {roll.Total} vs {roll.TargetValue}");
             sb.AppendLine();
             sb.Append(FormatD20RollDetailed(
                 roll,
@@ -128,9 +119,9 @@ namespace Assets.Scripts.Combat.Logging
         {
             var sb = new StringBuilder();
             sb.AppendLine($"{checkTypeName} {checkType} DC Breakdown:");
-            sb.AppendLine($"  Base DC: {dc} ({skillName})");
-            sb.AppendLine("  ─────────────");
-            sb.AppendLine($"  Total DC: {dc}");
+            sb.AppendLine($"  Base DC: <color={LogColors.DC}>{dc}</color> ({skillName})");
+            sb.AppendLine("  -------------");
+            sb.AppendLine($"  Total DC: <color={LogColors.DC}>{dc}</color>");
             return sb.ToString();
         }
 
@@ -149,8 +140,8 @@ namespace Assets.Scripts.Combat.Logging
                 sb.AppendLine($"  {mod.Label}: {sign}{(int)mod.Value}");
             }
 
-            sb.AppendLine("  ─────────────");
-            sb.AppendLine($"  Total {defenseName}: {total}");
+            sb.AppendLine("  -------------");
+            sb.AppendLine($"  Total {defenseName}: <color={LogColors.Number}>{total}</color>");
             return sb.ToString();
         }
 
@@ -164,14 +155,15 @@ namespace Assets.Scripts.Combat.Logging
             string diceNotation = BuildDiceNotation(result);
             string resistMod = GetResistanceModifier(result.ResistanceLevel);
             sb.AppendLine($"  Roll: {diceNotation}{resistMod} = {result.RawTotal}");
-            sb.AppendLine("  ─────────────");
+            sb.AppendLine("  -------------");
 
             if (result.ResistanceLevel != ResistanceLevel.Normal)
             {
                 sb.AppendLine($"  {result.ResistanceLevel}: {resistMod}");
             }
 
-            sb.AppendLine($"  Final: {result.FinalDamage} {result.DamageType}");
+            string dmgColor = LogColors.GetDamageTypeColor(result.DamageType);
+            sb.AppendLine($"  Final: <color={dmgColor}>{result.FinalDamage} {result.DamageType}</color>");
             return sb.ToString();
         }
 
@@ -182,7 +174,7 @@ namespace Assets.Scripts.Combat.Logging
 
             var sb = new StringBuilder();
             int totalDamage = results.Sum(r => r.FinalDamage);
-            sb.AppendLine($"Damage Total: {totalDamage}");
+            sb.AppendLine($"Damage Total: <color={LogColors.Damage}>{totalDamage}</color>");
 
             if (!string.IsNullOrEmpty(sourceName))
             {
@@ -194,11 +186,12 @@ namespace Assets.Scripts.Combat.Logging
             {
                 string diceNotation = BuildDiceNotation(result);
                 string resistMod = GetResistanceModifier(result.ResistanceLevel);
-                string label = result.ResistanceLevel != ResistanceLevel.Normal
-                    ? $"({result.DamageType}, {result.ResistanceLevel})"
-                    : $"({result.DamageType})";
+                string typeColor = LogColors.GetDamageTypeColor(result.DamageType);
+                string resistLabel = result.ResistanceLevel != ResistanceLevel.Normal
+                    ? $" ({result.ResistanceLevel})"
+                    : "";
 
-                sb.AppendLine($"{diceNotation}{resistMod} = {result.FinalDamage} {label}");
+                sb.AppendLine($"{diceNotation}{resistMod} = <color={typeColor}>{result.FinalDamage} {result.DamageType}</color>{resistLabel}");
             }
 
             return sb.ToString().Trim();
@@ -211,10 +204,12 @@ namespace Assets.Scripts.Combat.Logging
 
             string diceNotation = BuildDiceNotation(result);
             sb.AppendLine($"  Roll: {diceNotation} = {result.RawTotal}");
-            sb.AppendLine("  ─────────────");
+            sb.AppendLine("  -------------");
             sb.AppendLine($"  Requested: {result.RequestedChange:+0;-0}");
-            sb.AppendLine($"  Actual: {result.ActualChange:+0;-0}");
-            sb.AppendLine($"  Resource: {result.OldValue} → {result.NewValue} / {result.MaxValue}");
+            string resColor = result.ResourceType == ResourceType.Energy ? LogColors.Energy : LogColors.Health;
+            string resUnit = result.ResourceType == ResourceType.Energy ? "energy" : "HP";
+            sb.AppendLine($"  Actual: <color={resColor}>{result.ActualChange:+0;-0} {resUnit}</color>");
+            sb.AppendLine($"  Resource: {result.OldValue} -> {result.NewValue} / {result.MaxValue}");
             return sb.ToString();
         }
 
@@ -225,7 +220,7 @@ namespace Assets.Scripts.Combat.Logging
 
             var sb = new StringBuilder();
             int totalChange = results.Sum(r => r.ActualChange);
-            sb.AppendLine($"Restoration Total: {totalChange:+0;-0}");
+            sb.AppendLine($"Restoration Total: <color={LogColors.Health}>{totalChange:+0;-0}</color>");
 
             if (!string.IsNullOrEmpty(sourceName))
             {
@@ -251,11 +246,11 @@ namespace Assets.Scripts.Combat.Logging
             List<EntityAttributeModifier> modifiers)
         {
             if (modifiers == null || modifiers.Count == 0)
-                return $"{attribute}: {baseValue}\n═══════════════════════════════\nBase value only (no modifiers)";
+                return $"{attribute}: {baseValue}\n===============================\nBase value only (no modifiers)";
 
             var sb = new StringBuilder();
             sb.AppendLine($"{attribute}: {finalValue}");
-            sb.AppendLine("═══════════════════════════════");
+            sb.AppendLine("===============================");
             sb.AppendLine($"Base:                      {baseValue}");
             sb.AppendLine();
 
@@ -263,7 +258,7 @@ namespace Assets.Scripts.Combat.Logging
 
             float totalModifiers = finalValue - baseValue;
             string totalSign = totalModifiers >= 0 ? "+" : "";
-            sb.AppendLine("═══════════════════════════════");
+            sb.AppendLine("===============================");
             sb.AppendLine($"Total Modifiers:          {totalSign}{totalModifiers}  {attribute}");
             sb.AppendLine($"Final Value:               {finalValue}  {attribute}");
 
@@ -281,10 +276,10 @@ namespace Assets.Scripts.Combat.Logging
             var sb = new StringBuilder();
 
             sb.AppendLine($"{effect.effectName}");
-            sb.AppendLine("═══════════════════════════════");
+            sb.AppendLine("===============================");
 
             string durationStr = appliedEffect.IsIndefinite
-                ? "Indefinite (∞)"
+                ? "Indefinite"
                 : $"{appliedEffect.turnsRemaining} turns remaining";
             sb.AppendLine($"Duration: {durationStr}");
             sb.AppendLine();
@@ -299,7 +294,7 @@ namespace Assets.Scripts.Combat.Logging
                 sb.AppendLine();
             }
 
-            sb.AppendLine("═══════════════════════════════");
+            sb.AppendLine("===============================");
             return sb.ToString().TrimEnd();
         }
 
@@ -312,10 +307,10 @@ namespace Assets.Scripts.Combat.Logging
             var sb = new StringBuilder();
 
             sb.AppendLine($"{condition.effectName}");
-            sb.AppendLine("═══════════════════════════════");
+            sb.AppendLine("===============================");
 
             string durationStr = applied.IsIndefinite
-                ? "Indefinite (∞)"
+                ? "Indefinite"
                 : $"{applied.turnsRemaining} turns remaining";
             sb.AppendLine($"Duration: {durationStr}");
             sb.AppendLine();
@@ -329,7 +324,7 @@ namespace Assets.Scripts.Combat.Logging
                 sb.AppendLine();
             }
 
-            sb.AppendLine("═══════════════════════════════");
+            sb.AppendLine("===============================");
             return sb.ToString().TrimEnd();
         }
 
@@ -342,10 +337,10 @@ namespace Assets.Scripts.Combat.Logging
             var sb = new StringBuilder();
 
             sb.AppendLine($"{condition.effectName}");
-            sb.AppendLine("═══════════════════════════════");
+            sb.AppendLine("===============================");
 
             string durationStr = applied.IsIndefinite
-                ? "Indefinite (∞)"
+                ? "Indefinite"
                 : $"{applied.turnsRemaining} turns remaining";
             sb.AppendLine($"Duration: {durationStr}");
             sb.AppendLine();
@@ -360,7 +355,7 @@ namespace Assets.Scripts.Combat.Logging
                 sb.AppendLine();
             }
 
-            sb.AppendLine("═══════════════════════════════");
+            sb.AppendLine("===============================");
             return sb.ToString().TrimEnd();
         }
 
@@ -371,9 +366,9 @@ namespace Assets.Scripts.Combat.Logging
             sb.AppendLine("Effects:");
             foreach (var mod in condition.modifiers)
             {
-                string color = mod.value >= 0 ? "#44FF44" : "#FF4444";
+                string color = mod.value >= 0 ? LogColors.Success : LogColors.Failure;
                 string valueStr = mod.type == ModifierType.Multiplier
-                    ? $"×{mod.value}"
+                    ? $"x{mod.value}"
                     : $"{(mod.value >= 0 ? "+" : "")}{mod.value}";
 
                 string target = mod switch
@@ -382,7 +377,7 @@ namespace Assets.Scripts.Combat.Logging
                     CharacterAttributeModifierData attrData => attrData.attribute.ToString(),
                     _ => "Unknown"
                 };
-                sb.AppendLine($"  • <color={color}>{valueStr} {target}</color>");
+                sb.AppendLine($"  - <color={color}>{valueStr} {target}</color>");
             }
             sb.AppendLine();
         }
@@ -419,9 +414,9 @@ namespace Assets.Scripts.Combat.Logging
         {
             return level switch
             {
-                ResistanceLevel.Vulnerable => " (×2)",
-                ResistanceLevel.Resistant => " (×0.5)",
-                ResistanceLevel.Immune => " (×0)",
+                ResistanceLevel.Vulnerable => " (x2)",
+                ResistanceLevel.Resistant => " (x0.5)",
+                ResistanceLevel.Immune => " (x0)",
                 _ => ""
             };
         }
@@ -436,8 +431,8 @@ namespace Assets.Scripts.Combat.Logging
         private static string FormatModifierLine(EntityAttributeModifier mod, EntityAttribute attribute)
         {
             string sign = mod.Value >= 0 ? "+" : "";
-            string typeStr = mod.Type == ModifierType.Multiplier ? "×" : "";
-            string color = mod.Value >= 0 ? Colors.Success : Colors.Failure;
+            string typeStr = mod.Type == ModifierType.Multiplier ? "x" : "";
+            string color = mod.Value >= 0 ? LogColors.Success : LogColors.Failure;
 
             if (mod.Type == ModifierType.Multiplier)
                 return $"  <color={color}>{mod.Label,-25} {typeStr}{mod.Value}  {attribute}</color>";
@@ -451,11 +446,11 @@ namespace Assets.Scripts.Combat.Logging
             sb.AppendLine("Effects:");
             foreach (var mod in modifiers)
             {
-                string color = mod.value >= 0 ? "#44FF44" : "#FF4444";
+                string color = mod.value >= 0 ? LogColors.Success : LogColors.Failure;
                 string valueStr = mod.type == ModifierType.Multiplier
-                    ? $"×{mod.value}"
+                    ? $"x{mod.value}"
                     : $"{(mod.value >= 0 ? "+" : "")}{mod.value}";
-                sb.AppendLine($"  • <color={color}>{valueStr} {mod.attribute}</color>");
+                sb.AppendLine($"  - <color={color}>{valueStr} {mod.attribute}</color>");
             }
             sb.AppendLine();
         }
@@ -480,7 +475,8 @@ namespace Assets.Scripts.Combat.Logging
 
         private static string FormatPeriodicDamage(PeriodicDamageEffect dmg)
         {
-            return $"  • <color=#FF4444>{FormatFormulaNotation(dmg.damageFormula)} {dmg.damageFormula.damageType} damage per turn</color>";
+            string typeColor = LogColors.GetDamageTypeColor(dmg.damageFormula.damageType);
+            return $"  - <color={typeColor}>{FormatFormulaNotation(dmg.damageFormula)} {dmg.damageFormula.damageType} damage per turn</color>";
         }
 
         private static string FormatPeriodicRestoration(PeriodicRestorationEffect res)
@@ -488,9 +484,9 @@ namespace Assets.Scripts.Combat.Logging
             string notation = FormatRestorationNotation(res.formula);
             string resourceName = res.formula.resourceType == ResourceType.Health ? "HP" : "energy";
             bool isPositive = res.formula.baseDice > 0 || res.formula.bonus >= 0;
-            string color = isPositive ? "#44FF44" : "#FF4444";
+            string color = isPositive ? LogColors.Success : LogColors.Failure;
             string verb = isPositive ? "restores" : "drains";
-            return $"  • <color={color}>{verb} {notation} {resourceName} per turn</color>";
+            return $"  - <color={color}>{verb} {notation} {resourceName} per turn</color>";
         }
 
         public static string FormatFormulaNotation(DamageFormula formula)
@@ -517,12 +513,12 @@ namespace Assets.Scripts.Combat.Logging
             bool hasAny = false;
             if (effect.behavioralEffects.preventsActions)
             {
-                sb.AppendLine("  • <color=#FF4444>Prevents actions</color>");
+                sb.AppendLine($"  - <color={LogColors.Failure}>Prevents actions</color>");
                 hasAny = true;
             }
             if (effect.behavioralEffects.preventsMovement)
             {
-                sb.AppendLine("  • <color=#FF4444>Prevents movement</color>");
+                sb.AppendLine($"  - <color={LogColors.Failure}>Prevents movement</color>");
                 hasAny = true;
             }
             if (hasAny)

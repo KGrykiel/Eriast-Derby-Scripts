@@ -53,7 +53,7 @@ namespace Assets.Scripts.AI
             RaceHistory.Log(
                 EventType.AI,
                 EventImportance.Debug,
-                $"[AI] {FormatSeat(seat)} skipped — {reason}",
+                $"[AI] {FormatSeat(seat)} skipped - {reason}",
                 ctx.CurrentStage,
                 ctx.Self);
         }
@@ -94,11 +94,11 @@ namespace Assets.Scripts.AI
             string seatLabel = FormatSeat(seat);
 
             if (action == null)
-                return $"{seatLabel} — no viable action";
+                return $"{seatLabel} - no viable action";
 
-            string skillName  = action.Value.Skill != null ? action.Value.Skill.name : "?";
+            string skillName  = action.Value.Skill != null ? $"{LogColors.Ability(action.Value.Skill.name)}" : "?";
             string targetName = FormatTarget(action.Value.Target);
-            return $"{seatLabel} → [{skillName}] → {targetName}";
+            return $"{seatLabel} -> {skillName} -> {targetName}";
         }
 
         // ==================== TOOLTIP ====================
@@ -125,7 +125,7 @@ namespace Assets.Scripts.AI
             sb.AppendLine();
             if (action == null)
             {
-                sb.AppendLine("<b>Result</b>  no viable action (all scores ≤ 0 or no valid targets)");
+                sb.AppendLine("<b>Result</b>  no viable action (all scores <= 0 or no valid targets)");
             }
             else
             {
@@ -167,7 +167,9 @@ namespace Assets.Scripts.AI
             {
                 bool isSelected = skill == selected && tgt == selectedTarget;
                 string prefix    = isSelected ? "  > " : "    ";
-                sb.AppendLine($"{prefix}{skill.name} -> {FormatTarget(tgt)}  {score:F3}");
+                string skillStr  = $"{LogColors.Ability(skill.name)}";
+                string targetStr = FormatTarget(tgt);
+                sb.AppendLine($"{prefix}{skillStr} -> {targetStr}  {score:F3}");
             }
         }
 
@@ -176,16 +178,17 @@ namespace Assets.Scripts.AI
         private static string FormatSeat(VehicleSeat seat)
         {
             string vehicleName = seat.ParentVehicle != null ? seat.ParentVehicle.vehicleName : "?";
-            return $"{vehicleName}/{seat.seatName}";
+            return $"{LogColors.Vehicle(vehicleName)}/{seat.seatName}";
         }
 
         private static string FormatTarget(IRollTarget target)
         {
             if (target == null) return "?";
-            if (target is Vehicle v) return v.vehicleName;
-            if (target is Entity e) return e.name;
+            if (target is Vehicle v) return $"{LogColors.Vehicle(v.vehicleName)}";
+            if (target is Entity e) return $"{LogColors.Vehicle(e.name)}";
             return target.GetType().Name;
         }
     }
 }
+
 

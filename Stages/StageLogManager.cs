@@ -1,4 +1,4 @@
-﻿using Assets.Scripts.Entities.Vehicles;
+using Assets.Scripts.Entities.Vehicles;
 using Assets.Scripts.Logging;
 using Assets.Scripts.Stages.Lanes;
 using EventType = Assets.Scripts.Logging.EventType;
@@ -18,7 +18,7 @@ namespace Assets.Scripts.Stages
             RaceHistory.Log(
                 EventType.EventCard,
                 importance,
-                $"{vehicle.vehicleName} triggered event card: {cardName} in {stage.stageName}",
+                $"{LogColors.Vehicle(vehicle.vehicleName)} triggered event card: {cardName} in {stage.stageName}",
                 stage,
                 vehicle
             );
@@ -31,7 +31,7 @@ namespace Assets.Scripts.Stages
             RaceHistory.Log(
                 EventType.Movement,
                 EventImportance.Debug,
-                $"{vehicle.vehicleName} left {stage.stageName}",
+                $"{LogColors.Vehicle(vehicle.vehicleName)} left {stage.stageName}",
                 stage,
                 vehicle
             );
@@ -45,7 +45,10 @@ namespace Assets.Scripts.Stages
         {
             if (vehicle == null || lane == null) return;
 
-            string narrative = $"{vehicle.vehicleName} {(success ? "survived" : "was hit by")} {lane.laneName}";
+            string outcome = success
+                ? $"<color={LogColors.Success}>survived</color>"
+                : $"<color={LogColors.Failure}>was hit by</color>";
+            string narrative = $"{LogColors.Vehicle(vehicle.vehicleName)} {outcome} {lane.laneName}";
 
             RaceHistory.Log(
                 EventType.StageHazard,
@@ -60,7 +63,10 @@ namespace Assets.Scripts.Stages
         {
             if (vehicle == null) return;
 
-            string narrative = $"{vehicle.vehicleName} {(success ? "survived" : "was hit by")} {stage.stageName}";
+            string outcome = success
+                ? $"<color={LogColors.Success}>survived</color>"
+                : $"<color={LogColors.Failure}>was hit by</color>";
+            string narrative = $"{LogColors.Vehicle(vehicle.vehicleName)} {outcome} {stage.stageName}";
 
             RaceHistory.Log(
                 EventType.StageHazard,
@@ -72,3 +78,4 @@ namespace Assets.Scripts.Stages
         }
     }
 }
+

@@ -759,25 +759,25 @@ public class VehicleInspectorPanel : MonoBehaviour
                 if (!seat.CanAct())
                 {
                     statusIcon = "X";
-                    statusColor = "#FF6666";
+                    statusColor = LogColors.Warning;
                 }
                 else if (!seat.CanSpendAction(ActionType.Action) && !seat.CanSpendAction(ActionType.BonusAction))
                 {
                     statusIcon = "/";
-                    statusColor = "#888888";
+                    statusColor = LogColors.FeedLocation;
                 }
                 else if (!seat.CanSpendAction(ActionType.Action) || !seat.CanSpendAction(ActionType.BonusAction))
                 {
                     statusIcon = "~";
-                    statusColor = "#FFAA44";
+                    statusColor = LogColors.ImportanceHigh;
                 }
                 else
                 {
                     statusIcon = "Y";
-                    statusColor = "#66FF66";
+                    statusColor = LogColors.Available;
                 }
                 
-                string characterName = seat.GetDisplayName() ?? "<color=#FF6666>Unassigned</color>";
+                string characterName = seat.GetDisplayName() ?? $"<color={LogColors.Warning}>Unassigned</color>";
 
                 RoleType roles = seat.GetEnabledRoles();
                 string roleText = roles != RoleType.None ? $" [{roles}]" : "";
@@ -790,7 +790,7 @@ public class VehicleInspectorPanel : MonoBehaviour
                 if (!seat.CanAct())
                 {
                     string reason = seat.GetCannotActReason();
-                    info += $"    <color=#FF6666>{reason}</color>\n";
+                    info += $"    <color={LogColors.Warning}>{reason}</color>\n";
                 }
 
                 var seatSkills = new List<Skill>();
@@ -808,19 +808,19 @@ public class VehicleInspectorPanel : MonoBehaviour
                         {
                             string costText = BuildCostDisplay(skill);
                             bool canAfford = CanPayAllCosts(skill, selectedVehicle);
-                            string affordText = canAfford ? "" : " <color=#FF4444>(Can't afford)</color>";
+                            string affordText = canAfford ? "" : $" <color={LogColors.Failure}>(Can't afford)</color>";
                             info += $"    - <b>{skill.name}</b> ({costText}){affordText}\n";
                         }
                     }
                 }
                 else
                 {
-                    info += $"    <color=#888888>No skills available</color>\n";
+                    info += $"    <color={LogColors.FeedLocation}>No skills available</color>\n";
                 }
 
                 string aiDecision = GetLastSeatAIDecision(seat);
                 if (!string.IsNullOrEmpty(aiDecision))
-                    info += $"    <color=#8888FF>Last decision:</color>\n{aiDecision}\n";
+                    info += $"    <color={LogColors.IconAI}>Last decision:</color>\n{aiDecision}\n";
             }
         }
         
@@ -853,8 +853,8 @@ public class VehicleInspectorPanel : MonoBehaviour
         int actions = seat.GetActionCount(ActionType.Action);
         int bonus = seat.GetActionCount(ActionType.BonusAction);
 
-        string actionColor = actions > 0 ? "#66FF66" : "#888888";
-        string bonusColor  = bonus  > 0 ? "#66FF66" : "#888888";
+        string actionColor = actions > 0 ? LogColors.Available : LogColors.FeedLocation;
+        string bonusColor  = bonus  > 0 ? LogColors.Available : LogColors.FeedLocation;
 
         return $"    <color={actionColor}>Action x{actions}</color>  <color={bonusColor}>Bonus x{bonus}</color>\n";
     }
@@ -867,7 +867,7 @@ public class VehicleInspectorPanel : MonoBehaviour
         var conditions = seat.GetActiveConditions();
 
         if (conditions.Count == 0)
-            return "    <color=#888888>Conditions: none</color>\n";
+            return $"    <color={LogColors.FeedLocation}>Conditions: none</color>\n";
 
         string text = "    Conditions: ";
         for (int i = 0; i < conditions.Count; i++)
@@ -876,7 +876,7 @@ public class VehicleInspectorPanel : MonoBehaviour
             string name = condition.template.effectName;
             string duration = condition.IsIndefinite ? "inf" : $"{condition.turnsRemaining}t";
 
-            string flags = condition.PreventsActions ? " <color=#FF6666>[incap]</color>" : string.Empty;
+            string flags = condition.PreventsActions ? $" <color={LogColors.Warning}>[incap]</color>" : string.Empty;
 
             text += $"<b>{name}</b> ({duration}){flags}";
             if (i < conditions.Count - 1)
@@ -895,7 +895,7 @@ public class VehicleInspectorPanel : MonoBehaviour
 
         if (vehicleEvents.Count == 0)
         {
-            info += "  <color=#888888>No events recorded</color>\n";
+            info += $"  <color={LogColors.FeedLocation}>No events recorded</color>\n";
         }
         else
         {
@@ -907,7 +907,7 @@ public class VehicleInspectorPanel : MonoBehaviour
 
             if (vehicleEvents.Count > 10)
             {
-                info += $"  <color=#888888>... and {vehicleEvents.Count - 10} more</color>\n";
+                info += $"  <color={LogColors.FeedLocation}>... and {vehicleEvents.Count - 10} more</color>\n";
             }
         }
 
@@ -933,13 +933,13 @@ public class VehicleInspectorPanel : MonoBehaviour
             .ToList();
 
         var sb = new System.Text.StringBuilder();
-        sb.AppendLine("<color=#5599FF>> AI DECISION LOG</color>");
-        sb.AppendLine($"<color=#888888>  Round {latestTurn}</color>");
-        sb.AppendLine("<color=#334466>  -------------------------</color>");
+        sb.AppendLine($"<color={LogColors.InspectorHeader}>> AI DECISION LOG</color>");
+        sb.AppendLine($"<color={LogColors.FeedLocation}>  Round {latestTurn}</color>");
+        sb.AppendLine($"<color={LogColors.InspectorSeparator}>  -------------------------</color>");
 
         if (actionEvents.Count == 0)
         {
-            sb.AppendLine("  <color=#FF8888>No action taken this turn</color>");
+            sb.AppendLine($"  <color={LogColors.InspectorNoAction}>No action taken this turn</color>");
             var terminalEvent = thisTurnEvents.Last();
             if (terminalEvent.metadata.TryGetValue("aiDecision", out object raw))
                 sb.Append(IndentBlock(raw?.ToString(), "    "));

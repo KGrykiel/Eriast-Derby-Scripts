@@ -1,4 +1,4 @@
-﻿using System.Linq;
+using System.Linq;
 using Assets.Scripts.Combat.Rolls;
 using Assets.Scripts.Conditions.EntityConditions;
 using Assets.Scripts.Conditions.CharacterConditions;
@@ -7,6 +7,7 @@ using Assets.Scripts.Entities.Vehicles;
 using Assets.Scripts.Entities;
 using Assets.Scripts.Entities.Vehicles.VehicleComponents;
 using Assets.Scripts.Conditions;
+using Assets.Scripts.Logging;
 
 namespace Assets.Scripts.Combat.Logging
 {
@@ -17,6 +18,13 @@ namespace Assets.Scripts.Combat.Logging
     public static class CombatDisplayHelpers
     {
         // ==================== ENTITY DISPLAY NAMES ====================
+
+        /// <summary>
+        /// Wrap a raw vehicle name string with bold VehicleName colour.
+        /// Use when a vehicle name is already extracted as a string rather than read from a Vehicle object.
+        /// </summary>
+        public static string FormatVehicleName(string name)
+            => LogColors.Vehicle(name);
 
         /// <summary>
         /// Format an entity with its parent vehicle in brackets.
@@ -30,7 +38,7 @@ namespace Assets.Scripts.Combat.Logging
             Vehicle parentVehicle = EntityHelpers.GetParentVehicle(entity);
 
             if (entity is VehicleComponent component && parentVehicle != null)
-                return $"{component.name} [{parentVehicle.vehicleName}]";
+                return $"{LogColors.Component(component.name)} [{LogColors.Vehicle(parentVehicle.vehicleName)}]";
 
             return entity.GetDisplayName();
         }
@@ -141,11 +149,11 @@ namespace Assets.Scripts.Combat.Logging
             if (entity != null)
             {
                 if (componentName != null && vehicleName != null)
-                    return $"{componentName} [{vehicleName}]";
+                    return $"{LogColors.Component(componentName)} [{LogColors.Vehicle(vehicleName)}]";
                 return entity.GetDisplayName();
             }
 
-            return vehicleName ?? "Unknown";
+            return vehicleName != null ? $"{LogColors.Vehicle(vehicleName)}" : "Unknown";
         }
 
         /// <summary>
@@ -155,10 +163,11 @@ namespace Assets.Scripts.Combat.Logging
         private static string BuildSuffix(string componentName, string vehicleName)
         {
             if (componentName != null && vehicleName != null)
-                return $" via {componentName} [{vehicleName}]";
+                return $" via {LogColors.Component(componentName)} [{LogColors.Vehicle(vehicleName)}]";
             if (vehicleName != null)
-                return $" [{vehicleName}]";
+                return $" [{LogColors.Vehicle(vehicleName)}]";
             return "";
         }
     }
 }
+

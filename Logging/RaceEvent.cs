@@ -47,26 +47,17 @@ namespace Assets.Scripts.Logging
 
         public string GetFormattedText(bool includeTimestamp = false, bool includeLocation = true)
         {
-            string color = importance switch
-            {
-                EventImportance.Critical => "#FF4444",
-                EventImportance.High => "#FFAA44",
-                EventImportance.Medium => "#FFFFFF",
-                EventImportance.Low => "#AAAAAA",
-                _ => "#888888"
-            };
-
             string icon = GetTypeIcon();
-            string text = $"<color={color}>{icon} {description}</color>";
+            string text = $"{icon} {LogColors.FormatImportanceText(importance, description)}";
 
             if (includeLocation && location != null)
             {
-                text += $" <color=#888888>({location.stageName})</color>";
+                text += $" <color={LogColors.FeedLocation}>({location.stageName})</color>";
             }
 
             if (includeTimestamp)
             {
-                text += $" <color=#666666>[T{turnNumber}]</color>";
+                text += $" <color={LogColors.FeedTimestamp}>[T{turnNumber}]</color>";
             }
 
             return text;
@@ -76,22 +67,22 @@ namespace Assets.Scripts.Logging
         {
             return type switch
             {
-                EventType.Combat => "[ATK]",
-                EventType.Movement => "[MOVE]",
-                EventType.StageHazard => "[WARN]",
-                EventType.Modifier => "[MOD]",
-                EventType.Condition => "[STATUS]",
-                EventType.SkillUse => "[SKILL]",
-                EventType.Destruction => "[DEAD]",
-                EventType.FinishLine => "[FINISH]",
-                EventType.Rivalry => "[POWER]",
-                EventType.HeroicMoment => "[HERO]",
-                EventType.TragicMoment => "[TRAGIC]",
-                EventType.System => "[SYS]",
-                EventType.Resource => "[RES]",
-                EventType.EventCard => "[EVENT]",
-                EventType.AI => "[AI]",
-                _ => "[-]"
+                EventType.Combat       => $"<color={LogColors.IconCombat}>[ATK]</color>",
+                EventType.Movement     => $"<color={LogColors.IconMovement}>[MOVE]</color>",
+                EventType.StageHazard  => $"<color={LogColors.IconStageHazard}>[WARN]</color>",
+                EventType.Modifier     => $"<color={LogColors.IconModifier}>[MOD]</color>",
+                EventType.Condition    => $"<color={LogColors.IconCondition}>[STATUS]</color>",
+                EventType.SkillUse     => $"<color={LogColors.IconSkillUse}>[SKILL]</color>",
+                EventType.Destruction  => $"<color={LogColors.IconDestruction}>[DEAD]</color>",
+                EventType.FinishLine   => $"<color={LogColors.IconFinishLine}>[FINISH]</color>",
+                EventType.Rivalry      => $"<color={LogColors.IconRivalry}>[POWER]</color>",
+                EventType.HeroicMoment => $"<color={LogColors.IconHeroicMoment}>[HERO]</color>",
+                EventType.TragicMoment => $"<color={LogColors.IconTragicMoment}>[TRAGIC]</color>",
+                EventType.System       => $"<color={LogColors.IconSystem}>[SYS]</color>",
+                EventType.Resource     => $"<color={LogColors.IconResource}>[RES]</color>",
+                EventType.EventCard    => $"<color={LogColors.IconEventCard}>[EVENT]</color>",
+                EventType.AI           => $"<color={LogColors.IconAI}>[AI]</color>",
+                _                      => $"<color={LogColors.IconDefault}>[-]</color>"
             };
         }
     }
