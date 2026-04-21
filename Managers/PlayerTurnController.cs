@@ -2,6 +2,7 @@
 using Assets.Scripts.Entities.Vehicles;
 using Assets.Scripts.Managers.PlayerUI;
 using Assets.Scripts.Managers.TurnPhases;
+using Assets.Scripts.Skills;
 
 namespace Assets.Scripts.Managers
 {
@@ -18,7 +19,7 @@ namespace Assets.Scripts.Managers
             this.inputCoordinator = inputCoordinator;
         }
 
-        public void BeginTurn(Vehicle vehicle, TurnPhaseContext context, Action onDone)
+        public void RequestNextAction(Vehicle vehicle, TurnPhaseContext context, Action<SkillAction> onAction, Action onDone)
         {
             if (vehicle == null || !vehicle.IsOperational())
             {
@@ -28,7 +29,7 @@ namespace Assets.Scripts.Managers
                 return;
             }
 
-            inputCoordinator.SetCallbacks(context.ActionManager.Submit, onDone);
+            inputCoordinator.SetCallbacks(onAction, onDone);
             inputCoordinator.BeginTurn(vehicle);
         }
     }

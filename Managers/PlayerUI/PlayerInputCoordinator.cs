@@ -188,10 +188,11 @@ namespace Assets.Scripts.Managers.PlayerUI
             RollActor sourceActor = currentSeat.BuildActorForSkill(selectedSkill);
 
             var action = new SkillAction(selectedSkill, sourceActor, finalTarget);
-            onActionReady?.Invoke(action);
 
             ClearSelections();
-            RefreshAfterSkill();
+            HideTurnUI();
+
+            onActionReady?.Invoke(action);
         }
 
         private void OnTargetCancelClicked()

@@ -19,7 +19,11 @@
                 return TurnPhase.TurnEnd;
             }
 
-            controller.BeginTurn(context.CurrentVehicle, context, () => context.StateMachine.Resume(context, TurnPhase.TurnEnd));
+            context.ActionManager.ExecuteTurn(
+                context.CurrentVehicle,
+                controller,
+                context,
+                () => context.StateMachine.Resume(context, TurnPhase.TurnEnd));
             return null;
         }
     }

@@ -27,6 +27,10 @@ namespace Assets.Scripts.Managers
         [Tooltip("Maximum number of rounds before the race ends. Vehicles still active at this point are classified as DNF.")]
         [SerializeField] private int maxRounds = 100;
 
+        [Header("Action Playback")]
+        [Tooltip("Seconds to wait before each action executes. Gives animations and effects time to play.")]
+        [SerializeField] private float actionDelay = 0.6f;
+
         [Header("Game Over UI")]
         [Tooltip("Optional - status text for game over message")]
         [SerializeField] private TextMeshProUGUI statusNotesText;
@@ -111,7 +115,8 @@ namespace Assets.Scripts.Managers
             }
             playerController.Initialize(turnController);
 
-            phaseContext = new TurnPhaseContext(stateMachine, turnController, playerController, new VehicleActionManager());
+            var actionManager = new VehicleActionManager(this) { actionDelay = actionDelay };
+            phaseContext = new TurnPhaseContext(stateMachine, turnController, playerController, actionManager);
             phaseContext.RegisterController(ControlType.Player, new PlayerTurnController(playerController.InputCoordinator));
             phaseContext.RegisterController(ControlType.AI, new AITurnController());
 
