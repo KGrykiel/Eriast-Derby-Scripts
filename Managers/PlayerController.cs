@@ -1,4 +1,3 @@
-using System;
 using UnityEngine;
 using Assets.Scripts.Managers.PlayerUI;
 
@@ -16,9 +15,9 @@ namespace Assets.Scripts.Managers
 
         public PlayerInputCoordinator InputCoordinator { get; private set; }
 
-        public void Initialize(TurnService turnController, Action onTurnComplete)
+        public void Initialize(TurnService turnController)
         {
-            InputCoordinator = new PlayerInputCoordinator(turnController, ui, onTurnComplete);
+            InputCoordinator = new PlayerInputCoordinator(turnController, ui);
         }
     }
 }

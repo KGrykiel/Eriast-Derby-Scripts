@@ -47,10 +47,7 @@
 
             TurnEventBus.Emit(new TurnStartedEvent(vehicle));
 
-            if (context.IsPlayerTurn)
-                return TurnPhase.PlayerAction;
-
-            return TurnPhase.AIAction;
+            return TurnPhase.Action;
         }
         
         private TurnPhase? AdvanceToNextTurnOrRoundEnd(TurnPhaseContext context)

@@ -100,17 +100,17 @@ namespace Assets.Scripts.Stages
         /// <summary>Returns the scene-instance stage where vehicles begin the race.</summary>
         public Stage GetEntryStage() => _resolvedEntryStage;
 
-        /// <summary>Returns true if <paramref name="stage"/> is this track's finish line.</summary>
+        /// <summary>Returns true if the given stage is this track's finish line.</summary>
         public bool IsFinishStage(Stage stage) => stage != null && stage == _resolvedFinishStage;
 
-        /// <summary>Null-safe static helper. Returns true if the active track defines <paramref name="stage"/> as the finish line.</summary>
+        /// <summary>Null-safe static helper. Returns true if the active track defines the given stage as the finish line.</summary>
         public static bool IsFinish(Stage stage)
         {
             if (Active == null || stage == null) return false;
             return Active.IsFinishStage(stage);
         }
 
-        /// <summary>Returns the next stage for a vehicle leaving via <paramref name="fromLane"/>.</summary>
+        /// <summary>Returns the next stage for a vehicle leaving via the given lane.</summary>
         public Stage GetNextStage(StageLane fromLane)
         {
             if (fromLane == null || _resolvedLinks == null) return null;
@@ -118,7 +118,7 @@ namespace Assets.Scripts.Stages
             return toLane.GetComponentInParent<Stage>();
         }
 
-        /// <summary>Returns the target lane for a vehicle leaving via <paramref name="fromLane"/>.</summary>
+        /// <summary>Returns the target lane for a vehicle leaving via the given lane.</summary>
         public StageLane GetTargetLane(StageLane fromLane)
         {
             if (fromLane == null || _resolvedLinks == null) return null;
@@ -126,7 +126,7 @@ namespace Assets.Scripts.Stages
             return toLane;
         }
 
-        /// <summary>Returns all unique stages reachable from <paramref name="fromStage"/> via any lane.</summary>
+        /// <summary>Returns all unique stages reachable from the given stage via any lane.</summary>
         public IEnumerable<Stage> GetConnectedStages(Stage fromStage)
         {
             if (fromStage == null || _resolvedLinks == null) yield break;
@@ -154,7 +154,7 @@ namespace Assets.Scripts.Stages
         // ==================== DISTANCE QUERIES ====================
 
         /// <summary>
-        /// Returns the shortest distance from <paramref name="fromStage"/> at <paramref name="fromProgress"/> to a finish line stage via BFS.
+        /// Returns the shortest distance from the given stage and progress to a finish line stage via BFS.
         /// Returns 999999 if no path to finish is found.
         /// </summary>
         public float GetShortestDistanceToFinish(Stage fromStage, float fromProgress)

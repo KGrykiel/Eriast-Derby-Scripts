@@ -1,4 +1,5 @@
-﻿using Assets.Scripts.Entities.Vehicles;
+﻿using System.Collections.Generic;
+using Assets.Scripts.Entities.Vehicles;
 
 namespace Assets.Scripts.Managers.TurnPhases
 {
@@ -13,26 +14,43 @@ namespace Assets.Scripts.Managers.TurnPhases
         TurnPhase? Execute(TurnPhaseContext context);
     }
 
+    /// <summary>
+    /// Shared state passed to every ITurnPhaseHandler. Holds references to all
+    /// top-level systems and the per-ControlType turn controller registry.
+    /// </summary>
     public class TurnPhaseContext
     {
         public TurnStateMachine StateMachine { get; }
         public TurnService TurnController { get; }
         public PlayerController PlayerController { get; }
-        
+        public VehicleActionManager ActionManager { get; }
+
+        private readonly Dictionary<ControlType, IVehicleTurnController> turnControllers = new();
+
         public Vehicle CurrentVehicle => StateMachine?.CurrentVehicle;
         public int CurrentRound => StateMachine != null ? StateMachine.CurrentRound : 0;
-        public bool IsPlayerTurn => CurrentVehicle != null && CurrentVehicle.controlType == ControlType.Player;
+
+        public IVehicleTurnController CurrentController =>
+            CurrentVehicle != null && turnControllers.TryGetValue(CurrentVehicle.controlType, out var controller)
+                ? controller
+                : null;
 
         public bool IsGameOver { get; set; }
         public bool IsRaceOver { get; set; }
         public bool ShouldRefreshUI { get; set; }
-        
-        public TurnPhaseContext(TurnStateMachine stateMachine, TurnService turnController, 
-                                 PlayerController playerController)
+
+        public TurnPhaseContext(TurnStateMachine stateMachine, TurnService turnController,
+                                 PlayerController playerController, VehicleActionManager actionManager)
         {
             StateMachine = stateMachine;
             TurnController = turnController;
             PlayerController = playerController;
+            ActionManager = actionManager;
+        }
+
+        public void RegisterController(ControlType controlType, IVehicleTurnController controller)
+        {
+            turnControllers[controlType] = controller;
         }
     }
 }

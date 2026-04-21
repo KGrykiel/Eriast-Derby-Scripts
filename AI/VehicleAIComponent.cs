@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using Assets.Scripts.Entities.Vehicles;
 using Assets.Scripts.Managers;
+using Assets.Scripts.Skills;
 using UnityEngine;
 
 namespace Assets.Scripts.AI
@@ -28,24 +29,26 @@ namespace Assets.Scripts.AI
         }
 
         /// <summary>
-        /// Runs the full AI turn for this vehicle: each seat, in Inspector order,
-        /// acts repeatedly until it has nothing left to do. The shared context is
-        /// rebuilt before every action so each decision reflects current game state.
-        /// Loop termination is the seat's responsibility — a skill with no remaining
-        /// targets or economy will cause <see cref="SeatAI.TryAct"/> to return false.
+        /// Selects and returns the next single action for this vehicle, advancing
+        /// through seats in order. Returns null when all seats are exhausted.
+        /// Called repeatedly by AITurnController until null.
         /// </summary>
-        public void ExecuteTurn(TurnService turnService)
+        public SkillAction TakeOneStep(TurnService turnService)
         {
-            if (vehicle == null || !vehicle.IsOperational()) return;
-            if (turnService == null) return;
+            if (vehicle == null || !vehicle.IsOperational()) return null;
+            if (turnService == null) return null;
 
             SyncSeatAIs();
 
             foreach (var seatAI in seatAIs)
             {
                 if (seatAI == null) continue;
-                while (seatAI.TryAct(BuildContext(turnService))) { }
+                SkillAction action = seatAI.TrySelectAction(BuildContext(turnService));
+                if (action != null)
+                    return action;
             }
+
+            return null;
         }
 
         // ==================== SEAT MANAGEMENT ====================

@@ -18,12 +18,9 @@ namespace Assets.Scripts.Managers
         /// <summary>Start of a vehicle's turn - regen power, pay costs, reset flags</summary>
         TurnStart,
         
-        /// <summary>Player is selecting actions - WAIT for input</summary>
-        PlayerAction,
-        
-        /// <summary>AI is executing its turn - runs synchronously</summary>
-        AIAction,
-        
+        /// <summary>Unified action phase - delegates to the appropriate IVehicleTurnController</summary>
+        Action,
+
         /// <summary>End of a vehicle's turn - auto-move if needed, tick effects</summary>
         TurnEnd,
         
@@ -32,7 +29,7 @@ namespace Assets.Scripts.Managers
     }
 
     /// <summary>
-    /// Phase flow: RoundStart → TurnStart → (PlayerAction | AIAction) → TurnEnd → [next turn or RoundEnd] → RoundStart
+    /// Phase flow: RoundStart → TurnStart → Action → TurnEnd → [next turn or RoundEnd] → RoundStart
     /// </summary>
     public class TurnStateMachine
     {
@@ -46,16 +43,16 @@ namespace Assets.Scripts.Managers
         
         // Phase handlers (Chain of Responsibility)
         private Dictionary<TurnPhase, ITurnPhaseHandler> phaseHandlers = new();
-        
+
         // ==================== PUBLIC PROPERTIES ====================
 
         public TurnPhase CurrentPhase => currentPhase;
         public int CurrentRound => currentRound;
         public int CurrentTurnIndex => currentTurnIndex;
 
-        public Vehicle CurrentVehicle => 
-            vehicles.Count > 0 && currentTurnIndex >= 0 && currentTurnIndex < vehicles.Count 
-                ? vehicles[currentTurnIndex] 
+        public Vehicle CurrentVehicle =>
+            vehicles.Count > 0 && currentTurnIndex >= 0 && currentTurnIndex < vehicles.Count
+                ? vehicles[currentTurnIndex]
                 : null;
 
         public IReadOnlyList<Vehicle> AllVehicles => vehicles;
@@ -68,9 +65,6 @@ namespace Assets.Scripts.Managers
             vehicles = new List<Vehicle>(vehicleList);
             initiativeOrder.Clear();
 
-            RegisterPhaseHandlers();
-            TurnEventBus.OnEvent += HandleVehicleDestroyed;
-
             foreach (var vehicle in vehicles)
             {
                 int initiative = RollUtility.RollInitiative();
@@ -82,8 +76,6 @@ namespace Assets.Scripts.Managers
 
             currentTurnIndex = 0;
             currentRound = 0;
-
-            TransitionTo(TurnPhase.RoundStart);
         }
 
         private void HandleVehicleDestroyed(TurnEvent evt)
@@ -100,8 +92,7 @@ namespace Assets.Scripts.Managers
             {
                 new RoundStartHandler(),
                 new TurnStartHandler(),
-                new PlayerActionHandler(),
-                new AIActionHandler(),
+                new ActionHandler(),
                 new TurnEndHandler(),
                 new RoundEndHandler()
             };
@@ -129,6 +120,13 @@ namespace Assets.Scripts.Managers
         /// <summary>Runs until a pause point (player input, game over, or race complete).</summary>
         public void Run(TurnPhaseContext context)
         {
+            if (currentPhase == TurnPhase.Inactive)
+            {
+                RegisterPhaseHandlers();
+                TurnEventBus.OnEvent += HandleVehicleDestroyed;
+                TransitionTo(TurnPhase.RoundStart);
+            }
+
             while (IsActive && !context.IsGameOver && !context.IsRaceOver)
             {
                 TurnPhase? nextPhase = ProcessCurrentPhase(context);

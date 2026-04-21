@@ -19,10 +19,12 @@ namespace Assets.Scripts.Managers.PlayerUI
         #region Fields
 
         private readonly TurnService turnController;
-        private readonly Action onTurnComplete;
         private readonly PlayerUIReferences ui;
         private readonly SeatSkillUIController seatSkillUI;
         private readonly TargetSelectionUIController targetSelectionUI;
+
+        private Action<SkillAction> onActionReady;
+        private Action onTurnComplete;
 
         private Vehicle vehicle;
         private List<VehicleSeat> availableSeats = new();
@@ -35,12 +37,10 @@ namespace Assets.Scripts.Managers.PlayerUI
 
         public PlayerInputCoordinator(
             TurnService turnController,
-            PlayerUIReferences ui,
-            Action onTurnComplete)
+            PlayerUIReferences ui)
         {
             this.turnController = turnController;
             this.ui = ui;
-            this.onTurnComplete = onTurnComplete;
 
             seatSkillUI = new SeatSkillUIController(ui);
             targetSelectionUI = new TargetSelectionUIController(ui);
@@ -58,6 +58,13 @@ namespace Assets.Scripts.Managers.PlayerUI
         }
 
         // ==================== TURN HANDOFF ====================
+
+        /// <summary>Called by PlayerTurnController before each turn to wire up the action and completion callbacks.</summary>
+        public void SetCallbacks(Action<SkillAction> onActionReady, Action onTurnComplete)
+        {
+            this.onActionReady = onActionReady;
+            this.onTurnComplete = onTurnComplete;
+        }
 
         /// <summary>Called by PlayerActionHandler at the start of each player turn.</summary>
         public void BeginTurn(Vehicle currentVehicle)
@@ -180,7 +187,8 @@ namespace Assets.Scripts.Managers.PlayerUI
             IRollTarget finalTarget = target ?? vehicle;
             RollActor sourceActor = currentSeat.BuildActorForSkill(selectedSkill);
 
-            SkillPipeline.Execute(new SkillAction(selectedSkill, sourceActor, finalTarget));
+            var action = new SkillAction(selectedSkill, sourceActor, finalTarget);
+            onActionReady?.Invoke(action);
 
             ClearSelections();
             RefreshAfterSkill();

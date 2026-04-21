@@ -8,9 +8,7 @@ namespace Assets.Scripts.Managers
 {
     /// <summary>
     /// Race-traversal operations: moving vehicles along the track, handling stage
-    /// transitions, and querying movement eligibility. Kept separate from
-    /// <see cref="TurnService"/> (which owns the vehicle roster) and from
-    /// <see cref="Vehicle"/> (which is an entity, not a race-system concern).
+    /// transitions, and querying movement eligibility. 
     /// </summary>
     public static class RaceMovement
     {

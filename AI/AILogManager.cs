@@ -12,8 +12,8 @@ namespace Assets.Scripts.AI
 {
     /// <summary>
     /// Logging hub for AI pipeline events. Follows the same pattern as
-    /// <see cref="Assets.Scripts.Combat.Logging.CombatLogManager"/> and
-    /// <see cref="Assets.Scripts.Entities.EntityLogManager"/> — one entry per
+    /// <see cref="Combat.Logging.CombatLogManager"/> and
+    /// <see cref="EntityLogManager"/> — one entry per
     /// seat turn, emitted at <see cref="EventImportance.Debug"/> so it is hidden
     /// by default. The full pipeline detail (perception, weights, scoring table)
     /// lives in the <c>aiDecision</c> metadata key for hover tooltips.

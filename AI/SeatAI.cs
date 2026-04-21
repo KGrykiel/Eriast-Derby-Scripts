@@ -35,12 +35,17 @@ namespace Assets.Scripts.AI
             };
         }
 
-        public bool TryAct(VehicleAISharedContext context)
+        /// <summary>
+        /// Runs the full perception → scoring → selection pipeline and returns the
+        /// best <see cref="SkillAction"/>, or null if no positive-scoring action remains.
+        /// Does not execute anything.
+        /// </summary>
+        public SkillAction TrySelectAction(VehicleAISharedContext context)
         {
             if (seat == null || !seat.CanAct())
             {
                 AILogManager.LogSeatSkipped(seat, context, seat != null ? "CanAct() returned false" : "seat is null");
-                return false;
+                return null;
             }
 
             // ---- Perception ----
@@ -61,11 +66,7 @@ namespace Assets.Scripts.AI
                 : null;
             AILogManager.LogSeatAction(seat, context, perception, weights, takenAction);
 
-            // ---- Execution ----
-            if (best != null)
-                SkillPipeline.Execute(best);
-
-            return best != null;
+            return best;
         }
 
         // ==================== PIPELINE STAGES ====================

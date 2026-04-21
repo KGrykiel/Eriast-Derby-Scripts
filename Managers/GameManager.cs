@@ -61,10 +61,6 @@ namespace Assets.Scripts.Managers
 
             InitializeVehiclePositions(vehicles);
             InitializeControllers(vehicles);
-            RaceHistory.Initialize(stateMachine);
-
-            phaseContext = new TurnPhaseContext(stateMachine, turnController, playerController);
-            stateMachine.Run(phaseContext);
         }
 
         private void InitializeVehiclePositions(List<Vehicle> vehicles)
@@ -113,14 +109,15 @@ namespace Assets.Scripts.Managers
                 Debug.LogError("PlayerController component not found!");
                 return;
             }
-            playerController.Initialize(turnController, OnPlayerTurnComplete);
-        }
+            playerController.Initialize(turnController);
 
-        // ==================== PLAYER TURN CALLBACK ====================
+            phaseContext = new TurnPhaseContext(stateMachine, turnController, playerController, new VehicleActionManager());
+            phaseContext.RegisterController(ControlType.Player, new PlayerTurnController(playerController.InputCoordinator));
+            phaseContext.RegisterController(ControlType.AI, new AITurnController());
 
-        private void OnPlayerTurnComplete()
-        {
-            stateMachine.Resume(phaseContext, TurnPhase.TurnEnd);
+            RaceHistory.Initialize(stateMachine);
+
+            stateMachine.Run(phaseContext);
         }
 
         // ==================== EVENT HANDLERS ====================

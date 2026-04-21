@@ -27,7 +27,7 @@ namespace Assets.Scripts.Managers.PlayerUI
         }
 
         /// <summary>
-        /// Builds component options for a vehicle. Pass <paramref name="sourceOnly"/> = true
+        /// Builds component options for a vehicle. Pass sourceOnly = true
         /// when targeting the player's own vehicle (no accessibility restrictions).
         /// </summary>
         public static List<SelectionOption<VehicleComponent>> ComponentOptions(Vehicle vehicle, bool sourceOnly)

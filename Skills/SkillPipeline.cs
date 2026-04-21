@@ -5,7 +5,7 @@ namespace Assets.Scripts.Skills
 {
     /// <summary>
     /// Shared execution pipeline for all skill actions, regardless of source (player or AI).
-    /// Builds the <see cref="RollContext"/> and delegates to <see cref="Vehicle.ExecuteSkill"/>.
+    /// Builds the <see cref="RollContext"/> and delegates to the vehicle's skill execution.
     /// </summary>
     public static class SkillPipeline
     {
