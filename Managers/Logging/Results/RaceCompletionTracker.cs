@@ -1,5 +1,7 @@
 using System.Collections.Generic;
 using Assets.Scripts.Entities.Vehicles;
+using Assets.Scripts.Managers.Race;
+using Assets.Scripts.Managers.Turn;
 
 namespace Assets.Scripts.Managers.Logging.Results
 {

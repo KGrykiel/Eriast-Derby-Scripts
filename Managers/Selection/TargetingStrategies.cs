@@ -1,4 +1,5 @@
 using Assets.Scripts.Managers.PlayerUI;
+using Assets.Scripts.Managers.Race;
 
 namespace Assets.Scripts.Managers.Selection
 {

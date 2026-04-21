@@ -2,7 +2,7 @@
 using System.Linq;
 using Assets.Scripts.Stages;
 using Assets.Scripts.Entities.Vehicles;
-using Assets.Scripts.Managers;
+using Assets.Scripts.Managers.Turn;
 
 namespace Assets.Scripts.Logging
 {

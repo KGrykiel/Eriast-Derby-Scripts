@@ -1,11 +1,11 @@
 using System;
 using System.Collections;
 using Assets.Scripts.Entities.Vehicles;
-using Assets.Scripts.Managers.TurnPhases;
+using Assets.Scripts.Managers.Turn.TurnPhases;
 using Assets.Scripts.Skills;
 using UnityEngine;
 
-namespace Assets.Scripts.Managers
+namespace Assets.Scripts.Managers.Turn
 {
     /// <summary>
     /// Central action loop. Asks a controller for one action at a time, plays the

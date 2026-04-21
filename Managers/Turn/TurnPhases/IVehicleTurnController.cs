@@ -2,7 +2,7 @@ using System;
 using Assets.Scripts.Entities.Vehicles;
 using Assets.Scripts.Skills;
 
-namespace Assets.Scripts.Managers.TurnPhases
+namespace Assets.Scripts.Managers.Turn.TurnPhases
 {
     /// <summary>
     /// Implemented by anything that can control a vehicle's action phase.

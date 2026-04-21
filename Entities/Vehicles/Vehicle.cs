@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using Assets.Scripts.Items;
 using Assets.Scripts.Entities.Vehicles.VehicleComponents.ComponentTypes;
-using Assets.Scripts.Managers;
 using Assets.Scripts.Conditions;
 using Assets.Scripts.Combat.Rolls.RollSpecs;
 using Assets.Scripts.Effects;
@@ -13,6 +12,8 @@ using Assets.Scripts.Characters;
 using Assets.Scripts.Skills;
 using Assets.Scripts.Conditions.VehicleConditions;
 using Assets.Scripts.Combat.Restoration;
+using Assets.Scripts.Managers.Turn;
+using Assets.Scripts.Managers.Race;
 
 namespace Assets.Scripts.Entities.Vehicles
 {

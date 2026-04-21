@@ -1,5 +1,5 @@
 ﻿using Assets.Scripts.Entities.Vehicles;
-using Assets.Scripts.Managers;
+using Assets.Scripts.Managers.Race;
 
 namespace Assets.Scripts.Events.EventCard
 {

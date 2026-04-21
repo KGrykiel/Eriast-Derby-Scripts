@@ -4,7 +4,7 @@ using Assets.Scripts.Stages;
 using Assets.Scripts.Stages.Lanes;
 using UnityEngine;
 
-namespace Assets.Scripts.Managers
+namespace Assets.Scripts.Managers.Race
 {
     /// <summary>
     /// Handles vehicle grid placement at race start.

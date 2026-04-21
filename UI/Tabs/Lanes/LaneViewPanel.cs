@@ -6,6 +6,7 @@ using Assets.Scripts.Managers;
 using Assets.Scripts.Stages;
 using Assets.Scripts.Logging;
 using Assets.Scripts.Entities.Vehicles;
+using Assets.Scripts.Managers.Race;
 
 namespace Assets.Scripts.UI.Tabs.Lanes
 {

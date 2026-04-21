@@ -1,6 +1,7 @@
 ﻿using Assets.Scripts.Conditions;
+using Assets.Scripts.Managers.Race;
 
-namespace Assets.Scripts.Managers.TurnPhases
+namespace Assets.Scripts.Managers.Turn.TurnPhases
 {
     /// <summary>
     /// Any logic handled at the end of a vehicle's turn.

@@ -2,9 +2,10 @@ using System.Collections.Generic;
 using NUnit.Framework;
 using UnityEngine;
 using Assets.Scripts.Entities.Vehicles;
-using Assets.Scripts.Managers;
 using Assets.Scripts.Managers.Logging.Results;
 using Assets.Scripts.Tests.Helpers;
+using Assets.Scripts.Managers.Turn;
+using Assets.Scripts.Managers.Race;
 
 namespace Assets.Scripts.Tests.PlayMode
 {

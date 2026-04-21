@@ -22,7 +22,7 @@ using Assets.Scripts.Entities.Vehicles.VehicleComponents.ComponentTypes;
 using Assets.Scripts.Stages;
 using Assets.Scripts.Stages.Lanes;
 using Assets.Scripts.Tests.Helpers;
-using Assets.Scripts.Managers;
+using Assets.Scripts.Managers.Race;
 
 namespace Assets.Scripts.Tests.PlayMode
 {

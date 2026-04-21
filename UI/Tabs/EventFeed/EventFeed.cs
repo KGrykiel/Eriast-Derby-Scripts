@@ -5,7 +5,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Assets.Scripts.Entities.Vehicles;
 using Assets.Scripts.Logging;
-using Assets.Scripts.Managers;
+using Assets.Scripts.Managers.Race;
 
 public class EventFeed : MonoBehaviour
 {

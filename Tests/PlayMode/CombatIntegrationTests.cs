@@ -23,7 +23,6 @@ using Assets.Scripts.Effects.EffectTypes.EntityEffects;
 using Assets.Scripts.Effects.Invocations;
 using Assets.Scripts.Effects.Targeting;
 using Assets.Scripts.Combat.Rolls.Targeting;
-using Assets.Scripts.Managers;
 using Assets.Scripts.Entities.Vehicles;
 using Assets.Scripts.Entities.Vehicles.VehicleComponents.ComponentTypes;
 using Assets.Scripts.Entities.Vehicles.VehicleComponents;
@@ -31,6 +30,7 @@ using Assets.Scripts.Modifiers;
 using Assets.Scripts.Entities;
 using Assets.Scripts.Effects.Targeting.EntityTarget;
 using Assets.Scripts.Skills.Costs;
+using Assets.Scripts.Managers.Race;
 
 namespace Assets.Scripts.Tests.PlayMode
 {

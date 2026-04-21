@@ -1,10 +1,10 @@
 ﻿using System;
 using Assets.Scripts.AI;
 using Assets.Scripts.Entities.Vehicles;
-using Assets.Scripts.Managers.TurnPhases;
+using Assets.Scripts.Managers.Turn.TurnPhases;
 using Assets.Scripts.Skills;
 
-namespace Assets.Scripts.Managers
+namespace Assets.Scripts.Managers.Turn.TurnControllers
 {
     /// <summary>
     /// Turn controller for AI-controlled vehicles. Drives VehicleAIComponent one

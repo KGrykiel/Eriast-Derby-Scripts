@@ -1,9 +1,9 @@
 ﻿using System.Collections.Generic;
 using UnityEngine;
-using Assets.Scripts.Managers;
 using Assets.Scripts.Stages.Lanes;
 using Assets.Scripts.Combat.Rolls.RollSpecs;
 using Assets.Scripts.Entities.Vehicles;
+using Assets.Scripts.Managers.Race;
 
 namespace Assets.Scripts.Stages
 {

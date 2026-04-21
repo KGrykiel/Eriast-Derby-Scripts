@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using Assets.Scripts.Combat.Rolls.RollSpecs;
 using Assets.Scripts.Entities;
 using Assets.Scripts.Entities.Vehicles;
-using Assets.Scripts.Managers;
+using Assets.Scripts.Managers.Race;
 using Assets.Scripts.Stages.Lanes;
 using SerializeReferenceEditor;
 

@@ -1,10 +1,11 @@
 ﻿using System.Collections.Generic;
 using UnityEngine;
-using Assets.Scripts.Managers.TurnPhases;
 using Assets.Scripts.Entities.Vehicles;
 using Assets.Scripts.Combat;
+using Assets.Scripts.Managers.Turn.TurnPhases;
+using Assets.Scripts.Managers.Race;
 
-namespace Assets.Scripts.Managers
+namespace Assets.Scripts.Managers.Turn
 {
     /// <summary>CRPG-standard round/turn phases.</summary>
     public enum TurnPhase

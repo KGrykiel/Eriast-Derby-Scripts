@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 using Assets.Scripts.Entities.Vehicles;
-using Assets.Scripts.Managers;
+using Assets.Scripts.Managers.Turn;
 using Assets.Scripts.Stages;
 using Assets.Scripts.Stages.Lanes;
 

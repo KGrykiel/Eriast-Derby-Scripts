@@ -1,4 +1,4 @@
-﻿namespace Assets.Scripts.Managers.TurnPhases
+﻿namespace Assets.Scripts.Managers.Turn.TurnPhases
 {
     /// <summary>
     /// Routes the action phase to whichever IVehicleTurnController is

@@ -1,7 +1,7 @@
 ﻿using System;
 using UnityEngine;
 
-namespace Assets.Scripts.Managers
+namespace Assets.Scripts.Managers.Turn
 {
     /// <summary>Event bus for turn lifecycle, operations, and player actions. Used for logging.</summary>
     public static class TurnEventBus

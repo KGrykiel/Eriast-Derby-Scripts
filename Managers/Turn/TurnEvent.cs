@@ -3,7 +3,7 @@ using Assets.Scripts.Entities.Vehicles.VehicleComponents;
 using Assets.Scripts.Managers.Logging.Results;
 using Assets.Scripts.Stages;
 
-namespace Assets.Scripts.Managers
+namespace Assets.Scripts.Managers.Turn
 {
     /// <summary>Base class for all turn-lifecycle events. Used for logging and reactive systems.</summary>
     public abstract class TurnEvent { }

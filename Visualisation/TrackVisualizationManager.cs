@@ -4,10 +4,10 @@ using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.InputSystem;
 using Assets.Scripts.Entities.Vehicles;
-using Assets.Scripts.Managers;
 using Assets.Scripts.Stages;
 using Assets.Scripts.Stages.Lanes;
 using Assets.Scripts.UI.Tabs.Lanes;
+using Assets.Scripts.Managers.Race;
 
 namespace Assets.Scripts.Visualisation
 {

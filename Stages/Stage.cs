@@ -5,7 +5,7 @@ using Assets.Scripts.Conditions;
 using Assets.Scripts.Combat.Rolls.RollSpecs;
 using EventCard = Assets.Scripts.Events.EventCard.EventCard;
 using Assets.Scripts.Entities.Vehicles;
-using Assets.Scripts.Managers;
+using Assets.Scripts.Managers.Race;
 
 namespace Assets.Scripts.Stages
 {

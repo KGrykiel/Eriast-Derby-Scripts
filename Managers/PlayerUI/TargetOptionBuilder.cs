@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using Assets.Scripts.Core;
 using Assets.Scripts.Entities.Vehicles;
 using Assets.Scripts.Entities.Vehicles.VehicleComponents;
+using Assets.Scripts.Managers.Race;
 using Assets.Scripts.Managers.Selection;
 using Assets.Scripts.Stages.Lanes;
 

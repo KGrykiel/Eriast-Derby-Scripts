@@ -3,9 +3,9 @@ using System.Linq;
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
-using Assets.Scripts.Managers;
 using Assets.Scripts.Stages;
 using Assets.Scripts.Stages.Lanes;
+using Assets.Scripts.Managers.Race;
 
 namespace Assets.Scripts.UI.Tabs.Lanes
 {

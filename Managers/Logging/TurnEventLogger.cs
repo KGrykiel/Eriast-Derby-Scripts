@@ -4,6 +4,8 @@ using Assets.Scripts.Entities.Vehicles;
 using Assets.Scripts.Entities.Vehicles.VehicleComponents;
 using Assets.Scripts.Logging;
 using Assets.Scripts.Managers.Logging.Results;
+using Assets.Scripts.Managers.Race;
+using Assets.Scripts.Managers.Turn;
 using Assets.Scripts.Stages;
 using EventType = Assets.Scripts.Logging.EventType;
 

@@ -7,6 +7,7 @@ using Assets.Scripts.Managers;
 using Assets.Scripts.Conditions.EntityConditions;
 using Assets.Scripts.Entities.Vehicles;
 using Assets.Scripts.UI;
+using Assets.Scripts.Managers.Race;
 
 public class FocusPanel : MonoBehaviour
 {

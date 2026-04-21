@@ -4,13 +4,13 @@ using UnityEngine.UI;
 using System.Collections.Generic;
 using System.Linq;
 using Assets.Scripts.Logging;
-using Assets.Scripts.Managers;
 using Assets.Scripts.Stages;
 using Assets.Scripts.UI.Components;
 using Assets.Scripts.Entities.Vehicles;
 using Assets.Scripts.Entities.Vehicles.VehicleComponents;
 using Assets.Scripts.Entities;
 using Assets.Scripts.Skills;
+using Assets.Scripts.Managers.Race;
 
 public class VehicleInspectorPanel : MonoBehaviour
 {

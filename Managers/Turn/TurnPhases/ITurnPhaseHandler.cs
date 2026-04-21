@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
 using Assets.Scripts.Entities.Vehicles;
 
-namespace Assets.Scripts.Managers.TurnPhases
+namespace Assets.Scripts.Managers.Turn.TurnPhases
 {
     /// <summary>
     /// Interface for handling a specific turn phase, using the chain-of-responsibility pattern.

@@ -1,8 +1,9 @@
 using System.Collections.Generic;
 using Assets.Scripts.Stages;
 using Assets.Scripts.Entities.Vehicles;
+using Assets.Scripts.Managers.Race;
 
-namespace Assets.Scripts.Managers
+namespace Assets.Scripts.Managers.Turn
 {
     /// <summary>Owns the vehicle roster and provides targeting queries scoped to stages and teams.</summary>
     public class TurnService

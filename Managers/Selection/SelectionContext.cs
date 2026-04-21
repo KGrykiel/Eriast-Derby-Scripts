@@ -2,6 +2,7 @@ using System;
 using Assets.Scripts.Entities;
 using Assets.Scripts.Entities.Vehicles;
 using Assets.Scripts.Managers.PlayerUI;
+using Assets.Scripts.Managers.Turn;
 
 namespace Assets.Scripts.Managers.Selection
 {

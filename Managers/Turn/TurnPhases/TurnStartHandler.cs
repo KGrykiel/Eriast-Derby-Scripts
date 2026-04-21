@@ -1,4 +1,6 @@
-﻿namespace Assets.Scripts.Managers.TurnPhases
+﻿using Assets.Scripts.Managers.Race;
+
+namespace Assets.Scripts.Managers.Turn.TurnPhases
 {
     /// <summary>
     /// Everything happening at the start of a vehicle's turn.

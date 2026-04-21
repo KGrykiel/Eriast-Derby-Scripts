@@ -3,7 +3,7 @@ using Assets.Scripts.Stages;
 using Assets.Scripts.Stages.Lanes;
 using Assets.Scripts.Entities.Vehicles;
 
-namespace Assets.Scripts.Managers
+namespace Assets.Scripts.Managers.Race
 {
     /// <summary>
     /// Tracks race positions for all active vehicles — current stage, lane, and progress.

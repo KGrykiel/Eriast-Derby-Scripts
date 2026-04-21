@@ -7,6 +7,8 @@ using Assets.Scripts.Managers;
 using Assets.Scripts.Stages;
 using Assets.Scripts.Entities.Vehicles;
 using Assets.Scripts.UI;
+using Assets.Scripts.Managers.Turn;
+using Assets.Scripts.Managers.Race;
 
 public class OverviewPanel : MonoBehaviour
 {

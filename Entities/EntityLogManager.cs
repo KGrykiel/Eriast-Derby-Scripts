@@ -1,9 +1,9 @@
 using Assets.Scripts.Logging;
-using Assets.Scripts.Managers;
 using Assets.Scripts.Entities.Vehicles.VehicleComponents.ComponentTypes;
 using EventType = Assets.Scripts.Logging.EventType;
 using Assets.Scripts.Entities.Vehicles.VehicleComponents;
 using Assets.Scripts.Modifiers;
+using Assets.Scripts.Managers.Race;
 
 namespace Assets.Scripts.Entities
 {

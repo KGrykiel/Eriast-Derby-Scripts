@@ -3,8 +3,9 @@ using Assets.Scripts.Stages;
 using Assets.Scripts.Stages.Lanes;
 using Assets.Scripts.Conditions;
 using UnityEngine;
+using Assets.Scripts.Managers.Turn;
 
-namespace Assets.Scripts.Managers
+namespace Assets.Scripts.Managers.Race
 {
     /// <summary>
     /// Race-traversal operations: moving vehicles along the track, handling stage

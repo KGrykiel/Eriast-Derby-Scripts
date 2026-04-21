@@ -1,6 +1,6 @@
 ﻿using Assets.Scripts.Conditions;
 
-namespace Assets.Scripts.Managers.TurnPhases
+namespace Assets.Scripts.Managers.Turn.TurnPhases
 {
     /// <summary>
     /// Any logic to be executed upon the end of a round (after all vehicles have taken their turns)

@@ -1,4 +1,4 @@
-﻿namespace Assets.Scripts.Managers.TurnPhases
+﻿namespace Assets.Scripts.Managers.Turn.TurnPhases
 {
     /// <summary>
     /// Any logic to be executed at the start of a round.

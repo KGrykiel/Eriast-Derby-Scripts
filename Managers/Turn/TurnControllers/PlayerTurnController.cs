@@ -1,10 +1,10 @@
 ﻿using System;
 using Assets.Scripts.Entities.Vehicles;
 using Assets.Scripts.Managers.PlayerUI;
-using Assets.Scripts.Managers.TurnPhases;
+using Assets.Scripts.Managers.Turn.TurnPhases;
 using Assets.Scripts.Skills;
 
-namespace Assets.Scripts.Managers
+namespace Assets.Scripts.Managers.Turn.TurnControllers
 {
     /// <summary>
     /// Turn controller for player-controlled vehicles. Wires the action and

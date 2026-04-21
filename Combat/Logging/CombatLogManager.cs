@@ -9,7 +9,7 @@ using Assets.Scripts.Core;
 using Assets.Scripts.Conditions;
 using Assets.Scripts.Entities.Vehicles;
 using Assets.Scripts.Entities;
-using Assets.Scripts.Managers;
+using Assets.Scripts.Managers.Race;
 
 namespace Assets.Scripts.Combat.Logging
 {
