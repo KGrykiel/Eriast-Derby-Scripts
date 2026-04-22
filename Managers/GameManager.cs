@@ -118,7 +118,7 @@ namespace Assets.Scripts.Managers
             }
             playerController.Initialize(turnController);
 
-            var actionManager = new VehicleActionManager(this) { actionDelay = actionDelay };
+            var actionManager = new VehicleActionManager(this) { actionDelay = actionDelay, IsPaused = true };
             phaseContext = new TurnPhaseContext(stateMachine, turnController, playerController, actionManager);
             phaseContext.RegisterController(ControlType.Player, new PlayerTurnController(playerController.InputCoordinator));
             phaseContext.RegisterController(ControlType.AI, new AITurnController());
@@ -176,5 +176,20 @@ namespace Assets.Scripts.Managers
 
         public TurnStateMachine GetStateMachine() => stateMachine;
         public TurnService GetTurnController() => turnController;
+
+        public float GetActionDelay() => actionDelay;
+
+        public void SetPaused(bool paused)
+        {
+            if (phaseContext != null)
+                phaseContext.ActionManager.IsPaused = paused;
+        }
+
+        public void SetActionDelay(float delay)
+        {
+            actionDelay = delay;
+            if (phaseContext != null)
+                phaseContext.ActionManager.actionDelay = delay;
+        }
     }
 }

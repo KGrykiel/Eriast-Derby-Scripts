@@ -25,6 +25,7 @@ namespace Assets.Scripts.Visualisation
         private static readonly Color NeutralColour    = new(0.6f, 0.6f, 0.6f, 1f);
         private static readonly Color TerminalColour   = new(0.5f, 0.5f, 0.5f, 0.5f);
         private static readonly Color DangerEmissive   = new(0.8f, 0f,   0f,   1f);
+        private static readonly Color ActingEmissive   = new(1f,   1f,   0.3f, 1f);
 
         private const float SmoothTime         = 0.1f;
         private const float FinishSnapThreshold = 0.005f;
@@ -67,6 +68,7 @@ namespace Assets.Scripts.Visualisation
 
         // State
         private bool      _isInTerminalState;
+        private bool      _isActing;
         private bool      _pendingFinish;
         private StageLane _lastLane;
         private float     _visualT;
@@ -173,6 +175,18 @@ namespace Assets.Scripts.Visualisation
                 _actionLabel.gameObject.SetActive(false);
         }
 
+        /// <summary>Applies a steady emissive highlight to indicate this vehicle is currently acting.</summary>
+        public void ShowActingHighlight()
+        {
+            _isActing = true;
+        }
+
+        /// <summary>Removes the acting highlight applied by ShowActingHighlight.</summary>
+        public void HideActingHighlight()
+        {
+            _isActing = false;
+        }
+
         // ==================== POSITION + FACING ====================
 
         private void UpdatePosition()
@@ -271,6 +285,14 @@ namespace Assets.Scripts.Visualisation
         {
             if (_material == null || _vehicle == null)
                 return;
+
+            // Acting highlight takes priority over the danger pulse.
+            if (_isActing)
+            {
+                _material.EnableKeyword("_EMISSION");
+                _material.SetColor("_EmissionColor", ActingEmissive);
+                return;
+            }
 
             ChassisComponent chassis = _vehicle.Chassis;
             if (chassis == null)

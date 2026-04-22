@@ -21,6 +21,8 @@ namespace Assets.Scripts.Managers.Turn
         [Tooltip("Seconds to wait before executing each action.")]
         public float actionDelay = 0.6f;
 
+        public bool IsPaused { get; set; }
+
         public VehicleActionManager(MonoBehaviour coroutineRunner)
         {
             this.coroutineRunner = coroutineRunner;
@@ -44,9 +46,13 @@ namespace Assets.Scripts.Managers.Turn
 
         private IEnumerator ExecuteAfterDelay(SkillAction action, Action onComplete)
         {
+            yield return new WaitUntil(() => !IsPaused);
+
             ShowActionVisuals(action);
 
             yield return new WaitForSeconds(actionDelay);
+
+            yield return new WaitUntil(() => !IsPaused);
 
             HideActionVisuals(action);
             SkillPipeline.Execute(action);
@@ -64,6 +70,7 @@ namespace Assets.Scripts.Managers.Turn
                 sourceVisual.ShowActionLine(targetVisual);
 
             sourceVisual.ShowActionLabel(action.skill.name);
+            sourceVisual.ShowActingHighlight();
         }
 
         private static void HideActionVisuals(SkillAction action)
@@ -74,6 +81,7 @@ namespace Assets.Scripts.Managers.Turn
 
             sourceVisual.HideActionLine();
             sourceVisual.HideActionLabel();
+            sourceVisual.HideActingHighlight();
         }
 
         private static VehicleVisual GetSourceVisual(SkillAction action)
