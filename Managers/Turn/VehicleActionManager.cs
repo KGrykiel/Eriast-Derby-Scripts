@@ -1,8 +1,10 @@
 using System;
 using System.Collections;
 using Assets.Scripts.Entities.Vehicles;
+using Assets.Scripts.Entities.Vehicles.VehicleComponents;
 using Assets.Scripts.Managers.Turn.TurnPhases;
 using Assets.Scripts.Skills;
+using Assets.Scripts.Visualisation;
 using UnityEngine;
 
 namespace Assets.Scripts.Managers.Turn
@@ -42,10 +44,58 @@ namespace Assets.Scripts.Managers.Turn
 
         private IEnumerator ExecuteAfterDelay(SkillAction action, Action onComplete)
         {
+            ShowActionVisuals(action);
+
             yield return new WaitForSeconds(actionDelay);
-            // Future: visual effects, screen shake, attack line rendering here.
+
+            HideActionVisuals(action);
             SkillPipeline.Execute(action);
             onComplete();
+        }
+
+        private static void ShowActionVisuals(SkillAction action)
+        {
+            VehicleVisual sourceVisual = GetSourceVisual(action);
+            if (sourceVisual == null)
+                return;
+
+            VehicleVisual targetVisual = GetTargetVisual(action);
+            if (targetVisual != null)
+                sourceVisual.ShowActionLine(targetVisual);
+
+            sourceVisual.ShowActionLabel(action.skill.name);
+        }
+
+        private static void HideActionVisuals(SkillAction action)
+        {
+            VehicleVisual sourceVisual = GetSourceVisual(action);
+            if (sourceVisual == null)
+                return;
+
+            sourceVisual.HideActionLine();
+            sourceVisual.HideActionLabel();
+        }
+
+        private static VehicleVisual GetSourceVisual(SkillAction action)
+        {
+            Vehicle source = action.sourceActor.GetVehicle();
+            if (source == null)
+                return null;
+
+            return source.GetComponent<VehicleVisual>();
+        }
+
+        private static VehicleVisual GetTargetVisual(SkillAction action)
+        {
+            if (action.target is Vehicle targetVehicle)
+                return targetVehicle.GetComponent<VehicleVisual>();
+
+            if (action.target is VehicleComponent targetComponent)
+                return targetComponent.ParentVehicle != null
+                    ? targetComponent.ParentVehicle.GetComponent<VehicleVisual>()
+                    : null;
+
+            return null;
         }
     }
 }

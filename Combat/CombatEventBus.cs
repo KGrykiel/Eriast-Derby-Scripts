@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using UnityEngine;
 using Assets.Scripts.Combat.Logging;
 
@@ -13,6 +14,19 @@ namespace Assets.Scripts.Combat
     {
         // Stack supports nested actions (just in case)
         private static readonly Stack<CombatAction> actionStack = new();
+
+        /// <summary>Fired immediately whenever a DamageEvent is emitted, before scoping/logging. Used for real-time visuals.</summary>
+        public static event Action<DamageEvent> OnDamage;
+
+        /// <summary>Fired immediately whenever a RestorationEvent is emitted, before scoping/logging. Used for real-time visuals.</summary>
+        public static event Action<RestorationEvent> OnRestoration;
+
+        /// <summary>Fired immediately whenever an AttackRollEvent is emitted, before scoping/logging. Used for real-time visuals.</summary>
+        public static event Action<AttackRollEvent> OnAttackRoll;
+
+        // NOTE: These three typed hooks do not scale. If visuals are needed for more event types,
+        // introduce a dedicated CombatVisualBus with a single OnCombatEvent and remove these.
+        // See FurtherRefinements.md A9.
 
         public static CombatAction BeginAction()
         {
@@ -45,6 +59,15 @@ namespace Assets.Scripts.Combat
                 Debug.LogWarning("[CombatEventBus] Attempted to emit null event!");
                 return;
             }
+
+            if (evt is DamageEvent dmg)
+                OnDamage?.Invoke(dmg);
+
+            if (evt is RestorationEvent restore)
+                OnRestoration?.Invoke(restore);
+
+            if (evt is AttackRollEvent attack)
+                OnAttackRoll?.Invoke(attack);
             
             if (actionStack.Count > 0)
             {

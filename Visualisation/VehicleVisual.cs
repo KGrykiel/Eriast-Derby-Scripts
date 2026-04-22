@@ -1,3 +1,4 @@
+using System.Collections;
 using TMPro;
 using UnityEngine;
 using Assets.Scripts.Entities.Vehicles;
@@ -20,10 +21,10 @@ namespace Assets.Scripts.Visualisation
     {
         // ==================== CONSTANTS ====================
 
-        private static readonly Color PlayerColour   = new(0.2f, 1f,   0.2f, 1f);
-        private static readonly Color NeutralColour  = new(0.6f, 0.6f, 0.6f, 1f);
-        private static readonly Color TerminalColour = new(0.5f, 0.5f, 0.5f, 0.5f);
-        private static readonly Color DangerEmissive = new(0.8f, 0f,   0f,   1f);
+        private static readonly Color PlayerColour     = new(0.2f, 1f,   0.2f, 1f);
+        private static readonly Color NeutralColour    = new(0.6f, 0.6f, 0.6f, 1f);
+        private static readonly Color TerminalColour   = new(0.5f, 0.5f, 0.5f, 0.5f);
+        private static readonly Color DangerEmissive   = new(0.8f, 0f,   0f,   1f);
 
         private const float SmoothTime         = 0.1f;
         private const float FinishSnapThreshold = 0.005f;
@@ -56,6 +57,14 @@ namespace Assets.Scripts.Visualisation
         // Condition badge
         private TextMeshPro _conditionBadge;
 
+        // Action line
+        private LineRenderer  _actionLine;
+        private Material      _actionLineMaterial;
+        private VehicleVisual _actionLineTarget;
+
+        // Action label
+        private TextMeshPro _actionLabel;
+
         // State
         private bool      _isInTerminalState;
         private bool      _pendingFinish;
@@ -74,9 +83,10 @@ namespace Assets.Scripts.Visualisation
         {
             TurnEventBus.OnEvent -= HandleTurnEvent;
 
-            if (_material != null)          Destroy(_material);
-            if (_hpBarBgMaterial != null)   Destroy(_hpBarBgMaterial);
-            if (_hpBarFillMaterial != null) Destroy(_hpBarFillMaterial);
+            if (_material != null)           Destroy(_material);
+            if (_hpBarBgMaterial != null)    Destroy(_hpBarBgMaterial);
+            if (_hpBarFillMaterial != null)  Destroy(_hpBarFillMaterial);
+            if (_actionLineMaterial != null) Destroy(_actionLineMaterial);
         }
 
         private void LateUpdate()
@@ -93,6 +103,7 @@ namespace Assets.Scripts.Visualisation
             UpdateOverlayBillboard();
             UpdateHpBar();
             UpdateConditionBadge();
+            UpdateActionLine();
         }
 
         // ==================== PUBLIC API ====================
@@ -106,8 +117,60 @@ namespace Assets.Scripts.Visualisation
             CreateMeshChild(baseMaterial);
             CreateClickCollider();
             AttachOverlayUI();
+            CreateActionLine();
 
             TurnEventBus.OnEvent += HandleTurnEvent;
+        }
+
+        /// <summary>World-space centre of the vehicle mesh. Use this as a line endpoint instead of transform.position.</summary>
+        public Vector3 MeshCentre
+        {
+            get
+            {
+                if (_meshChild == null)
+                    return transform.position;
+
+                Renderer r = _meshChild.GetComponent<Renderer>();
+                return r != null ? r.bounds.center : transform.position;
+            }
+        }
+
+        /// <summary>
+        /// Draws a line from this vehicle to the target and keeps it updated until hidden.
+        /// </summary>
+        public void ShowActionLine(VehicleVisual target)
+        {
+            if (_actionLine == null || target == null)
+                return;
+
+            _actionLineTarget   = target;
+            _actionLine.enabled = true;
+        }
+
+        /// <summary>Removes the action line drawn by ShowActionLine.</summary>
+        public void HideActionLine()
+        {
+            if (_actionLine != null)
+                _actionLine.enabled = false;
+
+            _actionLineTarget = null;
+        }
+
+        /// <summary>Shows a floating label above this vehicle with the given skill name.</summary>
+        public void ShowActionLabel(string skillName)
+        {
+            if (_actionLabel == null)
+                return;
+
+            _actionLabel.text = skillName;
+            _actionLabel.gameObject.SetActive(true);
+        }
+
+        /// <summary>Hides the floating skill label shown by ShowActionLabel.</summary>
+        public void HideActionLabel()
+        {
+            if (_actionLabel != null)
+                _actionLabel.gameObject.SetActive(false);
         }
 
         // ==================== POSITION + FACING ====================
@@ -242,6 +305,8 @@ namespace Assets.Scripts.Visualisation
         {
             _isInTerminalState = true;
             StopAllCoroutines();
+            HideActionLine();
+            HideActionLabel();
 
             if (_material != null)
             {
@@ -333,6 +398,43 @@ namespace Assets.Scripts.Visualisation
             Transform badgeT = instance.transform.Find("ConditionBadge");
             if (badgeT != null)
                 _conditionBadge = badgeT.GetComponent<TextMeshPro>();
+
+            GameObject actionLabelGO = new GameObject("ActionLabel");
+            actionLabelGO.transform.SetParent(instance.transform, false);
+            actionLabelGO.transform.localPosition = new Vector3(0f, 0.8f, 0f);
+            _actionLabel            = actionLabelGO.AddComponent<TextMeshPro>();
+            _actionLabel.alignment  = TextAlignmentOptions.Center;
+            _actionLabel.fontSize   = 3f;
+            _actionLabel.fontStyle  = FontStyles.Bold;
+            _actionLabel.color      = new Color(1f, 0.9f, 0f, 1f);
+            _actionLabel.outlineWidth = 0.2f;
+            _actionLabel.outlineColor = new Color32(0, 0, 0, 255);
+            _actionLabel.gameObject.SetActive(false);
+        }
+
+        private void CreateActionLine()
+        {
+            _actionLine = gameObject.AddComponent<LineRenderer>();
+            _actionLineMaterial         = new Material(Shader.Find("Sprites/Default"));
+            _actionLine.material        = _actionLineMaterial;
+            _actionLine.useWorldSpace   = true;
+            _actionLine.positionCount   = 2;
+            _actionLine.startWidth      = 0.12f;
+            _actionLine.endWidth        = 0.02f;
+            _actionLine.startColor      = new Color(1f, 0.55f, 0f, 1f);
+            _actionLine.endColor        = new Color(1f, 0.55f, 0f, 1f);
+            _actionLine.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+            _actionLine.receiveShadows  = false;
+            _actionLine.enabled         = false;
+        }
+
+        private void UpdateActionLine()
+        {
+            if (_actionLine == null || !_actionLine.enabled || _actionLineTarget == null)
+                return;
+
+            _actionLine.SetPosition(0, MeshCentre);
+            _actionLine.SetPosition(1, _actionLineTarget.MeshCentre);
         }
 
         // ==================== HELPERS ====================

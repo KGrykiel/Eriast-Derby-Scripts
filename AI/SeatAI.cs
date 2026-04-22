@@ -141,7 +141,7 @@ namespace Assets.Scripts.AI
                     yield return ctx.Self;
                     break;
 
-                case TargetingMode.SourceComponent:
+                case TargetingMode.ComponentOnSelf:
                 {
                     bool anyTargetable = false;
                     foreach (var component in EnumerateTargetableComponents(ctx.Self, skill))

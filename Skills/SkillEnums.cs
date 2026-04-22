@@ -15,7 +15,7 @@
         /// Player selects a component on their own vehicle (targeted repairs/buffs).
         /// UI: Shows source vehicle's component selector.
         /// </summary>
-        SourceComponent,
+        ComponentOnSelf,
 
         /// <summary>
         /// Player selects enemy vehicle - system auto-routes to appropriate component based on effect type.

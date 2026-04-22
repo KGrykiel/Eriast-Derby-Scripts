@@ -17,7 +17,7 @@ namespace Assets.Scripts.Managers.Selection
             { TargetingMode.EnemyComponent,  new EnemyComponentStrategy() },
             { TargetingMode.Any,             new AnyVehicleStrategy() },
             { TargetingMode.AnyComponent,    new AnyComponentStrategy() },
-            { TargetingMode.SourceComponent, new SourceComponentStrategy() },
+            { TargetingMode.ComponentOnSelf, new SourceComponentStrategy() },
             { TargetingMode.Lane,            new LaneStrategy() },
         };
     }
