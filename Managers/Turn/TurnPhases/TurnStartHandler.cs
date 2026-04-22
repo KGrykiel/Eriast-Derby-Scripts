@@ -1,4 +1,5 @@
 ﻿using Assets.Scripts.Managers.Race;
+using Assets.Scripts.Visualisation;
 
 namespace Assets.Scripts.Managers.Turn.TurnPhases
 {
@@ -18,6 +19,10 @@ namespace Assets.Scripts.Managers.Turn.TurnPhases
                 return AdvanceToNextTurnOrRoundEnd(context);
 
             // === TURN START LOGIC ===
+
+            VehicleVisual visual = vehicle.GetComponent<VehicleVisual>();
+            if (visual != null)
+                visual.ShowActingHighlight();
             
             // 1. Regenerate power FIRST (see full resources before paying costs)
             if (vehicle.PowerCore != null && !vehicle.PowerCore.IsDestroyed())

@@ -28,6 +28,36 @@ namespace Assets.Scripts.Managers.Turn
             this.coroutineRunner = coroutineRunner;
         }
 
+        /// <summary>
+        /// Executes an auto-movement action: respects pause, executes movement, then waits one action delay before calling back.
+        /// </summary>
+        public void ExecuteMovementAction(Vehicle vehicle, Action movement, Action onComplete)
+        {
+            coroutineRunner.StartCoroutine(MovementActionRoutine(vehicle, movement, onComplete));
+        }
+
+        private IEnumerator MovementActionRoutine(Vehicle vehicle, Action movement, Action onComplete)
+        {
+            yield return new WaitUntil(() => !IsPaused);
+
+            VehicleVisual visual = vehicle.GetComponent<VehicleVisual>();
+            if (visual != null)
+                visual.ShowActionLabel("Moving");
+
+            yield return new WaitForSeconds(actionDelay);
+            yield return new WaitUntil(() => !IsPaused);
+
+            if (visual != null)
+                visual.HideActionLabel();
+
+            movement();
+
+            yield return new WaitForSeconds(actionDelay);
+            yield return new WaitUntil(() => !IsPaused);
+
+            onComplete();
+        }
+
         public void ExecuteTurn(Vehicle vehicle, IVehicleTurnController controller, TurnPhaseContext context, Action onTurnDone)
         {
             RequestNext(vehicle, controller, context, onTurnDone);
@@ -51,11 +81,14 @@ namespace Assets.Scripts.Managers.Turn
             ShowActionVisuals(action);
 
             yield return new WaitForSeconds(actionDelay);
-
             yield return new WaitUntil(() => !IsPaused);
 
             HideActionVisuals(action);
             SkillPipeline.Execute(action);
+
+            yield return new WaitForSeconds(actionDelay);
+            yield return new WaitUntil(() => !IsPaused);
+
             onComplete();
         }
 
@@ -70,7 +103,6 @@ namespace Assets.Scripts.Managers.Turn
                 sourceVisual.ShowActionLine(targetVisual);
 
             sourceVisual.ShowActionLabel(action.skill.name);
-            sourceVisual.ShowActingHighlight();
         }
 
         private static void HideActionVisuals(SkillAction action)
@@ -81,7 +113,6 @@ namespace Assets.Scripts.Managers.Turn
 
             sourceVisual.HideActionLine();
             sourceVisual.HideActionLabel();
-            sourceVisual.HideActingHighlight();
         }
 
         private static VehicleVisual GetSourceVisual(SkillAction action)
