@@ -9,6 +9,7 @@ public class TabManager : MonoBehaviour
     public Button inspectorTabButton;
     public Button logTabButton;
     public Button lanesTabButton;
+    public Button statsTabButton;
 
     [Header("Tab Panels")]
     public GameObject focusPanel;
@@ -16,6 +17,7 @@ public class TabManager : MonoBehaviour
     public GameObject inspectorPanel;
     public GameObject logPanel;
     public GameObject lanesPanel;
+    public GameObject statsPanel;
 
     [Header("Active Tab Color")]
     public Color activeColor = new(0.3f, 0.5f, 0.8f);
@@ -31,6 +33,8 @@ public class TabManager : MonoBehaviour
         logTabButton.onClick.AddListener(() => ShowTab(logPanel, logTabButton));
         if (lanesTabButton != null)
             lanesTabButton.onClick.AddListener(() => ShowTab(lanesPanel, lanesTabButton));
+        if (statsTabButton != null)
+            statsTabButton.onClick.AddListener(() => ShowTab(statsPanel, statsTabButton));
 
         ShowTab(focusPanel, focusTabButton);
     }
@@ -46,6 +50,12 @@ public class TabManager : MonoBehaviour
             ShowTab(lanesPanel, lanesTabButton);
     }
 
+    public void ShowStatsTab()
+    {
+        if (statsPanel != null && statsTabButton != null)
+            ShowTab(statsPanel, statsTabButton);
+    }
+
     private void ShowTab(GameObject panelToShow, Button buttonClicked)
     {
         focusPanel.SetActive(false);
@@ -53,12 +63,14 @@ public class TabManager : MonoBehaviour
         inspectorPanel.SetActive(false);
         logPanel.SetActive(false);
         if (lanesPanel != null) lanesPanel.SetActive(false);
+        if (statsPanel != null) statsPanel.SetActive(false);
 
         SetButtonColor(focusTabButton, inactiveColor);
         SetButtonColor(overviewTabButton, inactiveColor);
         SetButtonColor(inspectorTabButton, inactiveColor);
         SetButtonColor(logTabButton, inactiveColor);
         if (lanesTabButton != null) SetButtonColor(lanesTabButton, inactiveColor);
+        if (statsTabButton != null) SetButtonColor(statsTabButton, inactiveColor);
 
         panelToShow.SetActive(true);
         SetButtonColor(buttonClicked, activeColor);

@@ -11,6 +11,7 @@ using Assets.Scripts.Managers.Turn;
 using Assets.Scripts.Managers.Turn.TurnPhases;
 using Assets.Scripts.Managers.Race;
 using Assets.Scripts.Managers.Turn.TurnControllers;
+using Assets.Scripts.Statistics;
 
 namespace Assets.Scripts.Managers
 {
@@ -44,6 +45,7 @@ namespace Assets.Scripts.Managers
         private PlayerController playerController;
         private TurnEventLogger eventLogger;
         private RaceCompletionTracker raceTracker;
+        private RaceStatsTracker statsTracker;
 
         // Phase context (passed to handlers)
         private TurnPhaseContext phaseContext;
@@ -125,6 +127,8 @@ namespace Assets.Scripts.Managers
 
             RaceHistory.Initialize(stateMachine);
 
+            statsTracker = new RaceStatsTracker();
+
             stateMachine.Run(phaseContext);
         }
 
@@ -156,6 +160,7 @@ namespace Assets.Scripts.Managers
             raceTracker?.Unsubscribe();
             eventLogger?.Unsubscribe();
             stateMachine?.Cleanup();
+            statsTracker?.Dispose();
         }
 
         // ==================== PUBLIC API ====================
@@ -176,6 +181,7 @@ namespace Assets.Scripts.Managers
 
         public TurnStateMachine GetStateMachine() => stateMachine;
         public TurnService GetTurnController() => turnController;
+        public RaceStatsTracker GetStatsTracker() => statsTracker;
 
         public float GetActionDelay() => actionDelay;
 

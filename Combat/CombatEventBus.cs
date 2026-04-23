@@ -24,6 +24,9 @@ namespace Assets.Scripts.Combat
         /// <summary>Fired immediately whenever an AttackRollEvent is emitted, before scoping/logging. Used for real-time visuals.</summary>
         public static event Action<AttackRollEvent> OnAttackRoll;
 
+        /// <summary>Fired when a scoped action is fully resolved, after logging. Used for statistics accumulation.</summary>
+        public static event Action<CombatAction> OnActionCompleted;
+
         // NOTE: These three typed hooks do not scale. If visuals are needed for more event types,
         // introduce a dedicated CombatVisualBus with a single OnCombatEvent and remove these.
         // See FurtherRefinements.md A9.
@@ -47,6 +50,9 @@ namespace Assets.Scripts.Combat
 
             // Log the completed action
             CombatLogManager.LogAction(action);
+
+            // Notify statistics tracker (and any other subscribers)
+            OnActionCompleted?.Invoke(action);
         }
         
         // ==================== EVENT EMISSION ====================
