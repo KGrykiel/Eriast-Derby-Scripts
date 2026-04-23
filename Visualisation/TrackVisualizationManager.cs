@@ -8,6 +8,8 @@ using Assets.Scripts.Stages;
 using Assets.Scripts.Stages.Lanes;
 using Assets.Scripts.UI.Tabs.Lanes;
 using Assets.Scripts.Managers.Race;
+using Assets.Scripts.UI;
+using Assets.Scripts.UI.Tabs;
 
 namespace Assets.Scripts.Visualisation
 {
@@ -211,6 +213,5 @@ namespace Assets.Scripts.Visualisation
                 vv.Initialise(vehicleBaseMaterial);
             }
         }
-
-            }
-        }
+    }
+}

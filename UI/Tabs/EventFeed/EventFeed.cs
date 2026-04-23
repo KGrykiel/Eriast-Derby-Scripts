@@ -7,203 +7,205 @@ using Assets.Scripts.Entities.Vehicles;
 using Assets.Scripts.Logging;
 using Assets.Scripts.Managers.Race;
 
-public class EventFeed : MonoBehaviour
+namespace Assets.Scripts.UI.Tabs.EventFeed
 {
-    [Header("UI References")]
-    public Transform contentContainer; // The Content object of ScrollView
-    public GameObject eventEntryPrefab; // TextMeshPro prefab for event entries
-
-    [Header("Filter Toggles")]
-    public Toggle criticalToggle;
-    public Toggle highToggle;
-    public Toggle mediumToggle;
-    public Toggle lowToggle;
-    public Toggle debugToggle;
-
-    [Header("Vehicle Filter")]
-    [Tooltip("Optional — filters events to a single vehicle. First option is always 'All Vehicles'.")]
-    public TMP_Dropdown vehicleFilterDropdown;
-
-    [Header("Event Type Filter")]
-    [Tooltip("Optional — filters events to a single event type. First option is always 'All Types'.")]
-    public TMP_Dropdown eventTypeFilterDropdown;
-
-    [Header("Settings")]
-    public int maxDisplayedEvents = 100; // Limit to prevent performance issues
-    public bool autoScrollToBottom = true;
-    
-    [Header("Tooltip Settings")]
-    [Tooltip("Enable hover tooltips for detailed breakdowns")]
-    public bool enableTooltips = true;
-
-    private ScrollRect scrollRect;
-    private int lastProcessedEventCount = 0;
-    private readonly List<RaceEvent> currentlyDisplayedEvents = new();
-    private Vehicle filteredVehicle;
-    private Assets.Scripts.Logging.EventType? filteredEventType = null;
-
-    void Start()
+    public class EventFeed : MonoBehaviour
     {
-        scrollRect = GetComponentInParent<ScrollRect>();
+        [Header("UI References")]
+        public Transform contentContainer; // The Content object of ScrollView
+        public GameObject eventEntryPrefab; // TextMeshPro prefab for event entries
 
-        criticalToggle?.onValueChanged.AddListener(_ => FullRefreshFeed());
-        highToggle?.onValueChanged.AddListener(_ => FullRefreshFeed());
-        mediumToggle?.onValueChanged.AddListener(_ => FullRefreshFeed());
-        lowToggle?.onValueChanged.AddListener(_ => FullRefreshFeed());
-        debugToggle?.onValueChanged.AddListener(_ => FullRefreshFeed());
+        [Header("Filter Toggles")]
+        public Toggle criticalToggle;
+        public Toggle highToggle;
+        public Toggle mediumToggle;
+        public Toggle lowToggle;
+        public Toggle debugToggle;
 
-        vehicleFilterDropdown.onValueChanged.AddListener(_ => OnVehicleFilterChanged());
-        PopulateVehicleFilter();
+        [Header("Vehicle Filter")]
+        [Tooltip("Optional — filters events to a single vehicle. First option is always 'All Vehicles'.")]
+        public TMP_Dropdown vehicleFilterDropdown;
 
-        if (eventTypeFilterDropdown != null)
+        [Header("Event Type Filter")]
+        [Tooltip("Optional — filters events to a single event type. First option is always 'All Types'.")]
+        public TMP_Dropdown eventTypeFilterDropdown;
+
+        [Header("Settings")]
+        public int maxDisplayedEvents = 100; // Limit to prevent performance issues
+        public bool autoScrollToBottom = true;
+
+        [Header("Tooltip Settings")]
+        [Tooltip("Enable hover tooltips for detailed breakdowns")]
+        public bool enableTooltips = true;
+
+        private ScrollRect scrollRect;
+        private int lastProcessedEventCount = 0;
+        private readonly List<RaceEvent> currentlyDisplayedEvents = new();
+        private Vehicle filteredVehicle;
+        private Assets.Scripts.Logging.EventType? filteredEventType = null;
+
+        void Start()
         {
-            eventTypeFilterDropdown.onValueChanged.AddListener(_ => OnEventTypeFilterChanged());
-            PopulateEventTypeFilter();
-        }
+            scrollRect = GetComponentInParent<ScrollRect>();
 
-        FullRefreshFeed();
-    }
+            criticalToggle?.onValueChanged.AddListener(_ => FullRefreshFeed());
+            highToggle?.onValueChanged.AddListener(_ => FullRefreshFeed());
+            mediumToggle?.onValueChanged.AddListener(_ => FullRefreshFeed());
+            lowToggle?.onValueChanged.AddListener(_ => FullRefreshFeed());
+            debugToggle?.onValueChanged.AddListener(_ => FullRefreshFeed());
 
-    void Update()
-    {
-        int currentEventCount = RaceHistory.AllEvents.Count;
+            vehicleFilterDropdown.onValueChanged.AddListener(_ => OnVehicleFilterChanged());
+            PopulateVehicleFilter();
 
-        if (currentEventCount > lastProcessedEventCount)
-        {
-            AppendNewEvents();
-            lastProcessedEventCount = currentEventCount;
-        }
-    }
-
-    private void AppendNewEvents()
-    {
-        var allEvents = RaceHistory.AllEvents;
-
-        bool wasAtBottom = scrollRect != null && scrollRect.verticalNormalizedPosition <= 0.01f;
-        bool addedAny = false;
-
-        for (int i = lastProcessedEventCount; i < allEvents.Count; i++)
-        {
-            var evt = allEvents[i];
-            if (!IsEventVisible(evt)) continue;
-
-            CreateEventEntry(evt);
-            currentlyDisplayedEvents.Add(evt);
-            addedAny = true;
-
-            if (currentlyDisplayedEvents.Count > maxDisplayedEvents)
+            if (eventTypeFilterDropdown != null)
             {
-                if (contentContainer.childCount > 0)
-                    Destroy(contentContainer.GetChild(0).gameObject);
-                currentlyDisplayedEvents.RemoveAt(0);
+                eventTypeFilterDropdown.onValueChanged.AddListener(_ => OnEventTypeFilterChanged());
+                PopulateEventTypeFilter();
+            }
+
+            FullRefreshFeed();
+        }
+
+        void Update()
+        {
+            int currentEventCount = RaceHistory.AllEvents.Count;
+
+            if (currentEventCount > lastProcessedEventCount)
+            {
+                AppendNewEvents();
+                lastProcessedEventCount = currentEventCount;
             }
         }
 
-        if (addedAny && (autoScrollToBottom || wasAtBottom))
+        private void AppendNewEvents()
         {
-            Canvas.ForceUpdateCanvases();
-            if (scrollRect != null)
-                scrollRect.verticalNormalizedPosition = 0f;
-        }
-    }
+            var allEvents = RaceHistory.AllEvents;
 
-    private void FullRefreshFeed()
-    {
-        foreach (Transform child in contentContainer)
-            Destroy(child.gameObject);
+            bool wasAtBottom = scrollRect != null && scrollRect.verticalNormalizedPosition <= 0.01f;
+            bool addedAny = false;
 
-        currentlyDisplayedEvents.Clear();
+            for (int i = lastProcessedEventCount; i < allEvents.Count; i++)
+            {
+                var evt = allEvents[i];
+                if (!IsEventVisible(evt)) continue;
 
-        var filteredEvents = GetFilteredEvents();
-        var displayEvents = filteredEvents.TakeLast(maxDisplayedEvents).ToList();
+                CreateEventEntry(evt);
+                currentlyDisplayedEvents.Add(evt);
+                addedAny = true;
 
-        foreach (var evt in displayEvents)
-        {
-            CreateEventEntry(evt);
-            currentlyDisplayedEvents.Add(evt);
-        }
+                if (currentlyDisplayedEvents.Count > maxDisplayedEvents)
+                {
+                    if (contentContainer.childCount > 0)
+                        Destroy(contentContainer.GetChild(0).gameObject);
+                    currentlyDisplayedEvents.RemoveAt(0);
+                }
+            }
 
-        if (autoScrollToBottom)
-        {
-            Canvas.ForceUpdateCanvases();
-            if (scrollRect != null)
-                scrollRect.verticalNormalizedPosition = 0f;
-        }
-
-        lastProcessedEventCount = RaceHistory.AllEvents.Count;
-    }
-
-    public void RefreshFeed()
-    {
-        FullRefreshFeed();
-    }
-
-    private bool IsEventVisible(RaceEvent evt)
-    {
-        bool importanceVisible = evt.importance switch
-        {
-            EventImportance.Critical => criticalToggle == null || criticalToggle.isOn,
-            EventImportance.High => highToggle == null || highToggle.isOn,
-            EventImportance.Medium => mediumToggle == null || mediumToggle.isOn,
-            EventImportance.Low => lowToggle != null && lowToggle.isOn,
-            EventImportance.Debug => debugToggle != null && debugToggle.isOn,
-            _ => false
-        };
-
-        if (!importanceVisible) return false;
-
-        if (filteredEventType != null && evt.type != filteredEventType.GetValueOrDefault())
-            return false;
-
-        if (filteredVehicle != null)
-            return evt.involvedVehicles != null && evt.involvedVehicles.Contains(filteredVehicle);
-
-        return true;
-    }
-
-    private List<RaceEvent> GetFilteredEvents()
-    {
-        return RaceHistory.AllEvents.Where(IsEventVisible).ToList();
-    }
-
-    // ==================== VEHICLE FILTER ====================
-
-    private readonly List<Vehicle> vehicleFilterList = new();
-
-    private void PopulateVehicleFilter()
-    {
-        vehicleFilterDropdown.ClearOptions();
-        vehicleFilterList.Clear();
-
-        var vehicles = RacePositionTracker.GetAll();
-        var options = new List<string> { "All Vehicles" };
-        foreach (var vehicle in vehicles)
-        {
-            if (vehicle == null) continue;
-            vehicleFilterList.Add(vehicle);
-            options.Add(vehicle.vehicleName);
+            if (addedAny && (autoScrollToBottom || wasAtBottom))
+            {
+                Canvas.ForceUpdateCanvases();
+                if (scrollRect != null)
+                    scrollRect.verticalNormalizedPosition = 0f;
+            }
         }
 
-        vehicleFilterDropdown.AddOptions(options);
-        vehicleFilterDropdown.SetValueWithoutNotify(0);
-        filteredVehicle = null;
-    }
+        private void FullRefreshFeed()
+        {
+            foreach (Transform child in contentContainer)
+                Destroy(child.gameObject);
 
-    private void OnVehicleFilterChanged()
-    {
-        int index = vehicleFilterDropdown.value;
-        if (index <= 0 || index > vehicleFilterList.Count)
+            currentlyDisplayedEvents.Clear();
+
+            var filteredEvents = GetFilteredEvents();
+            var displayEvents = filteredEvents.TakeLast(maxDisplayedEvents).ToList();
+
+            foreach (var evt in displayEvents)
+            {
+                CreateEventEntry(evt);
+                currentlyDisplayedEvents.Add(evt);
+            }
+
+            if (autoScrollToBottom)
+            {
+                Canvas.ForceUpdateCanvases();
+                if (scrollRect != null)
+                    scrollRect.verticalNormalizedPosition = 0f;
+            }
+
+            lastProcessedEventCount = RaceHistory.AllEvents.Count;
+        }
+
+        public void RefreshFeed()
+        {
+            FullRefreshFeed();
+        }
+
+        private bool IsEventVisible(RaceEvent evt)
+        {
+            bool importanceVisible = evt.importance switch
+            {
+                EventImportance.Critical => criticalToggle == null || criticalToggle.isOn,
+                EventImportance.High => highToggle == null || highToggle.isOn,
+                EventImportance.Medium => mediumToggle == null || mediumToggle.isOn,
+                EventImportance.Low => lowToggle != null && lowToggle.isOn,
+                EventImportance.Debug => debugToggle != null && debugToggle.isOn,
+                _ => false
+            };
+
+            if (!importanceVisible) return false;
+
+            if (filteredEventType != null && evt.type != filteredEventType.GetValueOrDefault())
+                return false;
+
+            if (filteredVehicle != null)
+                return evt.involvedVehicles != null && evt.involvedVehicles.Contains(filteredVehicle);
+
+            return true;
+        }
+
+        private List<RaceEvent> GetFilteredEvents()
+        {
+            return RaceHistory.AllEvents.Where(IsEventVisible).ToList();
+        }
+
+        // ==================== VEHICLE FILTER ====================
+
+        private readonly List<Vehicle> vehicleFilterList = new();
+
+        private void PopulateVehicleFilter()
+        {
+            vehicleFilterDropdown.ClearOptions();
+            vehicleFilterList.Clear();
+
+            var vehicles = RacePositionTracker.GetAll();
+            var options = new List<string> { "All Vehicles" };
+            foreach (var vehicle in vehicles)
+            {
+                if (vehicle == null) continue;
+                vehicleFilterList.Add(vehicle);
+                options.Add(vehicle.vehicleName);
+            }
+
+            vehicleFilterDropdown.AddOptions(options);
+            vehicleFilterDropdown.SetValueWithoutNotify(0);
             filteredVehicle = null;
-        else
-            filteredVehicle = vehicleFilterList[index - 1];
+        }
 
-        FullRefreshFeed();
-    }
+        private void OnVehicleFilterChanged()
+        {
+            int index = vehicleFilterDropdown.value;
+            if (index <= 0 || index > vehicleFilterList.Count)
+                filteredVehicle = null;
+            else
+                filteredVehicle = vehicleFilterList[index - 1];
 
-    // ==================== EVENT TYPE FILTER ====================
+            FullRefreshFeed();
+        }
 
-    private static readonly (Assets.Scripts.Logging.EventType type, string label)[] EventTypeOptions =
-    {
+        // ==================== EVENT TYPE FILTER ====================
+
+        private static readonly (Assets.Scripts.Logging.EventType type, string label)[] EventTypeOptions =
+        {
         (Assets.Scripts.Logging.EventType.Combat,      "Combat"),
         (Assets.Scripts.Logging.EventType.Destruction, "Destruction"),
         (Assets.Scripts.Logging.EventType.Movement,    "Movement"),
@@ -216,81 +218,82 @@ public class EventFeed : MonoBehaviour
         (Assets.Scripts.Logging.EventType.System,      "System"),
     };
 
-    private void PopulateEventTypeFilter()
-    {
-        eventTypeFilterDropdown.ClearOptions();
+        private void PopulateEventTypeFilter()
+        {
+            eventTypeFilterDropdown.ClearOptions();
 
-        var options = new List<string> { "All Types" };
-        foreach (var entry in EventTypeOptions)
-            options.Add(entry.label);
+            var options = new List<string> { "All Types" };
+            foreach (var entry in EventTypeOptions)
+                options.Add(entry.label);
 
-        eventTypeFilterDropdown.AddOptions(options);
-        eventTypeFilterDropdown.SetValueWithoutNotify(0);
-        filteredEventType = null;
-    }
-
-    private void OnEventTypeFilterChanged()
-    {
-        int index = eventTypeFilterDropdown.value;
-        if (index <= 0 || index > EventTypeOptions.Length)
+            eventTypeFilterDropdown.AddOptions(options);
+            eventTypeFilterDropdown.SetValueWithoutNotify(0);
             filteredEventType = null;
-        else
-            filteredEventType = EventTypeOptions[index - 1].type;
-
-        FullRefreshFeed();
-    }
-    private void CreateEventEntry(RaceEvent evt)
-    {
-        GameObject entryObj;
-
-        if (eventEntryPrefab != null)
-        {
-            entryObj = Instantiate(eventEntryPrefab, contentContainer);
-        }
-        else
-        {
-            entryObj = new GameObject("EventEntry");
-            entryObj.transform.SetParent(contentContainer);
-            entryObj.AddComponent<TextMeshProUGUI>();
         }
 
-        var text = entryObj.GetComponent<TextMeshProUGUI>();
-        if (text != null)
+        private void OnEventTypeFilterChanged()
         {
-            string displayText = evt.GetFormattedText(includeTimestamp: true, includeLocation: true);
+            int index = eventTypeFilterDropdown.value;
+            if (index <= 0 || index > EventTypeOptions.Length)
+                filteredEventType = null;
+            else
+                filteredEventType = EventTypeOptions[index - 1].type;
+
+            FullRefreshFeed();
+        }
+        private void CreateEventEntry(RaceEvent evt)
+        {
+            GameObject entryObj;
+
+            if (eventEntryPrefab != null)
+            {
+                entryObj = Instantiate(eventEntryPrefab, contentContainer);
+            }
+            else
+            {
+                entryObj = new GameObject("EventEntry");
+                entryObj.transform.SetParent(contentContainer);
+                entryObj.AddComponent<TextMeshProUGUI>();
+            }
+
+            var text = entryObj.GetComponent<TextMeshProUGUI>();
+            if (text != null)
+            {
+                string displayText = evt.GetFormattedText(includeTimestamp: true, includeLocation: true);
+
+                if (enableTooltips && HasBreakdownData(evt))
+                    displayText += $" <color={LogColors.IconUnknown}>[?]</color>";
+
+                text.text = displayText;
+                text.fontSize = 12;
+                text.textWrappingMode = TextWrappingModes.Normal;
+                text.raycastTarget = true;
+            }
+
+            var layoutElement = entryObj.GetComponent<LayoutElement>();
+            if (layoutElement == null)
+                layoutElement = entryObj.AddComponent<LayoutElement>();
+            layoutElement.flexibleWidth = 1;
 
             if (enableTooltips && HasBreakdownData(evt))
-                displayText += $" <color={LogColors.IconUnknown}>[?]</color>";
-
-            text.text = displayText;
-            text.fontSize = 12;
-            text.textWrappingMode = TextWrappingModes.Normal;
-            text.raycastTarget = true;
+            {
+                var hoverComponent = entryObj.AddComponent<EventEntryHover>();
+                hoverComponent.SetEvent(evt);
+            }
         }
 
-        var layoutElement = entryObj.GetComponent<LayoutElement>();
-        if (layoutElement == null)
-            layoutElement = entryObj.AddComponent<LayoutElement>();
-        layoutElement.flexibleWidth = 1;
-
-        if (enableTooltips && HasBreakdownData(evt))
+        private bool HasBreakdownData(RaceEvent evt)
         {
-            var hoverComponent = entryObj.AddComponent<EventEntryHover>();
-            hoverComponent.SetEvent(evt);
-        }
-    }
-    
-    private bool HasBreakdownData(RaceEvent evt)
-    {
-        if (evt == null || evt.metadata == null)
-            return false;
+            if (evt == null || evt.metadata == null)
+                return false;
 
-        return evt.metadata.ContainsKey("rollBreakdown") ||
-               evt.metadata.ContainsKey("damageBreakdown") ||
-               evt.metadata.ContainsKey("restorationBreakdown") ||
-               evt.metadata.ContainsKey("effectBreakdown") ||
-               evt.metadata.ContainsKey("dcBreakdown") ||
-               evt.metadata.ContainsKey("defenseBreakdown") ||
-               evt.metadata.ContainsKey("aiDecision");
+            return evt.metadata.ContainsKey("rollBreakdown") ||
+                   evt.metadata.ContainsKey("damageBreakdown") ||
+                   evt.metadata.ContainsKey("restorationBreakdown") ||
+                   evt.metadata.ContainsKey("effectBreakdown") ||
+                   evt.metadata.ContainsKey("dcBreakdown") ||
+                   evt.metadata.ContainsKey("defenseBreakdown") ||
+                   evt.metadata.ContainsKey("aiDecision");
+        }
     }
 }

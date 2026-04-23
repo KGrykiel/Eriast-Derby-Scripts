@@ -12,6 +12,7 @@ using Assets.Scripts.Combat.Rolls.RollSpecs.SpecTypes;
 using Assets.Scripts.Combat.Damage.FormulaProviders.SpecificProviders;
 using Assets.Scripts.Effects.Invocations;
 using Assets.Scripts.Effects.EffectTypes.EntityEffects;
+using Assets.Scripts.UI.Tabs.EventFeed;
 
 namespace Assets.Scripts.UI.Components
 {

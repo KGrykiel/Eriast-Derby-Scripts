@@ -7,6 +7,7 @@ using Assets.Scripts.Combat.Logging;
 using Assets.Scripts.Conditions.EntityConditions;
 using Assets.Scripts.Conditions;
 using Assets.Scripts.Conditions.VehicleConditions;
+using Assets.Scripts.UI.Tabs.EventFeed;
 
 namespace Assets.Scripts.UI.Components
 {

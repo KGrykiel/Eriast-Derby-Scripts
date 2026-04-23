@@ -2,6 +2,7 @@
 using UnityEngine.EventSystems;
 using TMPro;
 using Assets.Scripts.Entities.Vehicles;
+using Assets.Scripts.UI.Tabs.EventFeed;
 
 namespace Assets.Scripts.UI.Components
 {

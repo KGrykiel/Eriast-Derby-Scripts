@@ -1,87 +1,90 @@
 using UnityEngine;
 using UnityEngine.UI;
 
-public class TabManager : MonoBehaviour
+namespace Assets.Scripts.UI
 {
-    [Header("Tab Buttons")]
-    public Button focusTabButton;
-    public Button overviewTabButton;
-    public Button inspectorTabButton;
-    public Button logTabButton;
-    public Button lanesTabButton;
-    public Button statsTabButton;
-
-    [Header("Tab Panels")]
-    public GameObject focusPanel;
-    public GameObject overviewPanel;
-    public GameObject inspectorPanel;
-    public GameObject logPanel;
-    public GameObject lanesPanel;
-    public GameObject statsPanel;
-
-    [Header("Active Tab Color")]
-    public Color activeColor = new(0.3f, 0.5f, 0.8f);
-    public Color inactiveColor = new(0.2f, 0.2f, 0.2f);
-
-    private Button currentActiveButton;
-
-    void Start()
+    public class TabManager : MonoBehaviour
     {
-        focusTabButton.onClick.AddListener(() => ShowTab(focusPanel, focusTabButton));
-        overviewTabButton.onClick.AddListener(() => ShowTab(overviewPanel, overviewTabButton));
-        inspectorTabButton.onClick.AddListener(() => ShowTab(inspectorPanel, inspectorTabButton));
-        logTabButton.onClick.AddListener(() => ShowTab(logPanel, logTabButton));
-        if (lanesTabButton != null)
-            lanesTabButton.onClick.AddListener(() => ShowTab(lanesPanel, lanesTabButton));
-        if (statsTabButton != null)
-            statsTabButton.onClick.AddListener(() => ShowTab(statsPanel, statsTabButton));
+        [Header("Tab Buttons")]
+        public Button focusTabButton;
+        public Button overviewTabButton;
+        public Button inspectorTabButton;
+        public Button logTabButton;
+        public Button lanesTabButton;
+        public Button statsTabButton;
 
-        ShowTab(focusPanel, focusTabButton);
-    }
+        [Header("Tab Panels")]
+        public GameObject focusPanel;
+        public GameObject overviewPanel;
+        public GameObject inspectorPanel;
+        public GameObject logPanel;
+        public GameObject lanesPanel;
+        public GameObject statsPanel;
 
-    public void ShowInspectorTab()
-    {
-        ShowTab(inspectorPanel, inspectorTabButton);
-    }
+        [Header("Active Tab Color")]
+        public Color activeColor = new(0.3f, 0.5f, 0.8f);
+        public Color inactiveColor = new(0.2f, 0.2f, 0.2f);
 
-    public void ShowLanesTab()
-    {
-        if (lanesPanel != null && lanesTabButton != null)
-            ShowTab(lanesPanel, lanesTabButton);
-    }
+        private Button currentActiveButton;
 
-    public void ShowStatsTab()
-    {
-        if (statsPanel != null && statsTabButton != null)
-            ShowTab(statsPanel, statsTabButton);
-    }
+        void Start()
+        {
+            focusTabButton.onClick.AddListener(() => ShowTab(focusPanel, focusTabButton));
+            overviewTabButton.onClick.AddListener(() => ShowTab(overviewPanel, overviewTabButton));
+            inspectorTabButton.onClick.AddListener(() => ShowTab(inspectorPanel, inspectorTabButton));
+            logTabButton.onClick.AddListener(() => ShowTab(logPanel, logTabButton));
+            if (lanesTabButton != null)
+                lanesTabButton.onClick.AddListener(() => ShowTab(lanesPanel, lanesTabButton));
+            if (statsTabButton != null)
+                statsTabButton.onClick.AddListener(() => ShowTab(statsPanel, statsTabButton));
 
-    private void ShowTab(GameObject panelToShow, Button buttonClicked)
-    {
-        focusPanel.SetActive(false);
-        overviewPanel.SetActive(false);
-        inspectorPanel.SetActive(false);
-        logPanel.SetActive(false);
-        if (lanesPanel != null) lanesPanel.SetActive(false);
-        if (statsPanel != null) statsPanel.SetActive(false);
+            ShowTab(focusPanel, focusTabButton);
+        }
 
-        SetButtonColor(focusTabButton, inactiveColor);
-        SetButtonColor(overviewTabButton, inactiveColor);
-        SetButtonColor(inspectorTabButton, inactiveColor);
-        SetButtonColor(logTabButton, inactiveColor);
-        if (lanesTabButton != null) SetButtonColor(lanesTabButton, inactiveColor);
-        if (statsTabButton != null) SetButtonColor(statsTabButton, inactiveColor);
+        public void ShowInspectorTab()
+        {
+            ShowTab(inspectorPanel, inspectorTabButton);
+        }
 
-        panelToShow.SetActive(true);
-        SetButtonColor(buttonClicked, activeColor);
-        currentActiveButton = buttonClicked;
-    }
+        public void ShowLanesTab()
+        {
+            if (lanesPanel != null && lanesTabButton != null)
+                ShowTab(lanesPanel, lanesTabButton);
+        }
 
-    private void SetButtonColor(Button button, Color color)
-    {
-        var colors = button.colors;
-        colors.normalColor = color;
-        colors.selectedColor = color;
-        button.colors = colors;
+        public void ShowStatsTab()
+        {
+            if (statsPanel != null && statsTabButton != null)
+                ShowTab(statsPanel, statsTabButton);
+        }
+
+        private void ShowTab(GameObject panelToShow, Button buttonClicked)
+        {
+            focusPanel.SetActive(false);
+            overviewPanel.SetActive(false);
+            inspectorPanel.SetActive(false);
+            logPanel.SetActive(false);
+            if (lanesPanel != null) lanesPanel.SetActive(false);
+            if (statsPanel != null) statsPanel.SetActive(false);
+
+            SetButtonColor(focusTabButton, inactiveColor);
+            SetButtonColor(overviewTabButton, inactiveColor);
+            SetButtonColor(inspectorTabButton, inactiveColor);
+            SetButtonColor(logTabButton, inactiveColor);
+            if (lanesTabButton != null) SetButtonColor(lanesTabButton, inactiveColor);
+            if (statsTabButton != null) SetButtonColor(statsTabButton, inactiveColor);
+
+            panelToShow.SetActive(true);
+            SetButtonColor(buttonClicked, activeColor);
+            currentActiveButton = buttonClicked;
+        }
+
+        private void SetButtonColor(Button button, Color color)
+        {
+            var colors = button.colors;
+            colors.normalColor = color;
+            colors.selectedColor = color;
+            button.colors = colors;
+        }
     }
 }

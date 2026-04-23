@@ -4,6 +4,7 @@ using TMPro;
 using Assets.Scripts.Combat.Logging;
 using Assets.Scripts.Core;
 using Assets.Scripts.Entities;
+using Assets.Scripts.UI.Tabs.EventFeed;
 
 namespace Assets.Scripts.UI.Components
 {
