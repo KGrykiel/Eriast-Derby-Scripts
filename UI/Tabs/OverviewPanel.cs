@@ -18,19 +18,18 @@ public class OverviewPanel : MonoBehaviour
     public TextMeshProUGUI eventSummaryText;
 
     [Header("Settings")]
-    public bool autoRefresh = true;
     public int criticalEventCount = 10;
 
     [Header("Display Settings")]
     [Tooltip("Show distance to finish line")]
     public bool showDistanceToFinish = true;
-    
+
     [Tooltip("Show energy for each vehicle")]
     public bool showEnergy = true;
-    
+
     [Tooltip("Show speed stat")]
     public bool showSpeed = false;
-    
+
     [Tooltip("Show active modifier count")]
     public bool showModifiers = false;
 
@@ -47,12 +46,20 @@ public class OverviewPanel : MonoBehaviour
         RefreshPanel();
     }
 
-    void Update()
+    void OnEnable()
     {
-        if (autoRefresh && gameObject.activeInHierarchy)
-        {
+        TurnEventBus.OnEvent += HandleTurnEvent;
+    }
+
+    void OnDisable()
+    {
+        TurnEventBus.OnEvent -= HandleTurnEvent;
+    }
+
+    private void HandleTurnEvent(TurnEvent evt)
+    {
+        if (evt is TurnEndedEvent || evt is RaceOverEvent)
             RefreshPanel();
-        }
     }
 
     public void RefreshPanel()
@@ -124,14 +131,16 @@ public class OverviewPanel : MonoBehaviour
 
             if (showEnergy)
             {
-                int energy = vehicle.PowerCore?.GetCurrentEnergy() ?? 0;
-                int maxEnergy = vehicle.PowerCore?.GetMaxEnergy() ?? 0;
+                var powerCore = vehicle.PowerCore;
+                int energy = powerCore != null ? powerCore.GetCurrentEnergy() : 0;
+                int maxEnergy = powerCore != null ? powerCore.GetMaxEnergy() : 0;
                 display += $" Energy:{energy}/{maxEnergy}";
             }
 
             if (showSpeed)
             {
-                float speed = vehicle.Drive?.GetMaxSpeed() ?? 0f;
+                var drive = vehicle.Drive;
+                float speed = drive != null ? drive.GetMaxSpeed() : 0f;
                 display += $" Speed:{speed:F1}";
             }
 
