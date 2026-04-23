@@ -45,23 +45,18 @@ namespace Assets.Scripts.Logging
         public const string FeedTimestamp = "#666666";
 
         // ==================== EVENT TYPE ICONS ====================
-        public const string IconCombat       = "#FF5555";
-        public const string IconMovement     = "#55AAFF";
-        public const string IconStageHazard  = "#FFAA00";
-        public const string IconModifier     = "#AA88FF";
-        public const string IconCondition    = "#FFAA00";
-        public const string IconSkillUse     = "#55DDAA";
-        public const string IconDestruction  = "#FF3333";
-        public const string IconFinishLine   = "#FFD700";
-        public const string IconRivalry      = "#FF55FF";
-        public const string IconHeroicMoment = "#FFD700";
-        public const string IconTragicMoment = "#AA4444";
-        public const string IconSystem       = "#888888";
-        public const string IconResource     = "#55FFAA";
-        public const string IconEventCard    = "#AADDFF";
-        public const string IconAI           = "#8888FF";
-        public const string IconDefault      = "#666666";
-        public const string IconUnknown      = "#6688FF";
+        public const string IconCombat      = "#FF5555";
+        public const string IconMovement    = "#55AAFF";
+        public const string IconStageHazard = "#FFAA00";
+        public const string IconCondition   = "#FFAA00";
+        public const string IconDestruction = "#FF3333";
+        public const string IconFinishLine  = "#FFD700";
+        public const string IconSystem      = "#888888";
+        public const string IconResource    = "#55FFAA";
+        public const string IconEventCard   = "#AADDFF";
+        public const string IconAI          = "#8888FF";
+        public const string IconDefault     = "#666666";
+        public const string IconUnknown     = "#6688FF";
 
         // ==================== INSPECTOR UI ====================
         public const string Available          = "#66FF66";

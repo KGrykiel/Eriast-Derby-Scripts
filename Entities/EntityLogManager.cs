@@ -38,7 +38,7 @@ namespace Assets.Scripts.Entities
             if (oldSpeed == newSpeed || drive.ParentVehicle == null) return;
             
             RaceHistory.Log(
-                EventType.Modifier,
+                EventType.System,
                 EventImportance.Low,
                 $"{LogColors.Vehicle(drive.ParentVehicle.vehicleName)}'s speed scaled: {LogColors.Number($"{oldSpeed} -> {newSpeed}")} (maxSpeed: {LogColors.Number($"{oldMaxSpeed} -> {newMaxSpeed}")})",
                 RacePositionTracker.GetStage(drive.ParentVehicle),
@@ -108,7 +108,7 @@ namespace Assets.Scripts.Entities
             if (component.ParentVehicle == null) return;
 
             RaceHistory.Log(
-                EventType.Modifier,
+                EventType.System,
                 EventImportance.Debug,
                 $"{LogColors.Vehicle(component.ParentVehicle.vehicleName)}'s {LogColors.Component(component.name)} lost {modifier.Type} {modifier.Attribute} {LogColors.Number($"{modifier.Value:+0;-0}")} modifier",
                 RacePositionTracker.GetStage(component.ParentVehicle),

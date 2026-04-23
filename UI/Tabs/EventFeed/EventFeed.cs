@@ -24,6 +24,10 @@ public class EventFeed : MonoBehaviour
     [Tooltip("Optional — filters events to a single vehicle. First option is always 'All Vehicles'.")]
     public TMP_Dropdown vehicleFilterDropdown;
 
+    [Header("Event Type Filter")]
+    [Tooltip("Optional — filters events to a single event type. First option is always 'All Types'.")]
+    public TMP_Dropdown eventTypeFilterDropdown;
+
     [Header("Settings")]
     public int maxDisplayedEvents = 100; // Limit to prevent performance issues
     public bool autoScrollToBottom = true;
@@ -36,6 +40,7 @@ public class EventFeed : MonoBehaviour
     private int lastProcessedEventCount = 0;
     private readonly List<RaceEvent> currentlyDisplayedEvents = new();
     private Vehicle filteredVehicle;
+    private Assets.Scripts.Logging.EventType? filteredEventType = null;
 
     void Start()
     {
@@ -49,6 +54,12 @@ public class EventFeed : MonoBehaviour
 
         vehicleFilterDropdown.onValueChanged.AddListener(_ => OnVehicleFilterChanged());
         PopulateVehicleFilter();
+
+        if (eventTypeFilterDropdown != null)
+        {
+            eventTypeFilterDropdown.onValueChanged.AddListener(_ => OnEventTypeFilterChanged());
+            PopulateEventTypeFilter();
+        }
 
         FullRefreshFeed();
     }
@@ -141,6 +152,9 @@ public class EventFeed : MonoBehaviour
 
         if (!importanceVisible) return false;
 
+        if (filteredEventType != null && evt.type != filteredEventType.GetValueOrDefault())
+            return false;
+
         if (filteredVehicle != null)
             return evt.involvedVehicles != null && evt.involvedVehicles.Contains(filteredVehicle);
 
@@ -186,6 +200,45 @@ public class EventFeed : MonoBehaviour
         FullRefreshFeed();
     }
 
+    // ==================== EVENT TYPE FILTER ====================
+
+    private static readonly (Assets.Scripts.Logging.EventType type, string label)[] EventTypeOptions =
+    {
+        (Assets.Scripts.Logging.EventType.Combat,      "Combat"),
+        (Assets.Scripts.Logging.EventType.Destruction, "Destruction"),
+        (Assets.Scripts.Logging.EventType.Movement,    "Movement"),
+        (Assets.Scripts.Logging.EventType.FinishLine,  "Finish Line"),
+        (Assets.Scripts.Logging.EventType.Resource,    "Resource"),
+        (Assets.Scripts.Logging.EventType.Condition,   "Condition"),
+        (Assets.Scripts.Logging.EventType.StageHazard, "Stage Hazard"),
+        (Assets.Scripts.Logging.EventType.EventCard,   "Event Card"),
+        (Assets.Scripts.Logging.EventType.AI,          "AI"),
+        (Assets.Scripts.Logging.EventType.System,      "System"),
+    };
+
+    private void PopulateEventTypeFilter()
+    {
+        eventTypeFilterDropdown.ClearOptions();
+
+        var options = new List<string> { "All Types" };
+        foreach (var entry in EventTypeOptions)
+            options.Add(entry.label);
+
+        eventTypeFilterDropdown.AddOptions(options);
+        eventTypeFilterDropdown.SetValueWithoutNotify(0);
+        filteredEventType = null;
+    }
+
+    private void OnEventTypeFilterChanged()
+    {
+        int index = eventTypeFilterDropdown.value;
+        if (index <= 0 || index > EventTypeOptions.Length)
+            filteredEventType = null;
+        else
+            filteredEventType = EventTypeOptions[index - 1].type;
+
+        FullRefreshFeed();
+    }
     private void CreateEventEntry(RaceEvent evt)
     {
         GameObject entryObj;
