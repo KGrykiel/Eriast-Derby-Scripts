@@ -1,6 +1,7 @@
 ﻿using UnityEngine;
 using TMPro;
 using System.Linq;
+using System.Collections.Generic;
 using EventType = Assets.Scripts.Logging.EventType;
 using Assets.Scripts.Logging;
 using Assets.Scripts.Managers;
@@ -62,10 +63,21 @@ public class OverviewPanel : MonoBehaviour
 
     private void UpdateLeaderboard()
     {
-        if (leaderboardText == null || stateMachine == null) return;
+        if (leaderboardText == null) return;
+
+        if (stateMachine == null)
+        {
+            if (gameManager == null)
+                gameManager = FindFirstObjectByType<GameManager>();
+            if (gameManager != null)
+                stateMachine = gameManager.GetStateMachine();
+        }
+
+        if (stateMachine == null) return;
 
         string display = "<b><size=18>=== RACE STANDINGS ===</size></b>\n";
-        display += $"<color=#888888>Round {stateMachine.CurrentRound} | Phase: {stateMachine.CurrentPhase}</color>\n\n";
+        display += $"<color=#888888>Round {stateMachine.CurrentRound} | Phase: {stateMachine.CurrentPhase}</color>\n";
+        display += BuildStageCountLine(stateMachine.AllVehicles) + "\n\n";
 
         var activeVehicles = stateMachine.AllVehicles
             .Where(v => v.Status == VehicleStatus.Active)
@@ -89,9 +101,11 @@ public class OverviewPanel : MonoBehaviour
             display += $"{posIcon} {name}\n";
 
             var vStage = RacePositionTracker.GetStage(vehicle);
-            string stageName = vStage != null ? vStage.stageName : "Unknown";
+            var vLane = RacePositionTracker.GetLane(vehicle);
+            string stageName = (vStage != null && !string.IsNullOrEmpty(vStage.stageName)) ? vStage.stageName : "Unknown";
+            string laneName = vLane != null ? vLane.laneName : "-";
             float stageLength = vStage != null ? vStage.length : 0;
-            display += $"   {stageName} ({RacePositionTracker.GetProgress(vehicle):F1}/{stageLength:F0}m)";
+            display += $"   <color={LogColors.IconMovement}>{stageName} > {laneName}</color> ({RacePositionTracker.GetProgress(vehicle):F1}/{stageLength:F0}m)";
 
             if (showDistanceToFinish)
             {
@@ -123,11 +137,29 @@ public class OverviewPanel : MonoBehaviour
 
             if (showModifiers)
             {
-                int statusCount = vehicle.AllComponents.Sum(c => c.GetActiveConditions().Count);
-                if (statusCount > 0)
-                    display += $" Effects:x{statusCount}";
+                var vehicleConditions = vehicle.GetActiveVehicleConditions();
+                var componentConditions = vehicle.AllComponents
+                    .SelectMany(c => c.GetActiveConditions())
+                    .Select(c => c.ModifierLabel)
+                    .Where(n => !string.IsNullOrEmpty(n));
+
+                var allConditionNames = vehicleConditions
+                    .Select(c => c.ModifierLabel)
+                    .Concat(componentConditions)
+                    .Where(n => !string.IsNullOrEmpty(n))
+                    .ToList();
+
+                if (allConditionNames.Count > 0)
+                {
+                    string pills = string.Join(" ", allConditionNames
+                        .Select(n => $"<color={LogColors.IconCondition}>[{n}]</color>"));
+                    display += $"\n   {pills}";
+                }
             }
 
+            string lastAction = GetLastAction(vehicle);
+            if (!string.IsNullOrEmpty(lastAction))
+                display += $"\n   <color={LogColors.ImportanceLow}>Last: {lastAction}</color>";
 
             display += "\n";
 
@@ -213,6 +245,39 @@ public class OverviewPanel : MonoBehaviour
             3 => "[3rd]",
             _ => $"[{position}]"
         };
+    }
+
+    private string GetLastAction(Vehicle vehicle)
+    {
+        for (int i = RaceHistory.AllEvents.Count - 1; i >= 0; i--)
+        {
+            var evt = RaceHistory.AllEvents[i];
+            if (evt.involvedVehicles.Contains(vehicle))
+            {
+                string desc = evt.description ?? "";
+                return desc.Length > 50 ? desc.Substring(0, 47) + "..." : desc;
+            }
+        }
+        return "";
+    }
+
+    private string BuildStageCountLine(IReadOnlyList<Vehicle> allVehicles)
+    {
+        var stageCounts = new Dictionary<string, int>();
+        foreach (var v in allVehicles)
+        {
+            if (v.Status != VehicleStatus.Active) continue;
+            var s = RacePositionTracker.GetStage(v);
+            string key = (s != null && !string.IsNullOrEmpty(s.stageName)) ? s.stageName : "?";
+            if (!stageCounts.ContainsKey(key)) stageCounts[key] = 0;
+            stageCounts[key]++;
+        }
+
+        if (stageCounts.Count == 0) return "";
+
+        string parts = string.Join("  ", stageCounts
+            .Select(kv => $"<color={LogColors.InspectorHeader}>{kv.Key}</color>: {kv.Value}"));
+        return $"<color={LogColors.ImportanceLow}>Stages: {parts}</color>";
     }
 
     }
