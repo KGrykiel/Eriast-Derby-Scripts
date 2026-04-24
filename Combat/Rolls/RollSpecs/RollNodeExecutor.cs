@@ -56,7 +56,6 @@ namespace Assets.Scripts.Combat.Rolls.RollSpecs
                 return anySuccess;
             }
 
-            Debug.LogWarning($"[RollNodeExecutor] RollNode has no targetResolver — skipping execution. CausalSource: {ctx.CausalSource ?? "<none>"}");
             throw new System.InvalidOperationException( $"[RollNodeExecutor] RollNode has no targetResolver. This is a content configuration error. CausalSource: {ctx.CausalSource ?? "<none>"}");
         }
 

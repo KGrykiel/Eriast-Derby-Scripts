@@ -11,7 +11,7 @@ namespace Assets.Scripts.Modifiers.DynamicModifiers
     /// </summary>
     public static class DynamicModifierEvaluator
     {
-        private const float SPEED_TO_AC_RATIO = 0.1f;
+        private const float SpeedToACRatio = 0.1f;
 
         public static List<EntityAttributeModifier> EvaluateAll(
             Entity entity, 
@@ -41,7 +41,7 @@ namespace Assets.Scripts.Modifiers.DynamicModifiers
             if (drive == null) return;
 
             float currentSpeed = drive.GetCurrentSpeed();
-            int acBonus = (int)(currentSpeed * SPEED_TO_AC_RATIO);
+            int acBonus = (int)(currentSpeed * SpeedToACRatio);
 
             if (acBonus > 0)
             {
