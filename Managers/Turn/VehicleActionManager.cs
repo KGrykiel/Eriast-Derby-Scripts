@@ -18,7 +18,6 @@ namespace Assets.Scripts.Managers.Turn
     {
         private readonly MonoBehaviour coroutineRunner;
 
-        [Tooltip("Seconds to wait before executing each action.")]
         public float actionDelay = 0.6f;
 
         public bool IsPaused { get; set; }

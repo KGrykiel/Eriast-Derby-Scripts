@@ -96,7 +96,7 @@ namespace Assets.Scripts.UI.Tabs.Lanes
             stagesWithLanes.Clear();
             stageDropdown.ClearOptions();
 
-            var allStages = FindObjectsByType<Stage>(FindObjectsSortMode.None);
+            var allStages = TrackDefinition.GetAll();
             var options = new List<string>();
 
             foreach (var stage in allStages)

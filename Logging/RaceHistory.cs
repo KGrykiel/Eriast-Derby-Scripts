@@ -15,7 +15,7 @@ namespace Assets.Scripts.Logging
         private TurnStateMachine stateMachine;
 
         private List<RaceEvent> allEvents = new();
-        public int maxStoredEvents = 10000;
+        private const int maxStoredEvents = 10000;
 
         public static IReadOnlyList<RaceEvent> AllEvents => Instance.allEvents;
 

@@ -155,11 +155,11 @@ namespace Assets.Scripts.Stages
 
         /// <summary>
         /// Returns the shortest distance from the given stage and progress to a finish line stage via BFS.
-        /// Returns 999999 if no path to finish is found.
+        /// Returns <see cref="float.PositiveInfinity"/> if no path to finish is found.
         /// </summary>
         public float GetShortestDistanceToFinish(Stage fromStage, float fromProgress)
         {
-            if (fromStage == null) return 999999f;
+            if (fromStage == null) return float.PositiveInfinity;
 
             if (fromStage == _resolvedFinishStage && fromProgress < 1f)
                 return GetFullLapDistance(fromStage);
@@ -175,7 +175,7 @@ namespace Assets.Scripts.Stages
             }
 
             if (queue.Count == 0)
-                return 999999f;
+                return float.PositiveInfinity;
 
             float shortestDistance = float.MaxValue;
 
@@ -200,12 +200,12 @@ namespace Assets.Scripts.Stages
                 }
             }
 
-            return shortestDistance == float.MaxValue ? 999999f : shortestDistance;
+            return shortestDistance == float.MaxValue ? float.PositiveInfinity : shortestDistance;
         }
 
         private float GetFullLapDistance(Stage startFinishStage)
         {
-            if (startFinishStage == null) return 999999f;
+            if (startFinishStage == null) return float.PositiveInfinity;
 
             Queue<(Stage stage, float distance)> queue = new();
             HashSet<Stage> visited = new();
@@ -234,8 +234,8 @@ namespace Assets.Scripts.Stages
                 }
             }
 
-            // If no loop found, return a large number
-            return lapDistance == float.MaxValue ? 999999f : lapDistance;
+            // If no loop found, no valid circuit exists.
+            return lapDistance == float.MaxValue ? float.PositiveInfinity : lapDistance;
         }
     }
 }

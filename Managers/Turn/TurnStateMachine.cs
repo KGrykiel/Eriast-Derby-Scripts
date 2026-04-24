@@ -77,6 +77,9 @@ namespace Assets.Scripts.Managers.Turn
 
             currentTurnIndex = 0;
             currentRound = 0;
+
+            RegisterPhaseHandlers();
+            TurnEventBus.OnEvent += HandleVehicleDestroyed;
         }
 
         private void HandleVehicleDestroyed(TurnEvent evt)
@@ -123,8 +126,6 @@ namespace Assets.Scripts.Managers.Turn
         {
             if (currentPhase == TurnPhase.Inactive)
             {
-                RegisterPhaseHandlers();
-                TurnEventBus.OnEvent += HandleVehicleDestroyed;
                 TransitionTo(TurnPhase.RoundStart);
             }
 

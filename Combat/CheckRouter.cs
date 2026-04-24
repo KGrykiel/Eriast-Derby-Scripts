@@ -23,13 +23,13 @@ namespace Assets.Scripts.Combat
         public class RoutingResult
         {
             /// <summary>Who or what makes the roll.</summary>
-            public RollActor Actor;
+            public RollActor Actor { get; private set; }
 
             /// <summary>Whether the check can be attempted at all.</summary>
-            public bool CanAttempt;
+            public bool CanAttempt { get; private set; }
 
             /// <summary>Why the check can't be attempted (for UI/narrative). Null if CanAttempt is true.</summary>
-            public string FailureReason;
+            public string FailureReason { get; private set; }
 
             public static RoutingResult Success(RollActor actor)
             {

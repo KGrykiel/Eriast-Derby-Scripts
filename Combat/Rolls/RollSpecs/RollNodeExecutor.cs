@@ -37,7 +37,7 @@ namespace Assets.Scripts.Combat.Rolls.RollSpecs
 
         private static bool ExecuteNode(RollNode node, RollContext ctx)
         {
-            // Fan-out: if the node has a targetResolver, execute once per resolved target
+            // Fan-out: execute once per resolved target
             if (node.targetResolver != null)
             {
                 var targets = node.targetResolver.ResolveFrom(ctx);
@@ -57,7 +57,7 @@ namespace Assets.Scripts.Combat.Rolls.RollSpecs
             }
 
             Debug.LogWarning($"[RollNodeExecutor] RollNode has no targetResolver — skipping execution. CausalSource: {ctx.CausalSource ?? "<none>"}");
-            return false;
+            throw new System.InvalidOperationException( $"[RollNodeExecutor] RollNode has no targetResolver. This is a content configuration error. CausalSource: {ctx.CausalSource ?? "<none>"}");
         }
 
         private static bool ExecuteSingleNode(RollNode node, RollContext ctx)

@@ -68,15 +68,26 @@ namespace Assets.Scripts.Core
         // ==================== SKILL CHECKS ====================
 
         /// <summary>
-        /// Full skill bonus breakdown: each component is separate for display and roll gathering.
+        /// Skill bonus breakdown without the total: each component is separate for display and roll gathering.
+        /// Returns (attrBonus, profBonus, directMods).
+        /// </summary>
+        public static (int attrBonus, int profBonus, List<CharacterModifier> directMods)
+            GatherSkillBonusComponents(VehicleSeat seat, CharacterSkill skill)
+        {
+            int attrBonus = GetAttributeBonus(seat, CharacterSkillHelper.GetPrimaryAttribute(skill));
+            int profBonus = seat.IsProficientIn(skill) ? CalculateProficiencyBonus(seat.GetLevel()) : 0;
+            var directMods = GatherDirectSkillModifiers(seat, skill);
+            return (attrBonus, profBonus, directMods);
+        }
+
+        /// <summary>
+        /// Full skill bonus breakdown including the total.
         /// Returns (total, attrBonus, profBonus, directMods).
         /// </summary>
         public static (int total, int attrBonus, int profBonus, List<CharacterModifier> directMods)
             GatherSkillBonusWithBreakdown(VehicleSeat seat, CharacterSkill skill)
         {
-            int attrBonus = GetAttributeBonus(seat, CharacterSkillHelper.GetPrimaryAttribute(skill));
-            int profBonus = seat.IsProficientIn(skill) ? CalculateProficiencyBonus(seat.GetLevel()) : 0;
-            var directMods = GatherDirectSkillModifiers(seat, skill);
+            var (attrBonus, profBonus, directMods) = GatherSkillBonusComponents(seat, skill);
             int total = ModifierCalculator.CalculateTotal(attrBonus + profBonus, directMods);
             return (total, attrBonus, profBonus, directMods);
         }
@@ -84,8 +95,8 @@ namespace Assets.Scripts.Core
         /// <summary>Convenience scalar for seat comparison in routing.</summary>
         public static int GatherSkillValue(VehicleSeat seat, CharacterSkill skill)
         {
-            var (total, _, _, _) = GatherSkillBonusWithBreakdown(seat, skill);
-            return total;
+            var (attrBonus, profBonus, directMods) = GatherSkillBonusComponents(seat, skill);
+            return ModifierCalculator.CalculateTotal(attrBonus + profBonus, directMods);
         }
 
         // ==================== SAVES ====================

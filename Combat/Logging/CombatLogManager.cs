@@ -25,10 +25,10 @@ namespace Assets.Scripts.Combat.Logging
         {
             if (action == null || !action.HasEvents) return;
 
-            LogAttackRolls(action);
-            LogSavingThrows(action);
-            LogSkillChecks(action);
-            LogOpposedChecks(action);
+            ForEach<AttackRollEvent>(action, LogSingleAttackRoll);
+            ForEach<SavingThrowEvent>(action, LogSingleSavingThrow);
+            ForEach<SkillCheckEvent>(action, LogSingleSkillCheck);
+            ForEach<OpposedCheckEvent>(action, LogSingleOpposedCheck);
             LogDamageByTarget(action);
             LogEntityConditions(action);
             LogVehicleConditions(action);
@@ -38,12 +38,6 @@ namespace Assets.Scripts.Combat.Logging
         }
 
         // ==================== ATTACK ROLL LOGGING ====================
-
-        private static void LogAttackRolls(CombatAction action)
-        {
-            foreach (var evt in action.Get<AttackRollEvent>())
-                LogSingleAttackRoll(evt);
-        }
 
         private static void LogSingleAttackRoll(AttackRollEvent evt)
         {
@@ -74,12 +68,6 @@ namespace Assets.Scripts.Combat.Logging
         }
 
         // ==================== SAVING THROW LOGGING ====================
-
-        private static void LogSavingThrows(CombatAction action)
-        {
-            foreach (var evt in action.Get<SavingThrowEvent>())
-                LogSingleSavingThrow(evt);
-        }
 
         private static void LogSingleSavingThrow(SavingThrowEvent evt)
         {
@@ -114,12 +102,6 @@ namespace Assets.Scripts.Combat.Logging
 
         // ==================== SKILL CHECK LOGGING ====================
 
-        private static void LogSkillChecks(CombatAction action)
-        {
-            foreach (var evt in action.Get<SkillCheckEvent>())
-                LogSingleSkillCheck(evt);
-        }
-
         private static void LogSingleSkillCheck(SkillCheckEvent evt)
         {
             Vehicle sourceVehicle = evt.Actor?.GetVehicle();
@@ -151,12 +133,6 @@ namespace Assets.Scripts.Combat.Logging
         }
 
         // ==================== OPPOSED CHECK LOGGING ====================
-
-        private static void LogOpposedChecks(CombatAction action)
-        {
-            foreach (var evt in action.Get<OpposedCheckEvent>())
-                LogSingleOpposedCheck(evt);
-        }
 
         private static void LogSingleOpposedCheck(OpposedCheckEvent evt)
         {
@@ -228,29 +204,14 @@ namespace Assets.Scripts.Combat.Logging
 
         private static void LogEntityConditions(CombatAction action)
         {
-            foreach (var evt in action.Get<EntityConditionEvent>().Where(e => e.Applied != null))
-                LogSingleEntityCondition(evt);
-
-            foreach (var evt in action.Get<EntityConditionRefreshedEvent>())
-                LogConditionRefreshed(EntityContext(evt.Target), evt.Refreshed, CombatFormatter.FormatEntityConditionTooltip(evt.Refreshed));
-
-            foreach (var evt in action.Get<EntityConditionIgnoredEvent>())
-                LogConditionIgnored(EntityContext(evt.Target), evt.Existing, CombatFormatter.FormatEntityConditionTooltip(evt.Existing));
-
-            foreach (var evt in action.Get<EntityConditionReplacedEvent>())
-                LogConditionReplaced(EntityContext(evt.Target), evt.NewEffect, evt.OldDuration, CombatFormatter.FormatEntityConditionTooltip(evt.NewEffect));
-
-            foreach (var evt in action.Get<EntityConditionKeptStrongerEvent>())
-                LogConditionKeptStronger(EntityContext(evt.Target), evt.Kept, CombatFormatter.FormatEntityConditionTooltip(evt.Kept));
-
-            foreach (var evt in action.Get<EntityConditionStackLimitEvent>())
-                LogConditionStackLimit(EntityContext(evt.Target), evt.Template.effectName, evt.MaxStacks);
-
-            foreach (var evt in action.Get<EntityConditionExpiredEvent>())
-                LogConditionExpired(EntityContext(evt.Target), evt.Expired, CombatFormatter.FormatEntityConditionTooltip(evt.Expired));
-
-            foreach (var evt in action.Get<EntityConditionRemovedByTriggerEvent>())
-                LogConditionRemovedByTrigger(EntityContext(evt.Target), evt.Removed, evt.Trigger.ToString(), CombatFormatter.FormatEntityConditionTooltip(evt.Removed));
+            ForEach<EntityConditionEvent>(action, evt => { if (evt.Applied != null) LogSingleEntityCondition(evt); });
+            ForEach<EntityConditionRefreshedEvent>(action, evt => LogConditionRefreshed(EntityContext(evt.Target), evt.Refreshed, CombatFormatter.FormatEntityConditionTooltip(evt.Refreshed)));
+            ForEach<EntityConditionIgnoredEvent>(action, evt => LogConditionIgnored(EntityContext(evt.Target), evt.Existing, CombatFormatter.FormatEntityConditionTooltip(evt.Existing)));
+            ForEach<EntityConditionReplacedEvent>(action, evt => LogConditionReplaced(EntityContext(evt.Target), evt.NewEffect, evt.OldDuration, CombatFormatter.FormatEntityConditionTooltip(evt.NewEffect)));
+            ForEach<EntityConditionKeptStrongerEvent>(action, evt => LogConditionKeptStronger(EntityContext(evt.Target), evt.Kept, CombatFormatter.FormatEntityConditionTooltip(evt.Kept)));
+            ForEach<EntityConditionStackLimitEvent>(action, evt => LogConditionStackLimit(EntityContext(evt.Target), evt.Template.effectName, evt.MaxStacks));
+            ForEach<EntityConditionExpiredEvent>(action, evt => LogConditionExpired(EntityContext(evt.Target), evt.Expired, CombatFormatter.FormatEntityConditionTooltip(evt.Expired)));
+            ForEach<EntityConditionRemovedByTriggerEvent>(action, evt => LogConditionRemovedByTrigger(EntityContext(evt.Target), evt.Removed, evt.Trigger.ToString(), CombatFormatter.FormatEntityConditionTooltip(evt.Removed)));
         }
 
         private static void LogSingleEntityCondition(EntityConditionEvent evt)
@@ -367,6 +328,12 @@ namespace Assets.Scripts.Combat.Logging
             return $"{string.Join(" + ", parts)} ({LogColors.Damage($"{total} total")}) damage";
         }
 
+        private static void ForEach<TEvent>(CombatAction action, Action<TEvent> handler) where TEvent : CombatEvent
+        {
+            foreach (var evt in action.Get<TEvent>())
+                handler(evt);
+        }
+
         private static void BuildRestorationPart(
             List<string> parts,
             List<RestorationEvent> restorations,
@@ -388,29 +355,14 @@ namespace Assets.Scripts.Combat.Logging
 
         private static void LogCharacterConditions(CombatAction action)
         {
-            foreach (var evt in action.Get<CharacterConditionEvent>())
-                LogSingleCharacterCondition(evt);
-
-            foreach (var evt in action.Get<CharacterConditionRefreshedEvent>())
-                LogConditionRefreshed(CharacterContext(evt.TargetSeat), evt.Refreshed, CombatFormatter.FormatCharacterConditionTooltip(evt.Refreshed));
-
-            foreach (var evt in action.Get<CharacterConditionIgnoredEvent>())
-                LogConditionIgnored(CharacterContext(evt.TargetSeat), evt.Existing, CombatFormatter.FormatCharacterConditionTooltip(evt.Existing));
-
-            foreach (var evt in action.Get<CharacterConditionReplacedEvent>())
-                LogConditionReplaced(CharacterContext(evt.TargetSeat), evt.NewCondition, evt.OldDuration, CombatFormatter.FormatCharacterConditionTooltip(evt.NewCondition));
-
-            foreach (var evt in action.Get<CharacterConditionKeptStrongerEvent>())
-                LogConditionKeptStronger(CharacterContext(evt.TargetSeat), evt.Kept, CombatFormatter.FormatCharacterConditionTooltip(evt.Kept));
-
-            foreach (var evt in action.Get<CharacterConditionStackLimitEvent>())
-                LogConditionStackLimit(CharacterContext(evt.TargetSeat), evt.Template.effectName, evt.MaxStacks);
-
-            foreach (var evt in action.Get<CharacterConditionExpiredEvent>())
-                LogConditionExpired(CharacterContext(evt.TargetSeat), evt.Expired, CombatFormatter.FormatCharacterConditionTooltip(evt.Expired));
-
-            foreach (var evt in action.Get<CharacterConditionRemovedByTriggerEvent>())
-                LogConditionRemovedByTrigger(CharacterContext(evt.TargetSeat), evt.Removed, evt.Trigger.ToString(), CombatFormatter.FormatCharacterConditionTooltip(evt.Removed));
+            ForEach<CharacterConditionEvent>(action, LogSingleCharacterCondition);
+            ForEach<CharacterConditionRefreshedEvent>(action, evt => LogConditionRefreshed(CharacterContext(evt.TargetSeat), evt.Refreshed, CombatFormatter.FormatCharacterConditionTooltip(evt.Refreshed)));
+            ForEach<CharacterConditionIgnoredEvent>(action, evt => LogConditionIgnored(CharacterContext(evt.TargetSeat), evt.Existing, CombatFormatter.FormatCharacterConditionTooltip(evt.Existing)));
+            ForEach<CharacterConditionReplacedEvent>(action, evt => LogConditionReplaced(CharacterContext(evt.TargetSeat), evt.NewCondition, evt.OldDuration, CombatFormatter.FormatCharacterConditionTooltip(evt.NewCondition)));
+            ForEach<CharacterConditionKeptStrongerEvent>(action, evt => LogConditionKeptStronger(CharacterContext(evt.TargetSeat), evt.Kept, CombatFormatter.FormatCharacterConditionTooltip(evt.Kept)));
+            ForEach<CharacterConditionStackLimitEvent>(action, evt => LogConditionStackLimit(CharacterContext(evt.TargetSeat), evt.Template.effectName, evt.MaxStacks));
+            ForEach<CharacterConditionExpiredEvent>(action, evt => LogConditionExpired(CharacterContext(evt.TargetSeat), evt.Expired, CombatFormatter.FormatCharacterConditionTooltip(evt.Expired)));
+            ForEach<CharacterConditionRemovedByTriggerEvent>(action, evt => LogConditionRemovedByTrigger(CharacterContext(evt.TargetSeat), evt.Removed, evt.Trigger.ToString(), CombatFormatter.FormatCharacterConditionTooltip(evt.Removed)));
         }
 
         private static void LogSingleCharacterCondition(CharacterConditionEvent evt)
@@ -446,29 +398,14 @@ namespace Assets.Scripts.Combat.Logging
 
         private static void LogVehicleConditions(CombatAction action)
         {
-            foreach (var evt in action.Get<VehicleConditionEvent>().Where(e => e.Applied != null))
-                LogSingleVehicleCondition(evt);
-
-            foreach (var evt in action.Get<VehicleConditionRefreshedEvent>())
-                LogConditionRefreshed(VehicleContext(evt.Target), evt.Refreshed, CombatFormatter.FormatVehicleConditionTooltip(evt.Refreshed));
-
-            foreach (var evt in action.Get<VehicleConditionIgnoredEvent>())
-                LogConditionIgnored(VehicleContext(evt.Target), evt.Existing, CombatFormatter.FormatVehicleConditionTooltip(evt.Existing));
-
-            foreach (var evt in action.Get<VehicleConditionReplacedEvent>())
-                LogConditionReplaced(VehicleContext(evt.Target), evt.NewCondition, evt.OldDuration, CombatFormatter.FormatVehicleConditionTooltip(evt.NewCondition));
-
-            foreach (var evt in action.Get<VehicleConditionKeptStrongerEvent>())
-                LogConditionKeptStronger(VehicleContext(evt.Target), evt.Kept, CombatFormatter.FormatVehicleConditionTooltip(evt.Kept));
-
-            foreach (var evt in action.Get<VehicleConditionStackLimitEvent>())
-                LogConditionStackLimit(VehicleContext(evt.Target), evt.Template.effectName, evt.MaxStacks);
-
-            foreach (var evt in action.Get<VehicleConditionExpiredEvent>())
-                LogConditionExpired(VehicleContext(evt.Target), evt.Expired, CombatFormatter.FormatVehicleConditionTooltip(evt.Expired));
-
-            foreach (var evt in action.Get<VehicleConditionRemovedByTriggerEvent>())
-                LogConditionRemovedByTrigger(VehicleContext(evt.Target), evt.Removed, evt.Trigger.ToString(), CombatFormatter.FormatVehicleConditionTooltip(evt.Removed));
+            ForEach<VehicleConditionEvent>(action, evt => { if (evt.Applied != null) LogSingleVehicleCondition(evt); });
+            ForEach<VehicleConditionRefreshedEvent>(action, evt => LogConditionRefreshed(VehicleContext(evt.Target), evt.Refreshed, CombatFormatter.FormatVehicleConditionTooltip(evt.Refreshed)));
+            ForEach<VehicleConditionIgnoredEvent>(action, evt => LogConditionIgnored(VehicleContext(evt.Target), evt.Existing, CombatFormatter.FormatVehicleConditionTooltip(evt.Existing)));
+            ForEach<VehicleConditionReplacedEvent>(action, evt => LogConditionReplaced(VehicleContext(evt.Target), evt.NewCondition, evt.OldDuration, CombatFormatter.FormatVehicleConditionTooltip(evt.NewCondition)));
+            ForEach<VehicleConditionKeptStrongerEvent>(action, evt => LogConditionKeptStronger(VehicleContext(evt.Target), evt.Kept, CombatFormatter.FormatVehicleConditionTooltip(evt.Kept)));
+            ForEach<VehicleConditionStackLimitEvent>(action, evt => LogConditionStackLimit(VehicleContext(evt.Target), evt.Template.effectName, evt.MaxStacks));
+            ForEach<VehicleConditionExpiredEvent>(action, evt => LogConditionExpired(VehicleContext(evt.Target), evt.Expired, CombatFormatter.FormatVehicleConditionTooltip(evt.Expired)));
+            ForEach<VehicleConditionRemovedByTriggerEvent>(action, evt => LogConditionRemovedByTrigger(VehicleContext(evt.Target), evt.Removed, evt.Trigger.ToString(), CombatFormatter.FormatVehicleConditionTooltip(evt.Removed)));
         }
 
         private static void LogSingleVehicleCondition(VehicleConditionEvent evt)
@@ -602,14 +539,9 @@ namespace Assets.Scripts.Combat.Logging
 
         private static void LogConsumables(CombatAction action)
         {
-            foreach (var evt in action.Get<ConsumableSpentEvent>())
-                LogConsumableSpent(evt);
-
-            foreach (var evt in action.Get<ConsumableRestoredEvent>())
-                LogConsumableRestored(evt);
-
-            foreach (var evt in action.Get<ConsumableUnavailableEvent>())
-                LogConsumableUnavailable(evt);
+            ForEach<ConsumableSpentEvent>(action, LogConsumableSpent);
+            ForEach<ConsumableRestoredEvent>(action, LogConsumableRestored);
+            ForEach<ConsumableUnavailableEvent>(action, LogConsumableUnavailable);
         }
 
         private static void LogConsumableSpent(ConsumableSpentEvent evt)

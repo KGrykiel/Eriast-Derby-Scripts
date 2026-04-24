@@ -68,9 +68,16 @@ namespace Assets.Scripts.Managers.Race
             if (vehicle == null || RacePositionTracker.GetStage(vehicle) == null) return;
 
             Stage currentStage;
+            int safetyCounter = 0;
+            const int maxTransitions = 64;
             while ((currentStage = RacePositionTracker.GetStage(vehicle)) != null &&
                    RacePositionTracker.GetProgress(vehicle) >= currentStage.length)
             {
+                if (++safetyCounter > maxTransitions)
+                {
+                    Debug.LogError($"[RaceMovement] Stage transition loop exceeded {maxTransitions} iterations for {vehicle.vehicleName} — aborting to prevent infinite loop.");
+                    break;
+                }
                 StageLane currentLane = RacePositionTracker.GetLane(vehicle);
                 Stage nextStage = null;
 

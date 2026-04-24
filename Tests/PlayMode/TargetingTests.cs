@@ -825,7 +825,7 @@ namespace Assets.Scripts.Tests.PlayMode
         // ================================================================
 
         [UnityTest]
-        public IEnumerator NullResolver_ReturnsFalseAndSkipsExecution()
+        public IEnumerator NullResolver_ThrowsInvalidOperationException()
         {
             var vehicle = BuildVehicle("Target", chassisHealth: 100);
             var node = new RollNode
@@ -838,10 +838,9 @@ namespace Assets.Scripts.Tests.PlayMode
             };
             var ctx = new RollContext { Target = vehicle, CausalSource = "Test" };
 
-            bool result = RollNodeExecutor.Execute(node, ctx);
+            Assert.Throws<System.InvalidOperationException>(() => RollNodeExecutor.Execute(node, ctx));
             yield return null;
 
-            Assert.IsFalse(result, "Null resolver should return false");
             Assert.AreEqual(100, vehicle.Chassis.GetCurrentHealth(), "No effects should apply when resolver is null");
         }
 

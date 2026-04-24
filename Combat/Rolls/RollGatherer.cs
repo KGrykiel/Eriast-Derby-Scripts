@@ -47,7 +47,7 @@ namespace Assets.Scripts.Combat.Rolls
             CharacterSkill skill)
         {
             var bonuses = new List<RollBonus>();
-            var (_, attrBonus, profBonus, directMods) = CharacterStatCalculator.GatherSkillBonusWithBreakdown(seat, skill);
+            var (attrBonus, profBonus, directMods) = CharacterStatCalculator.GatherSkillBonusComponents(seat, skill);
 
             CharacterAttribute attribute = CharacterSkillHelper.GetPrimaryAttribute(skill);
             if (attrBonus != 0)

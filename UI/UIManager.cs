@@ -37,7 +37,7 @@ namespace Assets.Scripts.UI
             }
             Instance = this;
 
-            string keyName = toggleHotkey != Key.None ? toggleHotkey.ToString().ToLower() : "tab";
+            string keyName = toggleHotkey != Key.None ? toggleHotkey.ToString() : "tab";
 
             _toggleAction = new InputAction("ToggleDMInterface", InputActionType.Button);
             _toggleAction.AddBinding($"<Keyboard>/{keyName}");

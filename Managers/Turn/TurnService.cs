@@ -22,8 +22,9 @@ namespace Assets.Scripts.Managers.Turn
         /// <summary>Returns all active vehicles in the same stage as <paramref name="source"/>, excluding source itself.</summary>
         public List<Vehicle> GetOtherVehiclesInStage(Vehicle source)
         {
+            if (source == null) return new List<Vehicle>();
             Stage sourceStage = RacePositionTracker.GetStage(source);
-            if (source == null || sourceStage == null)
+            if (sourceStage == null)
                 return new List<Vehicle>();
 
             var others = new List<Vehicle>();
@@ -41,8 +42,9 @@ namespace Assets.Scripts.Managers.Turn
         /// <summary>Returns all active vehicles in the same stage as <paramref name="source"/>, including source itself.</summary>
         public List<Vehicle> GetAllTargets(Vehicle source)
         {
+            if (source == null) return new List<Vehicle>();
             Stage sourceStage = RacePositionTracker.GetStage(source);
-            if (source == null || sourceStage == null)
+            if (sourceStage == null)
                 return new List<Vehicle>();
 
             var targets = new List<Vehicle>();
@@ -59,8 +61,9 @@ namespace Assets.Scripts.Managers.Turn
         /// <summary>Returns all active allies of <paramref name="source"/> in the same stage.</summary>
         public List<Vehicle> GetAlliedTargets(Vehicle source)
         {
+            if (source == null || source.team == null) return new List<Vehicle>();
             Stage sourceStage = RacePositionTracker.GetStage(source);
-            if (source == null || source.team == null || sourceStage == null)
+            if (sourceStage == null)
                 return new List<Vehicle>();
 
             var allies = new List<Vehicle>();

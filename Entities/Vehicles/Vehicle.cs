@@ -75,6 +75,11 @@ namespace Assets.Scripts.Entities.Vehicles
             RacePositionTracker.Register(this);
         }
 
+        void OnDisable()
+        {
+            RacePositionTracker.Unregister(this);
+        }
+
         void OnValidate()
         {
             // Validate component space usage

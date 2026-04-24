@@ -47,6 +47,8 @@ namespace Assets.Scripts.Entities.Vehicles
 
         // ==================== TURN STATE ====================
 
+        // Starts empty intentionally. CanSpendAction returns true for any ActionType not present
+        // in this pool, meaning actions are freely available until a limit is explicitly registered.
         [NonSerialized]
         private readonly Dictionary<ActionType, int> _actionPool = new();
 

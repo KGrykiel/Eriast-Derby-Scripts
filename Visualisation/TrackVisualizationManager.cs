@@ -42,17 +42,6 @@ namespace Assets.Scripts.Visualisation
         [Tooltip("LaneViewPanel in the scene. Required for stage clicks to open the Lanes tab.")]
         [SerializeField] private LaneViewPanel laneViewPanel;
 
-        // ==================== STATIC CLICK EVENTS ====================
-
-        private static event Action<Vehicle> VehicleClicked;
-        private static event Action<Stage>   StageClicked;
-
-        /// <summary>Called by VehicleVisual.OnMouseDown to route a vehicle click to this manager.</summary>
-        internal static void RaiseVehicleClicked(Vehicle vehicle) => VehicleClicked?.Invoke(vehicle);
-
-        /// <summary>Called by StageVisual.OnMouseDown to route a stage click to this manager.</summary>
-        internal static void RaiseStageClicked(Stage stage) => StageClicked?.Invoke(stage);
-
         private void Start()
         {
             if (TrackDefinition.Active == null)
@@ -62,15 +51,6 @@ namespace Assets.Scripts.Visualisation
             }
 
             InitialiseVisuals();
-
-            VehicleClicked += HandleVehicleClicked;
-            StageClicked   += HandleStageClicked;
-        }
-
-        private void OnDestroy()
-        {
-            VehicleClicked -= HandleVehicleClicked;
-            StageClicked   -= HandleStageClicked;
         }
 
         private void Update()
@@ -112,13 +92,13 @@ namespace Assets.Scripts.Visualisation
             VehicleVisual vv = closest.collider.GetComponentInParent<VehicleVisual>();
             if (vv != null)
             {
-                RaiseVehicleClicked(closest.collider.GetComponentInParent<Vehicle>());
+                HandleVehicleClicked(closest.collider.GetComponentInParent<Vehicle>());
                 return;
             }
 
             StageVisual sv = closest.collider.GetComponentInParent<StageVisual>();
             if (sv != null)
-                RaiseStageClicked(closest.collider.GetComponentInParent<Stage>());
+                HandleStageClicked(closest.collider.GetComponentInParent<Stage>());
         }
 
         // ==================== CLICK HANDLERS ====================

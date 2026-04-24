@@ -22,9 +22,9 @@ namespace Assets.Scripts.Combat
     
     public class DamageEvent : CombatEvent
     {
-        public DamageResult Result { get; set; }
-        public RollActor Actor { get; set; }
-        public Entity Target { get; set; }
+        public DamageResult Result { get; private set; }
+        public RollActor Actor { get; private set; }
+        public Entity Target { get; private set; }
 
         public DamageEvent(
             DamageResult result,
@@ -41,9 +41,9 @@ namespace Assets.Scripts.Combat
 
     public class RestorationEvent : CombatEvent
     {
-        public RestorationResult Result { get; set; }
-        public RollActor Actor { get; set; }
-        public Entity Target { get; set; }
+        public RestorationResult Result { get; private set; }
+        public RollActor Actor { get; private set; }
+        public Entity Target { get; private set; }
 
         public RestorationEvent(
             RestorationResult result,
@@ -61,9 +61,9 @@ namespace Assets.Scripts.Combat
     /// <summary>Attack roll (hit or miss). Separate from damage — attack determines IF damage happens.</summary>
     public class AttackRollEvent : CombatEvent
     {
-        public D20RollOutcome Roll { get; set; }
-        public RollActor Actor { get; set; }
-        public Entity Target { get; set; }
+        public D20RollOutcome Roll { get; private set; }
+        public RollActor Actor { get; private set; }
+        public Entity Target { get; private set; }
 
         public AttackRollEvent(
             D20RollOutcome roll,
@@ -80,10 +80,10 @@ namespace Assets.Scripts.Combat
     
     public class SavingThrowEvent : CombatEvent
     {
-        public D20RollOutcome Roll { get; set; }
-        public RollActor Defender { get; set; }
-        public string CheckName { get; set; }
-        public Entity Source { get; set; }
+        public D20RollOutcome Roll { get; private set; }
+        public RollActor Defender { get; private set; }
+        public string CheckName { get; private set; }
+        public Entity Source { get; private set; }
 
         public SavingThrowEvent(
             D20RollOutcome roll,
@@ -102,9 +102,9 @@ namespace Assets.Scripts.Combat
     
     public class SkillCheckEvent : CombatEvent
     {
-        public D20RollOutcome Roll { get; set; }
-        public RollActor Actor { get; set; }
-        public string CheckName { get; set; }
+        public D20RollOutcome Roll { get; private set; }
+        public RollActor Actor { get; private set; }
+        public string CheckName { get; private set; }
 
         public SkillCheckEvent(
             D20RollOutcome roll,
@@ -121,12 +121,12 @@ namespace Assets.Scripts.Combat
 
     public class OpposedCheckEvent : CombatEvent
     {
-        public D20RollOutcome Roll { get; set; }
-        public D20RollOutcome? DefenderRoll { get; set; }
-        public RollActor AttackerActor { get; set; }
-        public RollActor DefenderActor { get; set; }
-        public string AttackerCheckName { get; set; }
-        public string DefenderCheckName { get; set; }
+        public D20RollOutcome Roll { get; private set; }
+        public D20RollOutcome? DefenderRoll { get; private set; }
+        public RollActor AttackerActor { get; private set; }
+        public RollActor DefenderActor { get; private set; }
+        public string AttackerCheckName { get; private set; }
+        public string DefenderCheckName { get; private set; }
 
         public OpposedCheckEvent(
             D20RollOutcome roll,
@@ -150,9 +150,9 @@ namespace Assets.Scripts.Combat
 
     public class EntityConditionEvent : CombatEvent
     {
-        public AppliedEntityCondition Applied { get; set; }
-        public Entity Source { get; set; }
-        public Entity Target { get; set; }
+        public AppliedEntityCondition Applied { get; private set; }
+        public Entity Source { get; private set; }
+        public Entity Target { get; private set; }
 
         public EntityConditionEvent(
             AppliedEntityCondition applied,
@@ -171,8 +171,8 @@ namespace Assets.Scripts.Combat
 
     public class EntityConditionExpiredEvent : CombatEvent
     {
-        public AppliedEntityCondition Expired { get; set; }
-        public Entity Target { get; set; }
+        public AppliedEntityCondition Expired { get; private set; }
+        public Entity Target { get; private set; }
 
         public EntityConditionExpiredEvent(AppliedEntityCondition expired, Entity target)
         {
@@ -183,8 +183,8 @@ namespace Assets.Scripts.Combat
 
     public class EntityConditionRefreshedEvent : CombatEvent
     {
-        public AppliedEntityCondition Refreshed { get; set; }
-        public Entity Target { get; set; }
+        public AppliedEntityCondition Refreshed { get; private set; }
+        public Entity Target { get; private set; }
 
         public EntityConditionRefreshedEvent(AppliedEntityCondition refreshed, Entity target)
         {
@@ -195,8 +195,8 @@ namespace Assets.Scripts.Combat
 
     public class EntityConditionIgnoredEvent : CombatEvent
     {
-        public AppliedEntityCondition Existing { get; set; }
-        public Entity Target { get; set; }
+        public AppliedEntityCondition Existing { get; private set; }
+        public Entity Target { get; private set; }
 
         public EntityConditionIgnoredEvent(AppliedEntityCondition existing, Entity target)
         {
@@ -207,9 +207,9 @@ namespace Assets.Scripts.Combat
 
     public class EntityConditionReplacedEvent : CombatEvent
     {
-        public AppliedEntityCondition NewEffect { get; set; }
-        public int OldDuration { get; set; }
-        public Entity Target { get; set; }
+        public AppliedEntityCondition NewEffect { get; private set; }
+        public int OldDuration { get; private set; }
+        public Entity Target { get; private set; }
 
         public EntityConditionReplacedEvent(AppliedEntityCondition newEffect, Entity target, int oldDuration)
         {
@@ -221,8 +221,8 @@ namespace Assets.Scripts.Combat
 
     public class EntityConditionKeptStrongerEvent : CombatEvent
     {
-        public AppliedEntityCondition Kept { get; set; }
-        public Entity Target { get; set; }
+        public AppliedEntityCondition Kept { get; private set; }
+        public Entity Target { get; private set; }
 
         public EntityConditionKeptStrongerEvent(AppliedEntityCondition kept, Entity target)
         {
@@ -233,9 +233,9 @@ namespace Assets.Scripts.Combat
 
     public class EntityConditionStackLimitEvent : CombatEvent
     {
-        public EntityCondition Template { get; set; }
-        public int MaxStacks { get; set; }
-        public Entity Target { get; set; }
+        public EntityCondition Template { get; private set; }
+        public int MaxStacks { get; private set; }
+        public Entity Target { get; private set; }
 
         public EntityConditionStackLimitEvent(EntityCondition template, Entity target, int maxStacks)
         {
@@ -247,9 +247,9 @@ namespace Assets.Scripts.Combat
 
     public class EntityConditionRemovedByTriggerEvent : CombatEvent
     {
-        public AppliedEntityCondition Removed { get; set; }
-        public RemovalTrigger Trigger { get; set; }
-        public Entity Target { get; set; }
+        public AppliedEntityCondition Removed { get; private set; }
+        public RemovalTrigger Trigger { get; private set; }
+        public Entity Target { get; private set; }
 
         public EntityConditionRemovedByTriggerEvent(AppliedEntityCondition removed, Entity target, RemovalTrigger trigger)
         {
@@ -263,9 +263,9 @@ namespace Assets.Scripts.Combat
 
     public class CharacterConditionEvent : CombatEvent
     {
-        public AppliedCharacterCondition Applied { get; set; }
-        public VehicleSeat TargetSeat { get; set; }
-        public Entity Source { get; set; }
+        public AppliedCharacterCondition Applied { get; private set; }
+        public VehicleSeat TargetSeat { get; private set; }
+        public Entity Source { get; private set; }
 
         public CharacterConditionEvent(
             AppliedCharacterCondition applied,
@@ -282,8 +282,8 @@ namespace Assets.Scripts.Combat
 
     public class CharacterConditionExpiredEvent : CombatEvent
     {
-        public AppliedCharacterCondition Expired { get; set; }
-        public VehicleSeat TargetSeat { get; set; }
+        public AppliedCharacterCondition Expired { get; private set; }
+        public VehicleSeat TargetSeat { get; private set; }
 
         public CharacterConditionExpiredEvent(AppliedCharacterCondition expired, VehicleSeat targetSeat)
         {
@@ -294,8 +294,8 @@ namespace Assets.Scripts.Combat
 
     public class CharacterConditionRefreshedEvent : CombatEvent
     {
-        public AppliedCharacterCondition Refreshed { get; set; }
-        public VehicleSeat TargetSeat { get; set; }
+        public AppliedCharacterCondition Refreshed { get; private set; }
+        public VehicleSeat TargetSeat { get; private set; }
 
         public CharacterConditionRefreshedEvent(AppliedCharacterCondition refreshed, VehicleSeat targetSeat)
         {
@@ -306,8 +306,8 @@ namespace Assets.Scripts.Combat
 
     public class CharacterConditionIgnoredEvent : CombatEvent
     {
-        public AppliedCharacterCondition Existing { get; set; }
-        public VehicleSeat TargetSeat { get; set; }
+        public AppliedCharacterCondition Existing { get; private set; }
+        public VehicleSeat TargetSeat { get; private set; }
 
         public CharacterConditionIgnoredEvent(AppliedCharacterCondition existing, VehicleSeat targetSeat)
         {
@@ -318,9 +318,9 @@ namespace Assets.Scripts.Combat
 
     public class CharacterConditionReplacedEvent : CombatEvent
     {
-        public AppliedCharacterCondition NewCondition { get; set; }
-        public int OldDuration { get; set; }
-        public VehicleSeat TargetSeat { get; set; }
+        public AppliedCharacterCondition NewCondition { get; private set; }
+        public int OldDuration { get; private set; }
+        public VehicleSeat TargetSeat { get; private set; }
 
         public CharacterConditionReplacedEvent(AppliedCharacterCondition newCondition, VehicleSeat targetSeat, int oldDuration)
         {
@@ -332,8 +332,8 @@ namespace Assets.Scripts.Combat
 
     public class CharacterConditionKeptStrongerEvent : CombatEvent
     {
-        public AppliedCharacterCondition Kept { get; set; }
-        public VehicleSeat TargetSeat { get; set; }
+        public AppliedCharacterCondition Kept { get; private set; }
+        public VehicleSeat TargetSeat { get; private set; }
 
         public CharacterConditionKeptStrongerEvent(AppliedCharacterCondition kept, VehicleSeat targetSeat)
         {
@@ -344,9 +344,9 @@ namespace Assets.Scripts.Combat
 
     public class CharacterConditionStackLimitEvent : CombatEvent
     {
-        public CharacterCondition Template { get; set; }
-        public int MaxStacks { get; set; }
-        public VehicleSeat TargetSeat { get; set; }
+        public CharacterCondition Template { get; private set; }
+        public int MaxStacks { get; private set; }
+        public VehicleSeat TargetSeat { get; private set; }
 
         public CharacterConditionStackLimitEvent(CharacterCondition template, VehicleSeat targetSeat, int maxStacks)
         {
@@ -358,9 +358,9 @@ namespace Assets.Scripts.Combat
 
     public class CharacterConditionRemovedByTriggerEvent : CombatEvent
     {
-        public AppliedCharacterCondition Removed { get; set; }
-        public RemovalTrigger Trigger { get; set; }
-        public VehicleSeat TargetSeat { get; set; }
+        public AppliedCharacterCondition Removed { get; private set; }
+        public RemovalTrigger Trigger { get; private set; }
+        public VehicleSeat TargetSeat { get; private set; }
 
         public CharacterConditionRemovedByTriggerEvent(AppliedCharacterCondition removed, VehicleSeat targetSeat, RemovalTrigger trigger)
         {
@@ -374,9 +374,9 @@ namespace Assets.Scripts.Combat
 
     public class ConsumableSpentEvent : CombatEvent
     {
-        public ItemBase Template { get; set; }
-        public Vehicle Vehicle { get; set; }
-        public int ChargesRemaining { get; set; }
+        public ItemBase Template { get; private set; }
+        public Vehicle Vehicle { get; private set; }
+        public int ChargesRemaining { get; private set; }
 
         public ConsumableSpentEvent(ItemBase template, Vehicle vehicle, string causalSource, int chargesRemaining)
         {
@@ -389,10 +389,10 @@ namespace Assets.Scripts.Combat
 
     public class ConsumableRestoredEvent : CombatEvent
     {
-        public ItemBase Template { get; set; }
-        public Vehicle Vehicle { get; set; }
-        public int Amount { get; set; }
-        public int ChargesAfter { get; set; }
+        public ItemBase Template { get; private set; }
+        public Vehicle Vehicle { get; private set; }
+        public int Amount { get; private set; }
+        public int ChargesAfter { get; private set; }
 
         public ConsumableRestoredEvent(ItemBase template, Vehicle vehicle, string causalSource, int amount, int chargesAfter)
         {
@@ -406,8 +406,8 @@ namespace Assets.Scripts.Combat
 
     public class ConsumableUnavailableEvent : CombatEvent
     {
-        public ItemBase Template { get; set; }
-        public Vehicle Vehicle { get; set; }
+        public ItemBase Template { get; private set; }
+        public Vehicle Vehicle { get; private set; }
 
         public ConsumableUnavailableEvent(ItemBase template, Vehicle vehicle, string causalSource)
         {
@@ -421,9 +421,9 @@ namespace Assets.Scripts.Combat
 
     public class VehicleConditionEvent : CombatEvent
     {
-        public AppliedVehicleCondition Applied { get; set; }
-        public Entity Source { get; set; }
-        public Vehicle Target { get; set; }
+        public AppliedVehicleCondition Applied { get; private set; }
+        public Entity Source { get; private set; }
+        public Vehicle Target { get; private set; }
 
         public VehicleConditionEvent(
             AppliedVehicleCondition applied,
@@ -440,8 +440,8 @@ namespace Assets.Scripts.Combat
 
     public class VehicleConditionExpiredEvent : CombatEvent
     {
-        public AppliedVehicleCondition Expired { get; set; }
-        public Vehicle Target { get; set; }
+        public AppliedVehicleCondition Expired { get; private set; }
+        public Vehicle Target { get; private set; }
 
         public VehicleConditionExpiredEvent(AppliedVehicleCondition expired, Vehicle target)
         {
@@ -452,8 +452,8 @@ namespace Assets.Scripts.Combat
 
     public class VehicleConditionRefreshedEvent : CombatEvent
     {
-        public AppliedVehicleCondition Refreshed { get; set; }
-        public Vehicle Target { get; set; }
+        public AppliedVehicleCondition Refreshed { get; private set; }
+        public Vehicle Target { get; private set; }
 
         public VehicleConditionRefreshedEvent(AppliedVehicleCondition refreshed, Vehicle target)
         {
@@ -464,8 +464,8 @@ namespace Assets.Scripts.Combat
 
     public class VehicleConditionIgnoredEvent : CombatEvent
     {
-        public AppliedVehicleCondition Existing { get; set; }
-        public Vehicle Target { get; set; }
+        public AppliedVehicleCondition Existing { get; private set; }
+        public Vehicle Target { get; private set; }
 
         public VehicleConditionIgnoredEvent(AppliedVehicleCondition existing, Vehicle target)
         {
@@ -476,9 +476,9 @@ namespace Assets.Scripts.Combat
 
     public class VehicleConditionReplacedEvent : CombatEvent
     {
-        public AppliedVehicleCondition NewCondition { get; set; }
-        public int OldDuration { get; set; }
-        public Vehicle Target { get; set; }
+        public AppliedVehicleCondition NewCondition { get; private set; }
+        public int OldDuration { get; private set; }
+        public Vehicle Target { get; private set; }
 
         public VehicleConditionReplacedEvent(AppliedVehicleCondition newCondition, Vehicle target, int oldDuration)
         {
@@ -490,8 +490,8 @@ namespace Assets.Scripts.Combat
 
     public class VehicleConditionKeptStrongerEvent : CombatEvent
     {
-        public AppliedVehicleCondition Kept { get; set; }
-        public Vehicle Target { get; set; }
+        public AppliedVehicleCondition Kept { get; private set; }
+        public Vehicle Target { get; private set; }
 
         public VehicleConditionKeptStrongerEvent(AppliedVehicleCondition kept, Vehicle target)
         {
@@ -502,9 +502,9 @@ namespace Assets.Scripts.Combat
 
     public class VehicleConditionStackLimitEvent : CombatEvent
     {
-        public VehicleCondition Template { get; set; }
-        public int MaxStacks { get; set; }
-        public Vehicle Target { get; set; }
+        public VehicleCondition Template { get; private set; }
+        public int MaxStacks { get; private set; }
+        public Vehicle Target { get; private set; }
 
         public VehicleConditionStackLimitEvent(VehicleCondition template, Vehicle target, int maxStacks)
         {
@@ -516,9 +516,9 @@ namespace Assets.Scripts.Combat
 
     public class VehicleConditionRemovedByTriggerEvent : CombatEvent
     {
-        public AppliedVehicleCondition Removed { get; set; }
-        public RemovalTrigger Trigger { get; set; }
-        public Vehicle Target { get; set; }
+        public AppliedVehicleCondition Removed { get; private set; }
+        public RemovalTrigger Trigger { get; private set; }
+        public Vehicle Target { get; private set; }
 
         public VehicleConditionRemovedByTriggerEvent(AppliedVehicleCondition removed, Vehicle target, RemovalTrigger trigger)
         {
