@@ -1,3 +1,4 @@
+using Assets.Scripts.Combat;
 using Assets.Scripts.Entities.Vehicles;
 using Assets.Scripts.Managers.Race;
 using SerializeReferenceEditor;
@@ -26,11 +27,13 @@ namespace Assets.Scripts.Effects.EffectTypes.VehicleEffects
 
         void IVehicleEffect.Apply(Vehicle target, EffectContext context)
         {
+            int oldProgress = RacePositionTracker.GetProgress(target);
             int newProgress = mode == ProgressModifierMode.Flat
-                ? RacePositionTracker.GetProgress(target) + amount
+                ? oldProgress + amount
                 : amount;
 
             RaceMovement.SetProgress(target, newProgress);
+            CombatEventBus.Emit(new ProgressModifierEvent(target, oldProgress, newProgress, context.CausalSource));
         }
     }
 }

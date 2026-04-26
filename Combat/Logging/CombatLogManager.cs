@@ -10,6 +10,7 @@ using Assets.Scripts.Conditions;
 using Assets.Scripts.Entities.Vehicles;
 using Assets.Scripts.Entities;
 using Assets.Scripts.Managers.Race;
+using Assets.Scripts.Stages.Lanes;
 
 namespace Assets.Scripts.Combat.Logging
 {
@@ -29,12 +30,14 @@ namespace Assets.Scripts.Combat.Logging
             ForEach<SavingThrowEvent>(action, LogSingleSavingThrow);
             ForEach<SkillCheckEvent>(action, LogSingleSkillCheck);
             ForEach<OpposedCheckEvent>(action, LogSingleOpposedCheck);
+            ForEach<StateThresholdEvent>(action, LogSingleStateThreshold);
             LogDamageByTarget(action);
             LogEntityConditions(action);
             LogVehicleConditions(action);
             LogRestorations(action);
             LogCharacterConditions(action);
             LogConsumables(action);
+            LogMovement(action);
         }
 
         // ==================== ATTACK ROLL LOGGING ====================
@@ -157,6 +160,25 @@ namespace Assets.Scripts.Combat.Logging
                 attackerVehicle, defenderVehicle);
 
             logEvt.WithMetadata("rollBreakdown", CombatFormatter.FormatOpposedCheckDetailed(evt.Roll, evt.DefenderRoll, evt.AttackerCheckName, evt.DefenderCheckName));
+        }
+
+        // ==================== STATE THRESHOLD LOGGING ====================
+
+        private static void LogSingleStateThreshold(StateThresholdEvent evt)
+        {
+            if (evt.Target == null) return;
+
+            string vehicleName = CombatDisplayHelpers.FormatVehicleName(evt.Target.vehicleName);
+            string stateName = evt.State.ToString();
+            string resultText = evt.Success ? LogColors.Success("Passed") : LogColors.Failure("Failed");
+            bool isPlayer = evt.Target.controlType == ControlType.Player;
+
+            RaceHistory.Log(
+                EventType.Combat,
+                isPlayer ? EventImportance.High : EventImportance.Medium,
+                $"{vehicleName} checks {LogColors.Skill(stateName)} for {LogColors.Ability(evt.CausalSource)}: {LogColors.Number(evt.CurrentValue.ToString())} vs {LogColors.Number(evt.MinimumValue.ToString())} minimum. {resultText}",
+                RacePositionTracker.GetStage(evt.Target),
+                evt.Target);
         }
 
         // ==================== DAMAGE LOGGING ====================
@@ -583,6 +605,67 @@ namespace Assets.Scripts.Combat.Logging
                 $"{vehicleName} tried to use {evt.Template.name} but had no charges",
                 RacePositionTracker.GetStage(evt.Vehicle),
                 evt.Vehicle);
+        }
+
+        // ==================== MOVEMENT LOGGING ====================
+
+        private static void LogMovement(CombatAction action)
+        {
+            ForEach<LaneChangeEvent>(action, LogLaneChange);
+            ForEach<ProgressModifierEvent>(action, LogProgressModifier);
+            ForEach<SpeedChangeEvent>(action, LogSpeedChange);
+        }
+
+        private static void LogLaneChange(LaneChangeEvent evt)
+        {
+            string vehicleName = evt.Target != null ? CombatDisplayHelpers.FormatVehicleName(evt.Target.vehicleName) : "Unknown";
+            string fromName = evt.FromLane != null ? evt.FromLane.laneName : "unknown lane";
+            string toName = evt.ToLane != null ? evt.ToLane.laneName : "unknown lane";
+            bool isPlayer = evt.Target != null && evt.Target.controlType == ControlType.Player;
+
+            RaceHistory.Log(
+                EventType.Movement,
+                isPlayer ? EventImportance.High : EventImportance.Medium,
+                $"{vehicleName} pushed from {LogColors.Plain(fromName)} to {LogColors.Plain(toName)} by {LogColors.Ability(evt.CausalSource)}",
+                RacePositionTracker.GetStage(evt.Target),
+                evt.Target);
+        }
+
+        private static void LogProgressModifier(ProgressModifierEvent evt)
+        {
+            if (evt.Delta == 0) return;
+
+            string vehicleName = evt.Target != null ? CombatDisplayHelpers.FormatVehicleName(evt.Target.vehicleName) : "Unknown";
+            bool isPlayer = evt.Target != null && evt.Target.controlType == ControlType.Player;
+            bool isLoss = evt.Delta < 0;
+            string verb = isLoss ? "loses" : "gains";
+            string deltaText = LogColors.Number($"{System.Math.Abs(evt.Delta)}");
+
+            RaceHistory.Log(
+                EventType.Movement,
+                isPlayer ? EventImportance.High : EventImportance.Medium,
+                $"{vehicleName} {verb} {deltaText} progress from {LogColors.Ability(evt.CausalSource)}",
+                RacePositionTracker.GetStage(evt.Target),
+                evt.Target);
+        }
+
+        private static void LogSpeedChange(SpeedChangeEvent evt)
+        {
+            if (evt.OldSpeedPercent == evt.NewSpeedPercent) return;
+            if (evt.Target == null) return;
+
+            var drive = evt.Target.Drive;
+            int maxSpeed = drive != null ? drive.GetMaxSpeed() : 0;
+            int targetAbsolute = (evt.NewSpeedPercent * maxSpeed) / 100;
+            string vehicleName = CombatDisplayHelpers.FormatVehicleName(evt.Target.vehicleName);
+            bool isPlayer = evt.Target.controlType == ControlType.Player;
+
+            RaceHistory.Log(
+                EventType.Movement,
+                isPlayer ? EventImportance.High : EventImportance.Medium,
+                $"{vehicleName} set target speed: {LogColors.Number($"{evt.OldSpeedPercent}%")} -> {LogColors.Number($"{evt.NewSpeedPercent}%")} ({LogColors.Number($"{targetAbsolute} units/turn")})",
+                RacePositionTracker.GetStage(evt.Target),
+                evt.Target);
         }
     }
 }

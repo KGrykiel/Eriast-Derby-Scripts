@@ -1,3 +1,4 @@
+using Assets.Scripts.Combat;
 using Assets.Scripts.Entities.Vehicles;
 using SerializeReferenceEditor;
 using UnityEngine;
@@ -15,7 +16,9 @@ namespace Assets.Scripts.Effects.EffectTypes.VehicleEffects
 
         void IVehicleEffect.Apply(Vehicle target, EffectContext context)
         {
+            int oldSpeedPercent = target.Drive != null ? target.Drive.GetTargetSpeedPercent() : 0;
             target.SetTargetSpeed(targetSpeedPercent);
+            CombatEventBus.Emit(new SpeedChangeEvent(target, oldSpeedPercent, targetSpeedPercent, context.CausalSource));
         }
     }
 }

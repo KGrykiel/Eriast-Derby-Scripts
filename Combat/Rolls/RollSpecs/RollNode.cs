@@ -9,7 +9,8 @@ namespace Assets.Scripts.Combat.Rolls.RollSpecs
 {
     /// <summary>
     /// A self-contained resolution step: optionally make a roll, then apply success or failure effects.
-    /// Nodes can chain — onSuccessChain/onFailureChain execute after this node resolves.
+    /// Nodes can chain — onSuccessChains/onFailureChains execute depth-first after this node resolves.
+    /// Each list entry runs fully (including its own chains) before the next entry starts.
     /// Used by Skill, CardChoice, and LaneTurnEffect as a unified resolution unit.
     /// </summary>
     [Serializable]
@@ -35,11 +36,11 @@ namespace Assets.Scripts.Combat.Rolls.RollSpecs
 
         [Header("Chaining")]
         [SerializeReference, SR]
-        [Tooltip("Node evaluated after this one succeeds. Null = stop here.")]
-        public RollNode onSuccessChain;
+        [Tooltip("Nodes evaluated in order after this one succeeds. Each resolves fully before the next begins.")]
+        public List<RollNode> onSuccessChains = new();
 
         [SerializeReference, SR]
-        [Tooltip("Node evaluated after this one fails. Null = stop here.")]
-        public RollNode onFailureChain;
+        [Tooltip("Nodes evaluated in order after this one fails. Each resolves fully before the next begins.")]
+        public List<RollNode> onFailureChains = new();
     }
 }

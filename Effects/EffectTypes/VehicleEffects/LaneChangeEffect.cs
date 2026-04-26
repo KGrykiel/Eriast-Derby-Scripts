@@ -1,6 +1,8 @@
 ﻿using System;
+using Assets.Scripts.Combat;
 using Assets.Scripts.Entities.Vehicles;
 using Assets.Scripts.Managers.Race;
+using Assets.Scripts.Stages.Lanes;
 using SerializeReferenceEditor;
 using UnityEngine;
 
@@ -18,7 +20,8 @@ namespace Assets.Scripts.Effects.EffectTypes.VehicleEffects
         void IVehicleEffect.Apply(Vehicle target, EffectContext context)
         {
             var stage = RacePositionTracker.GetStage(target);
-            int currentIndex = stage.GetLaneIndex(RacePositionTracker.GetLane(target));
+            StageLane fromLane = RacePositionTracker.GetLane(target);
+            int currentIndex = stage.GetLaneIndex(fromLane);
             if (currentIndex < 0)
             {
                 Debug.LogWarning($"[RelativeLaneChangeEffect] Current lane of '{target.name}' was not found in stage '{stage.name}'.");
@@ -33,6 +36,7 @@ namespace Assets.Scripts.Effects.EffectTypes.VehicleEffects
             }
 
             stage.AssignVehicleToLane(target, targetLane);
+            CombatEventBus.Emit(new LaneChangeEvent(target, fromLane, targetLane, context.CausalSource));
         }
     }
 
@@ -47,14 +51,16 @@ namespace Assets.Scripts.Effects.EffectTypes.VehicleEffects
         void IVehicleEffect.Apply(Vehicle target, EffectContext context)
         {
             var stage = RacePositionTracker.GetStage(target);
-            var targetLane = stage.GetLaneByIndex(targetLaneIndex);
-            if (targetLane == null)
+            StageLane fromLane = RacePositionTracker.GetLane(target);
+            var toLane = stage.GetLaneByIndex(targetLaneIndex);
+            if (toLane == null)
             {
                 Debug.LogWarning($"[AbsoluteLaneChangeEffect] Lane index {targetLaneIndex} does not exist in stage '{stage.name}' — effect had no impact.");
                 return;
             }
 
-            stage.AssignVehicleToLane(target, targetLane);
+            stage.AssignVehicleToLane(target, toLane);
+            CombatEventBus.Emit(new LaneChangeEvent(target, fromLane, toLane, context.CausalSource));
         }
     }
 }

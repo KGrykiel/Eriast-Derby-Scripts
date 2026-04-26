@@ -131,7 +131,7 @@ namespace Assets.Scripts.Visualisation
             }
 
             GameObject instance = Instantiate(_stageLabelPrefab, transform);
-            instance.transform.position = transform.position + Vector3.up * 2f;
+            instance.transform.position = transform.position + Vector3.up * 1f;
             _label = instance.GetComponent<TextMeshPro>();
 
             if (_label != null)

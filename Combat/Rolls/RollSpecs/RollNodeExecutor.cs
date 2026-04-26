@@ -61,7 +61,7 @@ namespace Assets.Scripts.Combat.Rolls.RollSpecs
 
         private static bool ExecuteSingleNode(RollNode node, RollContext ctx)
         {
-            RollNode chain;
+            List<RollNode> chains;
             bool success;
 
             CombatEventBus.BeginAction();
@@ -72,7 +72,7 @@ namespace Assets.Scripts.Combat.Rolls.RollSpecs
                 var effects = roll.Success ? node.successEffects : node.failureEffects;
                 ApplyEffects(effects, ctx, roll.IsCriticalHit);
 
-                chain = roll.Success ? node.onSuccessChain : node.onFailureChain;
+                chains = roll.Success ? node.onSuccessChains : node.onFailureChains;
                 success = roll.Success;
             }
             finally
@@ -80,7 +80,7 @@ namespace Assets.Scripts.Combat.Rolls.RollSpecs
                 CombatEventBus.EndAction();
             }
 
-            if (chain != null)
+            foreach (var chain in chains)
                 ExecuteNode(chain, ctx);
 
             return success;
@@ -170,6 +170,8 @@ namespace Assets.Scripts.Combat.Rolls.RollSpecs
 
             int value = sourceVehicle.GetStateValue(spec.state);
             bool success = value >= spec.minimumValue;
+
+            CombatEventBus.Emit(new StateThresholdEvent(sourceVehicle, spec.state, value, spec.minimumValue, success, ctx.CausalSource));
 
             return success ? D20RollOutcome.AutoSuccess(0) : D20RollOutcome.AutoFail(0);
         }

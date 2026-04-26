@@ -73,6 +73,7 @@ namespace Assets.Scripts.Entities.Vehicles.VehicleComponents.ComponentTypes
         public int GetFriction() => StatCalculator.GatherAttributeValue(this, EntityAttribute.BaseFriction);
 
         public int GetCurrentSpeed() => currentSpeed;
+        public int GetTargetSpeedPercent() => targetSpeedPercent;
 
         public override int GetBaseValue(EntityAttribute attribute)
         {
@@ -185,10 +186,7 @@ namespace Assets.Scripts.Entities.Vehicles.VehicleComponents.ComponentTypes
         {
             if (IsDestroyed()) return;
 
-            int oldTarget = targetSpeedPercent;
             targetSpeedPercent = Mathf.Clamp(speedPercent, 0, 100);
-
-            this.LogTargetSpeedSet(oldTarget, targetSpeedPercent);
         }
 
 

@@ -56,7 +56,9 @@ namespace Assets.Scripts.AI.Scoring
             // Failure effects are intentionally ignored at scoring time. Expected-value
             // weighting by roll probability is deferred until a risk-aware pass exists.
 
-            AccumulateNode(node.onSuccessChain, context, target, targetIsEnemy, ref utility);
+            if (node.onSuccessChains != null)
+                foreach (var chain in node.onSuccessChains)
+                    AccumulateNode(chain, context, target, targetIsEnemy, ref utility);
         }
 
         private static void AccumulateInvocation(IEffectInvocation invocation, VehicleAISharedContext context, bool targetIsEnemy, ref CommandWeights utility)

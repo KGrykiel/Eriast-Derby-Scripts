@@ -8,6 +8,7 @@ using Assets.Scripts.Conditions.VehicleConditions;
 using Assets.Scripts.Items;
 using Assets.Scripts.Entities.Vehicles;
 using Assets.Scripts.Entities;
+using Assets.Scripts.Stages.Lanes;
 
 namespace Assets.Scripts.Combat
 {
@@ -58,6 +59,32 @@ namespace Assets.Scripts.Combat
         }
     }
     
+    /// <summary>Deterministic state threshold check — no d20 roll, pass/fail based on a live vehicle value vs a minimum.</summary>
+    public class StateThresholdEvent : CombatEvent
+    {
+        public Vehicle Target { get; private set; }
+        public Vehicle.RuntimeState State { get; private set; }
+        public int CurrentValue { get; private set; }
+        public int MinimumValue { get; private set; }
+        public bool Success { get; private set; }
+
+        public StateThresholdEvent(
+            Vehicle target,
+            Vehicle.RuntimeState state,
+            int currentValue,
+            int minimumValue,
+            bool success,
+            string causalSource)
+        {
+            Target = target;
+            State = state;
+            CurrentValue = currentValue;
+            MinimumValue = minimumValue;
+            Success = success;
+            CausalSource = causalSource;
+        }
+    }
+
     /// <summary>Attack roll (hit or miss). Separate from damage — attack determines IF damage happens.</summary>
     public class AttackRollEvent : CombatEvent
     {
@@ -525,6 +552,55 @@ namespace Assets.Scripts.Combat
             Removed = removed;
             Target = target;
             Trigger = trigger;
+        }
+    }
+
+    // ==================== MOVEMENT EVENTS ====================
+
+    public class LaneChangeEvent : CombatEvent
+    {
+        public Vehicle Target { get; private set; }
+        public StageLane FromLane { get; private set; }
+        public StageLane ToLane { get; private set; }
+
+        public LaneChangeEvent(Vehicle target, StageLane fromLane, StageLane toLane, string causalSource)
+        {
+            Target = target;
+            FromLane = fromLane;
+            ToLane = toLane;
+            CausalSource = causalSource;
+        }
+    }
+
+    public class ProgressModifierEvent : CombatEvent
+    {
+        public Vehicle Target { get; private set; }
+        public int OldProgress { get; private set; }
+        public int NewProgress { get; private set; }
+        public int Delta { get; private set; }
+
+        public ProgressModifierEvent(Vehicle target, int oldProgress, int newProgress, string causalSource)
+        {
+            Target = target;
+            OldProgress = oldProgress;
+            NewProgress = newProgress;
+            Delta = newProgress - oldProgress;
+            CausalSource = causalSource;
+        }
+    }
+
+    public class SpeedChangeEvent : CombatEvent
+    {
+        public Vehicle Target { get; private set; }
+        public int OldSpeedPercent { get; private set; }
+        public int NewSpeedPercent { get; private set; }
+
+        public SpeedChangeEvent(Vehicle target, int oldSpeedPercent, int newSpeedPercent, string causalSource)
+        {
+            Target = target;
+            OldSpeedPercent = oldSpeedPercent;
+            NewSpeedPercent = newSpeedPercent;
+            CausalSource = causalSource;
         }
     }
 }

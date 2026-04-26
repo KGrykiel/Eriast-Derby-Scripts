@@ -236,7 +236,7 @@ namespace Assets.Scripts.UI.Components
                 tooltip += "<b>Always applies</b>";
 
             bool hasSuccessEffects = node.successEffects != null && node.successEffects.Count > 0;
-            if (hasSuccessEffects || node.onSuccessChain != null)
+            if (hasSuccessEffects || (node.onSuccessChains != null && node.onSuccessChains.Count > 0))
             {
                 tooltip += $"\n{indent}<color=green><b>On Success:</b></color>";
                 if (hasSuccessEffects)
@@ -248,12 +248,13 @@ namespace Assets.Scripts.UI.Components
                             tooltip += $"\n{indent}  \u2022 {desc}";
                     }
                 }
-                if (node.onSuccessChain != null)
-                    tooltip += $"\n{indent}  \u2192 {BuildNodeTooltip(node.onSuccessChain, indent + "    ", depth + 1)}";
+                if (node.onSuccessChains != null)
+                    foreach (var chain in node.onSuccessChains)
+                        tooltip += $"\n{indent}  \u2192 {BuildNodeTooltip(chain, indent + "    ", depth + 1)}";
             }
 
             bool hasFailureEffects = node.failureEffects != null && node.failureEffects.Count > 0;
-            if (hasFailureEffects || node.onFailureChain != null)
+            if (hasFailureEffects || (node.onFailureChains != null && node.onFailureChains.Count > 0))
             {
                 tooltip += $"\n{indent}<color=red><b>On Failure:</b></color>";
                 if (hasFailureEffects)
@@ -265,8 +266,9 @@ namespace Assets.Scripts.UI.Components
                             tooltip += $"\n{indent}  \u2022 {desc}";
                     }
                 }
-                if (node.onFailureChain != null)
-                    tooltip += $"\n{indent}  \u2192 {BuildNodeTooltip(node.onFailureChain, indent + "    ", depth + 1)}";
+                if (node.onFailureChains != null)
+                    foreach (var chain in node.onFailureChains)
+                        tooltip += $"\n{indent}  \u2192 {BuildNodeTooltip(chain, indent + "    ", depth + 1)}";
             }
 
             return tooltip;

@@ -46,22 +46,6 @@ namespace Assets.Scripts.Entities
             );
         }
         
-        public static void LogTargetSpeedSet(this DriveComponent drive, int oldPercent, int newPercent)
-        {
-            if (oldPercent == newPercent || drive.ParentVehicle == null) return;
-            
-            int maxSpeed = drive.GetMaxSpeed();
-            int targetAbsolute = (newPercent * maxSpeed) / 100;
-            
-            RaceHistory.Log(
-                EventType.Movement,
-                EventImportance.Low,
-                $"{LogColors.Vehicle(drive.ParentVehicle.vehicleName)} set target speed: {LogColors.Number($"{oldPercent}%")} -> {LogColors.Number($"{newPercent}%")} ({LogColors.Number($"{targetAbsolute} units/turn")})",
-                RacePositionTracker.GetStage(drive.ParentVehicle),
-                drive.ParentVehicle
-            );
-        }
-        
         // ==================== DAMAGE/HEALTH LOGGING ====================
         
         public static void LogChassisDestroyed(this ChassisComponent chassis)
